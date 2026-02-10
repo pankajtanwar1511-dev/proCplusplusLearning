@@ -1,0 +1,950 @@
+{
+  "chapter_name": "chapter_2_mamory_management",
+  "chapter_number": 2,
+  "topic_count": 1,
+  "topics": [
+    {
+      "topic": "Memory Management in C++",
+      "filename": "topic_1.md",
+      "theory": {
+        "subsections": [
+          {
+            "title": "What is RAII?",
+            "content": "**RAII (Resource Acquisition Is Initialization)** is a C++ programming idiom where resource management is tied to object lifetime. Resources (memory, file handles, locks) are acquired in constructors and released in destructors. This guarantees automatic cleanup when objects go out of scope, even in the presence of exceptions. RAII is the foundation of modern C++ memory safety, implemented through smart pointers (`std::unique_ptr`, `std::shared_ptr`) and standard containers (`std::vector`, `std::string`)."
+          },
+          {
+            "title": "Why It Matters",
+            "content": "Manual memory management introduces numerous error categories: memory leaks (forgetting to deallocate), dangling pointers (accessing freed memory), double deletion (freeing memory twice), and exception-unsafe code (leaks when exceptions bypass cleanup). These bugs are often subtle, manifest inconsistently, and can cause security vulnerabilities or system crashes in production. Modern C++ practices using RAII eliminate most manual memory management, making code safer, more maintainable, and exception-safe by default.\n\n---"
+          }
+        ],
+        "full_text": "Memory management in C++ provides developers with direct control over program memory allocation and deallocation. Understanding the distinction between **stack** and **heap** memory, proper allocation/deallocation patterns, and modern RAII (Resource Acquisition Is Initialization) principles is fundamental for writing safe, efficient C++ code.\n\n**Stack memory** operates with automatic lifetime management following LIFO (Last In First Out) principles. Variables allocated on the stack exist only within their scope and are automatically deallocated when the scope ends. Stack allocation is extremely fast but limited in size (typically 1-8 MB depending on system configuration). Local variables, function parameters, and small temporary objects naturally reside on the stack.\n\n**Heap memory** (also called dynamic memory or free store) provides manual control over object lifetime. Memory allocated on the heap persists until explicitly deallocated by the programmer. While heap allocation is slower than stack allocation and requires explicit management, it supports much larger allocations and enables objects to outlive their creation scope. Modern C++ emphasizes using RAII-based containers and smart pointers to manage heap memory safely, eliminating most manual memory management pitfalls.\n\n#### What is RAII?\n\n**RAII (Resource Acquisition Is Initialization)** is a C++ programming idiom where resource management is tied to object lifetime. Resources (memory, file handles, locks) are acquired in constructors and released in destructors. This guarantees automatic cleanup when objects go out of scope, even in the presence of exceptions. RAII is the foundation of modern C++ memory safety, implemented through smart pointers (`std::unique_ptr`, `std::shared_ptr`) and standard containers (`std::vector`, `std::string`).\n\n#### Why It Matters\n\nManual memory management introduces numerous error categories: memory leaks (forgetting to deallocate), dangling pointers (accessing freed memory), double deletion (freeing memory twice), and exception-unsafe code (leaks when exceptions bypass cleanup). These bugs are often subtle, manifest inconsistently, and can cause security vulnerabilities or system crashes in production. Modern C++ practices using RAII eliminate most manual memory management, making code safer, more maintainable, and exception-safe by default.\n\n---"
+      },
+      "edge_cases": [
+        {
+          "title": "Returning Address of Local Stack Variable",
+          "explanation": "Returning a pointer or reference to a local stack variable creates **undefined behavior** because the variable's memory is reclaimed when the function returns. The pointer then refers to invalid memory that may be overwritten by subsequent function calls.\n\n\n\nThis code may appear to work in simple test cases because the stack memory hasn't been overwritten yet, making the bug particularly insidious. Compilers may warn about this pattern, but warnings are easily missed or ignored.",
+          "code_examples": [
+            "int* dangerous() {\n    int x = 42;\n    return &x;  // ❌ UB: x is destroyed after return\n}\n\nvoid caller() {\n    int* ptr = dangerous();\n    std::cout << *ptr;  // ❌ Accessing invalid memory\n}"
+          ]
+        },
+        {
+          "title": "Mismatched Array Allocation and Deallocation",
+          "explanation": "Using `delete` instead of `delete[]` for array allocations causes **undefined behavior**. The scalar `delete` operator only destructs the first element and may corrupt the heap allocator's internal structures.\n\n\n\nFor primitive types like `int`, this may seem benign, but for classes with destructors, it causes resource leaks. The heap corruption can manifest as crashes in unrelated code, making debugging extremely difficult.",
+          "code_examples": [
+            "int* arr = new int[100];\ndelete arr;  // ❌ Should be delete[]\n\nclass Widget {\n    ~Widget() { std::cout << \"destroyed\\n\"; }\n};\n\nWidget* widgets = new Widget[5];\ndelete widgets;  // ❌ Only first destructor runs, remaining 4 leak"
+          ]
+        },
+        {
+          "title": "Dangling Pointers After Deletion",
+          "explanation": "Accessing memory through a pointer after `delete` is **undefined behavior**. The memory may be immediately reused, unmapped, or marked as poisoned by debugging tools. The pointer becomes a **dangling pointer**.\n\n\n\nSetting pointers to `nullptr` after deletion is defensive programming that converts undefined behavior into deterministic crashes (null pointer dereference), which are much easier to debug.",
+          "code_examples": [
+            "int* p = new int(42);\ndelete p;\nstd::cout << *p;  // ❌ UB: p is now dangling\n\np = nullptr;  // ✅ Good practice: prevents accidental use"
+          ]
+        },
+        {
+          "title": "Mixing Allocation and Deallocation Mechanisms",
+          "explanation": "C++ provides two distinct memory management systems: C-style (`malloc`/`free`) and C++-style (`new`/`delete`). Mixing them causes **undefined behavior** because they use different allocators with incompatible internal bookkeeping.\n\n\n\nAdditionally, `new` calls constructors while `malloc` does not, and `delete` calls destructors while `free` does not, making them fundamentally incompatible for non-trivial types.",
+          "code_examples": [
+            "int* p1 = (int*)malloc(sizeof(int));\ndelete p1;  // ❌ UB: malloc must use free\n\nint* p2 = new int(10);\nfree(p2);  // ❌ UB: new must use delete\n\nint* arr = new int[10];\nfree(arr);  // ❌ UB: even worse mixing"
+          ]
+        },
+        {
+          "title": "Double Delete and Shared Ownership",
+          "explanation": "Deleting the same memory twice causes **undefined behavior** and typically results in heap corruption or immediate crashes. This commonly occurs when multiple raw pointers share ownership without coordination.\n\n\n\nModern C++ solves this with ownership semantics: `std::unique_ptr` for exclusive ownership and `std::shared_ptr` for reference-counted shared ownership, eliminating manual coordination.",
+          "code_examples": [
+            "int* p = new int(100);\nint* q = p;  // Both point to same memory\n\ndelete p;\ndelete q;  // ❌ Double free: UB and likely crash"
+          ]
+        },
+        {
+          "title": "Exception Safety and Memory Leaks",
+          "explanation": "When exceptions occur before `delete` statements, allocated memory is leaked. This is one of the primary motivations for RAII in C++.\n\n\n\nThe RAII pattern guarantees that destructors run during stack unwinding when exceptions are thrown, ensuring resource cleanup regardless of execution path.",
+          "code_examples": [
+            "void unsafe() {\n    int* data = new int[1000];\n    riskyOperation();  // ❌ If throws, data is leaked\n    delete[] data;     // Never reached\n}\n\nvoid safe() {\n    std::vector<int> data(1000);  // ✅ RAII: auto cleanup\n    riskyOperation();  // Even if throws, vector destructor runs\n}"
+          ]
+        },
+        {
+          "title": "Stack Overflow with Large Objects",
+          "explanation": "The stack has limited size (typically 1-8 MB). Allocating large objects on the stack can exceed this limit, causing **stack overflow** errors that may manifest as segmentation faults or silent corruption.\n\n\n\nThe stack overflow may not occur immediately if previous stack usage was minimal, making the bug environment-dependent and difficult to reproduce consistently.\n\n---",
+          "code_examples": [
+            "struct Massive {\n    int data[1000000];  // ~4 MB\n};\n\nvoid stackOverflow() {\n    Massive m;  // ❌ May exceed stack limit\n}\n\nvoid heapAlloc() {\n    auto m = std::make_unique<Massive>();  // ✅ Uses heap\n}"
+          ]
+        }
+      ],
+      "code_examples": [
+        {
+          "title": "Stack vs Heap Memory Allocation",
+          "explanation": "Stack variables have automatic storage duration managed by the compiler through stack pointer manipulation. Heap allocations invoke the system allocator (`operator new`), which manages free store memory and requires explicit deallocation.",
+          "code": "#include <iostream>\n\nvoid stackExample() {\n    int local = 42;  // ✅ Stack: automatic lifetime\n    std::cout << \"Stack: \" << local << \"\\n\";\n}  // local is automatically destroyed here\n\nvoid heapExample() {\n    int* dynamic = new int(42);  // Heap: manual lifetime\n    std::cout << \"Heap: \" << *dynamic << \"\\n\";\n    delete dynamic;  // ✅ Must manually free\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Correct Array Allocation and Deallocation",
+          "explanation": "The `delete[]` operator performs three tasks: invokes destructors for all elements, deallocates the memory block, and updates internal allocator bookkeeping. Using scalar `delete` only performs the first destructor call, creating inconsistencies.",
+          "code": "void arrayManagement() {\n    // ✅ Correct: matching allocation/deallocation\n    int* arr1 = new int[10];\n    delete[] arr1;\n\n    // ❌ Incorrect: mismatched operators\n    int* arr2 = new int[10];\n    delete arr2;  // UB: should be delete[]\n\n    // ✅ Modern approach: no manual management\n    std::vector<int> arr3(10);\n    // Automatic cleanup via destructor\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Memory Leak from Pointer Reassignment",
+          "explanation": "When reassigning a raw pointer, the original memory address is lost without deallocation, creating a memory leak. Smart pointers automatically delete managed objects when replaced or destroyed.",
+          "code": "void leakExample() {\n    int* ptr = new int(100);  // First allocation\n    ptr = new int(200);       // ❌ Leak: lost reference to first allocation\n    delete ptr;               // Only frees second allocation\n}\n\nvoid fixedExample() {\n    std::unique_ptr<int> ptr = std::make_unique<int>(100);\n    ptr = std::make_unique<int>(200);  // ✅ First automatically deleted\n    // Second automatically deleted at scope exit\n}",
+          "additional_code": []
+        },
+        {
+          "title": "RAII with std::unique_ptr",
+          "explanation": "The unique_ptr guarantees that the managed object's destructor runs when the smart pointer goes out of scope, regardless of how the scope is exited (normal return, exception, or early return).",
+          "code": "#include <memory>\n\nclass Resource {\npublic:\n    Resource() { std::cout << \"Resource acquired\\n\"; }\n    ~Resource() { std::cout << \"Resource released\\n\"; }\n};\n\nvoid manualManagement() {\n    Resource* r = new Resource();\n    // ... complex logic with early returns, exceptions ...\n    delete r;  // ❌ May be skipped due to early return/exception\n}\n\nvoid raiiManagement() {\n    std::unique_ptr<Resource> r = std::make_unique<Resource>();\n    // ... complex logic ...\n    // ✅ Destructor automatically called at scope exit\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Exception Safety with RAII",
+          "explanation": "Stack unwinding during exception propagation invokes destructors for all stack-allocated objects, including containers and smart pointers. This makes RAII-based code automatically exception-safe.",
+          "code": "void exceptionUnsafe() {\n    int* data = new int[1000];\n    if (errorCondition()) {\n        throw std::runtime_error(\"Error\");  // ❌ data is leaked\n    }\n    delete[] data;\n}\n\nvoid exceptionSafe() {\n    std::vector<int> data(1000);\n    if (errorCondition()) {\n        throw std::runtime_error(\"Error\");  // ✅ vector destructor runs\n    }\n    // Automatic cleanup regardless of path\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Preventing Double Delete",
+          "explanation": "The C++ standard defines `delete nullptr` as a safe no-op operation. Setting pointers to nullptr after deletion provides defensive protection. However, unique_ptr provides compile-time prevention by disallowing copies.",
+          "code": "void doubleDeleteBug() {\n    int* p = new int(42);\n    int* q = p;\n    \n    delete p;\n    delete q;  // ❌ Double delete: UB\n}\n\nvoid preventDoubleDelete() {\n    int* p = new int(42);\n    delete p;\n    p = nullptr;  // ✅ Safe to delete again (no-op)\n    delete p;     // Safe: delete nullptr is defined as no-op\n}\n\nvoid modernApproach() {\n    std::unique_ptr<int> p = std::make_unique<int>(42);\n    // Cannot accidentally double-delete\n    // Cannot copy (only move), enforcing single ownership\n}",
+          "additional_code": []
+        },
+        {
+          "title": "malloc/free vs new/delete Differences",
+          "explanation": "The `new` operator performs two operations: memory allocation followed by constructor invocation. The `delete` operator invokes the destructor before deallocating memory. In contrast, `malloc` and `free` only manage memory without object lifecycle awareness.",
+          "code": "#include <cstdlib>\n\nclass Widget {\n    int value;\npublic:\n    Widget(int v) : value(v) { \n        std::cout << \"Constructor: \" << value << \"\\n\"; \n    }\n    ~Widget() { \n        std::cout << \"Destructor: \" << value << \"\\n\"; \n    }\n};\n\nvoid mallocStyle() {\n    Widget* w = (Widget*)malloc(sizeof(Widget));\n    // ❌ Constructor never called! Object in invalid state\n    free(w);\n    // ❌ Destructor never called! Resources leaked\n}\n\nvoid newStyle() {\n    Widget* w = new Widget(42);\n    // ✅ Constructor called, object properly initialized\n    delete w;\n    // ✅ Destructor called, resources cleaned up\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Smart Pointer Ownership Semantics",
+          "explanation": "Unique_ptr enforces exclusive ownership through move semantics and deleted copy operations. Shared_ptr implements reference counting, maintaining a count of how many shared_ptrs reference the same object, deleting it only when the count reaches zero.\n\n---",
+          "code": "#include <memory>\n\nvoid uniqueOwnership() {\n    std::unique_ptr<int> p1 = std::make_unique<int>(100);\n    // std::unique_ptr<int> p2 = p1;  // ❌ Copy deleted\n    std::unique_ptr<int> p2 = std::move(p1);  // ✅ Ownership transferred\n    // p1 is now nullptr, p2 owns the resource\n}\n\nvoid sharedOwnership() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(100);\n    std::shared_ptr<int> p2 = p1;  // ✅ Reference count = 2\n    std::shared_ptr<int> p3 = p1;  // ✅ Reference count = 3\n    // Resource deleted when all shared_ptrs destroyed\n}",
+          "additional_code": []
+        }
+      ],
+      "interview_qa": [
+        {
+          "question": "What is the fundamental difference between stack and heap memory?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "memory_management",
+            "fundamentals"
+          ],
+          "concepts": [
+            "stack",
+            "heap",
+            "automatic_storage",
+            "dynamic_memory"
+          ],
+          "answer": "Stack memory is automatically managed with LIFO allocation, while heap memory requires manual management with dynamic allocation and deallocation.",
+          "explanation": "Stack memory is allocated and deallocated automatically as functions are called and return, with extremely fast allocation via simple pointer arithmetic. Heap memory persists until explicitly freed, allocated through the system allocator which manages a complex free store. Stack has limited size (typically 1-8 MB), while heap can grow much larger subject to available system memory.",
+          "code_examples": [],
+          "key_takeaway": "Use stack for small, short-lived objects; use heap (preferably via RAII containers) for large objects or those with complex lifetimes."
+        },
+        {
+          "question": "Why is returning a pointer to a local variable dangerous?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "stack",
+            "dangling_pointer",
+            "lifetime",
+            "undefined_behavior"
+          ],
+          "answer": "Local variables are destroyed when their function returns, making the returned pointer point to invalid memory that may be overwritten or unmapped.",
+          "explanation": "Stack memory occupied by local variables is reclaimed when the function exits. A pointer to this memory becomes a dangling pointer referring to memory that's either reused by subsequent function calls or marked as invalid by the OS. Dereferencing such pointers causes undefined behavior that may crash, return garbage values, or appear to work temporarily.",
+          "code_examples": [],
+          "key_takeaway": "Never return pointers or references to local stack variables; return by value, use heap allocation with smart pointers, or use static storage."
+        },
+        {
+          "question": "What happens if you use `delete` instead of `delete[]` for an array?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "new",
+            "delete",
+            "array_allocation",
+            "destructors",
+            "heap_corruption"
+          ],
+          "answer": "Using `delete` instead of `delete[]` causes undefined behavior, typically calling only the first destructor and potentially corrupting the heap allocator's bookkeeping.",
+          "explanation": "The `delete[]` operator knows the array size and invokes destructors for all elements before deallocating the entire block. Scalar `delete` only invokes the first destructor and attempts to free memory with incorrect size information, leading to heap corruption. For classes with destructors, this leaks resources from non-destructed elements.",
+          "code_examples": [],
+          "key_takeaway": "Always match allocation and deallocation operators: `new`→`delete`, `new[]`→`delete[]`, or better yet, use `std::vector` or `std::array`."
+        },
+        {
+          "question": "What is a dangling pointer and how does it occur?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "dangling_pointer",
+            "delete",
+            "use_after_free",
+            "undefined_behavior"
+          ],
+          "answer": "A dangling pointer points to memory that has been freed or deallocated, and accessing it causes undefined behavior.",
+          "explanation": "After `delete p`, the memory is returned to the heap allocator and may be immediately reused for other allocations. The pointer `p` still holds the old address but that memory is no longer valid. Dereferencing it can crash, return garbage, or appear to work temporarily, making bugs hard to diagnose.",
+          "code_examples": [
+            "int* p = new int(42);\ndelete p;\nstd::cout << *p;  // ❌ Dangling pointer dereference"
+          ],
+          "key_takeaway": "Set pointers to `nullptr` after deletion to catch dangling pointer bugs early with deterministic null pointer crashes."
+        },
+        {
+          "question": "Why is mixing `malloc`/`free` with `new`/`delete` undefined behavior?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "malloc",
+            "free",
+            "new",
+            "delete",
+            "allocators",
+            "constructors"
+          ],
+          "answer": "They use different allocators with incompatible bookkeeping, and `new`/`delete` handle object construction/destruction while `malloc`/`free` only manage raw memory.",
+          "explanation": "C++'s `operator new` may use a different heap allocator than C's `malloc`, with incompatible metadata structures. More critically, `new` invokes constructors and `delete` invokes destructors, while `malloc`/`free` work with uninitialized bytes. Using `delete` on `malloc`'d memory attempts to call a destructor on uninitialized data and frees memory the allocator doesn't recognize.",
+          "code_examples": [],
+          "key_takeaway": "Never mix C and C++ memory management; stick to `new`/`delete` or preferably modern RAII containers and smart pointers."
+        },
+        {
+          "question": "What causes memory leaks and how do smart pointers prevent them?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "raii"
+          ],
+          "concepts": [
+            "memory_leak",
+            "smart_pointers",
+            "unique_ptr",
+            "raii",
+            "destructors"
+          ],
+          "answer": "Memory leaks occur when allocated memory is not deallocated, losing all references to it. Smart pointers prevent leaks through automatic deallocation in their destructors.",
+          "explanation": "When a raw pointer is reassigned without deleting its target, the original memory becomes unreachable but still allocated. Smart pointers implement RAII: their destructors automatically delete managed objects, even during reassignment or exceptions. This eliminates the most common leak source.",
+          "code_examples": [
+            "void leak() {\n    int* p = new int(100);\n    p = new int(200);  // ❌ First allocation leaked\n}\n\nvoid safe() {\n    auto p = std::make_unique<int>(100);\n    p = std::make_unique<int>(200);  // ✅ First auto-deleted\n}"
+          ],
+          "key_takeaway": "Prefer `std::unique_ptr` and `std::make_unique` over raw `new`/`delete` to prevent leaks through automatic lifetime management."
+        },
+        {
+          "question": "What is RAII and why is it fundamental to modern C++?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "design_pattern",
+            "raii"
+          ],
+          "concepts": [
+            "raii",
+            "destructors",
+            "exception_safety",
+            "resource_management",
+            "smart_pointers"
+          ],
+          "answer": "RAII (Resource Acquisition Is Initialization) ties resource lifetime to object lifetime, acquiring resources in constructors and releasing them in destructors for automatic cleanup.",
+          "explanation": "RAII ensures resources are released even when functions exit via exceptions, early returns, or normal flow. C++ guarantees destructors run during stack unwinding, making RAII objects self-cleaning. This pattern underlies smart pointers, containers, locks, and file handles, eliminating most manual resource management and memory leaks.",
+          "code_examples": [],
+          "key_takeaway": "Embrace RAII by using smart pointers, containers, and scope-based resource management instead of manual allocation/deallocation."
+        },
+        {
+          "question": "How does `std::unique_ptr` enforce single ownership?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "smart_pointers",
+            "design_pattern"
+          ],
+          "concepts": [
+            "unique_ptr",
+            "move_semantics",
+            "ownership",
+            "deleted_functions",
+            "raii"
+          ],
+          "answer": "`std::unique_ptr` deletes its copy constructor and copy assignment operator, allowing only move operations that transfer ownership.",
+          "explanation": "By deleting copy operations at compile time, `unique_ptr` prevents multiple pointers from managing the same resource, eliminating double-delete bugs. Move semantics explicitly transfer ownership, making the source pointer null. This provides zero-overhead exclusive ownership with compiler-enforced safety.",
+          "code_examples": [
+            "std::unique_ptr<int> p1 = std::make_unique<int>(42);\n// auto p2 = p1;  // ❌ Compile error: copy deleted\nauto p2 = std::move(p1);  // ✅ Ownership transferred, p1 becomes nullptr"
+          ],
+          "key_takeaway": "Use `std::unique_ptr` as the default smart pointer for exclusive ownership, only upgrading to `shared_ptr` when shared ownership is genuinely needed."
+        },
+        {
+          "question": "What is exception safety and how does RAII provide it?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "exception_safety",
+            "raii"
+          ],
+          "concepts": [
+            "exception_safety",
+            "stack_unwinding",
+            "destructors",
+            "raii",
+            "resource_management"
+          ],
+          "answer": "Exception safety means resources are properly cleaned up when exceptions occur. RAII provides this through automatic destructor invocation during stack unwinding.",
+          "explanation": "When exceptions propagate, C++ performs stack unwinding, calling destructors for all stack-allocated objects in reverse construction order. RAII objects like smart pointers and containers have destructors that release resources, making cleanup automatic regardless of execution path. Raw pointers bypass this mechanism, requiring manual try-catch blocks.",
+          "code_examples": [
+            "void unsafe() {\n    Resource* r = new Resource();\n    mightThrow();  // ❌ If throws, r is leaked\n    delete r;\n}\n\nvoid safe() {\n    std::unique_ptr<Resource> r = std::make_unique<Resource>();\n    mightThrow();  // ✅ Destructor runs even if exception thrown\n}"
+          ],
+          "key_takeaway": "RAII makes exception-safe code the default; avoid manual resource management that requires explicit exception handling."
+        },
+        {
+          "question": "What is the difference between `std::make_unique` and `new`?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "smart_pointers",
+            "memory_management"
+          ],
+          "concepts": [
+            "make_unique",
+            "unique_ptr",
+            "new",
+            "exception_safety",
+            "raii"
+          ],
+          "answer": "`std::make_unique` allocates memory and constructs an object, returning a `unique_ptr`, while `new` returns a raw pointer requiring manual deletion.",
+          "explanation": "`make_unique` combines allocation and unique_ptr construction in a single operation that's exception-safe. It also avoids typing the type twice and prevents certain exception-safety issues in function calls. Raw `new` requires matching `delete`, is not exception-safe, and risks leaks if exceptions occur before deletion.",
+          "code_examples": [
+            "auto p1 = std::make_unique<Widget>(42);  // ✅ RAII, exception-safe\nWidget* p2 = new Widget(42);             // ❌ Manual management needed\ndelete p2;"
+          ],
+          "key_takeaway": "Always prefer `std::make_unique` over `new` for automatic lifetime management and exception safety."
+        },
+        {
+          "question": "Why is `delete nullptr` safe but `delete` on a dangling pointer is not?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "delete",
+            "nullptr",
+            "dangling_pointer",
+            "undefined_behavior",
+            "null_pointer"
+          ],
+          "answer": "The C++ standard defines `delete nullptr` as a safe no-op, but deleting dangling pointers causes undefined behavior as they point to invalid memory.",
+          "explanation": "`nullptr` is a special value that explicitly represents \"no object,\" and the standard guarantees deleting it does nothing. Dangling pointers hold addresses of freed memory that may be reused, unmapped, or poisoned by allocators. Deleting them attempts to free already-freed memory, corrupting the heap allocator's internal structures and typically crashing.",
+          "code_examples": [],
+          "key_takeaway": "Always set pointers to `nullptr` after deletion to enable safe redundant deletes and catch use-after-free bugs early."
+        },
+        {
+          "question": "What is double delete and why does it cause crashes?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "double_delete",
+            "delete",
+            "undefined_behavior",
+            "heap_corruption"
+          ],
+          "answer": "Double delete occurs when the same memory is freed twice, corrupting the heap allocator's internal data structures and typically causing immediate crashes.",
+          "explanation": "When memory is freed, the allocator updates its bookkeeping to mark that memory as available. Freeing the same memory again corrupts this bookkeeping, potentially linking the memory block into free lists multiple times. Subsequent allocations can return the same memory to multiple clients, causing random memory corruption.",
+          "code_examples": [
+            "int* p = new int(42);\nint* q = p;\ndelete p;\ndelete q;  // ❌ Double delete: UB, likely crash"
+          ],
+          "key_takeaway": "Use `std::unique_ptr` to prevent double deletes through single-ownership enforcement, or set raw pointers to `nullptr` after deletion."
+        },
+        {
+          "question": "How does `std::shared_ptr` manage reference counting?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "smart_pointers",
+            "memory_management"
+          ],
+          "concepts": [
+            "shared_ptr",
+            "reference_counting",
+            "control_block",
+            "weak_ptr",
+            "memory_management"
+          ],
+          "answer": "`std::shared_ptr` uses a control block containing reference counts to track how many shared_ptrs reference an object, deleting it when the count reaches zero.",
+          "explanation": "Each managed object has an associated control block (typically heap-allocated) storing a strong reference count and weak reference count. Copying a shared_ptr increments the count atomically (thread-safe), and destroying one decrements it. When the strong count reaches zero, the object is deleted. The control block is deleted when both strong and weak counts reach zero.",
+          "code_examples": [],
+          "key_takeaway": "Use `std::make_shared` to allocate object and control block together for better cache locality and performance."
+        },
+        {
+          "question": "What are the performance implications of stack vs heap allocation?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "performance",
+            "memory_management"
+          ],
+          "concepts": [
+            "stack",
+            "heap",
+            "performance",
+            "cache_locality",
+            "allocation_cost"
+          ],
+          "answer": "Stack allocation is orders of magnitude faster than heap allocation because it's simple pointer arithmetic versus complex allocator operations with synchronization.",
+          "explanation": "Stack allocation involves incrementing a stack pointer by the object's size—typically a single instruction. Heap allocation requires finding free memory blocks, updating complex data structures, and often involves locking for thread safety. Additionally, stack memory typically has better cache locality as it's contiguous and recently accessed, while heap allocations can be scattered across memory.",
+          "code_examples": [],
+          "key_takeaway": "Prefer stack allocation for small, short-lived objects; use heap only when object size is large, lifetime extends beyond scope, or size is unknown at compile time."
+        },
+        {
+          "question": "What is a memory leak and how do tools like Valgrind detect them?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "debugging"
+          ],
+          "concepts": [
+            "memory_leak",
+            "valgrind",
+            "debugging",
+            "heap_profiling",
+            "memory_tools"
+          ],
+          "answer": "Memory leaks occur when allocated memory is never freed and all references to it are lost. Tools like Valgrind track all allocations and deallocations to identify unreachable memory.",
+          "explanation": "Valgrind's Memcheck tool intercepts all memory management calls (`malloc`, `new`, `free`, `delete`) and maintains a shadow state tracking which memory is allocated, freed, or leaked. At program termination, it performs reachability analysis from all roots (stack, globals, registers) and reports any heap memory that was allocated but never freed and is unreachable.",
+          "code_examples": [],
+          "key_takeaway": "Use Valgrind with `--leak-check=full` during development to catch leaks early; better yet, use RAII to prevent leaks entirely."
+        },
+        {
+          "question": "Why can large local objects cause stack overflow?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "stack",
+            "stack_overflow",
+            "stack_size",
+            "heap",
+            "large_objects"
+          ],
+          "answer": "The stack has limited size (typically 1-8 MB), so allocating large objects on it can exceed this limit, causing stack overflow errors and crashes.",
+          "explanation": "Stack space is allocated at thread creation with fixed size. When cumulative stack frames exceed this limit, the program attempts to access memory beyond the stack region, triggering a segmentation fault. Stack overflow can be environment-dependent—code that works on systems with larger stacks may crash on constrained systems or deeply recursive calls.",
+          "code_examples": [
+            "void danger() {\n    int hugeArray[1000000];  // ~4 MB, may overflow stack\n}\n\nvoid safe() {\n    std::vector<int> hugeArray(1000000);  // ✅ Uses heap\n}"
+          ],
+          "key_takeaway": "Allocate large objects on the heap using containers or smart pointers; reserve stack for small, fixed-size objects and control flow."
+        },
+        {
+          "question": "What is the Rule of Zero and how does it relate to memory management?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "design_pattern",
+            "memory_management"
+          ],
+          "concepts": [
+            "rule_of_zero",
+            "raii",
+            "smart_pointers",
+            "copy_semantics",
+            "destructors"
+          ],
+          "answer": "The Rule of Zero states that classes should not manually manage resources; instead, use RAII types like smart pointers and containers that handle memory automatically.",
+          "explanation": "If a class uses only standard library components (std::vector, std::unique_ptr, std::string) for resource management, the compiler-generated special member functions (destructor, copy/move constructors, copy/move assignment) work correctly automatically. This eliminates the need for custom destructors or copy control, reducing bugs and maintenance burden.",
+          "code_examples": [],
+          "key_takeaway": "Prefer composition with standard RAII types over manual resource management; only implement custom destructors when managing non-RAII resources."
+        },
+        {
+          "question": "How does `std::vector` manage its internal memory?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "containers",
+            "memory_management"
+          ],
+          "concepts": [
+            "vector",
+            "dynamic_array",
+            "capacity",
+            "reallocation",
+            "growth_strategy"
+          ],
+          "answer": "`std::vector` manages a dynamically-allocated array that grows by reallocating to larger capacity when insertions exceed current capacity, typically using a growth factor of 1.5-2x.",
+          "explanation": "Vector maintains three pointers: begin (start of allocation), end (one past last element), and capacity_end (end of allocation). When `push_back` would exceed capacity, vector allocates new larger memory (often 2x current capacity), move-constructs all elements to the new location, destroys old elements, and deallocates old memory. This amortizes reallocation cost over insertions.",
+          "code_examples": [],
+          "key_takeaway": "Use `reserve()` when final size is known to avoid reallocations; vector provides both performance and safety through automatic memory management."
+        },
+        {
+          "question": "What is the difference between `nullptr`, `NULL`, and `0` in pointer contexts?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "syntax",
+            "fundamentals"
+          ],
+          "concepts": [
+            "nullptr",
+            "null",
+            "pointer",
+            "type_safety",
+            "constants"
+          ],
+          "answer": "`nullptr` is a type-safe null pointer literal (since C++11), while `NULL` is a macro (typically 0) and `0` is an integer that can implicitly convert to pointers.",
+          "explanation": "`nullptr` has type `std::nullptr_t` that converts to any pointer type but not to integral types, eliminating overload resolution ambiguities. `NULL` and `0` are integers, causing ambiguity in overloaded contexts. This makes `nullptr` essential for modern C++ code clarity and correctness.",
+          "code_examples": [
+            "void func(int x);\nvoid func(char* p);\n\nfunc(NULL);    // ❌ Ambiguous: which overload?\nfunc(nullptr); // ✅ Calls pointer overload unambiguously"
+          ],
+          "key_takeaway": "Always use `nullptr` instead of `NULL` or `0` for null pointers to ensure type safety and clear intent."
+        },
+        {
+          "question": "How do you detect use-after-free bugs?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "debugging",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "use_after_free",
+            "dangling_pointer",
+            "sanitizers",
+            "debugging",
+            "valgrind"
+          ],
+          "answer": "Use-after-free bugs can be detected with AddressSanitizer (ASan), Valgrind, or by setting pointers to `nullptr` after deletion to cause deterministic crashes.",
+          "explanation": "AddressSanitizer poisons freed memory and catches accesses to it with precise error messages including allocation and free stack traces. Valgrind tracks validity of every byte, reporting invalid accesses. Both tools significantly slow execution but catch bugs that manifest inconsistently in production. Setting pointers to nullptr after delete converts silent corruption into immediate, debuggable crashes.",
+          "code_examples": [],
+          "key_takeaway": "Enable AddressSanitizer during development (`-fsanitize=address`) to catch memory errors early; prefer smart pointers to prevent use-after-free entirely."
+        },
+        {
+          "question": "What is the relationship between `new[]` and `delete[]` implementation?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "memory_management",
+            "internals"
+          ],
+          "concepts": [
+            "new",
+            "delete",
+            "array_allocation",
+            "operator_new",
+            "array_cookie"
+          ],
+          "answer": "`new[]` stores array size information (array cookie) before the allocated memory block, which `delete[]` reads to invoke the correct number of destructors.",
+          "explanation": "When allocating arrays of non-trivial types, `operator new[]` allocates extra space for metadata storing the array size. The returned pointer points past this metadata to the first element. `delete[]` reads this metadata to know how many destructors to call before deallocating the entire block. Using scalar `delete` doesn't read this metadata, causing incorrect deallocation and skipped destructors.",
+          "code_examples": [],
+          "key_takeaway": "This implementation detail explains why mixing `new[]`/`delete` is catastrophic; always use matching operators or prefer std::vector."
+        },
+        {
+          "question": "How does `std::make_shared` differ from `std::shared_ptr<T>(new T)`?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "smart_pointers",
+            "performance"
+          ],
+          "concepts": [
+            "make_shared",
+            "shared_ptr",
+            "control_block",
+            "performance",
+            "exception_safety"
+          ],
+          "answer": "`std::make_shared` allocates object and control block together in one allocation, providing better performance and exception safety than separate allocation.",
+          "explanation": "`make_shared` performs a single allocation for both the managed object and the control block (containing reference counts), improving cache locality and reducing allocation overhead. It's also exception-safe: `shared_ptr<T>(new T())` has a window between `new` and smart pointer construction where exceptions can leak memory, while `make_shared` is atomic.",
+          "code_examples": [
+            "auto p1 = std::make_shared<Widget>(args);           // ✅ One allocation\nstd::shared_ptr<Widget> p2(new Widget(args));       // Two allocations"
+          ],
+          "key_takeaway": "Always prefer `std::make_shared` over constructing shared_ptr from `new` for performance and exception safety."
+        },
+        {
+          "question": "What is the weak_ptr for and how does it prevent cycles?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "smart_pointers",
+            "memory_management"
+          ],
+          "concepts": [
+            "weak_ptr",
+            "shared_ptr",
+            "circular_reference",
+            "reference_counting",
+            "memory_leak"
+          ],
+          "answer": "`std::weak_ptr` observes objects managed by `shared_ptr` without incrementing reference count, breaking reference cycles that would prevent deletion.",
+          "explanation": "Circular references (A owns B, B owns A) using shared_ptr create reference count cycles where neither object is ever deleted. Weak_ptr provides non-owning observation: it can check if the object still exists and temporarily promote to shared_ptr for access, but doesn't prevent deletion. This enables parent-child relationships where children hold weak_ptrs to parents.",
+          "code_examples": [],
+          "key_takeaway": "Use weak_ptr for back-references, caching, or observer patterns to avoid shared_ptr cycles and resulting memory leaks."
+        },
+        {
+          "question": "Why does C++ have both copy and move semantics for memory management?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "move_semantics",
+            "performance"
+          ],
+          "concepts": [
+            "move_semantics",
+            "copy_semantics",
+            "rvalue_references",
+            "performance",
+            "ownership"
+          ],
+          "answer": "Move semantics enable efficient transfer of resources without expensive copying, crucial for types managing dynamic memory like vectors and smart pointers.",
+          "explanation": "Copy semantics create independent copies, requiring deep copying of all owned resources. For a vector with 1 million elements, returning by value would copy all elements without move semantics. Move semantics transfer ownership by \"stealing\" resources (swapping pointers), leaving the source in a valid but unspecified state. This makes returning containers from functions efficient.",
+          "code_examples": [],
+          "key_takeaway": "Move semantics enable efficient, expressive C++ with value semantics; use std::move explicitly for lvalues and rely on automatic move for temporaries."
+        },
+        {
+          "question": "What are the memory safety advantages of std::array over C arrays?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "containers",
+            "memory_management"
+          ],
+          "concepts": [
+            "array",
+            "c_array",
+            "bounds_checking",
+            "stack_allocation",
+            "type_safety"
+          ],
+          "answer": "`std::array` provides bounds checking with `at()`, prevents decay to pointers, knows its size, and integrates with standard algorithms while maintaining stack allocation.",
+          "explanation": "C arrays decay to pointers when passed to functions, losing size information. They have no bounds checking and support pointer arithmetic past bounds. `std::array` is a zero-overhead wrapper that preserves size in the type system, provides checked access, and works with iterators and algorithms. It's stack-allocated like C arrays but with modern C++ safety.",
+          "code_examples": [
+            "int carr[10];                    // ❌ Decays to pointer, no size info\nstd::array<int, 10> arr;         // ✅ Maintains size, no decay\n\ncarr[-1] = 0;                    // ❌ UB, no checking\narr.at(-1) = 0;                  // ✅ Throws exception"
+          ],
+          "key_takeaway": "Prefer `std::array` for fixed-size stack arrays to gain bounds checking and standard library integration without performance cost."
+        },
+        {
+          "question": "How do memory allocators impact performance in multi-threaded programs?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "performance",
+            "memory_management"
+          ],
+          "concepts": [
+            "allocators",
+            "threading",
+            "performance",
+            "heap_contention",
+            "memory_pools"
+          ],
+          "answer": "Default allocators use locks to ensure thread safety, causing contention. High-frequency allocation across threads can serialize execution, degrading parallel performance.",
+          "explanation": "The system heap allocator (used by `new`/`delete`) maintains shared data structures that must be protected with locks. When multiple threads frequently allocate/deallocate, they contend for these locks, causing threads to block despite doing independent work. Solutions include thread-local caches, per-thread heaps, or memory pools for specific allocation patterns.",
+          "code_examples": [],
+          "key_takeaway": "For performance-critical multi-threaded code, consider custom allocators, memory pools, or allocator-aware containers to reduce heap contention."
+        },
+        {
+          "question": "What is placement new and when would you use it?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "memory_management",
+            "advanced_features"
+          ],
+          "concepts": [
+            "placement_new",
+            "memory_pools",
+            "custom_allocators",
+            "constructor",
+            "initialization"
+          ],
+          "answer": "Placement new constructs an object at a specific memory location without allocating memory, used in memory pools, custom allocators, or reusing existing memory.",
+          "explanation": "Placement new separates memory allocation from object construction. It calls the constructor on pre-allocated memory without invoking `operator new`. This is essential for implementing custom allocators, memory pools, or containers that manage raw memory separately from object lifetime. Objects constructed via placement new must be explicitly destroyed by calling their destructor.",
+          "code_examples": [
+            "alignas(Widget) char buffer[sizeof(Widget)];\nWidget* w = new (buffer) Widget(args);  // Construct in buffer\nw->~Widget();                           // Must explicitly destroy"
+          ],
+          "key_takeaway": "Placement new is an advanced feature for custom memory management; most code should use standard containers and smart pointers."
+        },
+        {
+          "question": "How does copy elision relate to memory management?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "optimization",
+            "move_semantics"
+          ],
+          "concepts": [
+            "copy_elision",
+            "rvo",
+            "nrvo",
+            "optimization",
+            "move_semantics"
+          ],
+          "answer": "Copy elision (including RVO/NRVO) allows compilers to eliminate copying by constructing objects directly in their final location, improving performance and preventing memory churn.",
+          "explanation": "Return Value Optimization (RVO) enables constructing return values directly in the caller's stack frame instead of constructing in the callee, copying to caller, and destroying the temporary. Since C++17, copy elision is mandatory for temporaries (prvalues). This means returning large containers by value is efficient, eliminating the need for output parameters or heap allocation for return values.",
+          "code_examples": [],
+          "key_takeaway": "Return values by value confidently; compilers optimize away copies, and move semantics handle cases where copy elision doesn't apply."
+        },
+        {
+          "question": "What is memory alignment and why does it matter?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "memory_management",
+            "performance"
+          ],
+          "concepts": [
+            "alignment",
+            "padding",
+            "performance",
+            "cache_line",
+            "undefined_behavior"
+          ],
+          "answer": "Memory alignment ensures objects are located at addresses divisible by their alignment requirement, enabling efficient CPU access and preventing undefined behavior on some architectures.",
+          "explanation": "CPUs access memory most efficiently when addresses are multiples of data size (4-byte int at addresses 0, 4, 8...). Misaligned access can be slower (multiple memory transactions) or cause crashes on ARM. Compilers insert padding to maintain alignment, affecting struct size. Alignment also matters for cache line optimization (typically 64 bytes) to prevent false sharing in multi-threaded code.",
+          "code_examples": [],
+          "key_takeaway": "Trust compiler alignment defaults; use `alignas` only for specific performance needs like cache line alignment or SIMD requirements."
+        },
+        {
+          "question": "How do you safely transfer ownership from raw pointers to smart pointers?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "smart_pointers",
+            "memory_management"
+          ],
+          "concepts": [
+            "unique_ptr",
+            "ownership",
+            "raw_pointer",
+            "legacy_code",
+            "adoption"
+          ],
+          "answer": "Use `std::unique_ptr<T>(raw_ptr)` to transfer ownership from raw pointer to smart pointer, ensuring only one smart pointer manages the resource.",
+          "explanation": "When wrapping a raw pointer in unique_ptr, ownership transfers to the smart pointer, which will delete the object. Creating multiple smart pointers from the same raw pointer causes double deletion. When migrating legacy code, wrap raw pointers in smart pointers as early as possible in their lifetime, then clear the raw pointer to prevent accidental misuse.",
+          "code_examples": [
+            "Widget* raw = new Widget();\nstd::unique_ptr<Widget> smart(raw);  // Takes ownership\n// ❌ Don't create second smart ptr: std::unique_ptr<Widget>(raw)\nraw = nullptr;  // ✅ Clear raw pointer to prevent accidental use"
+          ],
+          "key_takeaway": "Transfer ownership to smart pointers once at allocation time; prefer `make_unique` over `new` to avoid ever holding raw owning pointers."
+        }
+      ],
+      "practice_tasks": [
+        {
+          "question_number": 1,
+          "title": "Question 1",
+          "description": "",
+          "code": "int* createArray() {\n    int arr[5] = {1, 2, 3, 4, 5};\n    return arr;\n}\n\nint main() {\n    int* ptr = createArray();\n    std::cout << ptr[0];\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 2,
+          "title": "Question 2",
+          "description": "",
+          "code": "void test() {\n    int* p = new int[100];\n    delete p;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 3,
+          "title": "Question 3",
+          "description": "",
+          "code": "int* allocate() {\n    return new int(42);\n}\n\nvoid process() {\n    int* p = allocate();\n    int* q = allocate();\n    p = q;\n    delete p;\n    delete q;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 4,
+          "title": "Question 4",
+          "description": "",
+          "code": "class Widget {\n    int* data;\npublic:\n    Widget() : data(new int[10]) {}\n    ~Widget() { delete[] data; }\n};\n\nvoid test() {\n    Widget w1;\n    Widget w2 = w1;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 5,
+          "title": "Question 5",
+          "description": "",
+          "code": "void mystery() {\n    int* p = (int*)malloc(sizeof(int) * 5);\n    p[0] = 10;\n    delete[] p;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 6,
+          "title": "Question 6",
+          "description": "",
+          "code": "int* global = new int(100);\n\nvoid func() {\n    int* local = global;\n    delete local;\n}\n\nint main() {\n    func();\n    std::cout << *global;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 7,
+          "title": "Question 7",
+          "description": "",
+          "code": "void allocate() {\n    std::unique_ptr<int> p = std::make_unique<int>(42);\n    std::unique_ptr<int> q = p;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 8,
+          "title": "Question 8",
+          "description": "",
+          "code": "struct Large {\n    int data[10000000];\n};\n\nvoid stackTest() {\n    Large obj;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 9,
+          "title": "Question 9",
+          "description": "",
+          "code": "int* x = new int(5);\nint* y = x;\ndelete x;\nx = nullptr;\ndelete y;",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 10,
+          "title": "Question 10",
+          "description": "",
+          "code": "void test() {\n    int* arr = new int[10];\n    arr[10] = 0;\n    delete[] arr;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 11,
+          "title": "Question 11",
+          "description": "",
+          "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int(42)) {}\n    ~Resource() { delete data; }\n};\n\nvoid test() {\n    std::vector<Resource> vec;\n    vec.push_back(Resource());\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 12,
+          "title": "Question 12",
+          "description": "",
+          "code": "void leak() {\n    int* p = new int(10);\n    if (true) {\n        return;\n    }\n    delete p;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 13,
+          "title": "Question 13",
+          "description": "",
+          "code": "int* create() {\n    static int x = 100;\n    return &x;\n}\n\nint main() {\n    int* p = create();\n    *p = 200;\n    std::cout << *create();\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 14,
+          "title": "Question 14",
+          "description": "",
+          "code": "std::shared_ptr<int> p1 = std::make_shared<int>(10);\nstd::shared_ptr<int> p2 = p1;\nstd::shared_ptr<int> p3 = p1;\np1.reset();\nstd::cout << *p2;",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 15,
+          "title": "Question 15",
+          "description": "",
+          "code": "void test() {\n    int* p = nullptr;\n    delete p;\n    std::cout << \"Safe\";\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 16,
+          "title": "Question 16",
+          "description": "",
+          "code": "class Widget {\npublic:\n    int* ptr;\n    Widget() : ptr(new int(42)) {}\n};\n\nvoid test() {\n    Widget* w = new Widget();\n    delete w;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 17,
+          "title": "Question 17",
+          "description": "",
+          "code": "void allocate() {\n    std::vector<int> vec(1000000);\n    throw std::runtime_error(\"error\");\n}\n\nvoid caller() {\n    allocate();\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 18,
+          "title": "Question 18",
+          "description": "",
+          "code": "int* p = new int(5);\nint* q = new int(10);\np = q;\ndelete p;",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 19,
+          "title": "Question 19",
+          "description": "",
+          "code": "struct Node {\n    int data;\n    std::shared_ptr<Node> next;\n};\n\nvoid createCycle() {\n    auto n1 = std::make_shared<Node>();\n    auto n2 = std::make_shared<Node>();\n    n1->next = n2;\n    n2->next = n1;\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 20,
+          "title": "Question 20",
+          "description": "---",
+          "code": "void test() {\n    std::unique_ptr<int> p = std::make_unique<int>(42);\n    int* raw = p.get();\n    p.reset();\n    std::cout << *raw;\n}",
+          "expected_output": "",
+          "additional_code": []
+        }
+      ],
+      "quick_reference": {
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior, likely crash | Returning pointer to local array (stack memory). Array `arr` is destroyed when function returns, pointer points to invalid memory. | #dangling_pointer #stack |\n| 2 | Memory leak / undefined behavior | Using scalar `delete` on array allocated with `new[]`. Should use `delete[]` to properly deallocate array. | #array_allocation #delete |\n| 3 | Memory leak, then potential double delete | First allocation leaked when `p = q` overwrites pointer. Then `delete p` and `delete q` delete same memory (double delete). | #memory_leak #double_delete |\n| 4 | Double delete crash | Compiler-generated copy constructor performs shallow copy of `data` pointer. Both destructors try to delete same array. Need deep copy or delete copy constructor. | #rule_of_three #shallow_copy |\n| 5 | Undefined behavior | Mixing `malloc` (C allocation) with `delete[]` (C++ deallocation). Must use `free(p)` with `malloc`. | #malloc #delete #mixing_allocators |\n| 6 | Undefined behavior, use-after-free | `local` and `global` point to same memory. After `delete local`, `global` becomes dangling pointer. Dereferencing in main is UB. | #dangling_pointer #use_after_free |\n| 7 | Compilation error | `std::unique_ptr` copy constructor is deleted. Cannot copy `p` to `q`. Must use `std::move(p)` for ownership transfer. | #unique_ptr #move_semantics |\n| 8 | Stack overflow likely | `Large` object is ~40 MB (10 million ints). Exceeds typical stack size limit, causing stack overflow crash. Should allocate on heap. | #stack_overflow #heap |\n| 9 | Undefined behavior (double delete) | `delete x` frees memory. Setting `x = nullptr` doesn't affect `y`. `delete y` attempts to free same memory (double delete). | #double_delete #nullptr |\n| 10 | Undefined behavior, buffer overflow | Array has indices 0-9. Accessing `arr[10]` is out of bounds (buffer overflow), writing to unowned memory. May corrupt heap or crash. | #buffer_overflow #bounds_checking |\n| 11 | Double delete crash during vector reallocation | `Resource` violates Rule of Three - no proper copy constructor. During `push_back`, vector may reallocate, copying objects with shallow copies. Multiple destructors delete same `data`. | #rule_of_three #vector #copy_constructor |\n| 12 | Memory leak | Early return prevents `delete p` from executing. Memory allocated by `new int(10)` is never freed. Use smart pointers for exception safety. | #memory_leak #exception_safety |\n| 13 | Prints 200 | `static` variable has static storage duration, persists for program lifetime. Safe to return pointer to it. Modifying via `p` changes the shared static variable. | #static #lifetime |\n| 14 | Prints 10 | Reference count mechanism. `p1.reset()` decrements count to 2, but `p2` and `p3` still reference the object. Object not deleted until all shared_ptrs destroyed. | #shared_ptr #reference_counting |\n| 15 | Prints \"Safe\" | `delete nullptr` is safe and well-defined as a no-op in C++. No crash or undefined behavior. | #nullptr #delete |\n| 16 | Memory leak | `Widget` destructor never deallocates `ptr`. Need custom destructor: `~Widget() { delete ptr; }` or use smart pointer member. | #memory_leak #destructor |\n| 17 | Exception thrown, but no leak | `std::vector` uses RAII. When exception thrown, vector's destructor automatically called during stack unwinding, properly cleaning up memory. | #exception_safety #raii #vector |\n| 18 | Memory leak from first allocation | First allocation (`new int(5)`) leaked when `p` reassigned. Only second allocation (`new int(10)`) properly deleted. | #memory_leak #pointer_reassignment |\n| 19 | Memory leak (circular reference) | Both Nodes hold shared_ptrs to each other, creating reference count cycle. Reference counts never reach zero, objects never deleted. Need weak_ptr for back-reference. | #shared_ptr #circular_reference #weak_ptr |\n| 20 | Undefined behavior, use-after-free | `p.get()` returns raw pointer without transferring ownership. `p.reset()` deletes managed object. `raw` now dangles, dereferencing causes UB. | #unique_ptr #dangling_pointer #get |\n\n#### Stack vs Heap Comparison\n\n| Aspect | Stack | Heap |\n|--------|-------|------|\n| **Lifetime** | Automatic (scope-based) | Manual (explicit new/delete) |\n| **Allocation Speed** | Very fast (pointer bump) | Slower (allocator algorithm) |\n| **Size Limit** | Small (1-8 MB typical) | Large (limited by system memory) |\n| **Access Pattern** | LIFO (Last In First Out) | Random access |\n| **Fragmentation** | None | Can fragment over time |\n| **Thread Safety** | Thread-local | Requires synchronization |\n| **Use Cases** | Local variables, small objects | Large objects, dynamic lifetime |\n| **Management** | Compiler-managed | Programmer-managed |\n| **Deallocation** | Automatic at scope exit | Explicit delete required |\n| **Error Risk** | Stack overflow | Leaks, dangling pointers, fragmentation |\n\n#### Memory Management Comparison\n\n| Feature | new/delete | malloc/free | Smart Pointers | Containers |\n|---------|-----------|-------------|----------------|-----------|\n| **Language** | C++ | C | C++11+ | C++ |\n| **Constructors/Destructors** | Yes | No | Yes | Yes |\n| **Type Safety** | Yes | No (void*) | Yes | Yes |\n| **Manual Management** | Yes | Yes | No (RAII) | No (RAII) |\n| **Exception Safety** | No | No | Yes | Yes |\n| **Array Support** | new[]/delete[] | Yes | unique_ptr<T[]> | Yes |\n| **Overhead** | Minimal | Minimal | Minimal | Small |\n| **Memory Leaks** | Common | Common | Prevented | Prevented |\n| **Recommended Use** | Avoid | Avoid | Preferred | Preferred |\n\n#### RAII Types for Memory Management\n\n| Type | Use Case | Ownership | Performance |\n|------|----------|-----------|-------------|\n| `std::unique_ptr` | Single ownership, exclusive resource | Exclusive, moveable | Zero overhead |\n| `std::shared_ptr` | Shared ownership, reference counted | Shared, copyable | Atomic ref counting overhead |\n| `std::weak_ptr` | Non-owning observer, break cycles | None (observes shared_ptr) | Minimal |\n| `std::vector` | Dynamic array, contiguous memory | Owns elements | Amortized constant insertion |\n| `std::array` | Fixed-size array, stack allocated | Owns elements | Zero overhead |\n| `std::string` | Dynamic character array | Owns character data | Small string optimization |\n| `std::make_unique` | Construct unique_ptr | N/A (factory function) | Single allocation |\n| `std::make_shared` | Construct shared_ptr efficiently | N/A (factory function) | Single allocation (object + control block) |\n\n#### Common Memory Management Bugs\n\n| Bug Type | Cause | Detection | Prevention |\n|----------|-------|-----------|------------|\n| Memory Leak | Forgetting delete or early return | Valgrind, ASan, leak sanitizer | Smart pointers, RAII |\n| Dangling Pointer | Using pointer after delete | ASan, Valgrind | Set to nullptr, use smart pointers |\n| Double Delete | Deleting same memory twice | Crashes, ASan | Smart pointers, nullptr after delete |\n| Buffer Overflow | Accessing beyond array bounds | ASan, Valgrind | Bounds-checked containers |\n| Use After Free | Accessing freed memory | ASan, Valgrind | Smart pointers, RAII |\n| Stack Overflow | Too much stack allocation | Crashes, stack guards | Heap allocation for large objects |\n| Mismatched Operators | new[]/delete or malloc/delete | Crashes, Valgrind | Consistent operators, use containers |\n| Shallow Copy | Default copy with raw pointers | Double delete crashes | Rule of Three/Five/Zero |",
+        "tables": [
+          "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior, likely crash | Returning pointer to local array (stack memory). Array `arr` is destroyed when function returns, pointer points to invalid memory. | #dangling_pointer #stack |\n| 2 | Memory leak / undefined behavior | Using scalar `delete` on array allocated with `new[]`. Should use `delete[]` to properly deallocate array. | #array_allocation #delete |\n| 3 | Memory leak, then potential double delete | First allocation leaked when `p = q` overwrites pointer. Then `delete p` and `delete q` delete same memory (double delete). | #memory_leak #double_delete |\n| 4 | Double delete crash | Compiler-generated copy constructor performs shallow copy of `data` pointer. Both destructors try to delete same array. Need deep copy or delete copy constructor. | #rule_of_three #shallow_copy |\n| 5 | Undefined behavior | Mixing `malloc` (C allocation) with `delete[]` (C++ deallocation). Must use `free(p)` with `malloc`. | #malloc #delete #mixing_allocators |\n| 6 | Undefined behavior, use-after-free | `local` and `global` point to same memory. After `delete local`, `global` becomes dangling pointer. Dereferencing in main is UB. | #dangling_pointer #use_after_free |\n| 7 | Compilation error | `std::unique_ptr` copy constructor is deleted. Cannot copy `p` to `q`. Must use `std::move(p)` for ownership transfer. | #unique_ptr #move_semantics |\n| 8 | Stack overflow likely | `Large` object is ~40 MB (10 million ints). Exceeds typical stack size limit, causing stack overflow crash. Should allocate on heap. | #stack_overflow #heap |\n| 9 | Undefined behavior (double delete) | `delete x` frees memory. Setting `x = nullptr` doesn't affect `y`. `delete y` attempts to free same memory (double delete). | #double_delete #nullptr |\n| 10 | Undefined behavior, buffer overflow | Array has indices 0-9. Accessing `arr[10]` is out of bounds (buffer overflow), writing to unowned memory. May corrupt heap or crash. | #buffer_overflow #bounds_checking |\n| 11 | Double delete crash during vector reallocation | `Resource` violates Rule of Three - no proper copy constructor. During `push_back`, vector may reallocate, copying objects with shallow copies. Multiple destructors delete same `data`. | #rule_of_three #vector #copy_constructor |\n| 12 | Memory leak | Early return prevents `delete p` from executing. Memory allocated by `new int(10)` is never freed. Use smart pointers for exception safety. | #memory_leak #exception_safety |\n| 13 | Prints 200 | `static` variable has static storage duration, persists for program lifetime. Safe to return pointer to it. Modifying via `p` changes the shared static variable. | #static #lifetime |\n| 14 | Prints 10 | Reference count mechanism. `p1.reset()` decrements count to 2, but `p2` and `p3` still reference the object. Object not deleted until all shared_ptrs destroyed. | #shared_ptr #reference_counting |\n| 15 | Prints \"Safe\" | `delete nullptr` is safe and well-defined as a no-op in C++. No crash or undefined behavior. | #nullptr #delete |\n| 16 | Memory leak | `Widget` destructor never deallocates `ptr`. Need custom destructor: `~Widget() { delete ptr; }` or use smart pointer member. | #memory_leak #destructor |\n| 17 | Exception thrown, but no leak | `std::vector` uses RAII. When exception thrown, vector's destructor automatically called during stack unwinding, properly cleaning up memory. | #exception_safety #raii #vector |\n| 18 | Memory leak from first allocation | First allocation (`new int(5)`) leaked when `p` reassigned. Only second allocation (`new int(10)`) properly deleted. | #memory_leak #pointer_reassignment |\n| 19 | Memory leak (circular reference) | Both Nodes hold shared_ptrs to each other, creating reference count cycle. Reference counts never reach zero, objects never deleted. Need weak_ptr for back-reference. | #shared_ptr #circular_reference #weak_ptr |\n| 20 | Undefined behavior, use-after-free | `p.get()` returns raw pointer without transferring ownership. `p.reset()` deletes managed object. `raw` now dangles, dereferencing causes UB. | #unique_ptr #dangling_pointer #get |",
+          "| Aspect | Stack | Heap |\n|--------|-------|------|\n| **Lifetime** | Automatic (scope-based) | Manual (explicit new/delete) |\n| **Allocation Speed** | Very fast (pointer bump) | Slower (allocator algorithm) |\n| **Size Limit** | Small (1-8 MB typical) | Large (limited by system memory) |\n| **Access Pattern** | LIFO (Last In First Out) | Random access |\n| **Fragmentation** | None | Can fragment over time |\n| **Thread Safety** | Thread-local | Requires synchronization |\n| **Use Cases** | Local variables, small objects | Large objects, dynamic lifetime |\n| **Management** | Compiler-managed | Programmer-managed |\n| **Deallocation** | Automatic at scope exit | Explicit delete required |\n| **Error Risk** | Stack overflow | Leaks, dangling pointers, fragmentation |",
+          "| Feature | new/delete | malloc/free | Smart Pointers | Containers |\n|---------|-----------|-------------|----------------|-----------|\n| **Language** | C++ | C | C++11+ | C++ |\n| **Constructors/Destructors** | Yes | No | Yes | Yes |\n| **Type Safety** | Yes | No (void*) | Yes | Yes |\n| **Manual Management** | Yes | Yes | No (RAII) | No (RAII) |\n| **Exception Safety** | No | No | Yes | Yes |\n| **Array Support** | new[]/delete[] | Yes | unique_ptr<T[]> | Yes |\n| **Overhead** | Minimal | Minimal | Minimal | Small |\n| **Memory Leaks** | Common | Common | Prevented | Prevented |\n| **Recommended Use** | Avoid | Avoid | Preferred | Preferred |",
+          "| Type | Use Case | Ownership | Performance |\n|------|----------|-----------|-------------|\n| `std::unique_ptr` | Single ownership, exclusive resource | Exclusive, moveable | Zero overhead |\n| `std::shared_ptr` | Shared ownership, reference counted | Shared, copyable | Atomic ref counting overhead |\n| `std::weak_ptr` | Non-owning observer, break cycles | None (observes shared_ptr) | Minimal |\n| `std::vector` | Dynamic array, contiguous memory | Owns elements | Amortized constant insertion |\n| `std::array` | Fixed-size array, stack allocated | Owns elements | Zero overhead |\n| `std::string` | Dynamic character array | Owns character data | Small string optimization |\n| `std::make_unique` | Construct unique_ptr | N/A (factory function) | Single allocation |\n| `std::make_shared` | Construct shared_ptr efficiently | N/A (factory function) | Single allocation (object + control block) |",
+          "| Bug Type | Cause | Detection | Prevention |\n|----------|-------|-----------|------------|\n| Memory Leak | Forgetting delete or early return | Valgrind, ASan, leak sanitizer | Smart pointers, RAII |\n| Dangling Pointer | Using pointer after delete | ASan, Valgrind | Set to nullptr, use smart pointers |\n| Double Delete | Deleting same memory twice | Crashes, ASan | Smart pointers, nullptr after delete |\n| Buffer Overflow | Accessing beyond array bounds | ASan, Valgrind | Bounds-checked containers |\n| Use After Free | Accessing freed memory | ASan, Valgrind | Smart pointers, RAII |\n| Stack Overflow | Too much stack allocation | Crashes, stack guards | Heap allocation for large objects |\n| Mismatched Operators | new[]/delete or malloc/delete | Crashes, Valgrind | Consistent operators, use containers |"
+        ]
+      }
+    }
+  ]
+}

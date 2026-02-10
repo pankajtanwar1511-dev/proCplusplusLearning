@@ -1,0 +1,208 @@
+.learning-paths {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.paths-header {
+  margin-bottom: 2rem;
+}
+
+.paths-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.paths-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.path-card {
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-top: 4px solid var(--primary);
+}
+
+.path-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.path-card.path-success {
+  border-top-color: var(--success);
+}
+
+.path-card.path-primary {
+  border-top-color: var(--primary);
+}
+
+.path-card.path-warning {
+  border-top-color: var(--warning);
+}
+
+.path-card.path-danger {
+  border-top-color: var(--danger);
+}
+
+.path-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.path-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-icon.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.path-icon.primary {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.path-icon.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.path-icon.danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.path-card h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--dark);
+}
+
+.path-description {
+  color: var(--gray);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.path-meta {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.path-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--gray);
+}
+
+.path-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.path-topics {
+  border-top: 1px solid var(--light-dark);
+  padding-top: 1rem;
+}
+
+.topics-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.75rem;
+}
+
+.topics-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.topics-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--dark-light);
+}
+
+.topics-list li svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.topics-more {
+  color: var(--gray);
+  font-style: italic;
+}
+
+.path-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background-color: var(--primary);
+  color: var(--white);
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.path-action-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateX(4px);
+}
+
+.path-card.path-success .path-action-btn {
+  background-color: var(--success);
+}
+
+.path-card.path-success .path-action-btn:hover {
+  background-color: var(--success-dark);
+}
+
+.path-card.path-warning .path-action-btn {
+  background-color: var(--warning);
+}
+
+.path-card.path-warning .path-action-btn:hover {
+  background-color: var(--warning-dark);
+}
+
+.path-card.path-danger .path-action-btn {
+  background-color: var(--danger);
+}
+
+.path-card.path-danger .path-action-btn:hover {
+  background-color: var(--danger-dark);
+}
+
+@media (max-width: 768px) {
+  .paths-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .path-card {
+    padding: 1.5rem;
+  }
+}
