@@ -1,0 +1,82 @@
+{
+  "chapter_name": "chapter_5_robotics_applications",
+  "chapter_number": 5,
+  "topic_count": 5,
+  "topics": [
+    {
+      "topic": "topic_1",
+      "filename": "topic_1.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Nav2 Key Topics\n\n```bash\n# Navigation goals/actions\n/navigate_to_pose        # Action: single goal\n/follow_waypoints        # Action: multiple waypoints\n\n# Planning/Control\n/plan                    # Service: compute path\n/cmd_vel                 # Topic: velocity commands (output)\n\n# Costmaps\n/global_costmap/costmap  # Global costmap\n/local_costmap/costmap   # Local costmap\n\n# Visualization\n/plan                    # Global path\n/local_plan              # Local trajectory\n```\n\n### Nav2 Launch Commands\n\n```bash\n# Full Nav2 stack\nros2 launch nav2_bringup bringup_launch.py\n\n# With SLAM\nros2 launch nav2_bringup navigation_launch.py\n\n# Localization only (AMCL)\nros2 launch nav2_bringup localization_launch.py\n\n# RViz with Nav2 plugins\nros2 launch nav2_bringup rviz_launch.py\n```\n\n### Common Parameters\n\n```yaml\n# Controller\nmax_vel_x: 0.5              # Max forward speed (m/s)\nmax_vel_theta: 1.0          # Max rotation speed (rad/s)\nxy_goal_tolerance: 0.1      # Goal position tolerance (m)\nyaw_goal_tolerance: 0.1     # Goal orientation tolerance (rad)\n\n# Costmap\nwidth: 5                    # Costmap width (m)\nheight: 5                   # Costmap height (m)\nresolution: 0.05            # Cell size (m)\nupdate_frequency: 5.0       # Update rate (Hz)\n\n# Inflation\ninflation_radius: 0.55      # Inflate obstacles by this much (m)\ncost_scaling_factor: 3.0    # How quickly cost decays\n```\n\n### Debugging Commands\n\n```bash\n# View costmaps\nros2 run nav2_costmap_2d nav2_costmap_2d_markers voxel_grid:=/local_costmap/voxel_grid visualization_marker:=/my_marker\n\n# Check TF tree\nros2 run tf2_tools view_frames\n\n# Echo navigation status\nros2 topic echo /navigate_to_pose/_action/feedback\n\n# View planner output\nros2 topic echo /plan\n```\n\n---\n\n**END OF TOPIC 5.1: Navigation & Nav2 Stack**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_2",
+      "filename": "topic_2.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### cv_bridge Key Functions\n\n```cpp\n// ROS → OpenCV (copy, allows modification)\ncv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, \"bgr8\");\ncv::Mat image = cv_ptr->image;\n\n// ROS → OpenCV (shared, read-only)\ncv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(msg, \"bgr8\");\n\n// OpenCV → ROS\nsensor_msgs::msg::Image::SharedPtr msg =\n    cv_bridge::CvImage(header, \"bgr8\", image).toImageMsg();\n```\n\n### Image Encodings\n\n```cpp\nsensor_msgs::image_encodings::MONO8     // Grayscale 8-bit\nsensor_msgs::image_encodings::BGR8      // BGR color\nsensor_msgs::image_encodings::RGB8      // RGB color\nsensor_msgs::image_encodings::TYPE_32FC1 // Float depth\n```\n\n### message_filters Synchronization\n\n```cpp\n// Approximate time sync (RGB + Depth)\n#include <message_filters/sync_policies/approximate_time.h>\n\ntypedef message_filters::sync_policies::ApproximateTime<\n    sensor_msgs::msg::Image,\n    sensor_msgs::msg::Image> SyncPolicy;\n\nsync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(\n    SyncPolicy(10), rgb_sub_, depth_sub_);\n\nsync_->registerCallback(std::bind(&Node::callback, this, _1, _2));\n```\n\n### Common OpenCV Operations\n\n```cpp\n// Color conversion\ncv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);\ncv::cvtColor(image, hsv, cv::COLOR_BGR2HSV);\n\n// Filtering\ncv::GaussianBlur(image, blurred, cv::Size(5, 5), 0);\ncv::Canny(gray, edges, 50, 150);\n\n// Thresholding\ncv::threshold(gray, binary, 100, 255, cv::THRESH_BINARY);\ncv::adaptiveThreshold(gray, adaptive, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,\n                      cv::THRESH_BINARY, 11, 2);\n\n// Feature detection\ncv::Ptr<cv::ORB> orb = cv::ORB::create();\nstd::vector<cv::KeyPoint> keypoints;\ncv::Mat descriptors;\norb->detectAndCompute(image, cv::noArray(), keypoints, descriptors);\n```\n\n---\n\n**END OF TOPIC 5.2: Computer Vision & Image Processing with ROS2**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_3",
+      "filename": "topic_3.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### MoveIt2 Key APIs\n\n```cpp\n// Create move group\nmoveit::planning_interface::MoveGroupInterface move_group(node, \"panda_arm\");\n\n// Set pose target\ngeometry_msgs::msg::Pose target;\nmove_group.setPoseTarget(target);\n\n// Set joint target\nstd::vector<double> joints = {0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785};\nmove_group.setJointValueTarget(joints);\n\n// Plan\nmoveit::planning_interface::MoveGroupInterface::Plan plan;\nmove_group.plan(plan);\n\n// Execute\nmove_group.execute(plan);\n\n// Cartesian path\nstd::vector<geometry_msgs::msg::Pose> waypoints;\nmove_group.computeCartesianPath(waypoints, 0.01, 0.0);\n```\n\n### Common Launch Commands\n\n```bash\n# Launch MoveIt with RViz\nros2 launch moveit_config demo.launch.py\n\n# Launch MoveIt with real robot\nros2 launch moveit_config moveit.launch.py use_sim:=false\n\n# Setup assistant (configure new robot)\nros2 launch moveit_setup_assistant setup_assistant.launch.py\n```\n\n### Planning Scene Management\n\n```cpp\n// Add collision object\nmoveit_msgs::msg::CollisionObject object;\nobject.header.frame_id = \"world\";\nobject.id = \"box1\";\n\nshape_msgs::msg::SolidPrimitive primitive;\nprimitive.type = primitive.BOX;\nprimitive.dimensions = {0.5, 0.5, 0.5};\n\nobject.primitives.push_back(primitive);\nobject.primitive_poses.push_back(pose);\nobject.operation = object.ADD;\n\nplanning_scene_interface.applyCollisionObject(object);\n\n// Attach object to gripper\nmove_group.attachObject(\"box1\", \"gripper_link\");\n\n// Detach object\nmove_group.detachObject(\"box1\");\n```\n\n---\n\n**END OF TOPIC 5.3: Robot Manipulation & MoveIt2**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_4",
+      "filename": "topic_4.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Launch Gazebo\n\n```bash\n# Gazebo Classic\ngazebo --verbose\n\n# Gazebo Fortress (new)\ngz sim -v 4\n\n# With specific world\ngz sim -r world.sdf\n\n# Headless (no GUI)\ngzserver world.sdf\n```\n\n### ros_gz_bridge\n\n```bash\n# Bridge single topic\nros2 run ros_gz_bridge parameter_bridge \\\n    /cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist\n\n# Bridge multiple topics (launch file recommended)\n```\n\n### Spawn Entity\n\n```bash\n# Spawn from SDF file\nros2 service call /spawn_entity gazebo_msgs/srv/SpawnEntity \\\n    \"{name: 'my_robot', xml: '$(cat robot.sdf)', initial_pose: {position: {x: 0, y: 0, z: 0.5}}}\"\n\n# Spawn from URDF\nros2 run gazebo_ros spawn_entity.py \\\n    -entity robot_name \\\n    -topic /robot_description \\\n    -x 0 -y 0 -z 0.5\n```\n\n### Reset World\n\n```bash\n# Reset simulation\nros2 service call /reset_world std_srvs/srv/Empty\n```\n\n### Pause/Unpause\n\n```bash\n# Pause physics\nros2 service call /pause_physics std_srvs/srv/Empty\n\n# Unpause\nros2 service call /unpause_physics std_srvs/srv/Empty\n```\n\n---\n\n**END OF TOPIC 5.4: Simulation with Gazebo**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_5",
+      "filename": "topic_5.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Launch AMCL\n\n```bash\n# Launch AMCL with map\nros2 launch nav2_bringup localization_launch.py \\\n    map:=/path/to/map.yaml \\\n    use_sim_time:=false\n```\n\n### Launch SLAM (Cartographer)\n\n```bash\n# 2D SLAM\nros2 launch cartographer_ros cartographer.launch.py \\\n    configuration_basename:=my_robot_2d.lua \\\n    use_sim_time:=false\n\n# Save map\nros2 run nav2_map_server map_saver_cli -f my_map\n```\n\n### Set Initial Pose (AMCL)\n\n```bash\n# Publish initial pose\nros2 topic pub --once /initialpose geometry_msgs/msg/PoseWithCovarianceStamped \\\n  \"{header: {frame_id: 'map'}, pose: {pose: {position: {x: 0.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}\"\n```\n\n### Monitor Particle Cloud\n\n```bash\n# In RViz, add display:\n# - Type: PoseArray\n# - Topic: /particle_cloud\n\n# Particles should converge around robot\n```\n\n### Check SLAM Status\n\n```bash\n# Cartographer constraints (loop closures)\nros2 topic echo /constraint_list\n\n# RTAB-Map statistics\nros2 topic echo /rtabmap/info\n```\n\n---\n\n**END OF TOPIC 5.5: SLAM & Localization**\n\n---\n\n**🎉 CHAPTER 5: Robotics Applications COMPLETE! 🎉**\n\n**All 5 topics covered:**\n1. Navigation & Nav2 Stack\n2. Computer Vision & Image Processing\n3. Robot Manipulation & MoveIt2\n4. Simulation with Gazebo\n5. SLAM & Localization",
+        "tables": []
+      }
+    }
+  ]
+}

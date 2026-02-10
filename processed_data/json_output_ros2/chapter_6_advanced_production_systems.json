@@ -1,0 +1,97 @@
+{
+  "chapter_name": "chapter_6_advanced_production_systems",
+  "chapter_number": 6,
+  "topic_count": 6,
+  "topics": [
+    {
+      "topic": "topic_1",
+      "filename": "topic_1.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Lifecycle States\n\n```\nPrimary States:\n- Unconfigured (1): Initial state\n- Inactive (2): Configured but not running\n- Active (3): Fully operational\n- Finalized (4): Shutdown complete\n\nTransition States:\n- Configuring (10)\n- CleaningUp (11)\n- Activating (12)\n- Deactivating (13)\n- ShuttingDown (14)\n- ErrorProcessing (15)\n```\n\n### Lifecycle Commands\n\n```bash\n# List all lifecycle nodes\nros2 lifecycle list\n\n# Get node state\nros2 lifecycle get /node_name\n\n# Transitions\nros2 lifecycle set /node_name configure\nros2 lifecycle set /node_name activate\nros2 lifecycle set /node_name deactivate\nros2 lifecycle set /node_name cleanup\nros2 lifecycle set /node_name shutdown\n\n# View available transitions\nros2 lifecycle nodes /node_name\n```\n\n### Callback Return Values\n\n```cpp\nreturn CallbackReturn::SUCCESS;  // Transition successful\nreturn CallbackReturn::FAILURE;  // Transition failed, stay in current state\nreturn CallbackReturn::ERROR;    // Fatal error, go to ErrorProcessing\n```\n\n### Creating Lifecycle Node (C++)\n\n```cpp\n#include \"rclcpp_lifecycle/lifecycle_node.hpp\"\n\nclass MyNode : public rclcpp_lifecycle::LifecycleNode {\npublic:\n    MyNode() : LifecycleNode(\"my_node\") {}\n\n    CallbackReturn on_configure(const State &) override;\n    CallbackReturn on_activate(const State &) override;\n    CallbackReturn on_deactivate(const State &) override;\n    CallbackReturn on_cleanup(const State &) override;\n    CallbackReturn on_shutdown(const State &) override;\n    CallbackReturn on_error(const State &) override;\n};\n```\n\n### Creating Lifecycle Node (Python)\n\n```python\nfrom rclcpp.lifecycle import LifecycleNode, TransitionCallbackReturn, State\n\nclass MyNode(LifecycleNode):\n    def __init__(self):\n        super().__init__('my_node')\n\n    def on_configure(self, state: State) -> TransitionCallbackReturn:\n        return TransitionCallbackReturn.SUCCESS\n\n    def on_activate(self, state: State) -> TransitionCallbackReturn:\n        return TransitionCallbackReturn.SUCCESS\n```\n\n### Lifecycle Manager Config\n\n```yaml\nlifecycle_manager:\n  ros__parameters:\n    node_names: ['node1', 'node2', 'node3']\n    autostart: true\n    bond_timeout: 4.0\n    attempt_respawn_reconnection: true\n```\n\n---\n\n**END OF TOPIC 6.1: Lifecycle Nodes & Managed Components**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_2",
+      "filename": "topic_2.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Interface File Locations\n\n```\nmy_robot_interfaces/\n├── action/\n│   └── MyAction.action\n├── msg/\n│   └── MyMessage.msg\n├── srv/\n│   └── MyService.srv\n├── CMakeLists.txt\n└── package.xml\n```\n\n### Message Definition\n\n```msg\n# Comments\nstd_msgs/Header header\nfield_type field_name\nfield_type field_name default_value\nfield_type[] dynamic_array\nfield_type[N] fixed_array\nuint8 CONSTANT=0\n```\n\n### Service Definition\n\n```srv\n# Request\nfield_type request_field\n---\n# Response\nfield_type response_field\n```\n\n### Action Definition\n\n```action\n# Goal\nfield_type goal_field\n---\n# Result\nfield_type result_field\n---\n# Feedback\nfield_type feedback_field\n```\n\n### CMakeLists.txt Template\n\n```cmake\nfind_package(rosidl_default_generators REQUIRED)\nfind_package(std_msgs REQUIRED)\n\nrosidl_generate_interfaces(${PROJECT_NAME}\n  \"msg/MyMessage.msg\"\n  \"srv/MyService.srv\"\n  \"action/MyAction.action\"\n  DEPENDENCIES std_msgs\n)\n```\n\n### Build and Inspect\n\n```bash\n# Build\ncolcon build --packages-select my_interfaces\n\n# Show interface\nros2 interface show my_interfaces/msg/MyMessage\n\n# List all\nros2 interface list | grep my_interfaces\n\n# Show package interfaces\nros2 interface package my_interfaces\n```\n\n### Using in C++\n\n```cpp\n#include \"my_interfaces/msg/my_message.hpp\"\n\nauto msg = my_interfaces::msg::MyMessage();\nmsg.field = value;\npublisher_->publish(msg);\n```\n\n### Using in Python\n\n```python\nfrom my_interfaces.msg import MyMessage\n\nmsg = MyMessage()\nmsg.field = value\nself.publisher.publish(msg)\n```\n\n---\n\n**END OF TOPIC 6.2: Custom Messages & Interface Design**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_3",
+      "filename": "topic_3.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Controller Manager Commands\n\n```bash\n# List controllers\nros2 control list_controllers\n\n# List hardware interfaces\nros2 control list_hardware_interfaces\n\n# Load controller\nros2 control load_controller <name>\n\n# Configure controller\nros2 control set_controller_state <name> configure\n\n# Activate controller\nros2 control set_controller_state <name> active\n\n# Deactivate controller\nros2 control set_controller_state <name> inactive\n\n# Switch controllers\nros2 control switch_controllers --start <controller> --stop <controller>\n```\n\n### Common Controllers\n\n```yaml\n# Joint Trajectory Controller\njoint_trajectory_controller:\n  type: joint_trajectory_controller/JointTrajectoryController\n  joints: [joint1, joint2]\n  command_interfaces: [position]\n  state_interfaces: [position, velocity]\n\n# Diff Drive Controller\ndiff_drive_controller:\n  type: diff_drive_controller/DiffDriveController\n  left_wheel_names: [left_wheel]\n  right_wheel_names: [right_wheel]\n  wheel_separation: 0.5\n  wheel_radius: 0.1\n\n# Joint State Broadcaster\njoint_state_broadcaster:\n  type: joint_state_broadcaster/JointStateBroadcaster\n  joints: [joint1, joint2, joint3]\n```\n\n### Hardware Interface Template\n\n```cpp\nclass MyHardware : public hardware_interface::SystemInterface {\n  CallbackReturn on_init(const HardwareInfo &) override;\n  std::vector<StateInterface> export_state_interfaces() override;\n  std::vector<CommandInterface> export_command_interfaces() override;\n  CallbackReturn on_activate(const State &) override;\n  CallbackReturn on_deactivate(const State &) override;\n  return_type read(const Time &, const Duration &) override;\n  return_type write(const Time &, const Duration &) override;\n};\n```\n\n---\n\n**END OF TOPIC 6.3: ROS2 Control Framework**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_4",
+      "filename": "topic_4.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Node Types\n\n```cpp\n// Sync Action (instant)\nclass MyAction : public SyncActionNode {\n    NodeStatus tick() override;\n};\n\n// Async Action (multi-tick)\nclass MyAsyncAction : public StatefulActionNode {\n    NodeStatus onStart() override;\n    NodeStatus onRunning() override;\n    void onHalted() override;\n};\n\n// Condition (check)\nclass MyCondition : public ConditionNode {\n    NodeStatus tick() override;\n};\n```\n\n### Control Flow Nodes\n\n```xml\n<!-- Sequence: All must succeed -->\n<Sequence>\n  <Action1/>\n  <Action2/>\n</Sequence>\n\n<!-- Fallback: One must succeed -->\n<Fallback>\n  <Option1/>\n  <Option2/>\n</Fallback>\n\n<!-- Parallel: Concurrent execution -->\n<Parallel success_threshold=\"2\">\n  <Task1/>\n  <Task2/>\n</Parallel>\n```\n\n### Decorators\n\n```xml\n<!-- Retry up to 3 times -->\n<Retry num_attempts=\"3\">\n  <Action/>\n</Retry>\n\n<!-- Timeout after 5 seconds -->\n<Timeout seconds=\"5\">\n  <Action/>\n</Timeout>\n\n<!-- Invert result -->\n<Inverter>\n  <Condition/>\n</Inverter>\n\n<!-- Force success -->\n<ForceSuccess>\n  <Action/>\n</ForceSuccess>\n```\n\n### Blackboard\n\n```cpp\n// Declare ports\nstatic PortsList providedPorts() {\n    return {\n        InputPort<int>(\"input\"),\n        OutputPort<int>(\"output\")\n    };\n}\n\n// Read from blackboard\nauto value = getInput<int>(\"input\");\n\n// Write to blackboard\nsetOutput(\"output\", 42);\n```\n\n### Factory & Execution\n\n```cpp\nBehaviorTreeFactory factory;\nfactory.registerNodeType<MyNode>(\"MyNode\");\n\nauto tree = factory.createTreeFromFile(\"tree.xml\");\n\nwhile (running) {\n    auto status = tree.tickRoot();\n    if (status != NodeStatus::RUNNING) break;\n    sleep(100ms);\n}\n```\n\n### Groot Monitoring\n\n```cpp\n#include \"behaviortree_cpp_v3/loggers/bt_zmq_publisher.h\"\n\nPublisherZMQ publisher_zmq(tree);\n\n# Launch Groot\ngroot\n```\n\n---\n\n**END OF TOPIC 6.4: Behavior Trees (BehaviorTree.CPP)**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_5",
+      "filename": "topic_5.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Namespacing\n\n```python\n# Launch with namespace\nNode(\n    package='my_pkg',\n    executable='node',\n    namespace='robot_1',  # All topics prefixed with /robot_1/\n    ...\n)\n```\n\n### Domain IDs\n\n```bash\n# Set domain ID\nexport ROS_DOMAIN_ID=0\n\n# Robots on different domains can't communicate\nDomain 0: Robots A, B, C\nDomain 1: Robots D, E, F\n```\n\n### Common Multi-Robot Topics\n\n```\n# Per-robot (namespaced)\n/robot_1/cmd_vel\n/robot_1/odom\n/robot_1/status\n\n# Fleet-level (global)\n/fleet/task_assignments\n/fleet/heartbeats\n/fleet/coordination\n```\n\n### TF Frames\n\n```\n# Robot 1\nmap → robot_1/odom → robot_1/base_link\n\n# Robot 2\nmap → robot_2/odom → robot_2/base_link\n\n# Shared map\nworld → map (shared by all robots)\n```\n\n---\n\n**END OF TOPIC 6.5: Multi-Robot Systems & Coordination**",
+        "tables": []
+      }
+    },
+    {
+      "topic": "topic_6",
+      "filename": "topic_6.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": "### Point Cloud Types\n\n```cpp\npcl::PointCloud<pcl::PointXYZ>        // x, y, z\npcl::PointCloud<pcl::PointXYZRGB>     // x, y, z, r, g, b\npcl::PointCloud<pcl::PointNormal>     // x, y, z, normal_x, normal_y, normal_z\n```\n\n### ROS2 Conversion\n\n```cpp\n// PCL → ROS2\npcl::toROSMsg(*pcl_cloud, ros_cloud);\n\n// ROS2 → PCL\npcl::fromROSMsg(*ros_cloud, *pcl_cloud);\n```\n\n### Common Filters\n\n```cpp\n// Voxel grid downsample\npcl::VoxelGrid<pcl::PointXYZ> voxel;\nvoxel.setLeafSize(0.01f, 0.01f, 0.01f);\n\n// PassThrough filter\npcl::PassThrough<pcl::PointXYZ> pass;\npass.setFilterFieldName(\"z\");\npass.setFilterLimits(0.0, 2.0);\n\n// Remove NaN\npcl::removeNaNFromPointCloud(*cloud, *cloud, indices);\n```\n\n### Segmentation\n\n```cpp\n// Plane segmentation (RANSAC)\npcl::SACSegmentation<pcl::PointXYZ> seg;\nseg.setModelType(pcl::SACMODEL_PLANE);\nseg.setMethodType(pcl::SAC_RANSAC);\n\n// Euclidean clustering\npcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;\nec.setClusterTolerance(0.02);\n```\n\n---\n\n**END OF TOPIC 6.6: Point Cloud Processing (PCL)**",
+        "tables": []
+      }
+    }
+  ]
+}

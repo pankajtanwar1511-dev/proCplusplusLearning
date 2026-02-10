@@ -1,0 +1,1473 @@
+{
+  "chapter_name": "chapter_12_design_patterns",
+  "chapter_number": 12,
+  "topic_count": 5,
+  "topics": [
+    {
+      "topic": "Thread-Safe Singleton Pattern",
+      "filename": "topic_1_singleton_pattern.md",
+      "theory": {
+        "subsections": [
+          {
+            "title": "What is the Singleton Pattern",
+            "content": "The Singleton pattern is a creational design pattern that ensures a class has only one instance throughout the application lifetime and provides a global point of access to that instance. This pattern is particularly useful when exactly one object is needed to coordinate actions across the system, such as configuration managers, logging systems, database connection pools, or device drivers in embedded systems.\n\nIn C++, implementing a thread-safe Singleton requires careful attention to initialization order, thread safety, and resource management. The classic implementation challenges include preventing multiple instantiations in multithreaded environments, managing destruction order, and avoiding undefined behavior during static initialization. Modern C++11 introduced the Meyers Singleton, which leverages guaranteed thread-safe static local variable initialization, making it the preferred approach for most use cases."
+          },
+          {
+            "title": "Why It Matters",
+            "content": "Singleton patterns are fundamental in systems programming, particularly in autonomous driving systems where you need exactly one instance of critical components like sensor managers, CAN bus interfaces, or configuration handlers. Understanding thread-safe Singleton implementation demonstrates mastery of static initialization, mutex synchronization, memory ordering, and RAII principles. In interviews, Singleton questions test your knowledge of concurrency, resource management, and C++11/14 language guarantees. Poor Singleton implementation can lead to race conditions during initialization, memory leaks, or deadlocks - all critical failures in safety-critical automotive software.\n\n---"
+          }
+        ],
+        "full_text": "#### What is the Singleton Pattern\n\nThe Singleton pattern is a creational design pattern that ensures a class has only one instance throughout the application lifetime and provides a global point of access to that instance. This pattern is particularly useful when exactly one object is needed to coordinate actions across the system, such as configuration managers, logging systems, database connection pools, or device drivers in embedded systems.\n\nIn C++, implementing a thread-safe Singleton requires careful attention to initialization order, thread safety, and resource management. The classic implementation challenges include preventing multiple instantiations in multithreaded environments, managing destruction order, and avoiding undefined behavior during static initialization. Modern C++11 introduced the Meyers Singleton, which leverages guaranteed thread-safe static local variable initialization, making it the preferred approach for most use cases.\n\n#### Why It Matters\n\nSingleton patterns are fundamental in systems programming, particularly in autonomous driving systems where you need exactly one instance of critical components like sensor managers, CAN bus interfaces, or configuration handlers. Understanding thread-safe Singleton implementation demonstrates mastery of static initialization, mutex synchronization, memory ordering, and RAII principles. In interviews, Singleton questions test your knowledge of concurrency, resource management, and C++11/14 language guarantees. Poor Singleton implementation can lead to race conditions during initialization, memory leaks, or deadlocks - all critical failures in safety-critical automotive software.\n\n---"
+      },
+      "edge_cases": [
+        {
+          "title": "Double-Checked Locking Anti-Pattern (Pre-C++11)",
+          "explanation": "This pattern is broken because the compiler can reorder instructions, potentially returning a partially constructed object. The assignment `instance = new Singleton()` involves three steps: allocate memory, construct object, assign pointer. Without memory barriers, another thread might see a non-null pointer to an unconstructed object.",
+          "code_examples": [
+            "// ❌ BROKEN: Classic double-checked locking (pre-C++11)\nclass Singleton {\n    static Singleton* instance;\n    static std::mutex mtx;\n\n    Singleton() {}\n\npublic:\n    static Singleton* getInstance() {\n        if (!instance) {  // First check (unprotected)\n            std::lock_guard<std::mutex> lock(mtx);\n            if (!instance) {  // Second check (protected)\n                instance = new Singleton();  // ❌ Not atomic!\n            }\n        }\n        return instance;\n    }\n};"
+          ]
+        },
+        {
+          "title": "Static Initialization Order Fiasco",
+          "explanation": "Static members across translation units have undefined initialization order, leading to use-before-construction bugs that are nearly impossible to debug.",
+          "code_examples": [
+            "// ❌ DANGEROUS: Static member initialization\nclass Logger {\n    static Logger instance;  // When is this initialized?\n    Logger() { /* ... */ }\n};\n\nclass Config {\n    Config() {\n        Logger::instance.log(\"Config created\");  // ❌ Undefined behavior if Logger not initialized yet\n    }\n};\n\nLogger Logger::instance;  // Order relative to Config construction is undefined"
+          ]
+        },
+        {
+          "title": "Meyer's Singleton and Function-Static Destruction",
+          "explanation": "While initialization is thread-safe, destruction happens in reverse order of construction. If a destructor of another static object tries to access this Singleton after it's destroyed, you get undefined behavior.",
+          "code_examples": [
+            "// ✅ Thread-safe but watch destruction order\nclass DatabaseConnection {\npublic:\n    static DatabaseConnection& getInstance() {\n        static DatabaseConnection instance;  // ✅ C++11 guarantees thread-safe initialization\n        return instance;\n    }\n\n    ~DatabaseConnection() {\n        // ❌ DANGER: What if another static destructor calls getInstance()?\n        cleanup();\n    }\n};"
+          ]
+        },
+        {
+          "title": "Singleton with Lazy Initialization and shared_ptr",
+          "explanation": "Using `shared_ptr` allows controlled lifetime but adds atomic reference counting overhead. The `std::call_once` ensures thread-safe initialization without double-checked locking pitfalls.",
+          "code_examples": [
+            "// ✅ Thread-safe with std::call_once\nclass ResourceManager {\n    static std::shared_ptr<ResourceManager> instance;\n    static std::once_flag initFlag;\n\n    ResourceManager() = default;\n\npublic:\n    static std::shared_ptr<ResourceManager> getInstance() {\n        std::call_once(initFlag, []() {\n            instance = std::shared_ptr<ResourceManager>(new ResourceManager());\n        });\n        return instance;\n    }\n};\n\nstd::shared_ptr<ResourceManager> ResourceManager::instance = nullptr;\nstd::once_flag ResourceManager::initFlag;"
+          ]
+        },
+        {
+          "title": "Singleton Reset/Mock for Testing",
+          "explanation": "Testing Singletons is notoriously difficult. Adding reset functionality breaks the Singleton guarantee and isn't thread-safe. Better approaches use dependency injection or test-specific factory methods.\n\n---",
+          "code_examples": [
+            "// Testing challenge: How to reset Singleton between tests?\nclass ServiceLocator {\n    static std::unique_ptr<ServiceLocator> instance;\n\npublic:\n    static ServiceLocator& getInstance() {\n        if (!instance) instance = std::make_unique<ServiceLocator>();\n        return *instance;\n    }\n\n    // ⚠️ For testing only - not thread-safe\n    static void reset() {\n        instance.reset();\n    }\n};"
+          ]
+        }
+      ],
+      "code_examples": [
+        {
+          "title": "Easy - Classic Non-Thread-Safe Singleton",
+          "explanation": "This Meyers Singleton is thread-safe in C++11+ due to guaranteed thread-safe static local initialization. The function-local static is created on first call and destroyed at program exit.",
+          "code": "#include <iostream>\n\nclass ConfigManager {\nprivate:\n    int configValue;\n\n    ConfigManager() : configValue(42) {  // Private constructor\n        std::cout << \"ConfigManager created\\n\";\n    }\n\n    // ❌ Delete copy constructor and assignment\n    ConfigManager(const ConfigManager&) = delete;\n    ConfigManager& operator=(const ConfigManager&) = delete;\n\npublic:\n    static ConfigManager& getInstance() {\n        static ConfigManager instance;  // ✅ Created on first call\n        return instance;\n    }\n\n    int getValue() const { return configValue; }\n    void setValue(int val) { configValue = val; }\n};\n\nint main() {\n    ConfigManager& cfg1 = ConfigManager::getInstance();\n    ConfigManager& cfg2 = ConfigManager::getInstance();\n\n    std::cout << \"Same instance? \" << (&cfg1 == &cfg2) << \"\\n\";  // Prints: 1\n\n    cfg1.setValue(100);\n    std::cout << \"cfg2 value: \" << cfg2.getValue() << \"\\n\";  // Prints: 100\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Mid - Thread-Safe Singleton with Mutex Protection",
+          "explanation": "This version uses heap allocation with `unique_ptr` and protects both getInstance() and log() with mutex. More flexible than Meyers Singleton but adds locking overhead.",
+          "code": "#include <iostream>\n#include <mutex>\n#include <memory>\n\nclass Logger {\nprivate:\n    static std::unique_ptr<Logger> instance;\n    static std::mutex mtx;\n    int logCount;\n\n    Logger() : logCount(0) {\n        std::cout << \"Logger initialized\\n\";\n    }\n\npublic:\n    Logger(const Logger&) = delete;\n    Logger& operator=(const Logger&) = delete;\n\n    static Logger& getInstance() {\n        std::lock_guard<std::mutex> lock(mtx);  // ✅ Fully protected\n        if (!instance) {\n            instance.reset(new Logger());\n        }\n        return *instance;\n    }\n\n    void log(const std::string& msg) {\n        std::lock_guard<std::mutex> lock(mtx);\n        std::cout << \"[Log \" << ++logCount << \"] \" << msg << \"\\n\";\n    }\n};\n\nstd::unique_ptr<Logger> Logger::instance = nullptr;\nstd::mutex Logger::mtx;\n\nint main() {\n    Logger& log1 = Logger::getInstance();\n    Logger& log2 = Logger::getInstance();\n\n    log1.log(\"System started\");\n    log2.log(\"Configuration loaded\");  // Same instance\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Mid - std::call_once Initialization",
+          "explanation": "`std::call_once` provides clean, exception-safe initialization without manual mutex management. The lambda runs exactly once even if multiple threads call getInstance() simultaneously.",
+          "code": "#include <iostream>\n#include <mutex>\n#include <memory>\n\nclass DatabaseConnection {\nprivate:\n    static std::unique_ptr<DatabaseConnection> instance;\n    static std::once_flag initFlag;\n\n    std::string connectionString;\n\n    DatabaseConnection(const std::string& connStr) : connectionString(connStr) {\n        std::cout << \"DB connected: \" << connStr << \"\\n\";\n    }\n\npublic:\n    DatabaseConnection(const DatabaseConnection&) = delete;\n    DatabaseConnection& operator=(const DatabaseConnection&) = delete;\n\n    static DatabaseConnection& getInstance() {\n        std::call_once(initFlag, []() {\n            // ✅ Guaranteed to run exactly once, thread-safe\n            instance.reset(new DatabaseConnection(\"localhost:5432\"));\n        });\n        return *instance;\n    }\n\n    void query(const std::string& sql) {\n        std::cout << \"Executing: \" << sql << \"\\n\";\n    }\n};\n\nstd::unique_ptr<DatabaseConnection> DatabaseConnection::instance = nullptr;\nstd::once_flag DatabaseConnection::initFlag;\n\nint main() {\n    auto& db = DatabaseConnection::getInstance();\n    db.query(\"SELECT * FROM users\");\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Advanced - Lazy Initialization with std::shared_ptr",
+          "explanation": "Using `shared_ptr` allows multiple references and controlled destruction. The atomic counters avoid mutex overhead for statistics tracking. Double-checked locking works correctly with `shared_ptr` due to its atomic operations.",
+          "code": "#include <iostream>\n#include <memory>\n#include <mutex>\n#include <atomic>\n\nclass CacheManager {\nprivate:\n    static std::shared_ptr<CacheManager> instance;\n    static std::mutex mtx;\n    std::atomic<int> hits{0};\n    std::atomic<int> misses{0};\n\n    CacheManager() {\n        std::cout << \"CacheManager initialized\\n\";\n    }\n\npublic:\n    CacheManager(const CacheManager&) = delete;\n    CacheManager& operator=(const CacheManager&) = delete;\n\n    static std::shared_ptr<CacheManager> getInstance() {\n        // ✅ Double-checked locking CORRECT way with shared_ptr\n        if (!instance) {\n            std::lock_guard<std::mutex> lock(mtx);\n            if (!instance) {\n                instance = std::shared_ptr<CacheManager>(new CacheManager());\n            }\n        }\n        return instance;\n    }\n\n    void recordHit() { ++hits; }\n    void recordMiss() { ++misses; }\n\n    void printStats() const {\n        std::cout << \"Hits: \" << hits << \", Misses: \" << misses << \"\\n\";\n    }\n};\n\nstd::shared_ptr<CacheManager> CacheManager::instance = nullptr;\nstd::mutex CacheManager::mtx;\n\nint main() {\n    auto cache1 = CacheManager::getInstance();\n    auto cache2 = CacheManager::getInstance();\n\n    cache1->recordHit();\n    cache2->recordMiss();\n\n    cache1->printStats();  // Prints: Hits: 1, Misses: 1\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Advanced - Meyer's Singleton with CRTP for Multiple Singletons",
+          "explanation": "CRTP (Curiously Recurring Template Pattern) creates a reusable Singleton base class. Each derived class gets its own thread-safe static instance without code duplication.",
+          "code": "#include <iostream>\n#include <string>\n\ntemplate <typename T>\nclass Singleton {\nprotected:\n    Singleton() = default;\n\npublic:\n    Singleton(const Singleton&) = delete;\n    Singleton& operator=(const Singleton&) = delete;\n\n    static T& getInstance() {\n        static T instance;  // ✅ Thread-safe in C++11+\n        return instance;\n    }\n};\n\nclass AudioManager : public Singleton<AudioManager> {\n    friend class Singleton<AudioManager>;  // Allow base to construct\n\nprivate:\n    int volume = 50;\n    AudioManager() { std::cout << \"AudioManager created\\n\"; }\n\npublic:\n    void setVolume(int vol) { volume = vol; }\n    int getVolume() const { return volume; }\n};\n\nclass NetworkManager : public Singleton<NetworkManager> {\n    friend class Singleton<NetworkManager>;\n\nprivate:\n    std::string ipAddress = \"127.0.0.1\";\n    NetworkManager() { std::cout << \"NetworkManager created\\n\"; }\n\npublic:\n    void setIP(const std::string& ip) { ipAddress = ip; }\n    std::string getIP() const { return ipAddress; }\n};\n\nint main() {\n    auto& audio = AudioManager::getInstance();\n    audio.setVolume(75);\n\n    auto& network = NetworkManager::getInstance();\n    network.setIP(\"192.168.1.100\");\n\n    std::cout << \"Audio volume: \" << AudioManager::getInstance().getVolume() << \"\\n\";\n    std::cout << \"Network IP: \" << NetworkManager::getInstance().getIP() << \"\\n\";\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Advanced - Singleton with Dependency Injection for Testing",
+          "explanation": "This design maintains Singleton benefits while enabling testability through dependency injection. The abstract interface allows mock implementations during testing.",
+          "code": "#include <iostream>\n#include <memory>\n\nclass ILogger {\npublic:\n    virtual ~ILogger() = default;\n    virtual void log(const std::string& msg) = 0;\n};\n\nclass ProductionLogger : public ILogger {\npublic:\n    void log(const std::string& msg) override {\n        std::cout << \"[PROD] \" << msg << \"\\n\";\n    }\n};\n\nclass TestLogger : public ILogger {\npublic:\n    void log(const std::string& msg) override {\n        std::cout << \"[TEST] \" << msg << \"\\n\";\n    }\n};\n\nclass LoggerFactory {\nprivate:\n    static std::unique_ptr<ILogger> instance;\n\npublic:\n    static ILogger& getInstance() {\n        if (!instance) {\n            instance = std::make_unique<ProductionLogger>();\n        }\n        return *instance;\n    }\n\n    // ✅ For testing: inject mock implementation\n    static void setInstance(std::unique_ptr<ILogger> logger) {\n        instance = std::move(logger);\n    }\n\n    static void reset() {\n        instance.reset();\n    }\n};\n\nstd::unique_ptr<ILogger> LoggerFactory::instance = nullptr;\n\nint main() {\n    // Production usage\n    LoggerFactory::getInstance().log(\"Application started\");\n\n    // Test usage\n    LoggerFactory::setInstance(std::make_unique<TestLogger>());\n    LoggerFactory::getInstance().log(\"Running unit test\");\n\n    LoggerFactory::reset();\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Real-World - Autonomous Vehicle Sensor Manager",
+          "explanation": "This real-world example shows a thread-safe sensor data manager for autonomous vehicles, using `std::call_once` for initialization and mutex protection for data access.",
+          "code": "#include <iostream>\n#include <string>\n#include <mutex>\n#include <vector>\n#include <memory>\n\nstruct SensorData {\n    std::string sensorName;\n    double value;\n    long timestamp;\n};\n\nclass SensorManager {\nprivate:\n    static std::unique_ptr<SensorManager> instance;\n    static std::once_flag initFlag;\n\n    std::vector<SensorData> recentData;\n    mutable std::mutex dataMutex;\n\n    SensorManager() {\n        std::cout << \"SensorManager initialized\\n\";\n        recentData.reserve(1000);\n    }\n\npublic:\n    SensorManager(const SensorManager&) = delete;\n    SensorManager& operator=(const SensorManager&) = delete;\n\n    static SensorManager& getInstance() {\n        std::call_once(initFlag, []() {\n            instance.reset(new SensorManager());\n        });\n        return *instance;\n    }\n\n    void recordData(const std::string& sensor, double value, long ts) {\n        std::lock_guard<std::mutex> lock(dataMutex);\n        recentData.push_back({sensor, value, ts});\n        if (recentData.size() > 1000) {\n            recentData.erase(recentData.begin());  // Keep last 1000\n        }\n    }\n\n    std::vector<SensorData> getRecentData() const {\n        std::lock_guard<std::mutex> lock(dataMutex);\n        return recentData;  // Return copy\n    }\n\n    size_t getDataCount() const {\n        std::lock_guard<std::mutex> lock(dataMutex);\n        return recentData.size();\n    }\n};\n\nstd::unique_ptr<SensorManager> SensorManager::instance = nullptr;\nstd::once_flag SensorManager::initFlag;\n\nint main() {\n    auto& mgr = SensorManager::getInstance();\n\n    mgr.recordData(\"LIDAR_FRONT\", 15.7, 1000001);\n    mgr.recordData(\"RADAR_LEFT\", 8.3, 1000002);\n    mgr.recordData(\"CAMERA_360\", 120.5, 1000003);\n\n    std::cout << \"Total sensor readings: \" << mgr.getDataCount() << \"\\n\";\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Performance - Meyer's Singleton Benchmark",
+          "explanation": "Meyers Singleton has minimal performance overhead after first initialization. The static local variable is initialized with thread-safe guards, but subsequent accesses are lock-free.\n\n---",
+          "code": "#include <iostream>\n#include <chrono>\n#include <thread>\n#include <vector>\n\nclass FastSingleton {\npublic:\n    static FastSingleton& getInstance() {\n        static FastSingleton instance;  // ✅ Initialized once, no locking after first call\n        return instance;\n    }\n\n    void doWork() { /* fast operation */ }\n\nprivate:\n    FastSingleton() = default;\n};\n\nvoid workerThread(int iterations) {\n    for (int i = 0; i < iterations; ++i) {\n        FastSingleton::getInstance().doWork();\n    }\n}\n\nint main() {\n    const int iterations = 1000000;\n    const int numThreads = 4;\n\n    auto start = std::chrono::high_resolution_clock::now();\n\n    std::vector<std::thread> threads;\n    for (int i = 0; i < numThreads; ++i) {\n        threads.emplace_back(workerThread, iterations);\n    }\n\n    for (auto& t : threads) {\n        t.join();\n    }\n\n    auto end = std::chrono::high_resolution_clock::now();\n    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);\n\n    std::cout << \"Completed \" << (iterations * numThreads) << \" calls in \"\n              << duration.count() << \"ms\\n\";\n}",
+          "additional_code": []
+        }
+      ],
+      "interview_qa": [
+        {
+          "question": "What is the Singleton pattern and why is it used?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "design_pattern"
+          ],
+          "concepts": [
+            "singleton",
+            "creational_pattern",
+            "global_access"
+          ],
+          "answer": "The Singleton pattern ensures a class has exactly one instance and provides a global point of access to it.",
+          "explanation": "Singleton is useful when exactly one object is needed to coordinate actions across the system, such as logging, configuration management, or resource pools. It prevents multiple instantiations which could lead to resource conflicts or inconsistent state. In C++, the Meyers Singleton (function-local static) is thread-safe since C++11 due to guaranteed static initialization guards.",
+          "code_examples": [
+            "class Config {\n    static Config& getInstance() {\n        static Config instance;\n        return instance;\n    }\nprivate:\n    Config() = default;\n};"
+          ],
+          "key_takeaway": "Use Singleton for global resources that must have exactly one instance, but prefer dependency injection for better testability."
+        },
+        {
+          "question": "Why is double-checked locking broken in pre-C++11?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "concurrency",
+            "memory_model"
+          ],
+          "concepts": [
+            "memory_ordering",
+            "race_condition",
+            "instruction_reordering"
+          ],
+          "answer": "Pre-C++11 double-checked locking fails because compilers and CPUs can reorder instructions, allowing threads to see a non-null pointer to a partially constructed object.",
+          "explanation": "The `new T()` operation involves three steps: allocate memory, construct object, assign pointer. Without memory barriers, the compiler might reorder these, causing `instance` to become non-null before construction completes. Another thread seeing the non-null `instance` would skip the lock and access an unconstructed object. C++11 fixed this with memory ordering guarantees and thread-safe static local initialization.",
+          "code_examples": [
+            "// ❌ BROKEN pre-C++11\nif (!instance) {\n    lock();\n    if (!instance) {\n        instance = new T();  // 3 steps: allocate, construct, assign\n    }\n    unlock();\n}"
+          ],
+          "key_takeaway": "Never use double-checked locking in C++; use Meyers Singleton or std::call_once instead."
+        },
+        {
+          "question": "How does C++11 guarantee thread-safe static local variable initialization?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "language_features",
+            "concurrency"
+          ],
+          "concepts": [
+            "static_initialization",
+            "thread_safety",
+            "initialization_guards"
+          ],
+          "answer": "C++11 guarantees that static local variables are initialized exactly once in a thread-safe manner using compiler-generated guards (like pthread_once or equivalent).",
+          "explanation": "The C++11 standard (§6.7/4) requires that if control enters the declaration concurrently, one thread completes initialization while others wait. The compiler generates hidden initialization guard variables and synchronization code. This makes Meyers Singleton the safest and simplest Singleton implementation in modern C++, with no need for explicit mutexes or std::call_once.",
+          "code_examples": [
+            "T& getInstance() {\n    static T instance;  // ✅ Thread-safe initialization\n    return instance;\n}"
+          ],
+          "key_takeaway": "Meyers Singleton is the preferred idiom in C++11+ for its simplicity and guaranteed thread safety."
+        },
+        {
+          "question": "What is the static initialization order fiasco and how does Singleton address it?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "initialization",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "static_initialization",
+            "initialization_order",
+            "singleton"
+          ],
+          "answer": "Static initialization order fiasco occurs when static objects in different translation units depend on each other, but initialization order is undefined.",
+          "explanation": "Static objects across translation units are initialized in an undefined order, potentially causing use-before-initialization bugs. Singleton solves this by using lazy initialization - the instance is created on first use (when getInstance() is called), not at static initialization time. This ensures dependencies are available when needed, avoiding the fiasco entirely.",
+          "code_examples": [
+            "// File1.cpp\nLogger logger;  // When is this initialized?\n\n// File2.cpp\nConfig config;  // Uses logger in constructor - undefined order!"
+          ],
+          "key_takeaway": "Use function-local statics (Meyers Singleton) to avoid static initialization order problems."
+        },
+        {
+          "question": "When should you NOT use a Singleton?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "design_principles",
+            "best_practices"
+          ],
+          "concepts": [
+            "dependency_injection",
+            "testability",
+            "coupling"
+          ],
+          "answer": "Avoid Singleton when testability matters, when you need multiple instances in tests, or when it creates hidden dependencies and tight coupling.",
+          "explanation": "Singletons introduce global state that makes unit testing difficult - you cannot easily mock or reset them between tests. They create hidden dependencies (any code can call getInstance()), making code harder to understand and maintain. They violate the Single Responsibility Principle by managing both instantiation and business logic. Better alternatives include dependency injection, where objects receive dependencies through constructors, allowing easy testing with mocks and better separation of concerns.",
+          "code_examples": [],
+          "key_takeaway": "Prefer dependency injection over Singleton for better testability and loose coupling; use Singleton only for truly global, single-instance resources."
+        },
+        {
+          "question": "How does std::call_once work and when should you use it?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "concurrency",
+            "standard_library"
+          ],
+          "concepts": [
+            "call_once",
+            "once_flag",
+            "lazy_initialization"
+          ],
+          "answer": "`std::call_once` executes a callable exactly once using a `std::once_flag`, providing thread-safe lazy initialization without manual mutex management.",
+          "explanation": "`std::call_once` uses an internal state machine (the `once_flag`) to ensure the callable runs exactly once even if called from multiple threads simultaneously. It's exception-safe - if the callable throws, the flag remains unset and another thread can retry. Use it when you need lazy initialization with heap-allocated objects or when initialization requires parameters that aren't available at static initialization time.",
+          "code_examples": [
+            "std::once_flag flag;\nstd::shared_ptr<T> instance;\n\nT& getInstance() {\n    std::call_once(flag, []() {\n        instance = std::make_shared<T>();\n    });\n    return *instance;\n}"
+          ],
+          "key_takeaway": "Use std::call_once for complex initialization that requires heap allocation or runtime parameters."
+        },
+        {
+          "question": "What are the tradeoffs between Meyer's Singleton and heap-allocated Singleton with std::unique_ptr?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "design_tradeoffs",
+            "memory_management"
+          ],
+          "concepts": [
+            "stack_allocation",
+            "heap_allocation",
+            "smart_pointers"
+          ],
+          "answer": "Meyers Singleton (static local) is simpler and faster but has fixed lifetime; heap-allocated offers more control over construction/destruction and enables reset for testing.",
+          "explanation": "Meyers Singleton stores the object in static memory with automatic storage duration, making access very fast after initialization. However, destruction order is fixed (reverse of first-use order) and you cannot reset it. Heap-allocated Singleton using `unique_ptr` adds indirection overhead but allows manual reset (useful for testing), explicit destruction control, and potentially smaller static memory footprint. Heap allocation also enables polymorphism through abstract interfaces.",
+          "code_examples": [
+            "// Meyers: Simple, fast, fixed lifetime\nT& getInstance() { static T instance; return instance; }\n\n// Heap: More control, resettable\nstatic unique_ptr<T> instance;\nT& getInstance() { if (!instance) instance = make_unique<T>(); return *instance; }"
+          ],
+          "key_takeaway": "Use Meyers for simplicity; use heap allocation when you need reset capability or polymorphic behavior."
+        },
+        {
+          "question": "How do you handle Singleton destruction order issues?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "resource_management",
+            "undefined_behavior"
+          ],
+          "concepts": [
+            "destruction_order",
+            "static_lifetime",
+            "dangling_references"
+          ],
+          "answer": "Destruction order issues arise when one Singleton's destructor accesses another Singleton that may already be destroyed; solutions include dependency ordering, weak references, or avoiding cleanup in destructors.",
+          "explanation": "Static destruction order is reverse of initialization order, but across Singletons used in each other's destructors, this creates undefined behavior. Solutions include: (1) Phoenix Singleton - never destroy (accept leak), (2) explicit shutdown phase where all Singletons are destroyed in controlled order, (3) reference counting to track dependencies, (4) avoid doing work in destructors. In practice, most applications exit before destruction order matters.",
+          "code_examples": [
+            "// ❌ DANGEROUS\n~Logger() {\n    Config::getInstance().save();  // Config might be destroyed!\n}\n\n// ✅ SAFER: Use phoenix singleton\nLogger& getInstance() {\n    static Logger* instance = nullptr;\n    if (!instance) instance = new Logger();\n    return *instance;  // Never destroyed, but leaks\n}"
+          ],
+          "key_takeaway": "Avoid inter-Singleton dependencies in destructors; if necessary, implement explicit shutdown sequence or accept memory leaks."
+        },
+        {
+          "question": "Can you implement a thread-safe Singleton without mutexes in C++?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "concurrency",
+            "lock_free"
+          ],
+          "concepts": [
+            "atomics",
+            "memory_ordering",
+            "lock_free"
+          ],
+          "answer": "Yes, using C++11 static locals (compiler-generated guards) or atomic operations with acquire-release semantics for lock-free initialization.",
+          "explanation": "Meyers Singleton relies on compiler-generated synchronization (typically using atomic operations internally). For explicit lock-free implementation, use atomic pointers with compare-exchange. The acquire-release memory ordering ensures proper visibility: store-release makes the constructed object visible, and load-acquire ensures you see the complete object. This is complex and error-prone - prefer Meyers or std::call_once unless you need very specific performance characteristics.",
+          "code_examples": [
+            "// ✅ Option 1: Meyers (compiler handles synchronization)\nT& getInstance() { static T instance; return instance; }\n\n// ✅ Option 2: Atomic with double-checked locking\nstatic atomic<T*> instance{nullptr};\nT& getInstance() {\n    T* tmp = instance.load(memory_order_acquire);\n    if (!tmp) {\n        tmp = new T();\n        T* expected = nullptr;\n        if (!instance.compare_exchange_strong(expected, tmp, memory_order_release)) {\n            delete tmp;\n            tmp = expected;\n        }\n    }\n    return *tmp;\n}"
+          ],
+          "key_takeaway": "Meyers Singleton is already lock-free after first initialization; explicit atomic-based Singleton is rarely necessary."
+        },
+        {
+          "question": "How would you test code that uses Singletons?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "testing",
+            "design_patterns"
+          ],
+          "concepts": [
+            "testability",
+            "dependency_injection",
+            "mocking"
+          ],
+          "answer": "Testing Singletons is difficult; strategies include providing reset() methods, using dependency injection, or wrapping Singleton in a testable interface.",
+          "explanation": "Pure Singletons are hard to test because they introduce global state. Adding a reset() method helps but isn't thread-safe and breaks Singleton guarantees. Better approaches: (1) use dependency injection where classes receive dependencies rather than accessing Singletons, (2) create interfaces that Singleton implements, allowing mock implementations in tests, (3) use test-specific factory functions. The best solution is often to avoid Singletons entirely in favor of dependency injection patterns.",
+          "code_examples": [
+            "// Strategy 1: Reset method (dangerous in production)\nclass Service {\n    static unique_ptr<Service> instance;\npublic:\n    static Service& get() { /*...*/ }\n    static void reset() { instance.reset(); }  // For tests only\n};\n\n// Strategy 2: Dependency injection\nclass Client {\n    Service& service;  // Injected, not Singleton\npublic:\n    Client(Service& svc) : service(svc) {}\n};"
+          ],
+          "key_takeaway": "Design for dependency injection rather than Singleton for better testability; if Singleton is necessary, provide test hooks via interfaces."
+        },
+        {
+          "question": "What is a Monostate pattern and how does it differ from Singleton?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "design_patterns",
+            "alternatives"
+          ],
+          "concepts": [
+            "monostate",
+            "static_members",
+            "singleton_alternatives"
+          ],
+          "answer": "Monostate allows multiple instances but shares state through static members; unlike Singleton which restricts instantiation to one object.",
+          "explanation": "Monostate maintains singleton behavior (single shared state) without restricting instantiation. All instances share static member variables, creating the illusion of a single object while allowing normal construction. Advantages: works with existing code expecting multiple instances, no need for getInstance(). Disadvantages: all instances consume memory, initialization is less controlled, and the shared state is less obvious. Rarely used in practice compared to true Singleton.",
+          "code_examples": [
+            "class Monostate {\n    static int sharedState;  // ✅ All instances share this\npublic:\n    void setState(int val) { sharedState = val; }\n    int getState() const { return sharedState; }\n};\n\n// Multiple instances, shared state\nMonostate m1, m2;\nm1.setState(42);\ncout << m2.getState();  // Prints 42"
+          ],
+          "key_takeaway": "Monostate provides shared state with normal instantiation but is less explicit and rarely preferred over Singleton or dependency injection."
+        },
+        {
+          "question": "How does the Singleton pattern relate to the Single Responsibility Principle?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "design_principles",
+            "solid"
+          ],
+          "concepts": [
+            "srp",
+            "separation_of_concerns",
+            "responsibility"
+          ],
+          "answer": "Singleton often violates SRP by mixing instance management with business logic; better designs separate these concerns.",
+          "explanation": "The Single Responsibility Principle states a class should have one reason to change. Singleton classes typically have two responsibilities: (1) managing their own instantiation and lifecycle, and (2) performing their actual business logic. This coupling makes the class harder to test, maintain, and reason about. Better designs use a factory or service locator to handle instantiation while keeping business logic in separate classes. This separation allows easier testing (you can inject mocks) and better modularity.",
+          "code_examples": [],
+          "key_takeaway": "Consider separating instance management from business logic to maintain SRP; use factories or dependency injection frameworks."
+        },
+        {
+          "question": "Can Singleton work with inheritance and virtual functions?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "polymorphism",
+            "inheritance"
+          ],
+          "concepts": [
+            "virtual_functions",
+            "factory_pattern",
+            "polymorphic_singleton"
+          ],
+          "answer": "Yes, but requires careful design using abstract interfaces and factory methods to select concrete implementations while maintaining single instance guarantee.",
+          "explanation": "Polymorphic Singleton uses an abstract base class with virtual functions while the getInstance() method returns a reference to a single concrete implementation. This combines interface-based design with Singleton benefits. The factory method can select which implementation to instantiate based on configuration, but once created, only one instance exists. This enables testability through interface mocking while maintaining singleton semantics for the actual runtime object.",
+          "code_examples": [
+            "class IService {\npublic:\n    virtual ~IService() = default;\n    virtual void execute() = 0;\n    static IService& getInstance();\n};\n\nclass ServiceImpl : public IService {\n    friend class IService;\n    ServiceImpl() = default;\npublic:\n    void execute() override { /* implementation */ }\n};\n\nIService& IService::getInstance() {\n    static ServiceImpl instance;\n    return instance;\n}"
+          ],
+          "key_takeaway": "Combine interface abstraction with Singleton for testability; the interface is the public API while concrete implementation remains singleton."
+        },
+        {
+          "question": "What are the performance implications of different Singleton implementations?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "performance",
+            "optimization"
+          ],
+          "concepts": [
+            "memory_access",
+            "cache_performance",
+            "synchronization_overhead"
+          ],
+          "answer": "Meyers Singleton has minimal overhead after initialization (direct static access); mutex-based and std::call_once add synchronization cost on every access; atomic operations can avoid locks but add memory barriers.",
+          "explanation": "Meyers Singleton generates initialization guards that only check on first access, subsequent accesses are essentially free (just a memory reference). Mutex-based approaches pay locking cost on every access, ~20-50ns overhead. std::call_once amortizes well but still checks an atomic flag. For high-performance code (e.g., sensor processing at 10kHz), this matters. Consider caching the reference locally: `auto& instance = getInstance();` to avoid repeated access overhead.",
+          "code_examples": [
+            "// Fastest after init: Direct static access\nT& getInstance() { static T instance; return instance; }  // ~1ns after init\n\n// Moderate overhead: Mutex check every access\nT& getInstance() {\n    lock_guard<mutex> lock(mtx);  // ~20-50ns per access\n    if (!instance) instance = make_unique<T>();\n    return *instance;\n}"
+          ],
+          "key_takeaway": "Meyers Singleton has best runtime performance; cache getInstance() reference in hot paths to eliminate repeated access overhead."
+        },
+        {
+          "question": "How do Singletons behave across DLL boundaries?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "linking",
+            "dlls"
+          ],
+          "concepts": [
+            "shared_libraries",
+            "symbol_visibility",
+            "dll_boundaries"
+          ],
+          "answer": "Each DLL/SO gets its own copy of static variables unless explicitly exported, potentially creating multiple \"singleton\" instances.",
+          "explanation": "In Windows DLLs or Unix shared objects, static variables have internal linkage by default. If both the main executable and a DLL use a Singleton, they each get separate instances. Solutions: (1) export the singleton symbol with __declspec(dllexport)/__attribute__((visibility(\"default\"))), (2) provide getInstance() in a single DLL and have others link to it, (3) use a registry pattern where first DLL to load registers the instance. This is particularly problematic with plugins or dynamically loaded modules. Modern C++ modules (C++20) help but aren't yet widely adopted.",
+          "code_examples": [],
+          "key_takeaway": "Be aware that static variables don't cross DLL boundaries by default; explicitly export Singleton symbols or use a centralized registry."
+        },
+        {
+          "question": "What is the difference between Singleton and a global variable?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "design_patterns",
+            "comparison"
+          ],
+          "concepts": [
+            "global_state",
+            "encapsulation",
+            "lazy_initialization"
+          ],
+          "answer": "Global variables are initialized at program start and lack encapsulation; Singletons offer lazy initialization, controlled access through methods, and can enforce invariants.",
+          "explanation": "Global variables initialize at program startup (increasing startup time) whether used or not, and expose their internal state directly. Singletons delay initialization until first use (lazy), can run validation in private constructors, provide controlled access via methods, and can change implementation without affecting clients. However, both create global state which hinders testability. Prefer dependency injection when possible.",
+          "code_examples": [
+            "// Global variable: immediate initialization, no encapsulation\nConfig globalConfig;  // ❌ Initialized even if never used\n\n// Singleton: lazy init, encapsulated\nclass Config {\npublic:\n    static Config& getInstance() { static Config c; return c; }  // ✅ Created on first use\nprivate:\n    Config() { /* validation logic */ }\n};"
+          ],
+          "key_takeaway": "Singleton offers lazy initialization and encapsulation over raw global variables, but both introduce global state that complicates testing."
+        },
+        {
+          "question": "How would you implement a Singleton for a class that allocates significant resources?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "resource_management",
+            "initialization"
+          ],
+          "concepts": [
+            "lazy_initialization",
+            "raii",
+            "exception_safety"
+          ],
+          "answer": "Use lazy initialization to defer resource allocation until actually needed, with RAII to ensure proper cleanup even if initialization fails.",
+          "explanation": "Lazy initialization via Meyers Singleton ensures the resource is only allocated when first accessed, not at program startup. Use unique_ptr or other RAII types to manage resources so cleanup happens automatically. If initialization can fail, consider std::call_once with try-catch to allow retry on subsequent calls. For very large resources, consider two-phase initialization: Singleton manages the manager, which creates actual resources on demand.",
+          "code_examples": [
+            "class HeavyResource {\n    unique_ptr<LargeBuffer> buffer;\n\n    HeavyResource() {\n        cout << \"Allocating 1GB buffer...\\n\";\n        buffer = make_unique<LargeBuffer>(1024*1024*1024);\n    }\n\npublic:\n    static HeavyResource& getInstance() {\n        static HeavyResource instance;  // ✅ Only created when first accessed\n        return instance;\n    }\n\n    ~HeavyResource() { cout << \"Releasing heavy resource\\n\"; }\n};"
+          ],
+          "key_takeaway": "Combine lazy Singleton initialization with RAII resource management to defer allocation and ensure exception-safe cleanup."
+        },
+        {
+          "question": "Can you have a Singleton of a template class?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "templates",
+            "design_patterns"
+          ],
+          "concepts": [
+            "template_instantiation",
+            "static_members",
+            "crtp"
+          ],
+          "answer": "Yes, each template instantiation gets its own static instance; use CRTP for a reusable Singleton base class.",
+          "explanation": "Template static members are instantiated per template parameter, so `Singleton<Logger>` and `Singleton<Config>` each have their own static instance. CRTP (Curiously Recurring Template Pattern) allows derived classes to inherit Singleton behavior without code duplication. The friend declaration allows the base class to access the derived class's private constructor. This pattern is elegant but can be harder to debug due to template error messages.",
+          "code_examples": [
+            "template<typename T>\nclass Singleton {\nprotected:\n    Singleton() = default;\npublic:\n    static T& getInstance() {\n        static T instance;  // Separate instance per T\n        return instance;\n    }\n};\n\nclass Logger : public Singleton<Logger> {\n    friend class Singleton<Logger>;\n    Logger() = default;\n};\n\nclass Config : public Singleton<Config> {\n    friend class Singleton<Config>;\n    Config() = default;\n};\n\n// Usage: Logger::getInstance(), Config::getInstance()"
+          ],
+          "key_takeaway": "Template Singletons with CRTP provide reusable Singleton functionality; each template instantiation maintains its own single instance."
+        },
+        {
+          "question": "How do you handle Singleton initialization with exceptions?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "exception_safety",
+            "initialization"
+          ],
+          "concepts": [
+            "exception_handling",
+            "initialization_failure",
+            "recovery"
+          ],
+          "answer": "If Singleton constructor throws, C++11 guarantees the initialization will be retried on next access; use std::call_once for more control over exception recovery.",
+          "explanation": "With Meyers Singleton, if the constructor throws, the initialization guard resets, allowing retry on next getInstance() call. This is usually desired behavior - transient failures (network timeout) can succeed on retry. However, std::once_flag cannot be reset once set, so retrying with std::call_once requires redesign. For critical resources, log initialization failures, implement exponential backoff for retries, or fail-fast if initialization cannot succeed.",
+          "code_examples": [
+            "class DatabaseConnection {\n    DatabaseConnection() {\n        if (!connect()) throw runtime_error(\"Connection failed\");\n    }\npublic:\n    static DatabaseConnection& getInstance() {\n        static DatabaseConnection instance;  // ✅ Retries if construction throws\n        return instance;\n    }\n};\n\n// Alternative with std::call_once for explicit retry logic\nstatic shared_ptr<DB> instance;\nstatic once_flag flag;\nDB& getInstance() {\n    call_once(flag, []() {\n        try {\n            instance = make_shared<DB>();\n        } catch(...) {\n            flag = once_flag{};  // ❌ Can't reset! Must use different pattern\n            throw;\n        }\n    });\n    return *instance;\n}"
+          ],
+          "key_takeaway": "Meyers Singleton automatically retries initialization after exception; design constructors to be retry-safe or fail-fast for unrecoverable errors."
+        },
+        {
+          "question": "What is a \"phoenix singleton\" and when would you use it?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "advanced_patterns",
+            "lifetime_management"
+          ],
+          "concepts": [
+            "destruction_order",
+            "memory_leaks",
+            "static_lifetime"
+          ],
+          "answer": "Phoenix Singleton intentionally leaks memory by never calling destructor, avoiding destruction order problems at the cost of a memory leak.",
+          "explanation": "Phoenix Singleton solves destruction order problems by never destroying the instance. While this appears to leak memory, modern OS reclaims all process memory on exit, so the leak is benign. Use when: (1) other static objects might access the Singleton during shutdown, (2) the Singleton manages resources that don't need explicit cleanup (the OS handles it), (3) explicit destruction would be expensive during shutdown. Avoid if the destructor has important side effects like flushing logs or closing network connections.",
+          "code_examples": [
+            "class Logger {\npublic:\n    static Logger& getInstance() {\n        static Logger* instance = new Logger();  // ✅ Never deleted\n        return *instance;\n    }\n\n    void log(const string& msg) { /* ... */ }\n\nprivate:\n    Logger() = default;\n    ~Logger() = default;  // Never called\n};"
+          ],
+          "key_takeaway": "Phoenix Singleton trades intentional memory leak for guaranteed availability during static destruction; acceptable when destructor side effects aren't critical."
+        }
+      ],
+      "practice_tasks": [
+        {
+          "question_number": 1,
+          "title": "Question 1",
+          "description": "",
+          "code": "class Manager {\n    static Manager* instance;\n    Manager() {}\npublic:\n    static Manager* getInstance() {\n        if (!instance) instance = new Manager();\n        return instance;\n    }\n};\nManager* Manager::instance = nullptr;\n\n// Multiple threads call getInstance() simultaneously\n// What can go wrong?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 2,
+          "title": "Question 2",
+          "description": "",
+          "code": "class Service {\npublic:\n    static Service& getInstance() {\n        static Service instance;\n        return instance;\n    }\n    ~Service() {\n        Logger::getInstance().log(\"Service destroyed\");\n    }\n};\n\n// What happens if Logger is destroyed before Service?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 3,
+          "title": "Question 3",
+          "description": "",
+          "code": "class Config {\n    static unique_ptr<Config> instance;\n    static mutex mtx;\npublic:\n    static Config& getInstance() {\n        lock_guard<mutex> lock(mtx);\n        if (!instance) instance = make_unique<Config>();\n        return *instance;\n    }\n};\n\n// Is this implementation efficient? What's the performance impact?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 4,
+          "title": "Question 4",
+          "description": "",
+          "code": "template<typename T>\nclass Singleton {\npublic:\n    static T& getInstance() {\n        static T instance;\n        return instance;\n    }\n};\n\nclass Logger : public Singleton<Logger> {};\nclass Config : public Singleton<Config> {};\n\n// How many static instances exist in this program?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 5,
+          "title": "Question 5",
+          "description": "",
+          "code": "class Database {\npublic:\n    static Database& getInstance() {\n        static Database instance;\n        return instance;\n    }\n\n    Database(const Database&) = default;\n};\n\n// What design flaw exists in this Singleton?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 6,
+          "title": "Question 6",
+          "description": "",
+          "code": "class Service {\n    static shared_ptr<Service> instance;\npublic:\n    static shared_ptr<Service> getInstance() {\n        if (!instance) instance = make_shared<Service>();\n        return instance;\n    }\n};\n\n// Is this thread-safe? Why or why not?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 7,
+          "title": "Question 7",
+          "description": "",
+          "code": "class Manager {\npublic:\n    static Manager& getInstance() {\n        static Manager* instance = nullptr;\n        if (!instance) instance = new Manager();\n        return *instance;\n    }\n};\n\n// What happens if getInstance() is called during static destruction?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 8,
+          "title": "Question 8",
+          "description": "",
+          "code": "class Logger {\n    static once_flag flag;\n    static unique_ptr<Logger> instance;\npublic:\n    static Logger& getInstance() {\n        call_once(flag, []() {\n            instance.reset(new Logger());\n        });\n        return *instance;\n    }\n};\n\n// What are the advantages of std::call_once over Meyers Singleton?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 9,
+          "title": "Question 9",
+          "description": "",
+          "code": "class Config {\n    int value;\npublic:\n    static Config& getInstance() {\n        static Config instance;\n        return instance;\n    }\n\n    Config() : value(readFromFile()) {}\n\n    int readFromFile() {\n        // Opens file, reads value\n        return 42;\n    }\n};\n\n// What if readFromFile() throws an exception?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 10,
+          "title": "Question 10",
+          "description": "",
+          "code": "class Service {\n    static Service instance;\n    Service() {}\npublic:\n    static Service& getInstance() {\n        return instance;\n    }\n};\n\nService Service::instance;\n\n// What's the problem with this approach compared to Meyers Singleton?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 11,
+          "title": "Question 11",
+          "description": "",
+          "code": "class Manager {\n    static atomic<Manager*> instance;\npublic:\n    static Manager* getInstance() {\n        Manager* tmp = instance.load(memory_order_acquire);\n        if (!tmp) {\n            tmp = new Manager();\n            instance.store(tmp, memory_order_release);\n        }\n        return tmp;\n    }\n};\n\n// Is this lock-free Singleton implementation correct?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 12,
+          "title": "Question 12",
+          "description": "",
+          "code": "class Logger {\npublic:\n    static Logger& getInstance() {\n        static Logger instance;\n        return instance;\n    }\n\n    void log(const string& msg) {\n        file << msg << endl;\n    }\n\n    ~Logger() {\n        file.close();\n    }\nprivate:\n    ofstream file;\n    Logger() : file(\"log.txt\") {}\n};\n\n// Another static object logs during its destruction - is this safe?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 13,
+          "title": "Question 13",
+          "description": "",
+          "code": "// File1.cpp\nclass Service {\npublic:\n    static Service& getInstance() {\n        static Service instance;\n        return instance;\n    }\n};\n\n// File2.cpp (in a DLL/shared library)\nvoid libraryFunction() {\n    Service::getInstance().doWork();\n}\n\n// How many Service instances exist in this scenario?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 14,
+          "title": "Question 14",
+          "description": "",
+          "code": "class Database {\n    Database() {\n        if (failedToConnect()) throw runtime_error(\"Connection failed\");\n    }\npublic:\n    static Database& getInstance() {\n        static Database instance;\n        return instance;\n    }\n};\n\nint main() {\n    try {\n        Database::getInstance();\n    } catch(...) {\n        // Can I retry?\n    }\n}",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 15,
+          "title": "Question 15",
+          "description": "",
+          "code": "class Manager;\nextern Manager& getManager();  // Declaration\n\n// File1.cpp\nManager& getManager() {\n    static Manager instance;\n    return instance;\n}\n\n// File2.cpp\nManager& mgr = getManager();  // Global initialization\n\n// What problem can occur here?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 16,
+          "title": "Question 16",
+          "description": "",
+          "code": "class IService {\npublic:\n    virtual ~IService() = default;\n    virtual void execute() = 0;\n};\n\nclass ServiceFactory {\n    static unique_ptr<IService> instance;\npublic:\n    static IService& getInstance() {\n        if (!instance) instance = createService();\n        return *instance;\n    }\n    static void setTestInstance(unique_ptr<IService> svc) {\n        instance = move(svc);\n    }\n};\n\n// How does this design improve testability?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 17,
+          "title": "Question 17",
+          "description": "",
+          "code": "class Config {\npublic:\n    static Config& getInstance() {\n        static Config instance;\n        return instance;\n    }\n\n    void reload() {\n        // Re-read configuration\n    }\n};\n\n// Multiple threads call reload() - what synchronization is needed?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 18,
+          "title": "Question 18",
+          "description": "",
+          "code": "class ResourcePool {\n    static ResourcePool* instance;\n    vector<Resource> resources;\n\n    ResourcePool() {\n        for (int i = 0; i < 100; ++i) {\n            resources.emplace_back();  // Allocate 100 resources\n        }\n    }\npublic:\n    static ResourcePool& getInstance() {\n        static ResourcePool instance;\n        return instance;\n    }\n};\n\n// What are the implications of this design for startup time?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 19,
+          "title": "Question 19",
+          "description": "",
+          "code": "class Singleton {\nprotected:\n    Singleton() = default;\n    Singleton(const Singleton&) = delete;\n    Singleton& operator=(const Singleton&) = delete;\n};\n\nclass MyClass : public Singleton {\n    MyClass() = default;\npublic:\n    static MyClass& getInstance() {\n        static MyClass instance;\n        return instance;\n    }\n};\n\n// Can someone still create multiple instances of MyClass?",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 20,
+          "title": "Question 20",
+          "description": "---",
+          "code": "class Logger {\npublic:\n    static Logger& getInstance() {\n        static Logger instance;\n        return instance;\n    }\n\n    Logger& operator=(const Logger&) = delete;\n    Logger(const Logger&) = delete;\n    Logger(Logger&&) = delete;\n    Logger& operator=(Logger&&) = delete;\n};\n\n// Is this sufficient to prevent copying and moving?",
+          "expected_output": "",
+          "additional_code": []
+        }
+      ],
+      "quick_reference": {
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Race condition: multiple threads may create multiple instances | Without synchronization, multiple threads can pass the null check simultaneously and each create an instance | #race_condition #thread_safety |\n| 2 | Undefined behavior: accessing destroyed Singleton | If Logger is destroyed first, accessing it from Service destructor causes use-after-destruction undefined behavior | #destruction_order #undefined_behavior |\n| 3 | Inefficient: mutex locked on every access | While thread-safe, this locks mutex every time getInstance() is called, even after initialization. Meyers Singleton is faster. | #performance #synchronization_overhead |\n| 4 | Two instances: one for Logger, one for Config | Each template instantiation Singleton\\<T\\> has its own static instance. Logger and Config are separate types. | #templates #static_members |\n| 5 | Copy constructor not deleted, violates Singleton | Default copy constructor allows copying: `Database db2 = Database::getInstance();` creates second instance | #copy_semantics #design_flaw |\n| 6 | Not thread-safe: double-checked locking without atomics | Multiple threads can see null and create multiple shared_ptr instances. Needs mutex or atomic operations. | #thread_safety #shared_ptr |\n| 7 | Potential access to destroyed memory | Phoenix pattern: instance never deleted, remains accessible. Regular Meyers Singleton might be destroyed. | #static_destruction #lifetime |\n| 8 | std::call_once allows complex initialization with parameters; Meyers is simpler | call_once useful when initialization needs runtime parameters or complex error handling; Meyers simpler for basic cases | #initialization #call_once |\n| 9 | Exception during initialization; retried on next call | C++11 guarantees if static local construction throws, initialization guard resets and retries on next access | #exception_safety #initialization |\n| 10 | Static member initialized at program start, not lazy | Static member instance created during static initialization phase, whether used or not. Wastes resources if never accessed. | #static_initialization #lazy_init |\n| 11 | Not correct: potential double initialization | Race condition between load and store. Multiple threads can load null, create instances, and overwrite each other. Needs compare_exchange. | #atomics #lock_free |\n| 12 | Not safe: file might be closed when another static destructor tries to log | Destruction order between statics is reverse of initialization order. If other objects log during destruction, file might already be closed. | #destruction_order #raii |\n| 13 | Potentially two instances: one per DLL unless symbol exported | Each DLL gets its own copy of static locals unless explicitly shared via symbol export (__declspec(dllexport)) | #dll_boundaries #symbol_visibility |\n| 14 | Yes, Meyers Singleton retries on exception | If constructor throws, static initialization guard resets, allowing retry on next getInstance() call | #exception_handling #retry_logic |\n| 15 | Static initialization order fiasco | Order of static initialization across files undefined. If getManager() hasn't run yet, mgr references uninitialized instance. | #initialization_order #undefined_order |\n| 16 | Allows injecting mock implementations for testing | setTestInstance() allows replacing real implementation with test double, enabling unit testing without Singleton coupling | #testability #dependency_injection |\n| 17 | reload() needs mutex protection for internal state | getInstance() returns reference to static (thread-safe), but reload() modifies member data concurrently. Needs member mutex. | #thread_safety #data_races |\n| 18 | Lazy initialization defers 100 resource allocations until first use | Resources only allocated when getInstance() first called, not at program startup. Reduces startup time if rarely used. | #lazy_initialization #startup_time |\n| 19 | Yes, if they explicitly call the private constructor | Protected constructor still allows derived class and friends to construct. Need private constructor for true Singleton enforcement. | #access_control #inheritance |\n| 20 | Yes, sufficient if constructor is private | Deleting copy/move prevents accidental duplication. Private constructor (or protected in inheritance) prevents direct instantiation. | #rule_of_five #copy_prevention |\n\n#### Singleton Implementation Comparison\n\n| Implementation | Thread-Safe | Lazy Init | Testable | Performance | Complexity |\n|---------------|-------------|-----------|----------|-------------|------------|\n| Meyers (C++11) | ✅ Yes | ✅ Yes | ❌ No | ⚡ Excellent | 🟢 Low |\n| std::call_once | ✅ Yes | ✅ Yes | ⚠️ Partial | 🟡 Good | 🟡 Medium |\n| Mutex + unique_ptr | ✅ Yes | ✅ Yes | ⚠️ Partial | 🔴 Poor | 🟡 Medium |\n| Static member | ⚠️ Pre-C++11 | ❌ No | ❌ No | ⚡ Excellent | 🟢 Low |\n| Phoenix | ✅ Yes | ✅ Yes | ❌ No | ⚡ Excellent | 🟡 Medium |\n| Atomic + CAS | ✅ Yes | ✅ Yes | ❌ No | 🟢 Very Good | 🔴 High |\n| DI Factory | ✅ Depends | ⚠️ Flexible | ✅ Yes | 🟢 Good | 🔴 High |\n\n#### Thread-Safety Guarantees by C++ Version\n\n| Scenario | C++98/03 | C++11+ | Notes |\n|----------|----------|--------|-------|\n| Static local init | ❌ Not guaranteed | ✅ Guaranteed | C++11 §6.7/4 guarantees thread-safe init |\n| Static member init | ⚠️ Before main() | ⚠️ Before main() | Order undefined across TUs |\n| Function-local static | ❌ Race condition | ✅ Thread-safe | Compiler generates guards in C++11+ |\n| Heap allocation via new | ❌ Race condition | ❌ Still racy | Need explicit synchronization |\n| std::call_once | N/A | ✅ Thread-safe | Introduced in C++11 |\n\n#### Singleton Destruction Patterns\n\n| Pattern | Destroys Instance | Access During Destruction | Memory Leak |\n|---------|------------------|---------------------------|-------------|\n| Meyers Singleton | ✅ Yes | ⚠️ Undefined if destroyed | ❌ No |\n| Phoenix Singleton | ❌ Never | ✅ Always safe | ✅ Intentional |\n| unique_ptr heap | ✅ Yes | ⚠️ Undefined if destroyed | ❌ No |\n| shared_ptr | ✅ When refcount=0 | ✅ Safe if refs exist | ❌ No |\n| Manual new | ❌ Unless explicit delete | ✅ Always accessible | ✅ Yes |\n\n#### Singleton Use Cases in Autonomous Vehicles\n\n| Component | Pattern Choice | Rationale |\n|-----------|---------------|-----------|\n| Sensor Manager | Meyers | Single hardware interface, initialized on first sensor read |\n| Logger | Phoenix | Must be accessible during shutdown when other components log |\n| Configuration | std::call_once | Loaded from file with error handling, needs retry logic |\n| CAN Bus Driver | Meyers | Single hardware bus, thread-safe required, lazy init acceptable |\n| Device Registry | DI Factory | Multiple test implementations needed, testability critical |\n| Performance Monitor | Atomic Singleton | High-frequency access (10kHz+), lock-free critical |\n\n---",
+        "tables": [
+          "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Race condition: multiple threads may create multiple instances | Without synchronization, multiple threads can pass the null check simultaneously and each create an instance | #race_condition #thread_safety |\n| 2 | Undefined behavior: accessing destroyed Singleton | If Logger is destroyed first, accessing it from Service destructor causes use-after-destruction undefined behavior | #destruction_order #undefined_behavior |\n| 3 | Inefficient: mutex locked on every access | While thread-safe, this locks mutex every time getInstance() is called, even after initialization. Meyers Singleton is faster. | #performance #synchronization_overhead |\n| 4 | Two instances: one for Logger, one for Config | Each template instantiation Singleton\\<T\\> has its own static instance. Logger and Config are separate types. | #templates #static_members |\n| 5 | Copy constructor not deleted, violates Singleton | Default copy constructor allows copying: `Database db2 = Database::getInstance();` creates second instance | #copy_semantics #design_flaw |\n| 6 | Not thread-safe: double-checked locking without atomics | Multiple threads can see null and create multiple shared_ptr instances. Needs mutex or atomic operations. | #thread_safety #shared_ptr |\n| 7 | Potential access to destroyed memory | Phoenix pattern: instance never deleted, remains accessible. Regular Meyers Singleton might be destroyed. | #static_destruction #lifetime |\n| 8 | std::call_once allows complex initialization with parameters; Meyers is simpler | call_once useful when initialization needs runtime parameters or complex error handling; Meyers simpler for basic cases | #initialization #call_once |\n| 9 | Exception during initialization; retried on next call | C++11 guarantees if static local construction throws, initialization guard resets and retries on next access | #exception_safety #initialization |\n| 10 | Static member initialized at program start, not lazy | Static member instance created during static initialization phase, whether used or not. Wastes resources if never accessed. | #static_initialization #lazy_init |\n| 11 | Not correct: potential double initialization | Race condition between load and store. Multiple threads can load null, create instances, and overwrite each other. Needs compare_exchange. | #atomics #lock_free |\n| 12 | Not safe: file might be closed when another static destructor tries to log | Destruction order between statics is reverse of initialization order. If other objects log during destruction, file might already be closed. | #destruction_order #raii |\n| 13 | Potentially two instances: one per DLL unless symbol exported | Each DLL gets its own copy of static locals unless explicitly shared via symbol export (__declspec(dllexport)) | #dll_boundaries #symbol_visibility |\n| 14 | Yes, Meyers Singleton retries on exception | If constructor throws, static initialization guard resets, allowing retry on next getInstance() call | #exception_handling #retry_logic |\n| 15 | Static initialization order fiasco | Order of static initialization across files undefined. If getManager() hasn't run yet, mgr references uninitialized instance. | #initialization_order #undefined_order |\n| 16 | Allows injecting mock implementations for testing | setTestInstance() allows replacing real implementation with test double, enabling unit testing without Singleton coupling | #testability #dependency_injection |\n| 17 | reload() needs mutex protection for internal state | getInstance() returns reference to static (thread-safe), but reload() modifies member data concurrently. Needs member mutex. | #thread_safety #data_races |\n| 18 | Lazy initialization defers 100 resource allocations until first use | Resources only allocated when getInstance() first called, not at program startup. Reduces startup time if rarely used. | #lazy_initialization #startup_time |\n| 19 | Yes, if they explicitly call the private constructor | Protected constructor still allows derived class and friends to construct. Need private constructor for true Singleton enforcement. | #access_control #inheritance |\n| 20 | Yes, sufficient if constructor is private | Deleting copy/move prevents accidental duplication. Private constructor (or protected in inheritance) prevents direct instantiation. | #rule_of_five #copy_prevention |",
+          "| Implementation | Thread-Safe | Lazy Init | Testable | Performance | Complexity |\n|---------------|-------------|-----------|----------|-------------|------------|\n| Meyers (C++11) | ✅ Yes | ✅ Yes | ❌ No | ⚡ Excellent | 🟢 Low |\n| std::call_once | ✅ Yes | ✅ Yes | ⚠️ Partial | 🟡 Good | 🟡 Medium |\n| Mutex + unique_ptr | ✅ Yes | ✅ Yes | ⚠️ Partial | 🔴 Poor | 🟡 Medium |\n| Static member | ⚠️ Pre-C++11 | ❌ No | ❌ No | ⚡ Excellent | 🟢 Low |\n| Phoenix | ✅ Yes | ✅ Yes | ❌ No | ⚡ Excellent | 🟡 Medium |\n| Atomic + CAS | ✅ Yes | ✅ Yes | ❌ No | 🟢 Very Good | 🔴 High |\n| DI Factory | ✅ Depends | ⚠️ Flexible | ✅ Yes | 🟢 Good | 🔴 High |",
+          "| Scenario | C++98/03 | C++11+ | Notes |\n|----------|----------|--------|-------|\n| Static local init | ❌ Not guaranteed | ✅ Guaranteed | C++11 §6.7/4 guarantees thread-safe init |\n| Static member init | ⚠️ Before main() | ⚠️ Before main() | Order undefined across TUs |\n| Function-local static | ❌ Race condition | ✅ Thread-safe | Compiler generates guards in C++11+ |\n| Heap allocation via new | ❌ Race condition | ❌ Still racy | Need explicit synchronization |\n| std::call_once | N/A | ✅ Thread-safe | Introduced in C++11 |",
+          "| Pattern | Destroys Instance | Access During Destruction | Memory Leak |\n|---------|------------------|---------------------------|-------------|\n| Meyers Singleton | ✅ Yes | ⚠️ Undefined if destroyed | ❌ No |\n| Phoenix Singleton | ❌ Never | ✅ Always safe | ✅ Intentional |\n| unique_ptr heap | ✅ Yes | ⚠️ Undefined if destroyed | ❌ No |\n| shared_ptr | ✅ When refcount=0 | ✅ Safe if refs exist | ❌ No |\n| Manual new | ❌ Unless explicit delete | ✅ Always accessible | ✅ Yes |",
+          "| Component | Pattern Choice | Rationale |\n|-----------|---------------|-----------|\n| Sensor Manager | Meyers | Single hardware interface, initialized on first sensor read |\n| Logger | Phoenix | Must be accessible during shutdown when other components log |\n| Configuration | std::call_once | Loaded from file with error handling, needs retry logic |\n| CAN Bus Driver | Meyers | Single hardware bus, thread-safe required, lazy init acceptable |\n| Device Registry | DI Factory | Multiple test implementations needed, testability critical |\n| Performance Monitor | Atomic Singleton | High-frequency access (10kHz+), lock-free critical |"
+        ]
+      }
+    },
+    {
+      "topic": "topic_2_functor_pattern",
+      "filename": "topic_2_functor_pattern.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_3_crtp_pattern",
+      "filename": "topic_3_crtp_pattern.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_4_object_pool",
+      "filename": "topic_4_object_pool.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "STL-like Custom Vector Implementation",
+      "filename": "topic_5_custom_vector.md",
+      "theory": {
+        "subsections": [
+          {
+            "title": "What is a Custom Vector?",
+            "content": "A **Custom Vector** is a template class that mimics `std::vector<T>`, providing:\n- **Dynamic array behavior**: Automatic growth when capacity is exceeded\n- **RAII semantics**: Automatic memory management via constructor/destructor\n- **Value semantics**: Proper copy and move constructors/assignments\n- **Iterator support**: Range-for loop compatibility and STL algorithm integration\n- **Exception safety**: Strong guarantees via copy-and-swap idiom\n\nKey components of a Vector implementation:\n```cpp\ntemplate <typename T>\nclass Vector {\n    T* data;              // Pointer to heap-allocated array\n    std::size_t size;     // Current number of elements\n    std::size_t capacity; // Total allocated space\n};\n```"
+          },
+          {
+            "title": "Why Custom Vector Matters in Autonomous Driving",
+            "content": "In autonomous vehicle software, understanding dynamic containers is crucial for:\n1. **LiDAR point cloud buffers**: Storing variable-sized sensor data (100K-2M points per frame)\n2. **Object detection results**: Dynamic lists of detected vehicles, pedestrians, traffic signs\n3. **Path planning waypoints**: Variable-length trajectory representations\n4. **Memory optimization**: Understanding when to use `reserve()` vs `resize()` for real-time performance\n5. **Exception safety**: Ensuring sensor data structures remain valid even when memory allocation fails\n\nPerformance considerations:\n- **Reallocation cost**: Growing from capacity N to 2N requires O(N) copying\n- **Amortized O(1) insertion**: Doubling strategy ensures push_back averages constant time\n- **Memory overhead**: Typical capacity is 1.5x-2x actual size\n- **Cache locality**: Contiguous storage (unlike `std::list`) for better CPU cache performance"
+          },
+          {
+            "title": "Vector vs Array vs List",
+            "content": "| Feature | Custom Vector | std::array | std::list |\n|---------|--------------|------------|-----------|\n| Size | Dynamic | Fixed at compile-time | Dynamic |\n| Memory | Contiguous | Contiguous | Non-contiguous (nodes) |\n| Reallocation | Yes (when capacity exceeded) | Never | Never |\n| Random Access | O(1) | O(1) | O(N) |\n| Insertion at end | O(1) amortized | N/A (fixed size) | O(1) |\n| Memory locality | Excellent | Excellent | Poor |\n| Iterator invalidation | On reallocation | Never | Only deleted elements |\n| Use case | Variable-size data | Fixed-size data | Frequent insertion/deletion |\n\nReal-world example from autonomous driving:\n```cpp\n// LiDAR point cloud processor\nclass LidarProcessor {\n    Vector<Point3D> point_cloud;  // Dynamic size (varies by frame)\n\n    void processFrame(const LidarData& data) {\n        point_cloud.clear();\n        point_cloud.reserve(data.expected_points);  // Avoid reallocations\n\n        for (const auto& raw_point : data) {\n            Point3D processed = preprocess(raw_point);\n            point_cloud.push_back(std::move(processed));  // Move semantics\n        }\n\n        // point_cloud now contains 100K-2M points in contiguous memory\n        // Excellent cache locality for subsequent algorithms\n    }\n};\n```\n\n---"
+          }
+        ],
+        "full_text": "The **Custom Vector** (or STL-like Dynamic Array) is a fundamental container implementation that demonstrates core C++ concepts: RAII, dynamic memory management, move semantics, iterators, and exception safety. While not a \"design pattern\" in the traditional sense (like Singleton or Factory), implementing a custom `Vector<T>` class is a critical exercise in understanding how STL containers work internally and mastering C++'s memory model.\n\n#### What is a Custom Vector?\n\nA **Custom Vector** is a template class that mimics `std::vector<T>`, providing:\n- **Dynamic array behavior**: Automatic growth when capacity is exceeded\n- **RAII semantics**: Automatic memory management via constructor/destructor\n- **Value semantics**: Proper copy and move constructors/assignments\n- **Iterator support**: Range-for loop compatibility and STL algorithm integration\n- **Exception safety**: Strong guarantees via copy-and-swap idiom\n\nKey components of a Vector implementation:\n```cpp\ntemplate <typename T>\nclass Vector {\n    T* data;              // Pointer to heap-allocated array\n    std::size_t size;     // Current number of elements\n    std::size_t capacity; // Total allocated space\n};\n```\n\n#### Why Custom Vector Matters in Autonomous Driving\n\nIn autonomous vehicle software, understanding dynamic containers is crucial for:\n1. **LiDAR point cloud buffers**: Storing variable-sized sensor data (100K-2M points per frame)\n2. **Object detection results**: Dynamic lists of detected vehicles, pedestrians, traffic signs\n3. **Path planning waypoints**: Variable-length trajectory representations\n4. **Memory optimization**: Understanding when to use `reserve()` vs `resize()` for real-time performance\n5. **Exception safety**: Ensuring sensor data structures remain valid even when memory allocation fails\n\nPerformance considerations:\n- **Reallocation cost**: Growing from capacity N to 2N requires O(N) copying\n- **Amortized O(1) insertion**: Doubling strategy ensures push_back averages constant time\n- **Memory overhead**: Typical capacity is 1.5x-2x actual size\n- **Cache locality**: Contiguous storage (unlike `std::list`) for better CPU cache performance\n\n#### Vector vs Array vs List\n\n| Feature | Custom Vector | std::array | std::list |\n|---------|--------------|------------|-----------|\n| Size | Dynamic | Fixed at compile-time | Dynamic |\n| Memory | Contiguous | Contiguous | Non-contiguous (nodes) |\n| Reallocation | Yes (when capacity exceeded) | Never | Never |\n| Random Access | O(1) | O(1) | O(N) |\n| Insertion at end | O(1) amortized | N/A (fixed size) | O(1) |\n| Memory locality | Excellent | Excellent | Poor |\n| Iterator invalidation | On reallocation | Never | Only deleted elements |\n| Use case | Variable-size data | Fixed-size data | Frequent insertion/deletion |\n\nReal-world example from autonomous driving:\n```cpp\n// LiDAR point cloud processor\nclass LidarProcessor {\n    Vector<Point3D> point_cloud;  // Dynamic size (varies by frame)\n\n    void processFrame(const LidarData& data) {\n        point_cloud.clear();\n        point_cloud.reserve(data.expected_points);  // Avoid reallocations\n\n        for (const auto& raw_point : data) {\n            Point3D processed = preprocess(raw_point);\n            point_cloud.push_back(std::move(processed));  // Move semantics\n        }\n\n        // point_cloud now contains 100K-2M points in contiguous memory\n        // Excellent cache locality for subsequent algorithms\n    }\n};\n```\n\n---"
+      },
+      "edge_cases": [
+        {
+          "title": "Iterator Invalidation on Reallocation",
+          "explanation": "When `Vector` reallocates (during `push_back`, `reserve`, `resize`), all existing iterators, pointers, and references to elements become **invalid**. This is a common source of bugs.\n\n\n\n**Why it happens**: Reallocation involves:\n1. Allocate new larger buffer (`new T[new_capacity]`)\n2. Copy/move elements from old buffer to new buffer\n3. Delete old buffer (`delete[] old_data`)\n4. All pointers to old buffer now point to freed memory\n\n**Real-world autonomous vehicle impact**:\n\n\n**Key takeaway**: Always call `reserve()` before a loop that may insert elements, or use index-based access instead of iterators.\n\n---",
+          "code_examples": [
+            "Vector<int> v = {1, 2, 3};\nv.reserve(10);  // capacity = 10, no reallocation yet\n\nint* ptr = &v[1];  // ptr points to element at index 1\nauto it = v.begin() + 1;\n\nv.push_back(4);  // No reallocation (capacity sufficient)\nstd::cout << *ptr;  // ✅ OK: ptr still valid\n\n// Now exceed capacity\nfor (int i = 5; i < 15; ++i) {\n    v.push_back(i);  // ❌ Reallocation happens at i=11\n}\n\n// After reallocation:\nstd::cout << *ptr;  // ❌ UNDEFINED BEHAVIOR: ptr points to freed memory\nstd::cout << *it;   // ❌ UNDEFINED BEHAVIOR: iterator invalidated",
+            "// ❌ BUG: Processing point cloud with invalidated iterators\nvoid processLidar(Vector<Point3D>& cloud) {\n    auto it = cloud.begin();\n\n    for (size_t i = 0; i < cloud.size(); ++i) {\n        if (needsFiltering(cloud[i])) {\n            cloud.push_back(interpolate(cloud[i]));  // May reallocate!\n            // 'it' is now invalid if reallocation occurred\n        }\n        ++it;  // ❌ CRASH: dereferencing invalidated iterator\n    }\n}\n\n// ✅ FIX: Reserve capacity or use index-based access\nvoid processLidarSafe(Vector<Point3D>& cloud) {\n    size_t original_size = cloud.size();\n    cloud.reserve(original_size * 2);  // Prevent reallocation\n\n    for (size_t i = 0; i < original_size; ++i) {\n        if (needsFiltering(cloud[i])) {\n            cloud.push_back(interpolate(cloud[i]));  // No reallocation\n        }\n    }\n}"
+          ]
+        },
+        {
+          "title": "Copy Assignment Exception Safety (Basic Guarantee vs Strong Guarantee)",
+          "explanation": "A naive copy assignment operator can leave the object in a **broken state** if an exception is thrown during copying:\n\n\n\n**Strong exception guarantee solution** (copy-and-swap idiom):\n\n\n\n**Why this is better**:\n1. `Vector<T> temp(other)` does all risky operations (allocation, copying)\n2. If temp construction throws → `*this` remains **unchanged** (strong guarantee)\n3. If temp construction succeeds → `swap()` just exchanges pointers (noexcept)\n4. temp's destructor cleans up old data\n\n**Key takeaway**: Use copy-and-swap idiom for assignment operators to achieve strong exception safety.\n\n---",
+          "code_examples": [
+            "// ❌ UNSAFE: Basic exception guarantee (broken state possible)\nVector<T>& operator=(const Vector<T>& other) {\n    if (this != &other) {\n        delete[] data;  // Delete old data first\n        size = other.size;\n        capacity = other.capacity;\n        data = new T[capacity];  // ✅ May throw (allocation failure)\n\n        for (size_t i = 0; i < size; ++i) {\n            data[i] = other.data[i];  // ❌ May throw (T's copy throws)\n        }\n    }\n    return *this;\n}\n\n// Problem scenario:\nstruct ExpensiveObject {\n    ExpensiveObject(const ExpensiveObject& other) {\n        if (rand() % 10 == 0) throw std::runtime_error(\"copy failed\");\n        // ... copying logic ...\n    }\n};\n\nVector<ExpensiveObject> v1 = {obj1, obj2, obj3};\nVector<ExpensiveObject> v2 = {obj4, obj5};\n\nv1 = v2;  // ❌ If copy throws at i=2:\n          //    - v1.data is deleted (old data gone)\n          //    - new allocation succeeded\n          //    - first 2 elements copied\n          //    - exception thrown at element 3\n          //    - v1 now has partially-copied data (BROKEN STATE!)\n          //    - v1.size=3 but only 2 elements valid",
+            "// ✅ SAFE: Strong exception guarantee (all-or-nothing)\nVector<T>& operator=(const Vector<T>& other) {\n    if (this != &other) {\n        Vector<T> temp(other);  // ✅ May throw, but *this unchanged\n        swap(temp);             // ❌ Won't throw (just pointer swaps)\n    }\n    return *this;\n}\n// When temp goes out of scope, destructor cleans up old data\n\nvoid swap(Vector<T>& other) noexcept {\n    std::swap(data, other.data);\n    std::swap(size, other.size);\n    std::swap(capacity, other.capacity);\n}"
+          ]
+        },
+        {
+          "title": "Return-by-Reference vs Return-by-Value for Iterators",
+          "explanation": "A common mistake when implementing `begin()` and `end()` is returning references to **local variables**:\n\n\n\n**Correct implementation** (return by value):\n\n\n\n**Why return by value is correct**:\n- Iterators are lightweight (typically just a pointer)\n- Returning by value creates a copy, avoiding dangling references\n- RVO (Return Value Optimization) often eliminates the copy anyway\n- Local variable `it` is destroyed, but the **returned copy** is valid\n\n**Key takeaway**: Always return iterators by value, never by reference to locals.\n\n---",
+          "code_examples": [
+            "// ❌ BUG: Returning reference to local variable\nIterator begin() {\n    Iterator it(data);  // 'it' is a local variable on the stack\n    return it;          // ❌ Returns by value (correct!)\n}\n\n// ❌ CRITICAL BUG: Returning reference to local\nIterator& begin() {\n    Iterator it(data);  // 'it' is destroyed when function returns\n    return it;          // ❌ UNDEFINED BEHAVIOR: dangling reference!\n}\n\n// Usage:\nVector<int> v = {1, 2, 3};\nauto it = v.begin();  // ❌ 'it' refers to destroyed local variable\nstd::cout << *it;     // ❌ CRASH or garbage value",
+            "// ✅ Correct: Return by value\nIterator begin() { return Iterator(data); }\nIterator end()   { return Iterator(data + size); }\n\nConst_Iterator cbegin() const { return Const_Iterator(data); }\nConst_Iterator cend()   const { return Const_Iterator(data + size); }\n\n// Iterator is lightweight (just a pointer wrapper), so returning by value is fine\nclass Iterator {\n    T* ptr;  // 8 bytes on 64-bit systems\npublic:\n    Iterator(T* p) : ptr(p) {}\n    // Cheap to copy\n};"
+          ]
+        },
+        {
+          "title": "Move Constructor and Moved-From State",
+          "explanation": "After move construction/assignment, the **moved-from object** must remain in a **valid but unspecified state**:\n\n\n\n**Common bug: Not resetting moved-from object**:\n\n\n\n**Correct implementation**:\n\n\n\n**Real-world implication** (autonomous driving):\n\n\n**Key takeaway**: Always reset moved-from objects to a valid state (nullptr for pointers, 0 for sizes).\n\n---",
+          "code_examples": [
+            "// ✅ Correct move constructor\nVector(Vector<T>&& other) noexcept\n    : data(nullptr), size(0), capacity(0)\n{\n    swap(other);  // Exchange internals\n}\n\n// After move:\nVector<int> v1 = {1, 2, 3};\nVector<int> v2 = std::move(v1);\n\n// v1 is now in \"moved-from\" state:\n// - v1.data = nullptr\n// - v1.size = 0\n// - v1.capacity = 0\n// ✅ v1 can still be destroyed safely (destructor handles nullptr)\n// ✅ v1 can be reassigned: v1 = {4, 5, 6};\n// ❌ v1[0] is undefined behavior (size is 0)",
+            "// ❌ BUG: Moved-from object not in valid state\nVector(Vector<T>&& other) noexcept {\n    data = other.data;\n    size = other.size;\n    capacity = other.capacity;\n    // ❌ Forgot to reset other.data to nullptr!\n}\n\n// Destructor of moved-from object:\n~Vector() {\n    delete[] data;  // ❌ DOUBLE DELETE! Both objects delete same memory\n}",
+            "// ✅ Using swap (automatic reset)\nVector(Vector<T>&& other) noexcept\n    : data(nullptr), size(0), capacity(0)\n{\n    swap(other);  // other gets nullptr, 0, 0\n}\n\n// ✅ Manual reset\nVector(Vector<T>&& other) noexcept\n    : data(other.data), size(other.size), capacity(other.capacity)\n{\n    other.data = nullptr;\n    other.size = 0;\n    other.capacity = 0;\n}",
+            "// Sensor data processing with move semantics\nVector<Point3D> processLidar(Vector<Point3D> raw_cloud) {\n    Vector<Point3D> filtered;\n    filtered.reserve(raw_cloud.size());\n\n    for (const auto& pt : raw_cloud) {\n        if (isValid(pt)) filtered.push_back(pt);\n    }\n\n    return filtered;  // Move semantics (RVO or move constructor)\n}\n\n// Usage:\nVector<Point3D> cloud = getLidarData();\nVector<Point3D> processed = processLidar(std::move(cloud));\n// 'cloud' is moved-from but still valid (can be reassigned or destroyed)"
+          ]
+        },
+        {
+          "title": "Reserve vs Resize Semantics",
+          "explanation": "Confusing `reserve()` and `resize()` leads to bugs because they have **different effects** on size:\n\n\n\n**reserve() behavior**:\n\n\n**resize() behavior**:\n\n\n**Real-world scenario** (autonomous driving):\n\n\n**Key takeaway**: Use `reserve()` to optimize insertion performance (avoid reallocations), use `resize()` to actually create elements.\n\n---",
+          "code_examples": [
+            "Vector<int> v;\n\n// reserve(): Changes capacity, NOT size\nv.reserve(100);\nstd::cout << v.size();      // 0 (no elements constructed)\nstd::cout << v.capacity();  // 100 (space allocated)\nv[50] = 42;  // ❌ UNDEFINED BEHAVIOR: index out of bounds (size is 0!)\n\n// resize(): Changes size (constructs/destructs elements)\nv.resize(100);\nstd::cout << v.size();      // 100 (elements default-constructed)\nstd::cout << v.capacity();  // ≥100 (at least 100)\nv[50] = 42;  // ✅ OK: element exists",
+            "void reserve(size_t new_cap) {\n    if (new_cap <= capacity) return;  // No-op if sufficient\n\n    T* new_data = new T[new_cap];  // Allocate larger buffer\n    for (size_t i = 0; i < size; ++i) {\n        new_data[i] = std::move(data[i]);  // Move existing elements\n    }\n    delete[] data;\n    data = new_data;\n    capacity = new_cap;\n    // size UNCHANGED\n}",
+            "void resize(size_t new_size, const T& val = T{}) {\n    if (new_size < size) {\n        size = new_size;  // Shrink (no reallocation)\n    } else if (new_size > size) {\n        if (new_size > capacity) reserve(new_size);  // Grow capacity if needed\n        for (size_t i = size; i < new_size; ++i) {\n            data[i] = val;  // Default-construct new elements\n        }\n        size = new_size;\n    }\n}",
+            "// Preallocating LiDAR point buffer\nclass LidarBuffer {\n    Vector<Point3D> points;\n\n    void prepareForFrame(size_t expected_point_count) {\n        // ✅ Use reserve() to avoid reallocations during insertion\n        points.clear();\n        points.reserve(expected_point_count);\n        // size = 0, capacity = expected_point_count\n        // Ready for push_back() without reallocation\n    }\n\n    void initializeWithDefaults(size_t point_count) {\n        // ✅ Use resize() to create default-constructed points\n        points.resize(point_count);  // Creates point_count elements\n        // size = point_count, all elements initialized to Point3D{}\n\n        // Now can assign directly:\n        for (size_t i = 0; i < point_count; ++i) {\n            points[i] = readSensorData(i);\n        }\n    }\n};"
+          ]
+        }
+      ],
+      "code_examples": [
+        {
+          "title": "Basic Vector Implementation (Easy Level)",
+          "explanation": "This basic implementation demonstrates:\n- RAII: Memory automatically freed in destructor\n- Dynamic growth: Capacity doubles when full (amortized O(1) insertion)\n- Deep copy: Copy constructor copies all elements\n- No move semantics yet (covered in mid-level)\n\n**Real-world usage**: Storing variable-sized sensor data frames where size is unknown at compile time.\n\n---",
+          "code": "#include <iostream>\n#include <cstddef>\n\n// Minimal Vector implementation with dynamic growth\ntemplate <typename T>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n\npublic:\n    // Constructor\n    Vector() : data(nullptr), size(0), capacity(0) {}\n\n    // Destructor (RAII cleanup)\n    ~Vector() {\n        delete[] data;\n    }\n\n    // Copy constructor\n    Vector(const Vector<T>& other)\n        : data(new T[other.capacity]),\n          size(other.size),\n          capacity(other.capacity)\n    {\n        for (std::size_t i = 0; i < size; ++i) {\n            data[i] = other.data[i];  // Deep copy\n        }\n    }\n\n    // Copy assignment\n    Vector<T>& operator=(const Vector<T>& other) {\n        if (this != &other) {\n            delete[] data;\n            size = other.size;\n            capacity = other.capacity;\n            data = new T[capacity];\n            for (std::size_t i = 0; i < size; ++i) {\n                data[i] = other.data[i];\n            }\n        }\n        return *this;\n    }\n\n    // Push back with automatic growth\n    void push_back(const T& value) {\n        if (size == capacity) {\n            // Double capacity (or 1 if empty)\n            std::size_t new_cap = (capacity == 0) ? 1 : capacity * 2;\n            T* new_data = new T[new_cap];\n\n            // Copy existing elements\n            for (std::size_t i = 0; i < size; ++i) {\n                new_data[i] = data[i];\n            }\n\n            delete[] data;\n            data = new_data;\n            capacity = new_cap;\n        }\n        data[size++] = value;\n    }\n\n    // Element access\n    T& operator[](std::size_t index) { return data[index]; }\n    const T& operator[](std::size_t index) const { return data[index]; }\n\n    std::size_t get_size() const { return size; }\n    std::size_t get_capacity() const { return capacity; }\n    bool empty() const { return size == 0; }\n};\n\n// Usage example: Simple particle system\nstruct Particle {\n    float x, y, vx, vy;\n};\n\nint main() {\n    Vector<Particle> particles;\n\n    // Add particles\n    for (int i = 0; i < 5; ++i) {\n        particles.push_back({float(i), float(i*2), 1.0f, -1.0f});\n    }\n\n    std::cout << \"Particle count: \" << particles.get_size() << \"\\n\";\n    std::cout << \"Capacity: \" << particles.get_capacity() << \"\\n\";\n    // Output: Particle count: 5, Capacity: 8 (doubled from 4)\n\n    return 0;\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Vector with Reserve and Move Semantics (Mid Level)",
+          "explanation": "This mid-level implementation adds:\n- **Move semantics**: Efficient transfer of resources (no deep copy)\n- **reserve()**: Preallocate capacity to avoid reallocations\n- **resize()**: Change size, construct/destruct elements\n- **Copy-and-swap idiom**: Exception-safe assignment\n- **Move overload for push_back**: Optimize temporary insertion\n\n**Performance benefit**: Moving a `CameraFrame` (3 pointer swaps) vs copying (copying 6MB pixel buffer).\n\n---",
+          "code": "#include <iostream>\n#include <utility>  // std::move, std::swap\n\ntemplate <typename T>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n\npublic:\n    Vector() : data(nullptr), size(0), capacity(0) {}\n\n    ~Vector() { delete[] data; }\n\n    // Copy constructor\n    Vector(const Vector<T>& other)\n        : data(nullptr), size(0), capacity(0)\n    {\n        reserve(other.size);\n        for (std::size_t i = 0; i < other.size; ++i) {\n            data[i] = other.data[i];\n        }\n        size = other.size;\n    }\n\n    // Move constructor (steal resources)\n    Vector(Vector<T>&& other) noexcept\n        : data(nullptr), size(0), capacity(0)\n    {\n        std::swap(data, other.data);\n        std::swap(size, other.size);\n        std::swap(capacity, other.capacity);\n        // 'other' now has nullptr, 0, 0\n    }\n\n    // Copy assignment (copy-and-swap idiom)\n    Vector<T>& operator=(const Vector<T>& other) {\n        if (this != &other) {\n            Vector<T> temp(other);  // May throw\n            std::swap(data, temp.data);\n            std::swap(size, temp.size);\n            std::swap(capacity, temp.capacity);\n            // temp destructor cleans up old data\n        }\n        return *this;\n    }\n\n    // Move assignment\n    Vector<T>& operator=(Vector<T>&& other) noexcept {\n        if (this != &other) {\n            std::swap(data, other.data);\n            std::swap(size, other.size);\n            std::swap(capacity, other.capacity);\n        }\n        return *this;\n    }\n\n    // Reserve capacity (no size change)\n    void reserve(std::size_t new_cap) {\n        if (new_cap <= capacity) return;\n\n        T* new_data = new T[new_cap];\n        for (std::size_t i = 0; i < size; ++i) {\n            new_data[i] = std::move(data[i]);  // Move semantics\n        }\n        delete[] data;\n        data = new_data;\n        capacity = new_cap;\n    }\n\n    // Resize (change size, construct/destruct elements)\n    void resize(std::size_t new_size, const T& val = T{}) {\n        if (new_size > capacity) reserve(new_size);\n\n        if (new_size > size) {\n            // Construct new elements\n            for (std::size_t i = size; i < new_size; ++i) {\n                data[i] = val;\n            }\n        }\n        size = new_size;\n    }\n\n    // Push back with move overload\n    void push_back(const T& value) {\n        if (size == capacity) reserve(capacity == 0 ? 1 : capacity * 2);\n        data[size++] = value;\n    }\n\n    void push_back(T&& value) {\n        if (size == capacity) reserve(capacity == 0 ? 1 : capacity * 2);\n        data[size++] = std::move(value);  // Move instead of copy\n    }\n\n    T& operator[](std::size_t index) { return data[index]; }\n    const T& operator[](std::size_t index) const { return data[index]; }\n\n    std::size_t get_size() const { return size; }\n    std::size_t get_capacity() const { return capacity; }\n    bool empty() const { return size == 0; }\n\n    T& back() { return data[size - 1]; }\n    void pop_back() { --size; }\n};\n\n// Autonomous driving: Camera frame buffer\nstruct CameraFrame {\n    uint8_t* pixels;  // Large image data\n    size_t width, height;\n\n    CameraFrame() : pixels(nullptr), width(0), height(0) {}\n\n    // Move constructor (avoid copying large pixel buffer)\n    CameraFrame(CameraFrame&& other) noexcept\n        : pixels(other.pixels), width(other.width), height(other.height)\n    {\n        other.pixels = nullptr;\n    }\n\n    ~CameraFrame() { delete[] pixels; }\n};\n\nint main() {\n    Vector<CameraFrame> frame_buffer;\n\n    // Reserve space to avoid reallocations\n    frame_buffer.reserve(60);  // 60 fps buffer\n\n    for (int i = 0; i < 60; ++i) {\n        CameraFrame frame;\n        frame.width = 1920;\n        frame.height = 1080;\n        frame.pixels = new uint8_t[1920 * 1080 * 3];  // RGB\n\n        // Move frame into buffer (no copy of large pixel data)\n        frame_buffer.push_back(std::move(frame));\n    }\n\n    std::cout << \"Frames buffered: \" << frame_buffer.get_size() << \"\\n\";\n    // Output: Frames buffered: 60 (no reallocations due to reserve)\n\n    return 0;\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Vector with Iterators (Advanced Level)",
+          "explanation": "This advanced implementation adds:\n- **Random access iterators**: Full STL iterator traits\n- **Range-for support**: `begin()` and `end()` enable `for (auto x : vec)`\n- **STL algorithm compatibility**: Works with `std::sort`, `std::find`, `std::copy`, etc.\n- **Const iterators**: For read-only traversal\n- **Iterator arithmetic**: `it + 5`, `it - 3`, `it2 - it1`\n\n**Real-world benefit**: Seamless integration with STL algorithms for object detection sorting, filtering, and processing.\n\n---",
+          "code": "#include <iostream>\n#include <iterator>  // std::iterator_traits\n#include <algorithm> // std::sort\n\ntemplate <typename T>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n\npublic:\n    // ... constructors, destructor, etc. (same as before) ...\n\n    Vector() : data(nullptr), size(0), capacity(0) {}\n    ~Vector() { delete[] data; }\n\n    // Iterator implementation\n    class Iterator {\n    private:\n        T* ptr;\n    public:\n        // Iterator traits (required for STL compatibility)\n        using difference_type = std::ptrdiff_t;\n        using value_type = T;\n        using pointer = T*;\n        using reference = T&;\n        using iterator_category = std::random_access_iterator_tag;\n\n        explicit Iterator(T* p = nullptr) : ptr(p) {}\n\n        // Dereference operators\n        T& operator*() const { return *ptr; }\n        T* operator->() const { return ptr; }\n\n        // Increment/decrement\n        Iterator& operator++() { ++ptr; return *this; }\n        Iterator operator++(int) { Iterator tmp = *this; ++ptr; return tmp; }\n        Iterator& operator--() { --ptr; return *this; }\n        Iterator operator--(int) { Iterator tmp = *this; --ptr; return tmp; }\n\n        // Arithmetic operators (random access)\n        Iterator operator+(difference_type n) const { return Iterator(ptr + n); }\n        Iterator operator-(difference_type n) const { return Iterator(ptr - n); }\n        difference_type operator-(const Iterator& other) const { return ptr - other.ptr; }\n\n        // Comparison operators\n        bool operator==(const Iterator& other) const { return ptr == other.ptr; }\n        bool operator!=(const Iterator& other) const { return ptr != other.ptr; }\n        bool operator<(const Iterator& other) const { return ptr < other.ptr; }\n        bool operator>(const Iterator& other) const { return ptr > other.ptr; }\n\n        // Subscript operator\n        T& operator[](difference_type n) const { return ptr[n]; }\n    };\n\n    // Const iterator\n    class ConstIterator {\n    private:\n        const T* ptr;\n    public:\n        using difference_type = std::ptrdiff_t;\n        using value_type = T;\n        using pointer = const T*;\n        using reference = const T&;\n        using iterator_category = std::random_access_iterator_tag;\n\n        explicit ConstIterator(const T* p = nullptr) : ptr(p) {}\n\n        const T& operator*() const { return *ptr; }\n        const T* operator->() const { return ptr; }\n\n        ConstIterator& operator++() { ++ptr; return *this; }\n        ConstIterator operator++(int) { ConstIterator tmp = *this; ++ptr; return tmp; }\n\n        bool operator==(const ConstIterator& other) const { return ptr == other.ptr; }\n        bool operator!=(const ConstIterator& other) const { return ptr != other.ptr; }\n    };\n\n    // Iterator access methods\n    Iterator begin() { return Iterator(data); }\n    Iterator end() { return Iterator(data + size); }\n\n    ConstIterator begin() const { return ConstIterator(data); }\n    ConstIterator end() const { return ConstIterator(data + size); }\n\n    ConstIterator cbegin() const { return ConstIterator(data); }\n    ConstIterator cend() const { return ConstIterator(data + size); }\n\n    // ... other methods ...\n    void push_back(const T& value) {\n        if (size == capacity) {\n            std::size_t new_cap = capacity == 0 ? 1 : capacity * 2;\n            T* new_data = new T[new_cap];\n            for (std::size_t i = 0; i < size; ++i) {\n                new_data[i] = std::move(data[i]);\n            }\n            delete[] data;\n            data = new_data;\n            capacity = new_cap;\n        }\n        data[size++] = value;\n    }\n\n    T& operator[](std::size_t idx) { return data[idx]; }\n    std::size_t get_size() const { return size; }\n};\n\n// Autonomous driving: Object detection with STL algorithms\nstruct DetectedObject {\n    float distance;\n    float confidence;\n    std::string type;  // \"car\", \"pedestrian\", \"bike\"\n};\n\nint main() {\n    Vector<DetectedObject> objects;\n\n    objects.push_back({15.2f, 0.95f, \"car\"});\n    objects.push_back({8.5f, 0.89f, \"pedestrian\"});\n    objects.push_back({22.1f, 0.78f, \"bike\"});\n    objects.push_back({5.3f, 0.98f, \"car\"});\n\n    // Range-for loop (enabled by begin/end)\n    std::cout << \"All detected objects:\\n\";\n    for (const auto& obj : objects) {\n        std::cout << obj.type << \" at \" << obj.distance << \"m\\n\";\n    }\n\n    // STL algorithm usage (enabled by random access iterators)\n    std::sort(objects.begin(), objects.end(),\n        [](const DetectedObject& a, const DetectedObject& b) {\n            return a.distance < b.distance;  // Sort by distance\n        });\n\n    std::cout << \"\\nSorted by distance:\\n\";\n    for (const auto& obj : objects) {\n        std::cout << obj.type << \" at \" << obj.distance << \"m\\n\";\n    }\n\n    // Output:\n    // All detected objects:\n    // car at 15.2m\n    // pedestrian at 8.5m\n    // bike at 22.1m\n    // car at 5.3m\n    //\n    // Sorted by distance:\n    // car at 5.3m\n    // pedestrian at 8.5m\n    // car at 15.2m\n    // bike at 22.1m\n\n    return 0;\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Exception-Safe Vector with Copy-and-Swap (Advanced)",
+          "explanation": "This demonstrates:\n- **Strong exception guarantee**: Copy assignment uses copy-and-swap idiom\n- **Exception handling in copy constructor**: Try-catch with cleanup\n- **Moved-from state validity**: Objects can still be destroyed after move\n- **Testing exception safety**: Simulating copy failures\n\n**Key insight**: Copy-and-swap ensures that if copying fails, the original object (`*this`) remains **unchanged**. Without this idiom, `*this` could be left in a **broken state** (partially copied, invalid pointers).\n\n---",
+          "code": "#include <iostream>\n#include <stdexcept>\n#include <utility>\n\n// Type that throws on copy (for testing exception safety)\nstruct ThrowOnCopy {\n    int value;\n    static int copy_count;\n\n    ThrowOnCopy(int v = 0) : value(v) {}\n\n    ThrowOnCopy(const ThrowOnCopy& other) : value(other.value) {\n        if (++copy_count == 3) {\n            throw std::runtime_error(\"Simulated copy failure\");\n        }\n    }\n\n    ThrowOnCopy& operator=(const ThrowOnCopy& other) {\n        if (++copy_count == 3) {\n            throw std::runtime_error(\"Simulated assignment failure\");\n        }\n        value = other.value;\n        return *this;\n    }\n};\nint ThrowOnCopy::copy_count = 0;\n\ntemplate <typename T>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n\n    void swap(Vector<T>& other) noexcept {\n        std::swap(data, other.data);\n        std::swap(size, other.size);\n        std::swap(capacity, other.capacity);\n    }\n\npublic:\n    Vector() : data(nullptr), size(0), capacity(0) {}\n\n    ~Vector() { delete[] data; }\n\n    // Copy constructor with exception safety\n    Vector(const Vector<T>& other) : data(nullptr), size(0), capacity(0) {\n        if (other.size > 0) {\n            data = new T[other.capacity];  // May throw (allocation)\n            capacity = other.capacity;\n\n            try {\n                for (std::size_t i = 0; i < other.size; ++i) {\n                    data[i] = other.data[i];  // May throw (copy)\n                }\n                size = other.size;\n            } catch (...) {\n                delete[] data;\n                data = nullptr;\n                capacity = 0;\n                throw;  // Rethrow after cleanup\n            }\n        }\n    }\n\n    // Copy assignment with strong exception guarantee (copy-and-swap)\n    Vector<T>& operator=(const Vector<T>& other) {\n        if (this != &other) {\n            Vector<T> temp(other);  // May throw, but *this unchanged\n            swap(temp);             // noexcept (just pointer swaps)\n        }\n        return *this;\n    }\n\n    // Move constructor (noexcept)\n    Vector(Vector<T>&& other) noexcept : data(nullptr), size(0), capacity(0) {\n        swap(other);\n    }\n\n    // Move assignment (noexcept)\n    Vector<T>& operator=(Vector<T>&& other) noexcept {\n        if (this != &other) {\n            swap(other);\n        }\n        return *this;\n    }\n\n    void push_back(const T& value) {\n        if (size == capacity) {\n            std::size_t new_cap = capacity == 0 ? 1 : capacity * 2;\n            T* new_data = new T[new_cap];\n\n            try {\n                for (std::size_t i = 0; i < size; ++i) {\n                    new_data[i] = std::move(data[i]);\n                }\n            } catch (...) {\n                delete[] new_data;\n                throw;\n            }\n\n            delete[] data;\n            data = new_data;\n            capacity = new_cap;\n        }\n        data[size++] = value;\n    }\n\n    std::size_t get_size() const { return size; }\n};\n\nint main() {\n    Vector<ThrowOnCopy> v1;\n    v1.push_back(ThrowOnCopy{1});\n    v1.push_back(ThrowOnCopy{2});\n\n    Vector<ThrowOnCopy> v2;\n    v2.push_back(ThrowOnCopy{10});\n\n    ThrowOnCopy::copy_count = 0;\n\n    try {\n        v2 = v1;  // Will throw on 3rd copy\n    } catch (const std::exception& e) {\n        std::cout << \"Exception caught: \" << e.what() << \"\\n\";\n        std::cout << \"v2 size (should be 1, unchanged): \" << v2.get_size() << \"\\n\";\n        // Output: v2 size (should be 1, unchanged): 1\n        // ✅ Strong exception guarantee: v2 remains in original state\n    }\n\n    return 0;\n}",
+          "additional_code": []
+        },
+        {
+          "title": "Real-World LiDAR Point Cloud Processing",
+          "explanation": "This real-world example demonstrates:\n- **Move-only semantics**: Disabled copy for large sensor buffers (millions of points)\n- **reserve() optimization**: Preallocate capacity to avoid reallocations during 10Hz processing\n- **Cache-friendly data**: Contiguous storage with 16-byte aligned points for SIMD\n- **Two-stage processing**: Raw → Filtered pipeline typical in autonomous systems\n\n**Performance characteristics**:\n- 100K points × 16 bytes = 1.6 MB per frame\n- At 10 Hz LiDAR rate: 16 MB/s data throughput\n- Zero reallocations due to `reserve()` → deterministic latency\n- Sequential memory access → excellent CPU cache utilization\n\n---",
+          "code": "#include <iostream>\n#include <cmath>\n\n// High-performance Vector for real-time sensor processing\ntemplate <typename T>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n\npublic:\n    Vector() : data(nullptr), size(0), capacity(0) {}\n    ~Vector() { delete[] data; }\n\n    Vector(const Vector&) = delete;  // No copy for large sensor data\n    Vector& operator=(const Vector&) = delete;\n\n    Vector(Vector&& other) noexcept\n        : data(other.data), size(other.size), capacity(other.capacity)\n    {\n        other.data = nullptr;\n        other.size = 0;\n        other.capacity = 0;\n    }\n\n    void reserve(std::size_t new_cap) {\n        if (new_cap <= capacity) return;\n        T* new_data = new T[new_cap];\n        for (std::size_t i = 0; i < size; ++i) {\n            new_data[i] = std::move(data[i]);\n        }\n        delete[] data;\n        data = new_data;\n        capacity = new_cap;\n    }\n\n    void push_back(T&& value) {\n        if (size == capacity) reserve(capacity == 0 ? 1 : capacity * 2);\n        data[size++] = std::move(value);\n    }\n\n    void clear() { size = 0; }\n    std::size_t get_size() const { return size; }\n    T& operator[](std::size_t idx) { return data[idx]; }\n    const T& operator[](std::size_t idx) const { return data[idx]; }\n};\n\n// LiDAR point structure (16 bytes, cache-friendly)\nstruct alignas(16) Point3D {\n    float x, y, z;      // 3D coordinates\n    float intensity;    // Reflectivity (0-1)\n};\n\n// Autonomous driving: LiDAR processing pipeline\nclass LidarProcessor {\nprivate:\n    Vector<Point3D> raw_cloud;\n    Vector<Point3D> filtered_cloud;\n\npublic:\n    void processFrame(const Point3D* sensor_data, size_t point_count) {\n        // Step 1: Load raw data\n        raw_cloud.clear();\n        raw_cloud.reserve(point_count);  // Avoid reallocations\n\n        for (size_t i = 0; i < point_count; ++i) {\n            raw_cloud.push_back(std::move(sensor_data[i]));\n        }\n\n        std::cout << \"Raw points: \" << raw_cloud.get_size() << \"\\n\";\n\n        // Step 2: Filter by distance (keep points within 50m)\n        filtered_cloud.clear();\n        filtered_cloud.reserve(point_count / 2);  // Estimate half pass filter\n\n        for (size_t i = 0; i < raw_cloud.get_size(); ++i) {\n            const Point3D& pt = raw_cloud[i];\n            float dist = std::sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z);\n\n            if (dist < 50.0f && pt.intensity > 0.3f) {\n                filtered_cloud.push_back(std::move(raw_cloud[i]));\n            }\n        }\n\n        std::cout << \"Filtered points: \" << filtered_cloud.get_size() << \"\\n\";\n    }\n\n    const Vector<Point3D>& getFilteredCloud() const {\n        return filtered_cloud;\n    }\n};\n\nint main() {\n    // Simulate LiDAR sensor data (100K points per frame)\n    constexpr size_t POINTS_PER_FRAME = 100'000;\n    Point3D* sensor_data = new Point3D[POINTS_PER_FRAME];\n\n    // Generate random points\n    for (size_t i = 0; i < POINTS_PER_FRAME; ++i) {\n        sensor_data[i] = {\n            static_cast<float>(rand() % 100 - 50),  // x: -50 to 50\n            static_cast<float>(rand() % 100 - 50),  // y: -50 to 50\n            static_cast<float>(rand() % 10),         // z: 0 to 10\n            static_cast<float>(rand() % 100) / 100.0f // intensity: 0-1\n        };\n    }\n\n    LidarProcessor processor;\n    processor.processFrame(sensor_data, POINTS_PER_FRAME);\n\n    // Output:\n    // Raw points: 100000\n    // Filtered points: ~33000 (approx 1/3 pass distance+intensity filter)\n\n    delete[] sensor_data;\n    return 0;\n}",
+          "additional_code": []
+        }
+      ],
+      "interview_qa": [
+        {
+          "question": "What is the difference between size and capacity in a Vector?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "memory",
+            "fundamentals"
+          ],
+          "concepts": [
+            "dynamic_array",
+            "vector",
+            "capacity_management",
+            "memory_allocation"
+          ],
+          "answer": "**Size** is the number of elements currently stored in the vector, while **capacity** is the total number of elements the vector can hold before needing to reallocate memory.",
+          "explanation": "Size tracks constructed elements (accessible via `operator[]`), while capacity tracks allocated memory. When `size == capacity`, the next `push_back()` triggers reallocation (typically doubling capacity). The gap between size and capacity allows for efficient amortized O(1) insertion without reallocating on every `push_back()`.",
+          "code_examples": [
+            "Vector<int> v;\nv.reserve(10);\nstd::cout << v.size();      // 0 (no elements)\nstd::cout << v.capacity();  // 10 (space for 10 elements)\n\nv.push_back(5);\nstd::cout << v.size();      // 1 (one element)\nstd::cout << v.capacity();  // 10 (still space for 10)"
+          ],
+          "key_takeaway": "Use `reserve()` to set capacity without changing size; use `resize()` to change size (construct/destruct elements)."
+        },
+        {
+          "question": "Why does Vector typically double its capacity when growing?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "performance",
+            "algorithms"
+          ],
+          "concepts": [
+            "amortized_analysis",
+            "dynamic_array",
+            "reallocation",
+            "complexity"
+          ],
+          "answer": "Doubling capacity ensures **amortized O(1) insertion** for `push_back()`. If capacity grew by a fixed amount (e.g., +10), insertion would be O(N) amortized.",
+          "explanation": "With doubling: inserting N elements requires ~N copies total (1 + 2 + 4 + ... + N ≈ 2N), averaging 2 copies per element (constant). With fixed increment: inserting N elements requires N²/20 copies (1×10 + 2×10 + ... + (N/10)×10), averaging N/10 copies per element (linear). Doubling trades memory overhead (50% unused capacity on average) for time efficiency.",
+          "code_examples": [
+            "// Doubling strategy\nvoid push_back(const T& val) {\n    if (size == capacity) {\n        reserve(capacity == 0 ? 1 : capacity * 2);  // ✅ Double\n    }\n    data[size++] = val;\n}\n\n// ❌ Bad: Fixed increment (O(N) amortized)\nvoid push_back_bad(const T& val) {\n    if (size == capacity) {\n        reserve(capacity + 10);  // Only grow by 10\n    }\n    data[size++] = val;\n}"
+          ],
+          "key_takeaway": "Doubling capacity is a space-time tradeoff that achieves amortized constant-time insertion."
+        },
+        {
+          "question": "What is the copy-and-swap idiom and why is it used in assignment operators?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "exception_safety",
+            "design_pattern"
+          ],
+          "concepts": [
+            "copy_and_swap",
+            "strong_guarantee",
+            "exception_safety",
+            "raii"
+          ],
+          "answer": "Copy-and-swap ensures **strong exception safety** in assignment: either the assignment succeeds completely, or the object remains unchanged. It copies the source into a temporary, then swaps internals.",
+          "explanation": "Without copy-and-swap, assignment might delete old data first, then throw during copying, leaving the object in a broken state (no data, invalid size). Copy-and-swap does all risky operations (allocation, copying) on a temporary object. If it throws, `*this` is untouched. If it succeeds, `swap()` just exchanges pointers (which doesn't throw). The temporary's destructor cleans up the old data.",
+          "code_examples": [
+            "// ✅ Strong exception guarantee\nVector<T>& operator=(const Vector<T>& other) {\n    if (this != &other) {\n        Vector<T> temp(other);  // May throw, but *this unchanged\n        swap(temp);             // noexcept (just pointer swaps)\n    }\n    return *this;\n}\n\nvoid swap(Vector<T>& other) noexcept {\n    std::swap(data, other.data);\n    std::swap(size, other.size);\n    std::swap(capacity, other.capacity);\n}"
+          ],
+          "key_takeaway": "Copy-and-swap provides automatic exception safety by leveraging RAII (temp's destructor) and noexcept swap."
+        },
+        {
+          "question": "When do iterators become invalidated in a Vector?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory",
+            "iterators"
+          ],
+          "concepts": [
+            "iterator_invalidation",
+            "reallocation",
+            "undefined_behavior",
+            "memory_safety"
+          ],
+          "answer": "Iterators are invalidated when the Vector **reallocates** (during `push_back`, `reserve`, `resize` that exceeds capacity) or when elements are **erased**. Accessing invalidated iterators is undefined behavior.",
+          "explanation": "Reallocation involves allocating a new buffer, copying elements, and deleting the old buffer. Iterators (and pointers/references) to the old buffer now point to freed memory. The solution is to either (1) call `reserve()` before a loop to prevent reallocation, or (2) use index-based access instead of iterators when insertions occur.",
+          "code_examples": [
+            "Vector<int> v = {1, 2, 3};\nv.reserve(10);  // capacity = 10\n\nauto it = v.begin();\nv.push_back(4);  // ✅ No reallocation (capacity sufficient)\nstd::cout << *it;  // ✅ OK: iterator still valid\n\n// Exceed capacity\nfor (int i = 5; i < 15; ++i) {\n    v.push_back(i);  // ❌ Reallocation at i=11\n}\nstd::cout << *it;  // ❌ UNDEFINED BEHAVIOR: iterator invalidated"
+          ],
+          "key_takeaway": "Always `reserve()` before loops that insert elements, or re-acquire iterators after potential reallocation."
+        },
+        {
+          "question": "What is the difference between reserve() and resize()?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory",
+            "fundamentals"
+          ],
+          "concepts": [
+            "vector",
+            "capacity",
+            "size",
+            "memory_allocation",
+            "element_construction"
+          ],
+          "answer": "`reserve(n)` allocates space for `n` elements without constructing them (changes capacity, not size). `resize(n)` changes the size to `n`, constructing or destructing elements as needed.",
+          "explanation": "`reserve()` is an optimization: it preallocates memory to avoid multiple reallocations during a series of `push_back()` calls, but doesn't change the number of valid elements. `resize()` actually creates or destroys elements, making them accessible via `operator[]`. Use `reserve()` before inserting many elements for performance, and `resize()` when you need a specific number of elements initialized.",
+          "code_examples": [
+            "Vector<int> v;\n\nv.reserve(100);\nstd::cout << v.size();      // 0 (no elements constructed)\nstd::cout << v.capacity();  // 100 (space allocated)\nv[50] = 42;  // ❌ UNDEFINED BEHAVIOR: out of bounds\n\nv.resize(100);\nstd::cout << v.size();      // 100 (elements default-constructed)\nstd::cout << v.capacity();  // ≥100\nv[50] = 42;  // ✅ OK: element exists"
+          ],
+          "key_takeaway": "`reserve()` is for optimization (avoid reallocations), `resize()` is for initialization (create elements)."
+        },
+        {
+          "question": "Why should move constructors and move assignments be marked noexcept?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "move_semantics",
+            "exception_safety"
+          ],
+          "concepts": [
+            "noexcept",
+            "move_constructor",
+            "move_assignment",
+            "stl_compatibility",
+            "strong_guarantee"
+          ],
+          "answer": "Marking move operations `noexcept` enables STL containers to use them for strong exception safety. If moves can throw, containers must fall back to copying (slower).",
+          "explanation": "`std::vector` (and other STL containers) check `std::is_nothrow_move_constructible` when reallocating. If your type's move constructor is `noexcept`, it moves elements; otherwise, it copies them for strong exception safety (if move throws during reallocation, the container can't rollback). Moving is typically O(1) (pointer swap), while copying is O(N), so `noexcept` is critical for performance.",
+          "code_examples": [
+            "// ✅ Correct: noexcept move operations\nVector(Vector<T>&& other) noexcept {\n    data = other.data;\n    size = other.size;\n    capacity = other.capacity;\n    other.data = nullptr;\n    other.size = 0;\n    other.capacity = 0;\n}\n\nVector<T>& operator=(Vector<T>&& other) noexcept {\n    swap(other);\n    return *this;\n}\n\n// Example: std::vector<Vector<int>> resizing\nstd::vector<Vector<int>> vec_of_vecs;\nvec_of_vecs.reserve(10);\nvec_of_vecs.push_back(Vector<int>());  // Uses move if noexcept"
+          ],
+          "key_takeaway": "Always mark move constructors/assignments `noexcept` unless they can genuinely throw."
+        },
+        {
+          "question": "What is the Rule of Five and how does it apply to Vector?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "resource_management",
+            "design_pattern"
+          ],
+          "concepts": [
+            "rule_of_five",
+            "raii",
+            "copy_constructor",
+            "move_constructor",
+            "destructor",
+            "assignment"
+          ],
+          "answer": "The Rule of Five states: if you define a destructor, copy constructor, copy assignment, move constructor, or move assignment, you should define all five (or explicitly delete them).",
+          "explanation": "Vector manages a raw pointer (`T* data`), so it needs a custom destructor to free memory. Once you define a destructor, the compiler-generated copy/move operations are wrong: they'd do shallow copies (copying the pointer, not the data), leading to double-delete bugs. You must define all five to correctly handle deep copying (copy ops), resource stealing (move ops), and cleanup (destructor).",
+          "code_examples": [
+            "template <typename T>\nclass Vector {\npublic:\n    // 1. Destructor (manages heap memory)\n    ~Vector() { delete[] data; }\n\n    // 2. Copy constructor\n    Vector(const Vector& other);\n\n    // 3. Copy assignment\n    Vector& operator=(const Vector& other);\n\n    // 4. Move constructor\n    Vector(Vector&& other) noexcept;\n\n    // 5. Move assignment\n    Vector& operator=(Vector&& other) noexcept;\n};"
+          ],
+          "key_takeaway": "Managing raw resources (pointers, file handles) requires implementing all five special member functions."
+        },
+        {
+          "question": "How do you achieve strong exception safety in Vector::reserve()?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "exception_safety",
+            "memory"
+          ],
+          "concepts": [
+            "strong_guarantee",
+            "exception_handling",
+            "try_catch",
+            "cleanup",
+            "memory_leak"
+          ],
+          "answer": "Allocate new memory, copy elements in a try-catch block, clean up on exception, only commit changes on success.",
+          "explanation": "The risky operations are allocation (`new T[new_cap]`) and element copying/moving. If either throws, we must not leave the Vector in a broken state. The try-catch ensures that if copying throws, we delete the new buffer and rethrow the exception, leaving the original `data` pointer untouched. Only after all copying succeeds do we delete the old buffer and update the pointer.",
+          "code_examples": [
+            "void reserve(std::size_t new_cap) {\n    if (new_cap <= capacity) return;\n\n    T* new_data = new T[new_cap];  // May throw (allocation)\n\n    try {\n        // Copy existing elements (may throw)\n        for (std::size_t i = 0; i < size; ++i) {\n            new_data[i] = std::move(data[i]);\n        }\n    } catch (...) {\n        delete[] new_data;  // Clean up on failure\n        throw;              // Rethrow exception\n    }\n\n    // Success: commit changes\n    delete[] data;\n    data = new_data;\n    capacity = new_cap;\n}"
+          ],
+          "key_takeaway": "Strong exception safety requires transactional semantics: all-or-nothing, with cleanup on failure."
+        },
+        {
+          "question": "What is iterator invalidation and how do you prevent it?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "iterators",
+            "memory_safety"
+          ],
+          "concepts": [
+            "iterator_invalidation",
+            "reallocation",
+            "reserve",
+            "dangling_pointer",
+            "memory_management"
+          ],
+          "answer": "Iterator invalidation occurs when a Vector reallocates, making existing iterators point to freed memory. Prevent it by calling `reserve()` before insertion loops or using index-based access.",
+          "explanation": "Iterators are lightweight wrappers around pointers. When reallocation occurs, the old buffer is deleted, but the iterator still holds the old pointer (now dangling). `reserve()` prevents this by preallocating enough space. Index-based access (`v[i]`) recalculates the address each time, so it's always valid even after reallocation.",
+          "code_examples": [
+            "// ❌ Bug: Iterator invalidation\nVector<int> v = {1, 2, 3};\nv.reserve(5);\nauto it = v.begin();\nfor (int i = 0; i < 10; ++i) {\n    v.push_back(i);  // Reallocation invalidates 'it'\n}\nstd::cout << *it;  // ❌ UNDEFINED BEHAVIOR\n\n// ✅ Fix 1: Reserve sufficient capacity\nVector<int> v2 = {1, 2, 3};\nv2.reserve(13);  // No reallocation up to 13 elements\nauto it2 = v2.begin();\nfor (int i = 0; i < 10; ++i) {\n    v2.push_back(i);  // No reallocation\n}\nstd::cout << *it2;  // ✅ OK\n\n// ✅ Fix 2: Use index-based access\nVector<int> v3 = {1, 2, 3};\nfor (size_t i = 0; i < 10; ++i) {\n    v3.push_back(i);\n    std::cout << v3[0];  // Always valid (recalculates address)\n}"
+          ],
+          "key_takeaway": "Call `reserve()` with the final expected size before insertion loops to avoid iterator invalidation."
+        },
+        {
+          "question": "Why is push_back amortized O(1) instead of O(1)?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "algorithms",
+            "performance"
+          ],
+          "concepts": [
+            "amortized_analysis",
+            "complexity",
+            "reallocation",
+            "dynamic_array",
+            "geometric_growth"
+          ],
+          "answer": "Each `push_back` is O(1) except when reallocation occurs (O(N) to copy all elements). With doubling capacity, reallocations become exponentially rare, averaging to O(1) per insertion.",
+          "explanation": "Without doubling (e.g., +1 capacity each time), inserting N elements requires 0+1+2+...+N-1 = N²/2 copies (quadratic). With doubling, inserting N elements requires 1+2+4+8+...+N ≈ 2N copies (linear total), averaging 2 copies per element (constant). This is called **amortized analysis**: distributing rare expensive operations over many cheap ones.",
+          "code_examples": [
+            "// Inserting N elements with doubling strategy\nVector<int> v;\nfor (int i = 0; i < 16; ++i) {\n    v.push_back(i);\n    // Capacity doubles at i=0,1,2,4,8,16\n    // Copies: 0,1,2,4,8 = 15 total copies for 16 insertions\n}\n// Amortized cost: 15/16 ≈ 0.94 copies per insertion (constant)"
+          ],
+          "key_takeaway": "Geometric growth (doubling) transforms O(N) worst-case reallocation into O(1) amortized insertion cost."
+        },
+        {
+          "question": "What happens to a moved-from Vector, and can it still be used?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "move_semantics",
+            "memory_safety"
+          ],
+          "concepts": [
+            "moved_from_state",
+            "resource_management",
+            "valid_but_unspecified",
+            "destructor_safety"
+          ],
+          "answer": "A moved-from Vector is in a **valid but unspecified state**. It can be destroyed or reassigned, but accessing elements is undefined behavior.",
+          "explanation": "Move constructors should leave the moved-from object in a state where the destructor can safely run. For Vector, this means `data = nullptr` (since `delete[] nullptr` is a no-op). The C++ standard requires moved-from objects to be \"valid but unspecified\", meaning they can be destroyed or reassigned but shouldn't be used otherwise.",
+          "code_examples": [
+            "Vector<int> v1 = {1, 2, 3};\nVector<int> v2 = std::move(v1);\n\n// v1 is moved-from:\n// ✅ Can be destroyed (destructor handles nullptr)\n// ✅ Can be reassigned: v1 = {4, 5, 6};\n// ❌ Accessing elements: v1[0] is undefined behavior (size=0)\n// ❌ Using iterators: v1.begin() may be invalid\n\n// Typical moved-from state:\n// v1.data = nullptr\n// v1.size = 0\n// v1.capacity = 0\n\n// Destructor is safe:\n// ~Vector() { delete[] data; }  // delete[] nullptr is safe"
+          ],
+          "key_takeaway": "After moving, the moved-from object should have safe destructor semantics (nullptr pointers, zero sizes)."
+        },
+        {
+          "question": "How do you implement exception-safe push_back?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "exception_safety",
+            "implementation"
+          ],
+          "concepts": [
+            "strong_guarantee",
+            "try_catch",
+            "reallocation",
+            "rollback",
+            "cleanup"
+          ],
+          "answer": "Perform reallocation in a try-catch block, clean up new buffer on failure, only commit on success. Use move semantics to minimize throwing operations.",
+          "explanation": "If allocation fails, `new_data` is nullptr, and `delete[] nullptr` is safe. If moving throws mid-copy, we delete the partially-filled new buffer and rethrow, leaving `data` pointer unchanged. Only after all moves succeed do we delete the old buffer. The final assignment (`data[size++] = value`) can throw, but at this point the Vector is already in a valid state with increased capacity.",
+          "code_examples": [
+            "void push_back(const T& value) {\n    if (size == capacity) {\n        std::size_t new_cap = capacity == 0 ? 1 : capacity * 2;\n        T* new_data = nullptr;\n\n        try {\n            new_data = new T[new_cap];  // May throw\n\n            // Move existing elements (prefer move over copy)\n            for (std::size_t i = 0; i < size; ++i) {\n                new_data[i] = std::move(data[i]);  // May throw\n            }\n        } catch (...) {\n            delete[] new_data;  // Clean up on failure\n            throw;              // Rethrow\n        }\n\n        // Success: commit changes\n        delete[] data;\n        data = new_data;\n        capacity = new_cap;\n    }\n\n    data[size++] = value;  // May throw, but Vector still valid\n}"
+          ],
+          "key_takeaway": "Exception safety requires transactional semantics: changes are atomic (all succeed or none)."
+        },
+        {
+          "question": "Why does Vector use T* instead of T[] as a member?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "memory",
+            "design_choice"
+          ],
+          "concepts": [
+            "dynamic_array",
+            "heap_allocation",
+            "pointer_arithmetic",
+            "reallocation",
+            "array_decay"
+          ],
+          "answer": "`T*` allows dynamic reallocation (changing the pointer to a new buffer), while `T[]` is fixed at construction. Vectors need to reallocate as they grow.",
+          "explanation": "Reallocation requires allocating a new buffer, copying elements, and deleting the old buffer. This only works if the buffer is accessed via a reassignable pointer (`T*`). Arrays (`T[]` or `std::array`) have fixed size and can't be reallocated. The `T*` member is the fundamental building block of dynamic containers.",
+          "code_examples": [
+            "// ✅ Correct: T* allows reallocation\nclass Vector {\n    T* data;  // Can be reassigned to new buffer\n\n    void reserve(size_t new_cap) {\n        T* new_data = new T[new_cap];\n        // ... copy elements ...\n        delete[] data;\n        data = new_data;  // ✅ OK: reassign pointer\n    }\n};\n\n// ❌ Wrong: T[] is fixed\nclass Vector {\n    T data[];  // ❌ Can't be resized or reallocated\n    // How do you grow this? You can't.\n};\n\n// ❌ Also wrong: std::array\nclass Vector {\n    std::array<T, 100> data;  // Fixed size at compile time\n    // Can't grow beyond 100 elements\n};"
+          ],
+          "key_takeaway": "Use `T*` for dynamic resizable containers; arrays are for fixed-size storage."
+        },
+        {
+          "question": "What is the purpose of shrink_to_fit()?",
+          "difficulty": [
+            "beginner"
+          ],
+          "category": [
+            "memory",
+            "optimization"
+          ],
+          "concepts": [
+            "capacity_management",
+            "memory_overhead",
+            "reallocation",
+            "memory_optimization"
+          ],
+          "answer": "`shrink_to_fit()` reduces capacity to match size, freeing unused memory. It's useful after removing many elements to reclaim memory.",
+          "explanation": "Removing elements (via `pop_back`, `resize`) doesn't reduce capacity, so memory remains allocated. `shrink_to_fit()` reallocates a smaller buffer matching the current size. This is useful in scenarios like: (1) processing a large dataset, then keeping only summary results, or (2) long-running processes where memory footprint matters.",
+          "code_examples": [
+            "Vector<int> v;\nv.reserve(1000);\nfor (int i = 0; i < 1000; ++i) {\n    v.push_back(i);\n}\nstd::cout << v.size();      // 1000\nstd::cout << v.capacity();  // 1000\n\n// Remove most elements\nfor (int i = 0; i < 900; ++i) {\n    v.pop_back();\n}\nstd::cout << v.size();      // 100\nstd::cout << v.capacity();  // 1000 (unchanged!)\n\nv.shrink_to_fit();\nstd::cout << v.capacity();  // 100 (reduced to match size)\n// Freed 900 * sizeof(int) = 3600 bytes"
+          ],
+          "key_takeaway": "Use `shrink_to_fit()` to reclaim memory after removing many elements."
+        },
+        {
+          "question": "How would you implement a Vector that supports custom allocators?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "stl_compatibility",
+            "memory"
+          ],
+          "concepts": [
+            "allocator",
+            "template_template_parameter",
+            "stl_allocator",
+            "memory_management",
+            "customization"
+          ],
+          "answer": "Add an `Allocator` template parameter (defaulting to `std::allocator<T>`), and use allocator methods (`allocate`, `deallocate`, `construct`, `destroy`) instead of `new`/`delete`.",
+          "explanation": "Allocators decouple memory allocation from object construction. `allocate(n)` returns raw memory (like `operator new`), `construct(ptr, args...)` calls placement new, `destroy(ptr)` calls destructor, `deallocate(ptr, n)` frees memory. This allows custom memory management (e.g., pool allocators for real-time systems, aligned allocators for SIMD).",
+          "code_examples": [
+            "template <typename T, typename Allocator = std::allocator<T>>\nclass Vector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n    Allocator alloc;  // Allocator instance\n\npublic:\n    void reserve(std::size_t new_cap) {\n        if (new_cap <= capacity) return;\n\n        // Use allocator instead of new[]\n        T* new_data = alloc.allocate(new_cap);\n\n        // Construct elements using allocator\n        for (std::size_t i = 0; i < size; ++i) {\n            alloc.construct(&new_data[i], std::move(data[i]));\n            alloc.destroy(&data[i]);\n        }\n\n        alloc.deallocate(data, capacity);\n        data = new_data;\n        capacity = new_cap;\n    }\n\n    ~Vector() {\n        for (std::size_t i = 0; i < size; ++i) {\n            alloc.destroy(&data[i]);\n        }\n        alloc.deallocate(data, capacity);\n    }\n};\n\n// Usage with custom allocator\ntemplate <typename T>\nclass PoolAllocator {\n    // ... custom allocation from memory pool ...\n};\n\nVector<int, PoolAllocator<int>> v;  // Uses pool allocator"
+          ],
+          "key_takeaway": "Allocator support enables STL-compatible custom memory management."
+        },
+        {
+          "question": "What is the difference between emplace_back and push_back?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "performance",
+            "move_semantics"
+          ],
+          "concepts": [
+            "emplace",
+            "perfect_forwarding",
+            "in_place_construction",
+            "variadic_templates",
+            "move_semantics"
+          ],
+          "answer": "`push_back` takes a constructed object (copy or move), while `emplace_back` constructs the object in-place using perfect forwarding, avoiding temporary objects.",
+          "explanation": "`push_back(Expensive(42, \"hello\"))` creates a temporary `Expensive` object, then copies/moves it into the vector (2 operations). `emplace_back(42, \"hello\")` forwards the arguments to the constructor and constructs the object directly in the vector's memory using placement new (1 operation). This eliminates the temporary and is more efficient for complex types.",
+          "code_examples": [
+            "struct Expensive {\n    int x;\n    std::string s;\n\n    Expensive(int x, std::string s) : x(x), s(std::move(s)) {\n        std::cout << \"Expensive constructed\\n\";\n    }\n\n    Expensive(const Expensive&) {\n        std::cout << \"Expensive copied\\n\";\n    }\n};\n\nVector<Expensive> v;\n\n// push_back: constructs temporary, then moves\nv.push_back(Expensive(42, \"hello\"));\n// Output: Expensive constructed (temp)\n//         Expensive copied/moved (into vector)\n\n// emplace_back: constructs directly in vector\nv.emplace_back(42, \"hello\");\n// Output: Expensive constructed (in-place)",
+            "template <typename... Args>\nvoid emplace_back(Args&&... args) {\n    if (size == capacity) reserve(capacity == 0 ? 1 : capacity * 2);\n    new (&data[size++]) T(std::forward<Args>(args)...);  // Placement new\n}"
+          ],
+          "key_takeaway": "Use `emplace_back` for complex types to avoid temporary construction/destruction."
+        },
+        {
+          "question": "How do you prevent memory leaks in Vector when T's destructor throws?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "exception_safety",
+            "memory"
+          ],
+          "concepts": [
+            "destructor_exceptions",
+            "std_terminate",
+            "memory_leak",
+            "exception_handling",
+            "cleanup"
+          ],
+          "answer": "You can't fully prevent termination if T's destructor throws (C++ calls `std::terminate`), but you can use try-catch in cleanup loops to destroy as many elements as possible.",
+          "explanation": "C++ standard: destructors should not throw (marked `noexcept` by default in C++11+). If a destructor throws during stack unwinding (exception handling), `std::terminate` is called. In Vector's destructor, we can try-catch around element destruction to log errors and continue, ensuring memory is freed even if some destructors throw. However, if T's destructor throws during exception handling in user code, the program terminates.",
+          "code_examples": [
+            "~Vector() {\n    // Destroy elements (may throw)\n    for (std::size_t i = 0; i < size; ++i) {\n        try {\n            data[i].~T();  // Explicit destructor call\n        } catch (...) {\n            // Log error, but continue destroying other elements\n            std::cerr << \"Element destructor threw at index \" << i << \"\\n\";\n        }\n    }\n\n    // Always deallocate memory (even if some destructors threw)\n    delete[] data;\n}\n\n// Note: If using placement new (allocator), need explicit destruction:\n~Vector() {\n    for (std::size_t i = 0; i < size; ++i) {\n        try {\n            alloc.destroy(&data[i]);\n        } catch (...) {\n            // Continue\n        }\n    }\n    alloc.deallocate(data, capacity);\n}"
+          ],
+          "key_takeaway": "Always make destructors `noexcept`; throwing destructors break exception safety guarantees."
+        },
+        {
+          "question": "Why is contiguous memory (Vector) faster than linked memory (list)?",
+          "difficulty": [
+            "intermediate"
+          ],
+          "category": [
+            "performance",
+            "hardware"
+          ],
+          "concepts": [
+            "cache_locality",
+            "memory_hierarchy",
+            "cpu_cache",
+            "prefetching",
+            "sequential_access"
+          ],
+          "answer": "Contiguous memory (Vector) has excellent CPU cache locality: accessing element i+1 after i is fast because the data is already in cache. Linked lists suffer cache misses on each node access.",
+          "explanation": "Modern CPUs have a memory hierarchy: L1 cache (~1ns), L2 (~5ns), L3 (~20ns), RAM (~100ns). When you access `v[0]`, the CPU loads a cache line (64 bytes) containing `v[0]` through `v[15]` (assuming 4-byte ints). Subsequent accesses to `v[1]`-`v[15]` are instant. Lists store each node separately in random memory locations, so each access is a cache miss (100ns). The CPU's prefetcher can predict sequential access patterns (Vector) but not pointer chasing (list).",
+          "code_examples": [
+            "// Vector: contiguous memory\nVector<int> v = {1, 2, 3, 4, 5};\n// Memory: [1][2][3][4][5] (sequential)\n// Accessing v[1], v[2], v[3] -> all in same cache line\n\n// std::list: non-contiguous nodes\nstd::list<int> l = {1, 2, 3, 4, 5};\n// Memory: [1|next] -> [2|next] -> [3|next] (scattered)\n// Accessing each element -> cache miss\n\n// Benchmark: sum elements\n// Vector: ~10ns (all in L1 cache)\n// List: ~50ns (pointer chasing, cache misses)"
+          ],
+          "key_takeaway": "Use Vector for random access and sequential processing; use list only when frequent insertion/deletion in the middle is required."
+        },
+        {
+          "question": "What is the Small Vector Optimization (SVO) and how would you implement it?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "optimization",
+            "memory"
+          ],
+          "concepts": [
+            "small_buffer_optimization",
+            "union",
+            "placement_new",
+            "cache_optimization",
+            "memory_allocation"
+          ],
+          "answer": "Small Vector Optimization stores a small number of elements inline (without heap allocation) for small sizes. When size exceeds the inline capacity, it switches to heap allocation.",
+          "explanation": "Small objects (≤8 elements) benefit from inline storage: no malloc overhead (~100ns), better cache locality (part of the vector object itself). The union lets us reuse the same memory for either inline storage or heap pointer. When transitioning from inline to heap, we allocate heap storage, move elements, and switch the flag.",
+          "code_examples": [
+            "template <typename T, std::size_t InlineCapacity = 16>\nclass SmallVector {\nprivate:\n    std::size_t size;\n    std::size_t capacity;\n\n    // Union: either inline storage or heap pointer\n    union {\n        T inline_storage[InlineCapacity];\n        T* heap_storage;\n    };\n\n    bool is_heap_allocated() const {\n        return capacity > InlineCapacity;\n    }\n\n    T* data_ptr() {\n        return is_heap_allocated() ? heap_storage : inline_storage;\n    }\n\npublic:\n    SmallVector() : size(0), capacity(InlineCapacity) {\n        // Use inline_storage by default (no allocation)\n    }\n\n    ~SmallVector() {\n        if (is_heap_allocated()) {\n            delete[] heap_storage;\n        }\n    }\n\n    void push_back(const T& value) {\n        if (size == capacity) {\n            // Transition from inline to heap\n            if (!is_heap_allocated()) {\n                T* new_data = new T[capacity * 2];\n                for (size_t i = 0; i < size; ++i) {\n                    new_data[i] = std::move(inline_storage[i]);\n                }\n                heap_storage = new_data;\n                capacity *= 2;\n            } else {\n                // Already on heap, grow normally\n                T* new_data = new T[capacity * 2];\n                for (size_t i = 0; i < size; ++i) {\n                    new_data[i] = std::move(heap_storage[i]);\n                }\n                delete[] heap_storage;\n                heap_storage = new_data;\n                capacity *= 2;\n            }\n        }\n        data_ptr()[size++] = value;\n    }\n\n    T& operator[](size_t idx) { return data_ptr()[idx]; }\n};\n\n// Usage: No heap allocation for small vectors\nSmallVector<int, 8> v;  // First 8 elements stored inline\nfor (int i = 0; i < 5; ++i) {\n    v.push_back(i);  // No malloc (uses inline_storage)\n}\nv.push_back(10);  // Still inline\nv.push_back(11);  // Still inline\nv.push_back(12);  // Exceeds capacity=8 -> heap allocation"
+          ],
+          "key_takeaway": "SVO optimizes the common case of small vectors, avoiding heap allocation for sizes ≤ InlineCapacity."
+        },
+        {
+          "question": "How would you implement a thread-safe Vector?",
+          "difficulty": [
+            "advanced"
+          ],
+          "category": [
+            "concurrency",
+            "multithreading"
+          ],
+          "concepts": [
+            "thread_safety",
+            "mutex",
+            "shared_mutex",
+            "concurrent_access",
+            "lock_free",
+            "atomic"
+          ],
+          "answer": "Use a mutex to protect all member functions that modify or read shared state. For reader-writer scenarios, use `std::shared_mutex` (multiple readers, exclusive writer).",
+          "explanation": "`std::shared_mutex` allows multiple readers (`std::shared_lock`) or one writer (`std::unique_lock`). Writes (push_back, reserve) require exclusive access. Reads (operator[], size) allow concurrent access. **Important**: Return elements by value (not reference) to avoid dangling references if the vector reallocates after the lock is released.",
+          "code_examples": [
+            "#include <mutex>\n#include <shared_mutex>\n\ntemplate <typename T>\nclass ThreadSafeVector {\nprivate:\n    T* data;\n    std::size_t size;\n    std::size_t capacity;\n    mutable std::shared_mutex mtx;  // Reader-writer lock\n\npublic:\n    void push_back(const T& value) {\n        std::unique_lock lock(mtx);  // Exclusive lock (writer)\n\n        if (size == capacity) {\n            reserve_impl(capacity == 0 ? 1 : capacity * 2);\n        }\n        data[size++] = value;\n    }\n\n    T operator[](std::size_t idx) const {\n        std::shared_lock lock(mtx);  // Shared lock (reader)\n        return data[idx];  // Return by value (avoid dangling ref)\n    }\n\n    std::size_t get_size() const {\n        std::shared_lock lock(mtx);\n        return size;\n    }\n\nprivate:\n    void reserve_impl(std::size_t new_cap) {\n        // Called with lock held\n        T* new_data = new T[new_cap];\n        for (std::size_t i = 0; i < size; ++i) {\n            new_data[i] = std::move(data[i]);\n        }\n        delete[] data;\n        data = new_data;\n        capacity = new_cap;\n    }\n};\n\n// Usage: Multiple threads can safely access\nThreadSafeVector<int> v;\n\n// Thread 1: Write\nstd::thread t1([&]() { v.push_back(42); });\n\n// Thread 2: Read\nstd::thread t2([&]() { std::cout << v[0]; });\n\nt1.join();\nt2.join();"
+          ],
+          "key_takeaway": "Mutex-based thread safety is simple but may be a bottleneck; lock-free data structures are faster but much harder to implement correctly."
+        }
+      ],
+      "practice_tasks": [
+        {
+          "question_number": 1,
+          "title": "Question 1",
+          "description": "What is the output?",
+          "code": "Vector<int> v;\nv.reserve(10);\nv[5] = 42;\nstd::cout << v[5];",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 2,
+          "title": "Question 2",
+          "description": "Is this code safe? What does it print?",
+          "code": "Vector<int> v = {1, 2, 3};\nv.reserve(5);\nauto it = v.begin();\nv.push_back(4);\nv.push_back(5);\nstd::cout << *it;",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 3,
+          "title": "Question 3",
+          "description": "What is the expected capacity?",
+          "code": "Vector<int> v;\nfor (int i = 0; i < 8; ++i) {\n    v.push_back(i);\n}\nstd::cout << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 4,
+          "title": "Question 4",
+          "description": "What is the output?",
+          "code": "Vector<int> v1 = {1, 2, 3};\nVector<int> v2 = v1;\nv2[0] = 99;\nstd::cout << v1[0];",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 5,
+          "title": "Question 5",
+          "description": "What is the output and is this safe?",
+          "code": "Vector<int> v1 = {1, 2, 3};\nVector<int> v2 = std::move(v1);\nstd::cout << v1.size();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 6,
+          "title": "Question 6",
+          "description": "What is the output?",
+          "code": "Vector<int> v;\nv.resize(5);\nstd::cout << v[3];",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 7,
+          "title": "Question 7",
+          "description": "What is printed?",
+          "code": "Vector<int> v = {1, 2, 3};\nv.resize(10);\nstd::cout << v.size() << \", \" << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 8,
+          "title": "Question 8",
+          "description": "What is the capacity after two pop_back calls?",
+          "code": "Vector<int> v = {1, 2, 3, 4};\nv.pop_back();\nv.pop_back();\nstd::cout << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 9,
+          "title": "Question 9",
+          "description": "What is printed?",
+          "code": "Vector<int> v;\nv.reserve(100);\nv.resize(50);\nstd::cout << v.size() << \", \" << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 10,
+          "title": "Question 10",
+          "description": "What is the capacity after clear()?",
+          "code": "Vector<std::string> v;\nv.push_back(\"hello\");\nv.push_back(\"world\");\nv.clear();\nstd::cout << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 11,
+          "title": "Question 11",
+          "description": "What is the size?",
+          "code": "Vector<int> v = {1, 2, 3};\nVector<int>& ref = v;\nref.push_back(4);\nstd::cout << v.size();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 12,
+          "title": "Question 12",
+          "description": "Is this safe (self-assignment)? What is printed?",
+          "code": "Vector<int> v1 = {1, 2, 3};\nVector<int> v2;\nv2 = v1;\nv2 = v1;  // Assign again\nstd::cout << v2.size();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 13,
+          "title": "Question 13",
+          "description": "Will this compile?",
+          "code": "struct NonCopyable {\n    NonCopyable() = default;\n    NonCopyable(const NonCopyable&) = delete;\n    NonCopyable(NonCopyable&&) = default;\n};\n\nVector<NonCopyable> v;\nNonCopyable obj;\nv.push_back(obj);",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 14,
+          "title": "Question 14",
+          "description": "Is this safe?",
+          "code": "Vector<int> v = {1, 2, 3};\nauto it = v.begin();\nv.reserve(100);\nstd::cout << *it;",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 15,
+          "title": "Question 15",
+          "description": "What optimization is applied here?",
+          "code": "Vector<int> createVector() {\n    Vector<int> v = {1, 2, 3};\n    return v;\n}\n\nVector<int> result = createVector();\nstd::cout << result.size();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 16,
+          "title": "Question 16",
+          "description": "What is printed?",
+          "code": "Vector<int> v;\nv.resize(5, 10);\nstd::cout << v[0] << \", \" << v[4];",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 17,
+          "title": "Question 17",
+          "description": "What is the capacity?",
+          "code": "Vector<int> v = {1, 2, 3, 4, 5};\nv.shrink_to_fit();\nstd::cout << v.capacity();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 18,
+          "title": "Question 18",
+          "description": "What is printed?",
+          "code": "Vector<int> v;\ntry {\n    v.reserve(SIZE_MAX);\n} catch (const std::bad_alloc& e) {\n    std::cout << \"Allocation failed\";\n}\nstd::cout << v.size();",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 19,
+          "title": "Question 19",
+          "description": "What is the output?",
+          "code": "Vector<int> v = {1, 2, 3};\nfor (auto& elem : v) {\n    elem *= 2;\n}\nstd::cout << v[1];",
+          "expected_output": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 20,
+          "title": "Question 20",
+          "description": "What is printed?\n\n---",
+          "code": "Vector<int> v1 = {1, 2, 3};\nVector<int> v2 = {4, 5};\nstd::swap(v1, v2);\nstd::cout << v1.size() << \", \" << v2.size();",
+          "expected_output": "",
+          "additional_code": []
+        }
+      ],
+      "quick_reference": {
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior (likely crashes) | `reserve()` allocates capacity but doesn't construct elements; accessing `v[5]` is out of bounds (size=0) | reserve vs resize |\n| 2 | Safe, prints 1 | `reserve(5)` ensures capacity ≥5, so no reallocation during push_back; iterator remains valid | Iterator invalidation |\n| 3 | 8 | Capacity doubles: 0→1→2→4→8 (8th element fits in capacity 8) | Doubling strategy |\n| 4 | 1 | Copy constructor creates deep copy; modifying `v2` doesn't affect `v1` | Deep copy semantics |\n| 5 | 0 (safe) | Move constructor leaves `v1` in valid moved-from state (size=0, data=nullptr); accessing size is safe | Moved-from state |\n| 6 | 0 (default value) | `resize(5)` default-constructs 5 ints (initialized to 0) | resize default construction |\n| 7 | 10, ≥10 | `resize(10)` sets size to 10; capacity is at least 10 (may be larger) | resize capacity behavior |\n| 8 | 4 (unchanged) | `pop_back()` decreases size but doesn't reduce capacity | Capacity unchanged by pop |\n| 9 | 50, 100 | `reserve(100)` sets capacity, then `resize(50)` sets size; capacity remains 100 | reserve then resize |\n| 10 | ≥2 (unchanged) | `clear()` sets size to 0 but doesn't reduce capacity; capacity remains allocated | clear vs shrink |\n| 11 | 4 | `ref` is a reference to `v`; modifying via reference modifies original | Reference semantics |\n| 12 | Safe, prints 3 | Copy assignment checks `this != &other` to prevent self-assignment issues | Self-assignment check |\n| 13 | No | `push_back(obj)` requires copy constructor (lvalue); `NonCopyable` deleted copy constructor | Copy vs move |\n| 14 | Yes, prints 1 | `reserve(100)` with capacity 3→100 reallocates, but since 100 > current capacity, elements move; iterator points to old memory → UB if not careful, but many implementations handle this; **actually UB** | Iterator invalidation |\n| 15 | RVO/NRVO (Return Value Optimization) | Compiler elides copy/move, constructing `result` directly in caller's stack frame | RVO/NRVO |\n| 16 | 10, 10 | `resize(5, 10)` creates 5 elements, each initialized to 10 | resize with default value |\n| 17 | 5 | `shrink_to_fit()` reduces capacity to match size (5 elements) | shrink_to_fit |\n| 18 | Allocation failed0 | `reserve(SIZE_MAX)` throws `std::bad_alloc`; exception caught; size remains 0 | Exception handling |\n| 19 | 4 | Range-for allows modification via reference; `v[1]=2` becomes `2*2=4` | Range-for with references |\n| 20 | 2, 3 | `std::swap` exchanges contents; `v1` gets `{4,5}` (size 2), `v2` gets `{1,2,3}` (size 3) | std::swap semantics |\n\n**Note on Q14**: Calling `reserve()` when `new_cap > capacity` **does invalidate iterators** because reallocation occurs. The answer should be \"Undefined behavior\" for safety. The iterator `it` points to the old buffer (freed after reallocation).\n\n---\n\n#### Vector Design Patterns Comparison\n\n| Pattern | Description | Use Case | Example |\n|---------|-------------|----------|---------|\n| **Fixed-size Vector** | Allocate once, no reallocation | Known size upfront | Camera frame buffer (1920×1080 pixels) |\n| **Doubling Vector** | Capacity doubles on growth | Unknown size, frequent insertions | LiDAR point cloud (variable points per frame) |\n| **Small Vector Optimization** | Inline storage for small sizes | Most vectors are small (≤16 elements) | Function call argument lists |\n| **Move-only Vector** | Delete copy, only move | Large objects, unique ownership | High-res image buffers (GB-sized) |\n| **Thread-safe Vector** | Mutex-protected operations | Concurrent access | Shared object detection results |\n\n---\n\n#### Vector Operations Complexity\n\n| Operation | Time Complexity | Notes |\n|-----------|----------------|-------|\n| `operator[]` | O(1) | Direct index access |\n| `push_back` | O(1) amortized | O(N) on reallocation |\n| `pop_back` | O(1) | Decrements size only |\n| `insert(it, val)` | O(N) | Shift elements after insertion point |\n| `erase(it)` | O(N) | Shift elements after deletion point |\n| `reserve(n)` | O(N) | Copies all elements if reallocation needed |\n| `resize(n)` | O(N) | Constructs/destructs elements |\n| `clear` | O(N) | Calls destructors for all elements |\n| `shrink_to_fit` | O(N) | Reallocates and copies |\n\n---\n\n#### Exception Safety Guarantees\n\n| Operation | Guarantee | Explanation |\n|-----------|-----------|-------------|\n| Destructor | No-throw | `delete[]` doesn't throw; marked `noexcept` |\n| Move constructor | No-throw | Pointer swaps; marked `noexcept` |\n| Move assignment | No-throw | Pointer swaps; marked `noexcept` |\n| Copy constructor | Strong | If copy throws, no resources allocated yet |\n| Copy assignment (copy-and-swap) | Strong | If copy fails, original object unchanged |\n| `push_back` | Basic | If reallocation succeeds but element copy throws, vector still valid but element not added |\n| `reserve` | Strong | If allocation/copy fails, original data unchanged |\n| `resize` | Strong | If construction fails, size remains unchanged |\n\n---\n\n#### Memory Layout Characteristics\n\n| Container | Memory Layout | Cache Performance | Random Access | Insertion Cost |\n|-----------|---------------|-------------------|---------------|----------------|\n| Vector | Contiguous (sequential) | Excellent (prefetching) | O(1) | O(N) middle, O(1) end |\n| Array | Contiguous (fixed) | Excellent | O(1) | N/A (fixed size) |\n| Deque | Chunked (multiple blocks) | Good | O(1) | O(1) both ends |\n| List | Scattered (nodes) | Poor (cache misses) | O(N) | O(1) anywhere |\n\n---\n\n#### When to Use Vector vs Other Containers\n\n| Scenario | Best Choice | Reason |\n|----------|-------------|--------|\n| Unknown size, frequent append | Vector | Amortized O(1) push_back |\n| Fixed size, known at compile time | `std::array` | No heap allocation |\n| Fixed size, known at runtime | Vector + `reserve()` | Avoid reallocations |\n| Frequent insertion/deletion in middle | `std::list` | O(1) splice |\n| Frequent insertion at both ends | `std::deque` | O(1) push_front/push_back |\n| Large objects, unique ownership | Vector with move-only semantics | Avoid copying |\n| Real-time systems (no malloc) | Small Vector Optimization or pre-reserved Vector | Deterministic latency |\n\n---\n\n#### Autonomous Driving Use Cases\n\n| Subsystem | Data Structure | Vector Usage | Performance Requirement |\n|-----------|---------------|--------------|-------------------------|\n| **LiDAR Processing** | `Vector<Point3D>` | Store 100K-2M points per frame (10-20Hz) | <10ms processing, contiguous memory for SIMD |\n| **Camera Object Detection** | `Vector<BoundingBox>` | Store 10-50 detected objects per frame (30Hz) | <5ms inference, frequent reallocation |\n| **Path Planning** | `Vector<Waypoint>` | Store 100-500 waypoints (1Hz replanning) | <100ms, sparse insertions |\n| **Sensor Fusion** | `Vector<SensorData>` | Buffer 60 frames (1 second at 60Hz) | Circular buffer behavior, no reallocation |\n| **Map Tiles** | `Vector<MapTile>` | Load/unload tiles dynamically | Reserve based on visible area |\n\n---\n\n#### Rule of Five Checklist\n\n| Special Member Function | Purpose | Vector Implementation |\n|-------------------------|---------|----------------------|\n| **Destructor** | Free resources | `delete[] data;` |\n| **Copy Constructor** | Deep copy | Allocate new buffer, copy elements |\n| **Copy Assignment** | Deep copy with cleanup | Copy-and-swap idiom |\n| **Move Constructor** | Steal resources | Swap pointers, set other to nullptr |\n| **Move Assignment** | Steal resources with cleanup | Swap pointers |\n\n**Template for Vector Rule of Five:**\n```cpp\n~Vector() { delete[] data; }\n\nVector(const Vector& other) : data(new T[other.capacity]), size(other.size), capacity(other.capacity) {\n    for (size_t i = 0; i < size; ++i) data[i] = other.data[i];\n}\n\nVector& operator=(const Vector& other) {\n    if (this != &other) {\n        Vector temp(other);\n        swap(temp);\n    }\n    return *this;\n}\n\nVector(Vector&& other) noexcept : data(nullptr), size(0), capacity(0) {\n    swap(other);\n}\n\nVector& operator=(Vector&& other) noexcept {\n    if (this != &other) swap(other);\n    return *this;\n}\n```",
+        "tables": [
+          "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior (likely crashes) | `reserve()` allocates capacity but doesn't construct elements; accessing `v[5]` is out of bounds (size=0) | reserve vs resize |\n| 2 | Safe, prints 1 | `reserve(5)` ensures capacity ≥5, so no reallocation during push_back; iterator remains valid | Iterator invalidation |\n| 3 | 8 | Capacity doubles: 0→1→2→4→8 (8th element fits in capacity 8) | Doubling strategy |\n| 4 | 1 | Copy constructor creates deep copy; modifying `v2` doesn't affect `v1` | Deep copy semantics |\n| 5 | 0 (safe) | Move constructor leaves `v1` in valid moved-from state (size=0, data=nullptr); accessing size is safe | Moved-from state |\n| 6 | 0 (default value) | `resize(5)` default-constructs 5 ints (initialized to 0) | resize default construction |\n| 7 | 10, ≥10 | `resize(10)` sets size to 10; capacity is at least 10 (may be larger) | resize capacity behavior |\n| 8 | 4 (unchanged) | `pop_back()` decreases size but doesn't reduce capacity | Capacity unchanged by pop |\n| 9 | 50, 100 | `reserve(100)` sets capacity, then `resize(50)` sets size; capacity remains 100 | reserve then resize |\n| 10 | ≥2 (unchanged) | `clear()` sets size to 0 but doesn't reduce capacity; capacity remains allocated | clear vs shrink |\n| 11 | 4 | `ref` is a reference to `v`; modifying via reference modifies original | Reference semantics |\n| 12 | Safe, prints 3 | Copy assignment checks `this != &other` to prevent self-assignment issues | Self-assignment check |\n| 13 | No | `push_back(obj)` requires copy constructor (lvalue); `NonCopyable` deleted copy constructor | Copy vs move |\n| 14 | Yes, prints 1 | `reserve(100)` with capacity 3→100 reallocates, but since 100 > current capacity, elements move; iterator points to old memory → UB if not careful, but many implementations handle this; **actually UB** | Iterator invalidation |\n| 15 | RVO/NRVO (Return Value Optimization) | Compiler elides copy/move, constructing `result` directly in caller's stack frame | RVO/NRVO |\n| 16 | 10, 10 | `resize(5, 10)` creates 5 elements, each initialized to 10 | resize with default value |\n| 17 | 5 | `shrink_to_fit()` reduces capacity to match size (5 elements) | shrink_to_fit |\n| 18 | Allocation failed0 | `reserve(SIZE_MAX)` throws `std::bad_alloc`; exception caught; size remains 0 | Exception handling |\n| 19 | 4 | Range-for allows modification via reference; `v[1]=2` becomes `2*2=4` | Range-for with references |\n| 20 | 2, 3 | `std::swap` exchanges contents; `v1` gets `{4,5}` (size 2), `v2` gets `{1,2,3}` (size 3) | std::swap semantics |",
+          "| Pattern | Description | Use Case | Example |\n|---------|-------------|----------|---------|\n| **Fixed-size Vector** | Allocate once, no reallocation | Known size upfront | Camera frame buffer (1920×1080 pixels) |\n| **Doubling Vector** | Capacity doubles on growth | Unknown size, frequent insertions | LiDAR point cloud (variable points per frame) |\n| **Small Vector Optimization** | Inline storage for small sizes | Most vectors are small (≤16 elements) | Function call argument lists |\n| **Move-only Vector** | Delete copy, only move | Large objects, unique ownership | High-res image buffers (GB-sized) |\n| **Thread-safe Vector** | Mutex-protected operations | Concurrent access | Shared object detection results |",
+          "| Operation | Time Complexity | Notes |\n|-----------|----------------|-------|\n| `operator[]` | O(1) | Direct index access |\n| `push_back` | O(1) amortized | O(N) on reallocation |\n| `pop_back` | O(1) | Decrements size only |\n| `insert(it, val)` | O(N) | Shift elements after insertion point |\n| `erase(it)` | O(N) | Shift elements after deletion point |\n| `reserve(n)` | O(N) | Copies all elements if reallocation needed |\n| `resize(n)` | O(N) | Constructs/destructs elements |\n| `clear` | O(N) | Calls destructors for all elements |\n| `shrink_to_fit` | O(N) | Reallocates and copies |",
+          "| Operation | Guarantee | Explanation |\n|-----------|-----------|-------------|\n| Destructor | No-throw | `delete[]` doesn't throw; marked `noexcept` |\n| Move constructor | No-throw | Pointer swaps; marked `noexcept` |\n| Move assignment | No-throw | Pointer swaps; marked `noexcept` |\n| Copy constructor | Strong | If copy throws, no resources allocated yet |\n| Copy assignment (copy-and-swap) | Strong | If copy fails, original object unchanged |\n| `push_back` | Basic | If reallocation succeeds but element copy throws, vector still valid but element not added |\n| `reserve` | Strong | If allocation/copy fails, original data unchanged |\n| `resize` | Strong | If construction fails, size remains unchanged |",
+          "| Container | Memory Layout | Cache Performance | Random Access | Insertion Cost |\n|-----------|---------------|-------------------|---------------|----------------|\n| Vector | Contiguous (sequential) | Excellent (prefetching) | O(1) | O(N) middle, O(1) end |\n| Array | Contiguous (fixed) | Excellent | O(1) | N/A (fixed size) |\n| Deque | Chunked (multiple blocks) | Good | O(1) | O(1) both ends |\n| List | Scattered (nodes) | Poor (cache misses) | O(N) | O(1) anywhere |",
+          "| Scenario | Best Choice | Reason |\n|----------|-------------|--------|\n| Unknown size, frequent append | Vector | Amortized O(1) push_back |\n| Fixed size, known at compile time | `std::array` | No heap allocation |\n| Fixed size, known at runtime | Vector + `reserve()` | Avoid reallocations |\n| Frequent insertion/deletion in middle | `std::list` | O(1) splice |\n| Frequent insertion at both ends | `std::deque` | O(1) push_front/push_back |\n| Large objects, unique ownership | Vector with move-only semantics | Avoid copying |\n| Real-time systems (no malloc) | Small Vector Optimization or pre-reserved Vector | Deterministic latency |",
+          "| Subsystem | Data Structure | Vector Usage | Performance Requirement |\n|-----------|---------------|--------------|-------------------------|\n| **LiDAR Processing** | `Vector<Point3D>` | Store 100K-2M points per frame (10-20Hz) | <10ms processing, contiguous memory for SIMD |\n| **Camera Object Detection** | `Vector<BoundingBox>` | Store 10-50 detected objects per frame (30Hz) | <5ms inference, frequent reallocation |\n| **Path Planning** | `Vector<Waypoint>` | Store 100-500 waypoints (1Hz replanning) | <100ms, sparse insertions |\n| **Sensor Fusion** | `Vector<SensorData>` | Buffer 60 frames (1 second at 60Hz) | Circular buffer behavior, no reallocation |\n| **Map Tiles** | `Vector<MapTile>` | Load/unload tiles dynamically | Reserve based on visible area |",
+          "| Special Member Function | Purpose | Vector Implementation |\n|-------------------------|---------|----------------------|\n| **Destructor** | Free resources | `delete[] data;` |\n| **Copy Constructor** | Deep copy | Allocate new buffer, copy elements |\n| **Copy Assignment** | Deep copy with cleanup | Copy-and-swap idiom |\n| **Move Constructor** | Steal resources | Swap pointers, set other to nullptr |\n| **Move Assignment** | Steal resources with cleanup | Swap pointers |"
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   BookOpen,
   Code,
@@ -13,6 +14,9 @@ import {
   Play,
   Trophy,
   Clock,
+  AlertTriangle,
+  Terminal,
+  FileText,
 } from 'lucide-react';
 // Removed Prism.js to avoid compatibility issues
 // Using simple CSS-based syntax highlighting instead
@@ -115,8 +119,11 @@ const TopicDetail = () => {
 
   const tabs = [
     { id: 'theory', label: 'Theory', icon: BookOpen },
+    { id: 'edge-cases', label: 'Edge Cases', icon: AlertTriangle },
     { id: 'examples', label: 'Code Examples', icon: Code },
+    { id: 'practice', label: 'Practice Tasks', icon: Terminal },
     { id: 'quiz', label: 'Quiz', icon: Brain },
+    { id: 'reference', label: 'Quick Reference', icon: FileText },
     { id: 'notes', label: 'My Notes', icon: Edit3 },
   ];
 
@@ -205,7 +212,9 @@ const TopicDetail = () => {
               <>
                 <div className="content-card">
                   <div className="markdown-content">
-                    <ReactMarkdown>{theory.content || theory}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {typeof theory === 'string' ? theory : (theory.content || '')}
+                    </ReactMarkdown>
                   </div>
                 </div>
 
@@ -366,6 +375,143 @@ const TopicDetail = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Edge Cases Tab */}
+        {activeTab === 'edge-cases' && (
+          <div className="edge-cases-content">
+            {topic.edge_cases && topic.edge_cases.length > 0 ? (
+              topic.edge_cases.map((edgeCase, index) => (
+                <div key={index} className="example-card">
+                  <div className="example-header">
+                    <h3>
+                      <AlertTriangle size={20} style={{ display: 'inline', marginRight: '8px' }} />
+                      Edge Case {index + 1}: {edgeCase.title}
+                    </h3>
+                  </div>
+
+                  {edgeCase.explanation && (
+                    <div className="example-explanation">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {typeof edgeCase.explanation === 'string' ? edgeCase.explanation : ''}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+
+                  {edgeCase.code_examples && edgeCase.code_examples.length > 0 && edgeCase.code_examples.map((code, codeIdx) => (
+                    <div key={codeIdx} className="code-block-wrapper">
+                      <button
+                        className="copy-button"
+                        onClick={() => copyToClipboard(code, `edge-${index}-${codeIdx}`)}
+                      >
+                        {copiedCode === `edge-${index}-${codeIdx}` ? (
+                          <>
+                            <Check size={16} />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={16} />
+                            Copy
+                          </>
+                        )}
+                      </button>
+                      <pre>
+                        <code className="language-cpp">{code}</code>
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <AlertTriangle size={48} className="empty-state-icon" />
+                <p>No edge cases documented yet</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Practice Tasks Tab */}
+        {activeTab === 'practice' && (
+          <div className="practice-content">
+            {topic.practice_tasks && topic.practice_tasks.length > 0 ? (
+              topic.practice_tasks.map((task, index) => (
+                <div key={index} className="example-card">
+                  <div className="example-header">
+                    <h3>
+                      <Terminal size={20} style={{ display: 'inline', marginRight: '8px' }} />
+                      {task.title || `Practice Task ${index + 1}`}
+                    </h3>
+                  </div>
+
+                  {task.description && (
+                    <div className="example-explanation">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {typeof task.description === 'string' ? task.description : ''}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+
+                  {task.code && (
+                    <div className="code-block-wrapper">
+                      <button
+                        className="copy-button"
+                        onClick={() => copyToClipboard(task.code, `practice-${index}`)}
+                      >
+                        {copiedCode === `practice-${index}` ? (
+                          <>
+                            <Check size={16} />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={16} />
+                            Copy
+                          </>
+                        )}
+                      </button>
+                      <pre>
+                        <code className="language-cpp">{task.code}</code>
+                      </pre>
+                    </div>
+                  )}
+
+                  {task.expected_output && (
+                    <div className="example-output">
+                      <h4>Expected Output:</h4>
+                      <pre className="output-box">{task.expected_output}</pre>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <Terminal size={48} className="empty-state-icon" />
+                <p>No practice tasks available yet</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Reference Tab */}
+        {activeTab === 'reference' && (
+          <div className="reference-content">
+            {topic.quick_reference && topic.quick_reference.content ? (
+              <div className="content-card">
+                <div className="markdown-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {typeof topic.quick_reference.content === 'string' ? topic.quick_reference.content : ''}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <FileText size={48} className="empty-state-icon" />
+                <p>No quick reference available yet</p>
               </div>
             )}
           </div>

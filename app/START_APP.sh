@@ -26,8 +26,8 @@ if [ ! -d "backend" ]; then
 fi
 
 # Check if frontend directory exists
-if [ ! -d "frontend_v2" ]; then
-    echo -e "${RED}Error: frontend_v2 directory not found${NC}"
+if [ ! -d "frontend" ]; then
+    echo -e "${RED}Error: frontend directory not found${NC}"
     echo "Please run this script from the app directory"
     exit 1
 fi
@@ -91,7 +91,7 @@ echo ""
 
 # Start backend in background
 echo -e "${BLUE}Starting Flask backend server...${NC}"
-python3 app_v2.py > ../backend.log 2>&1 &
+python3 app_v3.py > ../backend.log 2>&1 &
 BACKEND_PID=$!
 echo -e "${GREEN}✓ Backend server started (PID: $BACKEND_PID)${NC}"
 echo -e "${GREEN}  Logs: app/backend.log${NC}"
@@ -109,7 +109,7 @@ echo -e "${BLUE}                    FRONTEND SETUP                             $
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-cd frontend_v2
+cd frontend
 
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then
@@ -121,10 +121,12 @@ else
 fi
 
 # Create .env file if it doesn't exist
-if [ ! -f ".env" ]; then
+if [ ! -f ".env" ] && [ -f ".env.example" ]; then
     echo -e "${BLUE}Creating .env file...${NC}"
     cp .env.example .env
     echo -e "${GREEN}✓ .env file created${NC}"
+elif [ ! -f ".env" ]; then
+    echo -e "${BLUE}No .env.example found, skipping .env creation${NC}"
 fi
 
 echo ""

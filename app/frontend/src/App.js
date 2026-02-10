@@ -17,6 +17,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
+    console.log('🚀 APP.JS VERSION: 2025-02-11-LATEST - NO loadChapters function exists in this version');
     loadUser();
   }, []);
 

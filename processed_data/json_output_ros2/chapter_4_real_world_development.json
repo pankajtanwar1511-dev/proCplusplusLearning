@@ -1,0 +1,77 @@
+{
+  "chapter_name": "chapter_4_real_world_development",
+  "chapter_number": 4,
+  "topic_count": 5,
+  "topics": [
+    {
+      "topic": "topic_1",
+      "filename": "topic_1.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_2",
+      "filename": "topic_2.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_3",
+      "filename": "topic_3.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_4",
+      "filename": "topic_4.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    },
+    {
+      "topic": "topic_5",
+      "filename": "topic_5.md",
+      "theory": {
+        "subsections": []
+      },
+      "edge_cases": [],
+      "code_examples": [],
+      "interview_qa": [],
+      "practice_tasks": [],
+      "quick_reference": {
+        "content": ""
+      }
+    }
+  ]
+}
