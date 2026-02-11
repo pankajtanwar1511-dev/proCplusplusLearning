@@ -33,9 +33,15 @@ class MarkdownParser:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Extract topic name (first ## TOPIC: line)
-        topic_match = re.search(r'^## TOPIC:\s*(.+)$', content, re.MULTILINE)
-        topic_name = topic_match.group(1).strip() if topic_match else filepath.stem
+        # Extract topic name from first heading
+        # Try "# TOPIC: Title" or "## TOPIC: Title" format first
+        topic_match = re.search(r'^##?\s*TOPIC:\s*(.+)$', content, re.MULTILINE)
+        if topic_match:
+            topic_name = topic_match.group(1).strip()
+        else:
+            # Try "# Topic N.M: Title" format (ROS2 style)
+            topic_match = re.search(r'^#\s+Topic\s+[\d.]+:\s+(.+)$', content, re.MULTILINE)
+            topic_name = topic_match.group(1).strip() if topic_match else filepath.stem
 
         # Parse each major section
         sections = {
@@ -53,20 +59,29 @@ class MarkdownParser:
 
     def _parse_theory_section(self, content: str) -> Dict[str, Any]:
         """Extract THEORY_SECTION content."""
+        # Try ### first (3 hashes - standard format) - colon is optional
         match = re.search(
-            r'### THEORY_SECTION:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### THEORY_SECTION:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
+
+        # Fallback to ## (2 hashes - used in some chapters like 9, 11-16) - colon is optional
+        if not match:
+            match = re.search(
+                r'## THEORY_SECTION:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                content,
+                re.DOTALL
+            )
 
         if not match:
             return {"subsections": []}
 
         theory_content = match.group(2).strip()
 
-        # Split by #### headers (subsections)
+        # Split by ### or #### headers (subsections) - support both 3 and 4 hashes
         subsections = []
-        subsection_pattern = r'####\s+(.+?)\n(.*?)(?=\n####|\Z)'
+        subsection_pattern = r'####+\s+(.+?)\n(.*?)(?=\n####+|\Z)'
 
         for sub_match in re.finditer(subsection_pattern, theory_content, re.DOTALL):
             subsections.append({
@@ -81,11 +96,20 @@ class MarkdownParser:
 
     def _parse_edge_cases(self, content: str) -> List[Dict[str, Any]]:
         """Extract edge cases with code examples."""
+        # Try ### first (3 hashes) - colon is optional
         match = re.search(
-            r'### EDGE_CASES:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### EDGE_CASES:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
+
+        # Fallback to ## (2 hashes) - colon is optional
+        if not match:
+            match = re.search(
+                r'## EDGE_CASES:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                content,
+                re.DOTALL
+            )
 
         if not match:
             return []
@@ -93,8 +117,8 @@ class MarkdownParser:
         edge_cases_content = match.group(2).strip()
         edge_cases = []
 
-        # Match #### Edge Case N: title
-        case_pattern = r'####\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n####\s+Edge Case|\Z)'
+        # Match #### or ### Edge Case N: title (support both 3 and 4 hashes)
+        case_pattern = r'####?\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n####?\s+Edge Case|\Z)'
 
         for case_match in re.finditer(case_pattern, edge_cases_content, re.DOTALL):
             title = case_match.group(1).strip()
@@ -103,12 +127,12 @@ class MarkdownParser:
             # Extract code blocks
             code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
 
-            # Remove code blocks from text to get pure explanation
-            text_without_code = re.sub(r'```(?:cpp|c\+\+)?.*?```', '', body, flags=re.DOTALL)
+            # Keep full markdown content (don't remove code blocks)
+            # ReactMarkdown will render them properly
 
             edge_cases.append({
                 "title": title,
-                "explanation": text_without_code.strip(),
+                "explanation": body.strip(),  # Keep full content including code blocks
                 "code_examples": [code.strip() for code in code_blocks]
             })
 
@@ -116,11 +140,20 @@ class MarkdownParser:
 
     def _parse_code_examples(self, content: str) -> List[Dict[str, Any]]:
         """Extract code examples section."""
+        # Try ### first (3 hashes) - colon is optional
         match = re.search(
-            r'### CODE_EXAMPLES:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### CODE_EXAMPLES:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
+
+        # Fallback to ## (2 hashes) - colon is optional
+        if not match:
+            match = re.search(
+                r'## CODE_EXAMPLES:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                content,
+                re.DOTALL
+            )
 
         if not match:
             return []
@@ -128,8 +161,8 @@ class MarkdownParser:
         examples_content = match.group(2).strip()
         examples = []
 
-        # Match #### Example N: title
-        example_pattern = r'####\s+Example \d+:\s+(.+?)\n(.*?)(?=\n####\s+Example|\Z)'
+        # Match #### or ### Example N: title (support both 3 and 4 hashes)
+        example_pattern = r'####?\s+Example \d+:\s+(.+?)\n(.*?)(?=\n####?\s+Example|\Z)'
 
         for ex_match in re.finditer(example_pattern, examples_content, re.DOTALL):
             title = ex_match.group(1).strip()
@@ -152,17 +185,17 @@ class MarkdownParser:
 
     def _parse_interview_qa(self, content: str) -> List[Dict[str, Any]]:
         """Extract interview questions with metadata."""
-        # Try ### first (standard format)
+        # Try ### first (standard format) - colon is optional
         match = re.search(
-            r'### INTERVIEW_QA:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### INTERVIEW_QA:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (used in some chapter 9 files)
+        # Fallback to ## (used in some chapter 9 files) - colon is optional
         if not match:
             match = re.search(
-                r'## INTERVIEW_QA:([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                r'## INTERVIEW_QA:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
                 content,
                 re.DOTALL
             )
@@ -173,8 +206,8 @@ class MarkdownParser:
         qa_content = match.group(2).strip()
         questions = []
 
-        # Match #### QN: question
-        question_pattern = r'####\s+Q\d+:\s+(.+?)\n(.*?)(?=\n####\s+Q|\Z)'
+        # Match #### or ### QN: question (support both 3 and 4 hashes)
+        question_pattern = r'####?\s+Q\d+:\s+(.+?)\n(.*?)(?=\n####?\s+Q|\Z)'
 
         for q_match in re.finditer(question_pattern, qa_content, re.DOTALL):
             question_text = q_match.group(1).strip()
@@ -212,11 +245,20 @@ class MarkdownParser:
 
     def _parse_practice_tasks(self, content: str) -> List[Dict[str, Any]]:
         """Extract practice tasks (output prediction, code analysis)."""
+        # Try ### first (3 hashes) - colon is optional
         match = re.search(
-            r'### PRACTICE_TASKS:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### PRACTICE_TASKS:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
+
+        # Fallback to ## (2 hashes) - colon is optional
+        if not match:
+            match = re.search(
+                r'## PRACTICE_TASKS:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                content,
+                re.DOTALL
+            )
 
         if not match:
             return []
@@ -224,8 +266,8 @@ class MarkdownParser:
         practice_content = match.group(2).strip()
         tasks = []
 
-        # Match #### QN (like Q1, Q2) or #### Task N: title or #### Practice N: title
-        task_pattern = r'####\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n####\s+(?:Q\d+|Task|Practice)|\Z)'
+        # Match ### or #### QN (like Q1, Q2) or Task N: title or Practice N: title (support both 3 and 4 hashes)
+        task_pattern = r'####?\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n####?\s+(?:Q\d+|Task|Practice)|\Z)'
 
         for task_match in re.finditer(task_pattern, practice_content, re.DOTALL):
             # Get question number or title
@@ -261,11 +303,20 @@ class MarkdownParser:
 
     def _parse_quick_reference(self, content: str) -> Dict[str, Any]:
         """Extract quick reference section (answer keys, comparison tables)."""
+        # Try ### first (3 hashes) - colon is optional
         match = re.search(
-            r'### QUICK_REFERENCE:([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### QUICK_REFERENCE:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
             content,
             re.DOTALL
         )
+
+        # Fallback to ## (2 hashes) - colon is optional
+        if not match:
+            match = re.search(
+                r'## QUICK_REFERENCE:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
+                content,
+                re.DOTALL
+            )
 
         if not match:
             return {"content": ""}
@@ -335,13 +386,11 @@ class MarkdownParser:
         return int(match.group(1)) if match else 0
 
     def process_all_chapters(self, chapter_filter: Optional[int] = None):
-        """Process all chapter directories (1-10 only)."""
+        """Process all chapter directories."""
         chapter_dirs = sorted([d for d in self.data_dir.iterdir()
                               if d.is_dir() and d.name.startswith('chapter_')])
 
-        # Filter to chapters 1-10
-        chapter_dirs = [d for d in chapter_dirs
-                       if self._extract_chapter_number(d.name) <= 10]
+        # No chapter limit - process all chapters
 
         if chapter_filter:
             chapter_dirs = [d for d in chapter_dirs
@@ -369,9 +418,10 @@ class MarkdownParser:
         # Create master index
         master_index = {
             "version": "1.0",
-            "description": "C++ Professional Learning Content - Chapters 1-10",
+            "description": "C++ Professional Learning Content - All Chapters",
             "statistics": stats,
-            "chapters": all_chapters
+            "chapters": all_chapters,
+            "catalog": "cpp"
         }
 
         index_file = self.output_dir / "master_index.json"
@@ -396,7 +446,7 @@ def main():
     parser.add_argument(
         '--chapter',
         type=int,
-        help='Process specific chapter number (1-10)'
+        help='Process specific chapter number'
     )
     parser.add_argument(
         '--data-dir',
@@ -410,11 +460,6 @@ def main():
     )
 
     args = parser.parse_args()
-
-    # Validate chapter range
-    if args.chapter and (args.chapter < 1 or args.chapter > 10):
-        print("❌ Error: Chapter must be between 1 and 10")
-        return
 
     print("\n" + "="*60)
     print("C++ MARKDOWN TO JSON CONVERTER")
