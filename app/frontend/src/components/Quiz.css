@@ -174,7 +174,9 @@
 }
 
 .question-code {
-  background-color: #2d2d2d;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  background: linear-gradient(135deg, #f9fafb 0%, #f4f6f8 100%);
+  border: 1px solid #e7e9ed;
   padding: 1.5rem;
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
@@ -182,7 +184,8 @@
 }
 
 .question-code code {
-  color: #f8f8f2;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  color: #334155;
   font-size: 0.875rem;
 }
 

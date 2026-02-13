@@ -1,10 +1,9 @@
-# Chapter 6: Advanced Production Systems
-## Topic 6.1: Lifecycle Nodes & Managed Components
+## TOPIC: Lifecycle Nodes & Managed Components
+
 
 ---
 
-## THEORY
-
+## THEORY_SECTION
 ### 1. What are Lifecycle Nodes?
 
 **Definition:**

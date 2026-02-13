@@ -1,10 +1,9 @@
-# Chapter 4: Real-World Development Practices
-## Topic 3: Deployment & Packaging
+## TOPIC: Deployment & Packaging
+
 
 ---
 
-## Theory
-
+## THEORY_SECTION
 ### 1. ROS2 Package Structure and Build System
 
 ROS2 uses two main build systems: **ament_cmake** for C++ packages and **ament_python** for Python packages.
@@ -825,8 +824,7 @@ ros2 launch my_package robot.launch.py config:=$ROBOT_CONFIG
 
 ---
 
-## Edge Cases
-
+## EDGE_CASES
 ### Edge Case 1: Missing Runtime Dependencies Not Caught at Build Time
 
 **Scenario:**
@@ -1354,8 +1352,7 @@ ros2 launch my_package robot.launch.py
 
 ---
 
-## Code Examples
-
+## CODE_EXAMPLES
 ### Example: Complete Deployment Package with Docker and systemd
 
 This example shows a production-ready deployment setup.
@@ -2554,8 +2551,7 @@ exit $EXIT_CODE
 
 ---
 
-## Practice Tasks
-
+## PRACTICE_TASKS
 ### Practice Task 1: Create Production-Ready Debian Package
 
 **Objective:** Package a ROS2 application as a `.deb` file for easy distribution and installation.
@@ -2674,8 +2670,7 @@ CMD ["bash"]
 
 ---
 
-## Quick Reference
-
+## QUICK_REFERENCE
 ### Common CMakeLists.txt Patterns
 
 ```cmake

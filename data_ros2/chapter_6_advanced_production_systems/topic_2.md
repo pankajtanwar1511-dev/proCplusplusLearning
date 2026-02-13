@@ -1,10 +1,9 @@
-# Chapter 6: Advanced Production Systems
-## Topic 6.2: Custom Messages & Interface Design
+## TOPIC: Custom Messages & Interface Design
+
 
 ---
 
-## THEORY
-
+## THEORY_SECTION
 ### 1. ROS2 Interface Types
 
 ROS2 has three types of interfaces for communication:

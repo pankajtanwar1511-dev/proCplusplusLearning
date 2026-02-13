@@ -1,10 +1,9 @@
-# Chapter 4: Real-World Development Practices
-## Topic 1: Testing Strategies (Unit, Integration, System)
+## TOPIC: Testing Strategies (Unit, Integration, System)
+
 
 ---
 
-## Theory
-
+## THEORY_SECTION
 ### 1. Testing Pyramid for ROS2
 
 The testing pyramid guides the distribution of different test types in a ROS2 project:
@@ -976,8 +975,7 @@ TEST(DataProcessorTest, HandlesNaN) {
 
 ---
 
-## Edge Cases
-
+## EDGE_CASES
 ### Edge Case 1: Flaky Tests Due to Timing Issues
 
 **Scenario:**
@@ -1546,8 +1544,7 @@ TEST_F(TimeoutNodeTest, DetectsTimeout) {
 
 ---
 
-## Code Examples
-
+## CODE_EXAMPLES
 ### Example: Complete Testing Setup for a ROS2 Package
 
 This example shows a production-ready testing setup for a sensor processing node.
@@ -2718,8 +2715,7 @@ make coverage
 
 ---
 
-## Practice Tasks
-
+## PRACTICE_TASKS
 ### Practice Task 1: Build a Comprehensive Test Suite
 
 **Objective:** Create unit, integration, and system tests for a robot navigation node.
@@ -2920,8 +2916,7 @@ public:
 
 ---
 
-## Quick Reference
-
+## QUICK_REFERENCE
 ### Common Test Assertions
 
 ```cpp

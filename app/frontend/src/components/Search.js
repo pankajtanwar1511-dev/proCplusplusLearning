@@ -1,14 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Search as SearchIcon, BookOpen, Code, Brain, ArrowRight, X } from 'lucide-react';
 import { search } from '../utils/api';
 import './Search.css';
 
 const Search = () => {
+  const { catalog } = useParams();
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Helper to create catalog-aware links
+  const getTopicLink = (topicId) => {
+    return catalog ? `/catalog/${catalog}/topic/${topicId}` : `/topics/${topicId}`;
+  };
+
+  const getQuizLink = (topicId) => {
+    return catalog ? `/catalog/${catalog}/quiz/${topicId}` : `/quiz/${topicId}`;
+  };
+
+  const getTopicsLink = () => {
+    return catalog ? `/catalog/${catalog}/topics` : '/topics';
+  };
+
+  const getCatalogTitle = () => {
+    if (catalog === 'cpp') return 'C++ Master';
+    if (catalog === 'ros2') return 'ROS 2 Master';
+    return 'C++ Master';
+  };
 
   useEffect(() => {
     const delaySearch = setTimeout(() => {
@@ -54,7 +75,7 @@ const Search = () => {
   return (
     <div className="search-page fade-in">
       <div className="search-header">
-        <h1>Search C++ Master</h1>
+        <h1>Search {getCatalogTitle()}</h1>
         <p className="text-gray">
           Search topics, code examples, and quiz questions
         </p>
@@ -113,7 +134,7 @@ const Search = () => {
                   {results.topics.map((topic, index) => (
                     <Link
                       key={index}
-                      to={`/topics/${topic.id}`}
+                      to={getTopicLink(topic.id)}
                       className="result-item"
                     >
                       <div className="result-icon topic">
@@ -151,7 +172,7 @@ const Search = () => {
                   {results.examples.map((example, index) => (
                     <Link
                       key={index}
-                      to={`/topics/${example.topic_id}`}
+                      to={getTopicLink(example.topic_id)}
                       className="result-item"
                     >
                       <div className="result-icon example">
@@ -192,7 +213,7 @@ const Search = () => {
                   {results.questions.map((question, index) => (
                     <Link
                       key={index}
-                      to={`/quiz/${question.topic_id}`}
+                      to={getQuizLink(question.topic_id)}
                       className="result-item"
                     >
                       <div className="result-icon question">
@@ -221,7 +242,7 @@ const Search = () => {
                 <SearchIcon size={64} className="empty-state-icon" />
                 <h3>No Results Found</h3>
                 <p>Try different keywords or browse all topics</p>
-                <Link to="/topics" className="btn btn-primary">
+                <Link to={getTopicsLink()} className="btn btn-primary">
                   <BookOpen size={18} />
                   Browse Topics
                 </Link>

@@ -16,7 +16,7 @@ echo "✓ Port 3000 cleared"
 
 # Kill any Python backend
 echo "Killing Python backends..."
-pkill -9 -f "python.*app_v2.py" 2>/dev/null
+pkill -9 -f "python.*app_v3.py" 2>/dev/null
 echo "✓ Python processes cleared"
 
 # Kill any React processes

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Platform - Catalog Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .catalogs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .catalog-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .catalog-header {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .catalog-title {
+            font-size: 1.8em;
+            color: #333;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .catalog-description {
+            color: #666;
+            margin-top: 10px;
+        }
+        .catalog-stats {
+            display: flex;
+            gap: 30px;
+            margin: 15px 0;
+        }
+        .catalog-stat {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .catalog-stat strong {
+            color: #667eea;
+            font-size: 1.3em;
+        }
+        .chapters-list {
+            margin-top: 20px;
+        }
+        .chapter-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .chapter-item:hover {
+            background: #e9ecef;
+        }
+        .chapter-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .chapter-name:hover {
+            color: #667eea;
+        }
+        .chapter-info {
+            font-size: 0.85em;
+            color: #666;
+        }
+        .topics-list {
+            margin-top: 10px;
+            padding-left: 15px;
+            display: none;
+        }
+        .topics-list.expanded {
+            display: block;
+        }
+        .topic-item {
+            background: white;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #2ecc71;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .topic-item:hover {
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+        .topic-name {
+            color: #333;
+            font-size: 0.95em;
+        }
+        .topic-stats {
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 3px;
+        }
+        .expand-icon {
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.3s;
+        }
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .view-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        .view-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Learning Platform - Multi-Catalog Browser</h1>
+
+        <div id="stats" class="stats"></div>
+        <div id="catalogs" class="catalogs">
+            <div class="loading">Loading catalogs...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function fetchJSON(url) {
+            const response = await fetch(API_BASE + url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        }
+
+        async function loadCatalogs() {
+            try {
+                // Load health stats
+                const health = await fetchJSON('/health');
+
+                // Display stats
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${health.catalogs}</div>
+                        <div class="stat-label">Catalogs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${health.total_chapters}</div>
+                        <div class="stat-label">Chapters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${health.total_topics}</div>
+                        <div class="stat-label">Topics</div>
+                    </div>
+                `;
+
+                // Load catalogs
+                const catalogsData = await fetchJSON('/catalogs');
+
+                let html = '';
+                for (const catalog of catalogsData.catalogs) {
+                    // Load chapters for this catalog
+                    const chaptersData = await fetchJSON(`/${catalog.name}/chapters`);
+
+                    html += `
+                        <div class="catalog-card">
+                            <div class="catalog-header">
+                                <div class="catalog-title">${catalog.name} Learning Path</div>
+                                <div class="catalog-description">${catalog.description}</div>
+                                <div class="catalog-stats">
+                                    <div class="catalog-stat">
+                                        <strong>${catalog.total_chapters}</strong> chapters
+                                    </div>
+                                    <div class="catalog-stat">
+                                        <strong>${catalog.total_topics}</strong> topics
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chapters-list" id="${catalog.name}-chapters">
+                                ${chaptersData.chapters.map(chapter => `
+                                    <div class="chapter-item" id="${catalog.name}-chapter-${chapter.number}">
+                                        <div class="chapter-name" onclick="toggleChapter('${catalog.name}', ${chapter.number})">
+                                            <span class="expand-icon" id="${catalog.name}-icon-${chapter.number}">▶</span>
+                                            Chapter ${chapter.number}: ${chapter.name.replace('chapter_' + chapter.number + '_', '').replace(/_/g, ' ')}
+                                        </div>
+                                        <div class="chapter-info">
+                                            📚 ${chapter.total_topics} topics •
+                                            ✅ ${chapter.completed_topics} completed (${Math.round(chapter.progress_percent)}%)
+                                        </div>
+                                        <div class="topics-list" id="${catalog.name}-topics-${chapter.number}">
+                                            <div style="text-align: center; padding: 10px; color: #999;">
+                                                Loading topics...
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('catalogs').innerHTML = html;
+            } catch (error) {
+                document.getElementById('catalogs').innerHTML = `
+                    <div class="error">
+                        <h3>Error loading catalogs</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure the backend is running on port 5000</p>
+                    </div>
+                `;
+            }
+        }
+
+        const loadedChapters = new Set();
+
+        async function toggleChapter(catalog, chapterNum) {
+            const topicsDiv = document.getElementById(`${catalog}-topics-${chapterNum}`);
+            const icon = document.getElementById(`${catalog}-icon-${chapterNum}`);
+            const chapterId = `${catalog}-${chapterNum}`;
+
+            // Toggle expanded state
+            if (topicsDiv.classList.contains('expanded')) {
+                topicsDiv.classList.remove('expanded');
+                icon.classList.remove('expanded');
+                icon.textContent = '▶';
+                return;
+            }
+
+            // Expand
+            topicsDiv.classList.add('expanded');
+            icon.classList.add('expanded');
+            icon.textContent = '▼';
+
+            // Load topics if not already loaded
+            if (!loadedChapters.has(chapterId)) {
+                try {
+                    const chapterData = await fetchJSON(`/${catalog}/chapter/${chapterNum}`);
+
+                    const topicsHTML = chapterData.topics.map(topic => `
+                        <div class="topic-item" onclick="viewTopic('${catalog}', ${chapterNum}, ${topic.index})">
+                            <div class="topic-name">${topic.topic}</div>
+                            <div class="topic-stats">
+                                📝 ${topic.theory_count} sections •
+                                ⚠️ ${topic.edge_cases_count} edge cases •
+                                💻 ${topic.examples_count} examples •
+                                🎯 ${topic.questions_count} questions
+                                ${topic.progress.completed ? ' • ✅ Completed' : ''}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    topicsDiv.innerHTML = topicsHTML;
+                    loadedChapters.add(chapterId);
+                } catch (error) {
+                    topicsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 10px; color: #c62828;">
+                            Error loading topics: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function viewTopic(catalog, chapterNum, topicIdx) {
+            const topicId = `${catalog}_${chapterNum}_${topicIdx}`;
+            window.open(`http://localhost:3000/topics/${topicId}`, '_blank');
+        }
+
+        // Load on page load
+        loadCatalogs();
+    </script>
+</body>
+</html>

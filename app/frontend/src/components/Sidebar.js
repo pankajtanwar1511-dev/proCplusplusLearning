@@ -10,30 +10,63 @@ import {
   X,
   Code2,
   Flame,
+  Radio,
+  Library,
 } from 'lucide-react';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, onToggle, user }) => {
   const location = useLocation();
+  const catalogMatch = location.pathname.match(/^\/catalog\/(\w+)/);
+  const catalog = catalogMatch ? catalogMatch[1] : null;
 
-  const navItems = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/topics', icon: BookOpen, label: 'Topics' },
-    { path: '/learning-paths', icon: Map, label: 'Learning Paths' },
-    { path: '/search', icon: Search, label: 'Search' },
-    { path: '/profile', icon: User, label: 'Profile' },
-  ];
+  // Catalog-aware navigation
+  const getNavItems = () => {
+    if (catalog) {
+      return [
+        { path: `/catalog/${catalog}/dashboard`, icon: Home, label: 'Dashboard' },
+        { path: `/catalog/${catalog}/chapters`, icon: Library, label: 'Chapters' },
+        { path: `/catalog/${catalog}/topics`, icon: BookOpen, label: 'Topics' },
+        { path: `/catalog/${catalog}/search`, icon: Search, label: 'Search' },
+        { path: `/catalog/${catalog}/profile`, icon: User, label: 'Profile' },
+      ];
+    }
+    // Legacy navigation
+    return [
+      { path: '/dashboard', icon: Home, label: 'Dashboard' },
+      { path: '/topics', icon: BookOpen, label: 'Topics' },
+      { path: '/learning-paths', icon: Map, label: 'Learning Paths' },
+      { path: '/search', icon: Search, label: 'Search' },
+      { path: '/profile', icon: User, label: 'Profile' },
+    ];
+  };
+
+  const navItems = getNavItems();
+
+  const getCatalogIcon = () => {
+    if (catalog === 'cpp') return Code2;
+    if (catalog === 'ros2') return Radio;
+    return Code2;
+  };
+
+  const getCatalogTitle = () => {
+    if (catalog === 'cpp') return 'C++ Master';
+    if (catalog === 'ros2') return 'ROS 2 Master';
+    return 'C++ Master';
+  };
 
   const isActive = (path) => location.pathname === path;
+
+  const LogoIcon = getCatalogIcon();
 
   return (
     <>
       <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <div className="logo">
-            <Code2 size={32} />
-            {isOpen && <span className="logo-text">C++ Master</span>}
-          </div>
+          <Link to="/" className="logo">
+            <LogoIcon size={32} />
+            {isOpen && <span className="logo-text">{getCatalogTitle()}</span>}
+          </Link>
           <button className="sidebar-toggle" onClick={onToggle}>
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>

@@ -100,8 +100,8 @@ if [ ! -z "$FRONTEND_PIDS" ]; then
     STOPPED_SOMETHING=true
 fi
 
-# Extra safety: kill any python app_v2.py processes
-PYTHON_PIDS=$(pgrep -f "python.*app_v2.py" 2>/dev/null)
+# Extra safety: kill any python app_v3.py processes
+PYTHON_PIDS=$(pgrep -f "python.*app_v3.py" 2>/dev/null)
 if [ ! -z "$PYTHON_PIDS" ]; then
     echo -e "${BLUE}Found Python backend processes: $PYTHON_PIDS${NC}"
     for pid in $PYTHON_PIDS; do

@@ -1,10 +1,9 @@
-# Chapter 5: Robotics Applications
-## Topic 5.3: Robot Manipulation & MoveIt2
+## TOPIC: Robot Manipulation & MoveIt2
+
 
 ---
 
-## THEORY
-
+## THEORY_SECTION
 ### 1. MoveIt2 Overview
 
 **What is MoveIt2?**

@@ -76,7 +76,7 @@ echo ""
 echo "To start the backend server:"
 echo -e "${BLUE}  cd app/backend"
 echo "  source venv/bin/activate"
-echo -e "  python3 app_v2.py${NC}"
+echo -e "  python3 app_v3.py${NC}"
 echo ""
 echo "The API will be available at: http://localhost:5000"
 echo ""
@@ -104,5 +104,5 @@ then
     echo -e "${GREEN}Starting backend server...${NC}"
     echo "Press Ctrl+C to stop"
     echo ""
-    python3 app_v2.py
+    python3 app_v3.py
 fi

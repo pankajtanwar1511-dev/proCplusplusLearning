@@ -18,8 +18,12 @@ import { generateQuiz, submitQuiz, getTopic } from '../utils/api';
 import './Quiz.css';
 
 const Quiz = () => {
-  const { topicId } = useParams();
+  const { topicId, catalog } = useParams();
   const navigate = useNavigate();
+
+  // Determine navigation links based on catalog context
+  const topicLink = catalog ? `/catalog/${catalog}/topic/${topicId}` : `/topics/${topicId}`;
+  const dashboardLink = catalog ? `/catalog/${catalog}/dashboard` : '/dashboard';
 
   // Quiz state
   const [topic, setTopic] = useState(null);
@@ -235,13 +239,13 @@ const Quiz = () => {
           </button>
           <button
             className="btn btn-ghost"
-            onClick={() => navigate(`/topics/${topicId}`)}
+            onClick={() => navigate(topicLink)}
           >
             Back to Topic
           </button>
           <button
             className="btn btn-primary"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(dashboardLink)}
           >
             <Home size={18} />
             Dashboard
@@ -311,7 +315,7 @@ const Quiz = () => {
 
           <button
             className="btn btn-ghost"
-            onClick={() => navigate(`/topics/${topicId}`)}
+            onClick={() => navigate(topicLink)}
           >
             Cancel
           </button>

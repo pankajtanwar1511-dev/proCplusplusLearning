@@ -91,6 +91,14 @@
   box-shadow: var(--shadow);
 }
 
+/* Force JetBrains Mono for all code in theory content */
+.content-card code,
+.content-card pre,
+.content-card code[class*="language-"],
+.content-card pre[class*="language-"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+}
+
 .markdown-content {
   font-size: 1rem;
   line-height: 1.8;
@@ -129,6 +137,7 @@
 }
 
 .markdown-content code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
   background-color: var(--light-dark);
   padding: 0.2rem 0.4rem;
   border-radius: var(--radius-sm);
@@ -136,6 +145,7 @@
 }
 
 .markdown-content pre code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
   background-color: transparent;
   padding: 0;
 }
@@ -192,6 +202,7 @@
 
 /* Table code styling */
 .markdown-content table code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
   background-color: rgba(99, 102, 241, 0.1);
   color: var(--primary-dark);
   padding: 0.15rem 0.4rem;
@@ -230,6 +241,14 @@
   border-radius: var(--radius-lg);
   padding: 2rem;
   box-shadow: var(--shadow);
+}
+
+/* Force JetBrains Mono for all code in examples */
+.example-card code,
+.example-card pre,
+.example-card code[class*="language-"],
+.example-card pre[class*="language-"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
 }
 
 .example-header h3 {
@@ -289,8 +308,10 @@
 }
 
 .output-box {
-  background-color: #1e1e1e;
-  color: #d4d4d4;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  background: linear-gradient(135deg, #f9fafb 0%, #f0f2f5 100%);
+  border: 1px solid #d9dce2;
+  color: #1e293b;
   padding: 1rem;
   border-radius: var(--radius);
   font-size: 0.875rem;

@@ -24,6 +24,41 @@ USER_DATA_FILE = Path(__file__).parent / 'user_data_v3.json'
 # DATA LOADING
 # ============================================================
 
+def format_chapter_name(slug):
+    """Format chapter slug to human-readable name"""
+    chapter_names = {
+        # C++ Chapters
+        'chapter_1_oops': 'Object-Oriented Programming (OOP)',
+        'chapter_2_mamory_management': 'Memory Management',
+        'chapter_3_smart_pointers': 'Smart Pointers',
+        'chapter_4_reference_copying_moving': 'References, Copying & Moving',
+        'chapter_5_operator_overloading': 'Operator Overloading',
+        'chapter_6_type_system_casting': 'Type System & Casting',
+        'chapter_7_templates_generics': 'Templates & Generics',
+        'chapter_8_stl_containers_algorithms': 'STL Containers & Algorithms',
+        'chapter_9_cpp11_features': 'C++11 Features',
+        'chapter_10_raii_resource_management': 'RAII & Resource Management',
+        'chapter_11_multithreading': 'Multithreading',
+        'chapter_12_design_patterns': 'Design Patterns',
+        'chapter_13_compile_time_magic': 'Compile-Time Programming',
+        'chapter_14_low_level_tricky': 'Low-Level & Advanced Tricks',
+        'chapter_15_cpp14_features': 'C++14 Features',
+        'chapter_16_cpp17_features': 'C++17 Features',
+        'chapter_18_network_programming': 'Network Programming',
+        # ROS2 Chapters
+        'chapter_1_fundamentals': 'ROS2 Fundamentals',
+        'chapter_2_communication': 'Communication Patterns',
+        'chapter_3_advanced_features': 'Advanced Features',
+        'chapter_4_navigation': 'Navigation',
+        'chapter_4_real_world_development': 'Real-World Development',
+        'chapter_5_real_world': 'Real-World Applications',
+        'chapter_5_robotics_applications': 'Robotics Applications',
+        'chapter_6_advanced_production_systems': 'Advanced Production Systems'
+    }
+
+    # Return formatted name if exists, otherwise fallback to title case
+    return chapter_names.get(slug, slug.replace('_', ' ').title())
+
 def load_catalogs():
     """Load all available catalogs"""
     catalogs = {}
@@ -194,7 +229,7 @@ def get_catalog_chapters(catalog):
 
         chapters_list.append({
             'number': chapter_num,
-            'name': chapter_info['name'],
+            'name': format_chapter_name(chapter_info['name']),
             'total_topics': total_topics,
             'completed_topics': completed_topics,
             'progress_percent': (completed_topics / total_topics * 100) if total_topics > 0 else 0

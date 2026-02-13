@@ -32,8 +32,13 @@ import {
 import './TopicDetail.css';
 
 const TopicDetail = () => {
-  const { id } = useParams();
+  const { id, catalog } = useParams();
   const navigate = useNavigate();
+
+  // Determine back link based on whether we're in a catalog context
+  const backLink = catalog ? `/catalog/${catalog}/topics` : '/topics';
+  const quizLink = catalog ? `/catalog/${catalog}/quiz/${id}` : `/quiz/${id}`;
+
   const [topic, setTopic] = useState(null);
   const [activeTab, setActiveTab] = useState('theory');
   const [loading, setLoading] = useState(true);
@@ -142,7 +147,7 @@ const TopicDetail = () => {
         <BookOpen size={64} className="empty-state-icon" />
         <h3>Topic Not Found</h3>
         <p>{error || 'The requested topic could not be found'}</p>
-        <Link to="/topics" className="btn btn-primary">
+        <Link to={backLink} className="btn btn-primary">
           <ArrowLeft size={18} />
           Back to Topics
         </Link>
@@ -156,7 +161,7 @@ const TopicDetail = () => {
     <div className="topic-detail fade-in">
       {/* Header */}
       <div className="topic-detail-header">
-        <button className="btn btn-ghost" onClick={() => navigate('/topics')}>
+        <button className="btn btn-ghost" onClick={() => navigate(backLink)}>
           <ArrowLeft size={18} />
           Back
         </button>
@@ -227,7 +232,7 @@ const TopicDetail = () => {
                     Mark as Read
                   </button>
                   <Link
-                    to={`/quiz/${id}`}
+                    to={quizLink}
                     className="btn btn-primary"
                   >
                     <Brain size={18} />
@@ -343,7 +348,7 @@ const TopicDetail = () => {
               </div>
 
               <Link
-                to={`/quiz/${id}`}
+                to={quizLink}
                 className="btn btn-primary btn-lg"
               >
                 <Play size={18} />

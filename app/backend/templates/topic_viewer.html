@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic Viewer - Learning Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.0/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .nav {
+            background: white;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        .header {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .catalog-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .section {
+            margin: 40px 0;
+        }
+        .section-title {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .subsection {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .subsection h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .edge-case, .example, .question {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .edge-case {
+            border-left: 4px solid #e74c3c;
+        }
+        .example {
+            border-left: 4px solid #2ecc71;
+        }
+        .question {
+            border-left: 4px solid #3498db;
+        }
+        .item-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        .tag.difficulty {
+            background: #667eea;
+            color: white;
+        }
+        .answer-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .key-takeaway {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .stat strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">← Back to Catalog Browser</a>
+        <span id="breadcrumb"></span>
+    </div>
+
+    <div class="container">
+        <div id="content">
+            <div class="loading">Loading topic...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function fetchJSON(url) {
+            const response = await fetch(API_BASE + url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        }
+
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                catalog: params.get('catalog'),
+                chapter: params.get('chapter'),
+                topic: params.get('topic')
+            };
+        }
+
+        function renderTheory(theory) {
+            if (!theory.subsections || theory.subsections.length === 0) {
+                return '<p>No theory content available.</p>';
+            }
+
+            return theory.subsections.map(sub => `
+                <div class="subsection">
+                    <h3>${sub.title}</h3>
+                    <div>${marked.parse(sub.content)}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderEdgeCases(edgeCases) {
+            if (!edgeCases || edgeCases.length === 0) return '';
+
+            return `
+                <div class="section">
+                    <div class="section-title">⚠️ Edge Cases & Tricky Scenarios</div>
+                    ${edgeCases.map(ec => `
+                        <div class="edge-case">
+                            <div class="item-title">${ec.title}</div>
+                            <div>${marked.parse(ec.explanation)}</div>
+                            ${ec.code_examples && ec.code_examples.length > 0 ? ec.code_examples.map(code => `
+                                <pre><code class="language-cpp">${code}</code></pre>
+                            `).join('') : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderCodeExamples(examples) {
+            if (!examples || examples.length === 0) return '';
+
+            return `
+                <div class="section">
+                    <div class="section-title">💻 Code Examples</div>
+                    ${examples.map(ex => `
+                        <div class="example">
+                            <div class="item-title">${ex.title}</div>
+                            ${ex.explanation ? `<div>${marked.parse(ex.explanation)}</div>` : ''}
+                            ${ex.code ? `<pre><code class="language-cpp">${ex.code}</code></pre>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderInterviewQuestions(questions) {
+            if (!questions || questions.length === 0) return '';
+
+            return `
+                <div class="section">
+                    <div class="section-title">🎯 Interview Questions & Answers</div>
+                    ${questions.map((q, idx) => `
+                        <div class="question">
+                            <div class="item-title">Q${idx + 1}: ${q.question}</div>
+                            <div class="tags">
+                                ${q.difficulty && q.difficulty.length > 0 ? q.difficulty.map(d => `<span class="tag difficulty">${d}</span>`).join('') : ''}
+                                ${q.category && q.category.length > 0 ? q.category.map(c => `<span class="tag">${c}</span>`).join('') : ''}
+                                ${q.concepts && q.concepts.length > 0 ? q.concepts.map(c => `<span class="tag">${c}</span>`).join('') : ''}
+                            </div>
+                            ${q.answer ? `<div class="answer-box"><strong>Answer:</strong> ${q.answer}</div>` : ''}
+                            ${q.explanation ? `<div>${marked.parse(q.explanation)}</div>` : ''}
+                            ${q.code_examples && q.code_examples.length > 0 ? q.code_examples.map(code => `
+                                <pre><code class="language-cpp">${code}</code></pre>
+                            `).join('') : ''}
+                            ${q.key_takeaway ? `<div class="key-takeaway"><strong>💡 Key Takeaway:</strong> ${q.key_takeaway}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function loadTopic() {
+            try {
+                const { catalog, chapter, topic } = getUrlParams();
+
+                if (!catalog || !chapter || !topic) {
+                    document.getElementById('content').innerHTML = `
+                        <div class="error">
+                            <h3>Missing Parameters</h3>
+                            <p>Please provide catalog, chapter, and topic parameters.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Update breadcrumb
+                document.getElementById('breadcrumb').innerHTML = `
+                    ${catalog.toUpperCase()} > Chapter ${chapter} > Topic ${topic}
+                `;
+
+                // Fetch topic data
+                const data = await fetchJSON(`/${catalog}/topic/${chapter}/${topic}`);
+
+                // Render content
+                document.getElementById('content').innerHTML = `
+                    <div class="header">
+                        <div class="catalog-badge">${catalog.toUpperCase()}</div>
+                        <h1>${data.topic}</h1>
+                        <div class="meta">Chapter ${data.chapter_num} • Topic ${data.topic_idx}</div>
+                        <div class="stats">
+                            <div class="stat"><strong>${data.stats.theory_subsections}</strong> Theory Sections</div>
+                            <div class="stat"><strong>${data.stats.edge_cases}</strong> Edge Cases</div>
+                            <div class="stat"><strong>${data.stats.code_examples}</strong> Code Examples</div>
+                            <div class="stat"><strong>${data.stats.interview_questions}</strong> Interview Questions</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">📚 Theory</div>
+                        ${renderTheory(data.theory)}
+                    </div>
+
+                    ${renderEdgeCases(data.edge_cases)}
+                    ${renderCodeExamples(data.code_examples)}
+                    ${renderInterviewQuestions(data.interview_qa)}
+                `;
+
+                // Highlight code blocks
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h3>Error Loading Topic</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load on page load
+        loadTopic();
+    </script>
+</body>
+</html>

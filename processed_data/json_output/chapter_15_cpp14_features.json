@@ -46,7 +46,7 @@
       "edge_cases": [
         {
           "title": "Return Type Deduction with Multiple Return Paths",
-          "explanation": "All return statements must deduce to the **same type**. The compiler doesn't try to find a common type. This is intentional to prevent surprises. If you need different return types, use explicit return type or `std::variant` (C++17+).\n\n**Workaround**:\n\n\n**Key takeaway:** Return type deduction is all-or-nothing; be cautious with conditional returns.",
+          "explanation": "```cpp\nauto tricky(bool b) {\n    if (b) return 1;      // int\n    else return 1.5;      // double\n}  // ❌ ERROR: Conflicting deduced types\n```\n\nAll return statements must deduce to the **same type**. The compiler doesn't try to find a common type. This is intentional to prevent surprises. If you need different return types, use explicit return type or `std::variant` (C++17+).\n\n**Workaround**:\n```cpp\ndouble tricky(bool b) {  // ✅ Explicit return type\n    if (b) return 1;     // Implicitly converted to double\n    else return 1.5;\n}\n```\n\n**Key takeaway:** Return type deduction is all-or-nothing; be cautious with conditional returns.",
           "code_examples": [
             "auto tricky(bool b) {\n    if (b) return 1;      // int\n    else return 1.5;      // double\n}  // ❌ ERROR: Conflicting deduced types",
             "double tricky(bool b) {  // ✅ Explicit return type\n    if (b) return 1;     // Implicitly converted to double\n    else return 1.5;\n}"
@@ -54,7 +54,7 @@
         },
         {
           "title": "decltype(auto) and Parentheses Matter",
-          "explanation": "With `decltype(auto)`, parentheses change the deduced type:\n- `decltype(x)` is `int` (identifier)\n- `decltype((x))` is `int&` (expression)\n\nThis can lead to **dangling references** if used with local variables:\n\n\n\n**Key takeaway:** Be extremely careful with `decltype(auto)` and parentheses; use it primarily for perfect forwarding, not with local variables.",
+          "explanation": "```cpp\nint x = 10;\n\nauto f1() { return x; }    // Returns int (copy)\nauto f2() { return (x); }  // Returns int (copy) - parens ignored for auto\n\ndecltype(auto) g1() { return x; }    // Returns int (copy)\ndecltype(auto) g2() { return (x); }  // Returns int& (reference!) - parens matter\n```\n\nWith `decltype(auto)`, parentheses change the deduced type:\n- `decltype(x)` is `int` (identifier)\n- `decltype((x))` is `int&` (expression)\n\nThis can lead to **dangling references** if used with local variables:\n\n```cpp\ndecltype(auto) danger() {\n    int local = 5;\n    return (local);  // ❌ Returns int& to local → UB when accessed\n}\n```\n\n**Key takeaway:** Be extremely careful with `decltype(auto)` and parentheses; use it primarily for perfect forwarding, not with local variables.",
           "code_examples": [
             "int x = 10;\n\nauto f1() { return x; }    // Returns int (copy)\nauto f2() { return (x); }  // Returns int (copy) - parens ignored for auto\n\ndecltype(auto) g1() { return x; }    // Returns int (copy)\ndecltype(auto) g2() { return (x); }  // Returns int& (reference!) - parens matter",
             "decltype(auto) danger() {\n    int local = 5;\n    return (local);  // ❌ Returns int& to local → UB when accessed\n}"
@@ -62,7 +62,7 @@
         },
         {
           "title": "Generic Lambdas and Type Deduction Failures",
-          "explanation": "Braced initializer lists have no deducible type in template contexts. You must explicitly specify the type:\n\n\n\nAlso, generic lambdas with `static_assert` or `enable_if` can provide better compile-time error messages:\n\n\n\n**Key takeaway:** Generic lambdas don't support braced-init-list deduction; add type constraints for better diagnostics.",
+          "explanation": "```cpp\nauto lambda = [](auto x) {\n    return x + x;\n};\n\n// lambda({1, 2, 3});  // ❌ ERROR: Can't deduce type for braced-init-list\n```\n\nBraced initializer lists have no deducible type in template contexts. You must explicitly specify the type:\n\n```cpp\nauto lambda = [](std::initializer_list<int> il) {\n    int sum = 0;\n    for (int v : il) sum += v;\n    return sum;\n};\nlambda({1, 2, 3});  // ✅ OK\n```\n\nAlso, generic lambdas with `static_assert` or `enable_if` can provide better compile-time error messages:\n\n```cpp\nauto only_numeric = [](auto val) {\n    static_assert(std::is_arithmetic<decltype(val)>::value, \"Numeric required\");\n    return val * 2;\n};\n\nonly_numeric(10);    // ✅ OK\n// only_numeric(\"hi\");  // ❌ Compile error with clear message\n```\n\n**Key takeaway:** Generic lambdas don't support braced-init-list deduction; add type constraints for better diagnostics.",
           "code_examples": [
             "auto lambda = [](auto x) {\n    return x + x;\n};\n\n// lambda({1, 2, 3});  // ❌ ERROR: Can't deduce type for braced-init-list",
             "auto lambda = [](std::initializer_list<int> il) {\n    int sum = 0;\n    for (int v : il) sum += v;\n    return sum;\n};\nlambda({1, 2, 3});  // ✅ OK",
@@ -71,7 +71,7 @@
         },
         {
           "title": "Init-Capture and Reference Count with shared_ptr",
-          "explanation": "Moving a `shared_ptr` transfers ownership to the lambda. Unlike with `unique_ptr` which always becomes nullptr, `shared_ptr` behavior depends on whether other copies exist. If you copy into the lambda instead:\n\n\n\n**Key takeaway:** Understand move vs copy semantics with init-capture; unique_ptr forces move-only, shared_ptr allows both.",
+          "explanation": "```cpp\nauto sp = std::make_shared<int>(100);\nstd::cout << sp.use_count() << \"\\n\";  // 1\n\nauto lam = [p = std::move(sp)]() { return *p; };\nstd::cout << sp.use_count() << \"\\n\";  // 0 (sp is nullptr)\nstd::cout << (sp == nullptr) << \"\\n\";  // 1 (true)\n```\n\nMoving a `shared_ptr` transfers ownership to the lambda. Unlike with `unique_ptr` which always becomes nullptr, `shared_ptr` behavior depends on whether other copies exist. If you copy into the lambda instead:\n\n```cpp\nauto sp = std::make_shared<int>(100);\nauto lam = [p = sp]() { return *p; };  // Copy, not move\nstd::cout << sp.use_count() << \"\\n\";  // 2 (shared between sp and lambda)\n```\n\n**Key takeaway:** Understand move vs copy semantics with init-capture; unique_ptr forces move-only, shared_ptr allows both.",
           "code_examples": [
             "auto sp = std::make_shared<int>(100);\nstd::cout << sp.use_count() << \"\\n\";  // 1\n\nauto lam = [p = std::move(sp)]() { return *p; };\nstd::cout << sp.use_count() << \"\\n\";  // 0 (sp is nullptr)\nstd::cout << (sp == nullptr) << \"\\n\";  // 1 (true)",
             "auto sp = std::make_shared<int>(100);\nauto lam = [p = sp]() { return *p; };  // Copy, not move\nstd::cout << sp.use_count() << \"\\n\";  // 2 (shared between sp and lambda)"
@@ -79,7 +79,7 @@
         },
         {
           "title": "Variable Templates and ODR (One Definition Rule)",
-          "explanation": "Each translation unit that includes this header gets its own instantiation of `pi<double>`, but they all have the same address due to linkage rules. However, if `pi` were non-const or non-constexpr, you'd violate ODR:\n\n\n\n**Key takeaway:** Variable templates should be const or constexpr to avoid ODR violations in headers; use inline variables (C++17) for mutable shared state.\n\n---",
+          "explanation": "```cpp\n// header.h\ntemplate<typename T>\nconstexpr T pi = T(3.1415926535);\n```\n\nEach translation unit that includes this header gets its own instantiation of `pi<double>`, but they all have the same address due to linkage rules. However, if `pi` were non-const or non-constexpr, you'd violate ODR:\n\n```cpp\ntemplate<typename T>\nT mutable_value = T(0);  // ❌ Each TU gets its own copy → linker error if used across TUs\n```\n\n**Key takeaway:** Variable templates should be const or constexpr to avoid ODR violations in headers; use inline variables (C++17) for mutable shared state.\n\n---",
           "code_examples": [
             "// header.h\ntemplate<typename T>\nconstexpr T pi = T(3.1415926535);",
             "template<typename T>\nT mutable_value = T(0);  // ❌ Each TU gets its own copy → linker error if used across TUs"

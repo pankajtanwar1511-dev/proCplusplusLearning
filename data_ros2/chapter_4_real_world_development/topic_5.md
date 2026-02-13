@@ -1,10 +1,9 @@
-# Chapter 4: Real-World Development Practices
-## Topic 5: CI/CD for ROS2
+## TOPIC: CI/CD for ROS2
+
 
 ---
 
-## Theory
-
+## THEORY_SECTION
 ### 1. CI/CD Overview for ROS2
 
 CI/CD (Continuous Integration / Continuous Deployment) automates building, testing, and deploying ROS2 applications.
@@ -877,8 +876,7 @@ jobs:
 
 ---
 
-## Edge Cases
-
+## EDGE_CASES
 ### Edge Case 1: Flaky Tests Failing CI Intermittently
 
 **Scenario:**
@@ -1437,8 +1435,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" \
 
 ---
 
-## Code Examples
-
+## CODE_EXAMPLES
 ### Example: Complete CI/CD Pipeline for ROS2 Project
 
 This example shows a production-ready CI/CD setup.
@@ -2713,8 +2710,7 @@ gh api graphql -f query='
 
 ---
 
-## Practice Tasks
-
+## PRACTICE_TASKS
 ### Practice Task 1: Setup Complete CI/CD Pipeline
 
 **Objective:** Create a full CI/CD pipeline for a ROS2 project from scratch.
@@ -2836,8 +2832,7 @@ gh api graphql -f query='
 
 ---
 
-## Quick Reference
-
+## QUICK_REFERENCE
 ### GitHub Actions Templates
 
 ```yaml

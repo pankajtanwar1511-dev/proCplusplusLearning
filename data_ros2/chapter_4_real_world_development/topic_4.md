@@ -1,10 +1,9 @@
-# Chapter 4: Real-World Development Practices
-## Topic 4: Security & DDS Security
+## TOPIC: Security & DDS Security
+
 
 ---
 
-## Theory
-
+## THEORY_SECTION
 ### 1. ROS2 Security Overview
 
 ROS2 implements security through **DDS Security**, which provides authentication, encryption, and access control at the DDS layer.
@@ -552,8 +551,7 @@ private:
 
 ---
 
-## Edge Cases
-
+## EDGE_CASES
 ### Edge Case 1: Certificate Expiration in Production
 
 **Scenario:**
@@ -1192,8 +1190,7 @@ export FASTRTPS_DEFAULT_PROFILES_FILE=/path/to/fastdds_profile.xml
 
 ---
 
-## Code Examples
-
+## CODE_EXAMPLES
 ### Example: Complete Secure ROS2 System Setup
 
 This example demonstrates a production-ready secure ROS2 deployment.
@@ -2607,8 +2604,7 @@ ros2 security quickstart \
 
 ---
 
-## Practice Tasks
-
+## PRACTICE_TASKS
 ### Practice Task 1: Setup Complete Secure ROS2 System
 
 **Objective:** Configure DDS Security for a multi-node robot system from scratch.
@@ -2736,8 +2732,7 @@ ros2 security quickstart \
 
 ---
 
-## Quick Reference
-
+## QUICK_REFERENCE
 ### Enable Security Commands
 
 ```bash

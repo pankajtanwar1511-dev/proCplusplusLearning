@@ -1,10 +1,9 @@
-# Chapter 5: Robotics Applications
-## Topic 5.5: SLAM & Localization
+## TOPIC: SLAM & Localization
+
 
 ---
 
-## THEORY
-
+## THEORY_SECTION
 ### 1. Localization vs Mapping vs SLAM
 
 **Localization:**

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   Grid,
   List,
@@ -16,6 +16,11 @@ import { getTopics } from '../utils/api';
 import './TopicsList.css';
 
 const TopicsList = () => {
+  const { catalog: catalogParam } = useParams();
+
+  // Extract catalog from URL - either from /catalog/:catalog/* or default to 'all'
+  const urlCatalog = catalogParam || 'all';
+
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,11 +28,19 @@ const TopicsList = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'completed', 'in-progress', 'not-started'
   const [sortBy, setSortBy] = useState('title'); // 'title', 'progress', 'difficulty'
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCatalog, setSelectedCatalog] = useState('all'); // 'all', 'cpp', 'ros2'
+  // Use URL catalog as default, but allow switching if in legacy mode
+  const [selectedCatalog, setSelectedCatalog] = useState(urlCatalog);
 
   useEffect(() => {
     loadTopics();
   }, []);
+
+  // Update selected catalog when URL changes
+  useEffect(() => {
+    if (urlCatalog !== 'all' && urlCatalog !== selectedCatalog) {
+      setSelectedCatalog(urlCatalog);
+    }
+  }, [urlCatalog]);
 
   const loadTopics = async () => {
     try {
@@ -201,27 +214,29 @@ const TopicsList = () => {
         </div>
       </div>
 
-      {/* Catalog Switcher */}
-      <div className="catalog-switcher">
-        <button
-          className={`catalog-btn ${selectedCatalog === 'all' ? 'active' : ''}`}
-          onClick={() => setSelectedCatalog('all')}
-        >
-          All Topics
-        </button>
-        <button
-          className={`catalog-btn ${selectedCatalog === 'cpp' ? 'active' : ''}`}
-          onClick={() => setSelectedCatalog('cpp')}
-        >
-          C++ Programming
-        </button>
-        <button
-          className={`catalog-btn ${selectedCatalog === 'ros2' ? 'active' : ''}`}
-          onClick={() => setSelectedCatalog('ros2')}
-        >
-          ROS2 Robotics
-        </button>
-      </div>
+      {/* Catalog Switcher - Only show in legacy mode (not in catalog context) */}
+      {urlCatalog === 'all' && (
+        <div className="catalog-switcher">
+          <button
+            className={`catalog-btn ${selectedCatalog === 'all' ? 'active' : ''}`}
+            onClick={() => setSelectedCatalog('all')}
+          >
+            All Topics
+          </button>
+          <button
+            className={`catalog-btn ${selectedCatalog === 'cpp' ? 'active' : ''}`}
+            onClick={() => setSelectedCatalog('cpp')}
+          >
+            C++ Programming
+          </button>
+          <button
+            className={`catalog-btn ${selectedCatalog === 'ros2' ? 'active' : ''}`}
+            onClick={() => setSelectedCatalog('ros2')}
+          >
+            ROS2 Robotics
+          </button>
+        </div>
+      )}
 
       {/* Filters and Controls */}
       <div className="topics-controls">
@@ -285,7 +300,8 @@ const TopicsList = () => {
             <div key={`${chapter.catalog}_${chapter.chapterNum}`} className="chapter-group">
               <div className="chapter-header">
                 <h2>
-                  <span className="catalog-badge">{chapter.catalog}</span>
+                  {/* Only show catalog badge in "All Topics" mode */}
+                  {urlCatalog === 'all' && <span className="catalog-badge">{chapter.catalog}</span>}
                   Chapter {chapter.chapterNum}: {chapter.chapterName}
                 </h2>
                 <span className="topic-count">{chapter.topics.length} topics</span>
@@ -301,7 +317,7 @@ const TopicsList = () => {
                   return (
                     <Link
                       key={topic.id}
-                      to={`/topics/${topic.id}`}
+                      to={urlCatalog !== 'all' ? `/catalog/${urlCatalog}/topic/${topic.id}` : `/topics/${topic.id}`}
                       className="topic-card"
                     >
                       <div className="topic-card-header">
