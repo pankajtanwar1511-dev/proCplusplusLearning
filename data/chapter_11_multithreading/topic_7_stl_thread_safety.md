@@ -2,97 +2,305 @@
 
 ### THEORY_SECTION: Core Concepts and Thread Safety Guarantees
 
-#### STL Container Thread Safety Fundamentals
+#### 1. STL Thread Safety - The Golden Rule
 
-The C++ Standard Library containers (vector, map, unordered_map, list, etc.) provide **minimal thread safety guarantees**: multiple threads may simultaneously **read** from the same container without synchronization, but any **write** operation requires exclusive access through external synchronization (mutexes, locks, or atomics).
+**Core Guarantee (C++ Standard §23.2.2):**
 
-This design philosophy prioritizes performance for single-threaded code while allowing developers to choose appropriate synchronization strategies for concurrent access. Understanding these rules is critical for building correct multithreaded applications, especially in high-performance domains like autonomous driving where sensor data streams must be processed concurrently.
+| Access Pattern | Thread Safety | Synchronization Required? |
+|---------------|---------------|--------------------------|
+| **Multiple const reads** | ✅ Safe | ❌ No (C++11 guarantee) |
+| **Multiple writes** | ❌ Data race | ✅ Yes (mutex/lock) |
+| **Read + write** | ❌ Data race | ✅ Yes (mutex/lock) |
+| **Writes to different containers** | ✅ Safe | ❌ No |
 
-**The Golden Rule:**
-- ✅ **Concurrent reads**: Multiple threads reading from the same const-qualified container = **SAFE**
-- ❌ **Concurrent writes**: Multiple threads writing to the same container = **DATA RACE**
-- ❌ **Concurrent read + write**: One thread reading while another writes = **DATA RACE**
+**Simple Rule:**
 
-Even operations that appear read-only may perform writes internally. For example, `operator[]` on `std::map` or `std::unordered_map` inserts a default-constructed element if the key doesn't exist, making it a **write operation** despite looking like a read.
+```cpp
+const std::vector<int> vec = {1, 2, 3};
 
-#### Container-Specific Thread Safety Characteristics
+// ✅ SAFE: Concurrent reads on const container
+void thread1() { int x = vec[0]; }
+void thread2() { int y = vec[1]; }
 
-Different container types have varying internal implementations that affect their behavior under concurrent access:
+// ❌ UNSAFE: Concurrent writes without synchronization
+std::vector<int> vec2;
+void writer1() { vec2.push_back(1); }  // DATA RACE
+void writer2() { vec2.push_back(2); }  // DATA RACE
+```
 
-**std::vector (Dynamic Array):**
-- Reallocation invalidates **all** iterators, references, and pointers
-- `push_back()`, `insert()`, `resize()` may trigger reallocation
-- Reading elements during reallocation = dangling pointer access = **CRASH**
-- Solution: Reserve capacity upfront with `reserve()` or use external synchronization
+**Critical Insight: operator[] is a WRITE on Maps**
+
+```cpp
+std::map<int, string> map;
+
+map[1];  // ❌ If key 1 doesn't exist, INSERTS default value!
+         // This is a WRITE operation, not a read
+
+// ✅ Use at() or find() for read-only access:
+map.at(1);        // Throws if key missing
+map.find(1);      // Returns end() if missing
+```
+
+#### 2. Container-Specific Thread Safety Characteristics
+
+**Internal Implementation Differences:**
+
+| Container | Internal Structure | Reallocation Trigger | Iterator Invalidation Scope | Thread Safety Risk |
+|-----------|-------------------|---------------------|----------------------------|-------------------|
+| **std::vector** | Dynamic array | `push_back()`, `insert()`, `resize()` when capacity exceeded | ❌ ALL iterators, refs, pointers | HIGH - global reallocation |
+| **std::map** | Red-black tree | Never (grows node-by-node) | ✅ Only erased elements (single-thread) | MEDIUM - localized rebalancing |
+| **std::unordered_map** | Hash table | Insert when load factor > threshold | ❌ ALL iterators when rehashing | VERY HIGH - global rehashing |
+| **std::list** | Doubly-linked list | Never (grows node-by-node) | ✅ Only erased elements | LOW - stable iterators (still needs sync) |
+| **std::deque** | Array of arrays | Insert in middle | ❌ ALL if middle insert | MEDIUM-HIGH |
+
+**Detailed Characteristics:**
+
+**std::vector:**
+```cpp
+std::vector<int> vec;
+vec.reserve(10);  // Capacity = 10
+
+// Thread 1: Reading
+int x = vec[0];
+
+// Thread 2: May trigger reallocation
+vec.push_back(11);  // If size >= capacity → reallocate entire buffer
+                     // Thread 1's access becomes dangling pointer → CRASH
+```
 
 **std::map (Red-Black Tree):**
-- Insertion/deletion performs **local** tree rebalancing
-- Iterators to unmodified elements remain valid during insertion (single-threaded)
-- Tree structure changes are **localized** to the path from root to inserted/deleted node
-- Slightly safer than hash tables for unsynchronized access (still **UNSAFE**, but failure modes are more constrained)
+```cpp
+std::map<int, string> tree_map;
+
+// Insert only modifies nodes along path from root to insertion point
+tree_map[50] = "data";  // Rebalances only 3-4 nodes (O(log n))
+                        // Other nodes untouched
+// Still UNSAFE for concurrent access - tree structure modified
+```
 
 **std::unordered_map (Hash Table):**
-- Most dangerous for concurrent access
-- **Rehashing** occurs when load factor exceeds threshold (default 1.0)
-- Rehashing **invalidates ALL iterators** and moves all elements
-- `operator[]` can trigger rehashing if key doesn't exist
-- `insert()` can trigger rehashing if adding element exceeds load factor
-- Solution: Use `reserve()` to pre-allocate buckets, preventing rehashing
+```cpp
+std::unordered_map<int, string> hash_map;
+// Default: max_load_factor = 1.0
 
-**std::list / std::deque:**
-- Insertion/deletion doesn't invalidate iterators to other elements (single-threaded)
-- However, concurrent modification still causes data races
-- Suitable for lock-free algorithms with careful design (e.g., intrusive lists with atomic pointers)
+hash_map[1] = "a";  // OK
+// ... insert 99 more elements ...
+hash_map[100] = "z";  // May trigger rehashing:
+                       // 1. Allocate new bucket array (2x size)
+                       // 2. Rehash ALL 100 elements
+                       // 3. Invalidate ALL iterators
+                       // 4. Deallocate old array
+```
 
-#### Why operator[] is Dangerous
+**Solution - Always reserve() for hash tables:**
+```cpp
+hash_map.reserve(200);  // Pre-allocate to prevent rehashing
+```
+
+#### 3. Why operator[] is Dangerous on Maps
+
+**The Hidden Write Problem:**
+
+`operator[]` is **NOT a read operation** - it always has potential to write!
+
+**What operator[] Actually Does:**
+
+| Step | Operation | Type | Risk |
+|------|-----------|------|------|
+| 1 | Search for key | Read | Safe if const |
+| 2 | If key exists, return reference | Read | Safe if const |
+| 3 | If key missing, **insert default value** | ❌ Write | Modifies container! |
+| 4 | If insert exceeds load factor, **rehash** | ❌ Global write | Invalidates ALL iterators! |
+
+**Example - Surprising Writes:**
 
 ```cpp
 std::unordered_map<int, std::string> map;
 
 // Thread 1
-map[1] = "hello";  // If key 1 doesn't exist, inserts default-constructed string, THEN assigns
+map[1] = "hello";  // If key 1 doesn't exist:
+                    // 1. Insert {1, ""}  (default-constructed string)
+                    // 2. Assign "hello"
+                    // This is a WRITE, not a read!
 
 // Thread 2
-auto val = map[2];  // If key 2 doesn't exist, inserts default-constructed string AND may trigger rehashing
+auto val = map[2];  // If key 2 doesn't exist:
+                     // 1. Insert {2, ""}
+                     // 2. Return reference to ""
+                     // May trigger REHASHING if load factor exceeded
+                     // ❌ DATA RACE with Thread 1
 ```
 
-`operator[]` performs **two operations**:
-1. Search for key
-2. If not found, insert default-constructed value (WRITE operation)
-3. If insertion causes load factor to exceed threshold, rehash entire table (GLOBAL WRITE)
+**Safe Alternatives:**
 
-This makes `operator[]` unsuitable for concurrent access without synchronization. Use `find()` or `at()` for read-only access.
+| Method | Const-Safe? | Throws on Missing? | Returns on Missing | Use Case |
+|--------|-------------|-------------------|-------------------|----------|
+| `operator[]` | ❌ No | No (inserts) | Default value | Write/insert operations |
+| `at(key)` | ✅ Yes | Yes (`std::out_of_range`) | N/A | Read-only with exception |
+| `find(key)` | ✅ Yes | No | `end()` iterator | Read-only without exception |
 
-#### Iterator Invalidation in Concurrent Contexts
+**Correct Read-Only Access:**
 
-Iterator invalidation rules from single-threaded C++ apply, but in multithreaded contexts, the timing becomes critical:
+```cpp
+const std::map<int, string> config = {{1, "one"}, {2, "two"}};
 
-**Scenario: Vector reallocation**
+// ❌ COMPILATION ERROR - operator[] is non-const
+// auto val = config[1];
+
+// ✅ Use at() - throws if missing
+try {
+    auto val = config.at(1);  // Returns "one"
+} catch (const std::out_of_range& e) {
+    // Handle missing key
+}
+
+// ✅ Use find() - returns end() if missing
+auto it = config.find(1);
+if (it != config.end()) {
+    auto val = it->second;  // Returns "one"
+}
+```
+
+#### 4. Iterator Invalidation in Concurrent Contexts
+
+**Critical Difference from Single-Threaded Code:**
+
+In single-threaded code, you control when invalidation happens. In multithreaded code, **any thread can invalidate iterators at any time** without synchronization.
+
+**The Time-of-Check to Time-of-Use (TOCTOU) Race:**
+
+| Timeline | Thread 1 | Thread 2 | Iterator State |
+|----------|----------|----------|----------------|
+| T0 | `auto it = vec.begin()` | - | ✅ Valid (points to buffer A) |
+| T1 | ... processing ... | `vec.push_back(4)` | ❌ Invalid (buffer A freed) |
+| T2 | `int val = *it` | - | CRASH - dangling pointer! |
+
+**Example - Vector Reallocation Race:**
+
 ```cpp
 std::vector<int> vec = {1, 2, 3};  // capacity = 3
 
-// Thread 1
-auto it = vec.begin();  // Points to old buffer
+// Thread 1: Iterator user
+auto it = vec.begin();  // Points to buffer at address 0x1000
+std::this_thread::sleep_for(10ms);  // Processing delay
+int val = *it;  // ❌ May access freed memory!
 
-// Thread 2
-vec.push_back(4);  // Reallocates to new buffer, invalidates it
-
-// Thread 1
-int val = *it;  // ❌ Dangling iterator - accesses freed memory!
+// Thread 2: Modifier
+vec.push_back(4);  // Reallocates to new buffer at 0x2000
+                    // Old buffer (0x1000) freed
+                    // Thread 1's iterator now dangling
 ```
 
-The time window between obtaining an iterator and using it becomes a race condition in multithreaded code. Even if `vec.begin()` executes before `push_back()` starts, without synchronization, there's no happens-before relationship guaranteeing the iterator remains valid.
+**Why No Happens-Before Relationship:**
 
-#### C++ Standard Guarantees (§23.2.2)
+Without synchronization primitives (mutex, atomic, etc.), there's **no happens-before edge** between:
+- Thread 1 obtaining iterator
+- Thread 2 modifying container
 
-The C++ standard specifies:
+Even if T1's `vec.begin()` executes "first" in wall-clock time, the C++ memory model doesn't guarantee T1 will observe the container in a consistent state.
 
-1. **Concurrent reads on const objects**: No synchronization required
-2. **Concurrent writes to different containers**: No synchronization required
-3. **Concurrent writes to the same container**: Requires synchronization
-4. **Concurrent read (non-const) + write**: Requires synchronization
+**Container-Specific Invalidation in Concurrent Context:**
 
-Importantly, "read" means accessing a **const-qualified** container. Non-const access (even if logically read-only) is not guaranteed thread-safe because internal state may change (e.g., reference counting in older implementations, lazy evaluation).
+| Container | Single-Thread Guarantee | Multi-Thread Reality |
+|-----------|------------------------|---------------------|
+| `vector` | Insert/erase invalidates after point | ❌ ANY modification invalidates ALL iterators across threads |
+| `map` | Insert doesn't invalidate existing | ❌ Tree rebalancing causes data race on structure |
+| `unordered_map` | Insert invalidates if rehash | ❌ Rehashing invalidates ALL + data race on bucket array |
+| `list` | Insert doesn't invalidate others | ❌ Concurrent insert causes data race on next/prev pointers |
+
+**Key Insight:**
+
+Single-threaded invalidation rules describe **which iterators become invalid**. Multithreaded reality is **all concurrent access without sync is undefined behavior**, regardless of invalidation rules.
+
+**Safe Pattern - Lock During Iterator Lifetime:**
+
+```cpp
+std::vector<int> vec;
+std::mutex mtx;
+
+// Thread 1: Safe iterator usage
+{
+    std::lock_guard lock(mtx);
+    auto it = vec.begin();
+    // Iterator valid while lock held
+    int val = *it;
+}  // Lock released
+
+// Thread 2: Safe modification
+{
+    std::lock_guard lock(mtx);
+    vec.push_back(4);  // Exclusive access
+}
+```
+
+#### 5. C++ Standard Guarantees (§23.2.2 since C++11)
+
+**Formal Thread Safety Rules:**
+
+| Access Pattern | Example | Synchronization Required? | Standard Guarantee |
+|---------------|---------|--------------------------|-------------------|
+| **Multiple reads on const container** | `const vec`: T1 reads `[0]`, T2 reads `[1]` | ❌ No | ✅ Safe (C++11+) |
+| **Writes to different containers** | T1 writes `vec1`, T2 writes `vec2` | ❌ No | ✅ Safe (different objects) |
+| **Multiple writes to same container** | T1 `push_back`, T2 `push_back` | ✅ Yes (mutex) | ❌ Data race without sync |
+| **Read + write to same container** | T1 reads `[0]`, T2 `push_back` | ✅ Yes (mutex) | ❌ Data race without sync |
+| **Non-const read + non-const read** | `vec` (non-const): T1 reads, T2 reads | ⚠️ Unclear | ❌ NOT guaranteed safe |
+
+**Critical Distinction: Const vs Non-Const Access:**
+
+```cpp
+// ✅ SAFE - const-qualified reads
+const std::vector<int> vec1 = {1, 2, 3};
+void thread1() { int x = vec1[0]; }  // Safe
+void thread2() { int y = vec1[1]; }  // Safe
+
+// ❌ NOT GUARANTEED SAFE - non-const reads
+std::vector<int> vec2 = {1, 2, 3};  // Non-const
+void thread3() { int x = vec2[0]; }  // Not guaranteed safe!
+void thread4() { int y = vec2[1]; }  // Not guaranteed safe!
+```
+
+**Why Non-Const Reads Aren't Guaranteed Safe:**
+
+**Historical Reason (Pre-C++11):**
+- Copy-on-write strings modified reference counts even during reads
+- Non-const access could modify internal state (lazy initialization, caching, etc.)
+
+**Modern Reason (C++11+):**
+- Debug builds may track iterator states in non-const containers
+- Implementation may use internal mutexes for non-const access
+- No guarantee that "logically read-only" operations don't modify state
+
+**The 4 Standard Guarantees in Detail:**
+
+1. **Const-Qualified Concurrent Reads: ✅ Safe**
+   ```cpp
+   const std::map<int, string> config = {{1, "one"}};
+   // Thread 1, 2, 3 all read concurrently - guaranteed safe
+   ```
+
+2. **Different Containers: ✅ Safe**
+   ```cpp
+   std::vector<int> vec1, vec2;
+   // Thread 1 modifies vec1, Thread 2 modifies vec2 - safe
+   ```
+
+3. **Same Container Writes: ❌ Requires Sync**
+   ```cpp
+   std::vector<int> vec;
+   std::mutex mtx;
+   // Thread 1, 2 must lock mtx before push_back
+   ```
+
+4. **Same Container Read+Write: ❌ Requires Sync**
+   ```cpp
+   std::vector<int> vec;
+   std::mutex mtx;
+   // Thread 1 (reader) and Thread 2 (writer) must both lock
+   ```
+
+**Key Takeaway:**
+
+The standard ONLY guarantees thread safety for **const-qualified container access**. Everything else requires explicit synchronization, even seemingly read-only operations on non-const containers.
 
 ---
 

@@ -4,15 +4,214 @@ I'll format a comprehensive C++ OOP study document based on all the topics cover
 
 ### THEORY_SECTION: Foundational OOP Concepts in C++
 
-#### Understanding C++ OOP Paradigms
+#### 1. The Three Pillars of C++ OOP - Encapsulation, Inheritance, Polymorphism
 
-C++ supports multiple programming paradigms, with **Object-Oriented Programming (OOP)** being central to its design. OOP in C++ revolves around encapsulation (bundling data and methods), inheritance (deriving new classes from existing ones), and polymorphism (using common interfaces for different implementations). Classes and structures serve as blueprints for objects, with the only syntactic difference being default access specifiers: `class` members default to private, while `struct` members default to public. This distinction is purely conventional—both support the full feature set of OOP including constructors, destructors, inheritance, and virtual functions.
+**Core OOP principles:**
 
-The power of C++ OOP lies in its support for **compile-time and runtime polymorphism**. Compile-time polymorphism is achieved through function overloading, operator overloading, and templates, resolved at compile time. Runtime polymorphism uses virtual functions and vtables, enabling dynamic dispatch where the actual function called depends on the object's runtime type, not the pointer/reference type. This flexibility makes C++ suitable for everything from systems programming requiring zero-overhead abstractions to complex object hierarchies in game engines and GUIs.
+| Pillar | Definition | C++ Mechanism | Benefit |
+|--------|------------|---------------|---------|
+| **Encapsulation** | Bundling data and methods together with access control | `private`, `protected`, `public` keywords | Data hiding, invariant enforcement, controlled interfaces |
+| **Inheritance** | Deriving new classes from existing ones | `: public Base`, `: protected Base`, `: private Base` | Code reuse, hierarchical modeling, "is-a" relationships |
+| **Polymorphism** | One interface, multiple implementations | Virtual functions, function/operator overloading, templates | Flexibility, extensibility, runtime behavior selection |
 
-#### Resource Management and Special Member Functions
+**Class vs Struct - only ONE difference:**
 
-Modern C++ demands careful resource management through special member functions: constructors (default, parameterized, copy, move), assignment operators (copy, move), and destructors. These functions control object lifetime, copying semantics, and resource ownership. The **Rule of Three** states that if a class manages resources requiring a destructor, it likely needs custom copy constructor and copy assignment. C++11's move semantics extended this to the **Rule of Five**, adding move constructor and move assignment for efficient resource transfer. The **Rule of Zero** advocates using RAII wrappers (smart pointers, standard containers) to avoid defining any special members, letting the compiler handle everything correctly. Understanding when to follow which rule is crucial for writing safe, efficient C++ code that avoids resource leaks, double-deletion, and undefined behavior.
+| Aspect | `struct` | `class` |
+|--------|----------|---------|
+| **Default member access** | `public` | `private` |
+| **Default inheritance mode** | `public` | `private` |
+| **All other features** | ✅ **Identical** (constructors, destructors, inheritance, virtual functions, etc.) | ✅ **Identical** |
+| **Convention** | Simple data aggregates (POD-like) | Objects with behavior and encapsulation |
+| **Memory layout** | **Exactly the same** | **Exactly the same** |
+
+**Compile-time vs Runtime polymorphism:**
+
+| Type | Mechanism | Resolution Time | Examples | Performance |
+|------|-----------|----------------|----------|-------------|
+| **Compile-time (Static)** | Function/operator overloading, templates | Compile time | `void func(int)` vs `void func(double)`, `template<T> func(T)` | ✅ Zero overhead |
+| **Runtime (Dynamic)** | Virtual functions via vtable | Runtime | `virtual void func()` overridden in derived classes | Small vtable lookup cost |
+
+**Code example - runtime polymorphism:**
+```cpp
+class Shape {
+public:
+    virtual double area() const = 0;  // Runtime polymorphism
+    virtual ~Shape() = default;
+};
+
+class Circle : public Shape {
+    double radius;
+public:
+    Circle(double r) : radius(r) {}
+    double area() const override {
+        return 3.14159 * radius * radius;
+    }
+};
+
+class Rectangle : public Shape {
+    double width, height;
+public:
+    Rectangle(double w, double h) : width(w), height(h) {}
+    double area() const override {
+        return width * height;
+    }
+};
+
+// ✅ Polymorphic function - works with any Shape
+void printArea(const Shape& shape) {
+    std::cout << "Area: " << shape.area() << "\n";  // Runtime dispatch
+}
+```
+
+---
+
+#### 2. Special Member Functions - The Rule of Three/Five/Zero
+
+**The six special member functions:**
+
+| Function | Signature | When Auto-Generated | Purpose |
+|----------|-----------|-------------------|---------|
+| **Default Constructor** | `T()` | If no other constructors defined | Initialize object with default values |
+| **Destructor** | `~T()` | Always (if not user-defined) | Clean up resources |
+| **Copy Constructor** | `T(const T&)` | If no move operations declared | Create new object as copy |
+| **Copy Assignment** | `T& operator=(const T&)` | If no move operations declared | Assign to existing object |
+| **Move Constructor** | `T(T&&)` | If no special members user-declared | Transfer resources from temporary |
+| **Move Assignment** | `T& operator=(T&&)` | If no special members user-declared | Transfer resources to existing object |
+
+**The three rules compared:**
+
+| Rule | Era | When to Apply | What to Define | Modern Preference |
+|------|-----|---------------|---------------|------------------|
+| **Rule of Zero** | C++11+ | Class doesn't manage resources | **Nothing** - use `unique_ptr`, `vector`, `string` | ✅ **Strongly preferred** |
+| **Rule of Three** | C++98 | Class manages resources (pre-move) | Destructor + Copy Ctor + Copy Assign | Legacy code only |
+| **Rule of Five** | C++11+ | Class manages resources (with move) | Rule of Three + Move Ctor + Move Assign | When Rule of Zero impossible |
+
+**Decision tree - which rule to follow:**
+
+```
+Does your class directly own resources (raw pointers, file handles, etc.)?
+│
+├─ NO  → ✅ Follow Rule of Zero
+│         Use smart pointers and RAII wrappers
+│         Let compiler generate everything
+│         Example: std::unique_ptr<int[]>, std::vector<T>
+│
+└─ YES → Follow Rule of Five
+          Define/delete all five special member functions
+          Ensure move operations are noexcept
+          Example: Custom allocators, legacy C interface wrappers
+```
+
+**Code example - Rule of Zero (MODERN APPROACH):**
+```cpp
+class ModernBuffer {
+    std::unique_ptr<int[]> data;  // ✅ Smart pointer manages memory
+    size_t size;
+public:
+    explicit ModernBuffer(size_t n)
+        : data(std::make_unique<int[]>(n)), size(n) {}
+
+    // ✅ No special member functions defined
+    // unique_ptr provides correct move-only semantics automatically
+    // Compiler generates: destructor, move ctor, move assign
+    // Copy is deleted (unique_ptr is move-only)
+};
+```
+
+**Code example - Rule of Five (when necessary):**
+```cpp
+class LegacyBuffer {
+    int* data;  // Raw pointer (C interface, legacy code)
+    size_t size;
+public:
+    explicit LegacyBuffer(size_t n) : size(n), data(new int[n]) {}
+
+    // ✅ Rule of Five - all five explicitly defined
+    ~LegacyBuffer() { delete[] data; }
+
+    LegacyBuffer(const LegacyBuffer& other)
+        : size(other.size), data(new int[other.size]) {
+        std::copy(other.data, other.data + size, data);
+    }
+
+    LegacyBuffer& operator=(const LegacyBuffer& other) {
+        if (this != &other) {
+            int* new_data = new int[other.size];
+            std::copy(other.data, other.data + other.size, new_data);
+            delete[] data;
+            data = new_data;
+            size = other.size;
+        }
+        return *this;
+    }
+
+    LegacyBuffer(LegacyBuffer&& other) noexcept
+        : data(other.data), size(other.size) {
+        other.data = nullptr;
+        other.size = 0;
+    }
+
+    LegacyBuffer& operator=(LegacyBuffer&& other) noexcept {
+        if (this != &other) {
+            delete[] data;
+            data = other.data;
+            size = other.size;
+            other.data = nullptr;
+            other.size = 0;
+        }
+        return *this;
+    }
+};
+```
+
+---
+
+#### 3. Resource Management Dangers - Common Pitfalls
+
+**What happens with wrong resource management:**
+
+| Mistake | Symptom | Cause | Fix |
+|---------|---------|-------|-----|
+| **Double-deletion crash** | Crash when second object destroyed | Shallow copy with raw pointers | Deep copy or Rule of Zero |
+| **Memory leak** | Growing memory usage | No destructor or improper cleanup | RAII and proper destructor |
+| **Use-after-free** | Crash or undefined behavior | Dangling pointer after move | Nullify pointers in move operations |
+| **Resource leak** | File handles/sockets exhausted | Missing cleanup in exception paths | RAII wrappers auto-cleanup |
+| **Object slicing** | Lost data and polymorphism | Pass polymorphic types by value | Pass by reference/pointer |
+
+**Why Rule of Zero is strongly preferred:**
+
+| Rule of Zero Benefit | Why It Matters |
+|---------------------|----------------|
+| **No manual memory management** | Eliminates entire class of bugs (leaks, double-delete) |
+| **Exception-safe by default** | RAII wrappers clean up even during exceptions |
+| **Move semantics automatic** | unique_ptr, vector, etc. provide optimal moves |
+| **Less code to maintain** | Compiler-generated special members always correct |
+| **Clearer intent** | Composition shows exactly what resources are owned |
+| **Standard library tested** | Battle-tested implementations vs custom code |
+
+**Code example - dangers of shallow copy:**
+```cpp
+class DangerousBuffer {
+    int* data;
+    size_t size;
+public:
+    DangerousBuffer(size_t n) : size(n), data(new int[n]) {}
+    ~DangerousBuffer() { delete[] data; }
+
+    // ❌ Compiler-generated copy constructor does shallow copy!
+    // Both objects point to same memory
+};
+
+int main() {
+    DangerousBuffer buf1(100);
+    DangerousBuffer buf2 = buf1;  // ❌ Shallow copy
+    // When buf2 destroys: delete[] data
+    // When buf1 destroys: delete[] data again (same pointer!)
+    // CRASH: Double-deletion
+}
+```
+
+**Key takeaway:** Follow Rule of Zero using smart pointers and RAII wrappers whenever possible. Only use Rule of Five when directly managing resources for legacy interfaces or custom allocators. Understanding OOP pillars (encapsulation, inheritance, polymorphism) combined with proper resource management is essential for safe, efficient C++ programming.
 
 ### EDGE_CASES: Advanced OOP Scenarios and Pitfalls
 

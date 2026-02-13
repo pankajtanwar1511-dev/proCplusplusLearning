@@ -22,77 +22,121 @@ C++17 introduced powerful new standard library types that provide safer, more ex
 
 ### THEORY_SECTION: Core Concepts
 
-#### std::optional<T> - Optional Value Container
+#### 1. std::optional<T> - Type-Safe Optional Values
 
-`std::optional<T>` is a wrapper that may or may not contain a value of type T. It's a safer, more expressive alternative to returning pointers or sentinel values (-1, empty strings) to indicate "no result."
+**Definition:** `std::optional<T>` is a stack-allocated wrapper that may or may not contain a value of type T, providing a safer alternative to pointers or sentinel values for representing "no value" semantics.
 
-**Key operations:**
-- Construction: `std::optional<int> o;` creates empty optional
-- Assignment: `o = 42;` or `o = std::nullopt;`
-- Checking: `if (o)` or `o.has_value()`
-- Access: `*o` or `o.value()` (throws if empty)
-- Safe access: `o.value_or(default)` returns value or fallback
+**Core Operations Table:**
 
-**Why use optional:**
-1. **Replacing raw pointers**: No heap allocation, clear intent
-2. **Avoiding sentinel values**: No magic -1 or empty string constants
-3. **Function return values**: Explicit "may fail" semantics
-4. **Optional parameters**: Type-safe optional arguments
+| Operation | Syntax | Behavior | Throws |
+|-----------|--------|----------|--------|
+| **Create empty** | `std::optional<int> o;` | No value, `has_value() == false` | No |
+| **Create with value** | `std::optional<int> o = 42;` | Has value 42 | No |
+| **Assign value** | `o = 42;` | Sets value | No |
+| **Clear value** | `o = std::nullopt;` | Makes empty | No |
+| **Check if has value** | `if (o)` or `o.has_value()` | Returns bool | No |
+| **Unchecked access** | `*o` or `o.operator->()` | Direct access | No, **UB if empty** |
+| **Checked access** | `o.value()` | Throws if empty | `std::bad_optional_access` |
+| **Safe access** | `o.value_or(default)` | Returns value or default | No |
+| **Emplace value** | `o.emplace(args...)` | Construct in-place | Depends on T |
 
-**Common patterns:**
+**Access Method Comparison:**
+
+| Method | Empty Optional | Has Value | Performance | Safety |
+|--------|----------------|-----------|-------------|--------|
+| `*opt` | **Undefined Behavior** | Returns value | Fastest (no check) | **Unsafe** - use only after checking |
+| `opt.value()` | Throws exception | Returns value | Check + potential exception | Safe, but exceptions |
+| `opt.value_or(def)` | Returns default | Returns value | Check + copy default | Safe, no exceptions |
+
+**Replacing Legacy Patterns:**
+
+| Legacy Pattern | optional Alternative | Benefits |
+|----------------|---------------------|----------|
+| **Sentinel values** (`-1`, `""`) | `std::optional<int>` | No magic values, type-safe |
+| **Nullable pointers** (`T*` or `nullptr`) | `std::optional<T>` | No heap, no ownership issues |
+| **bool + T** (`pair<bool, T>`) | `std::optional<T>` | Single concept, better API |
+| **Throwing exceptions** | Return `optional` | Explicit failure in signature |
+
+**Practical Use Cases:**
+
 ```cpp
-// Safe return from search
+// ✅ Search with optional result
 std::optional<size_t> findIndex(const vector<int>& v, int target) {
     for (size_t i = 0; i < v.size(); ++i)
         if (v[i] == target) return i;
-    return std::nullopt;
+    return std::nullopt;  // Clear "not found" signal
 }
 
-// Optional configuration
+// ✅ Optional configuration with fallback
 void configure(std::optional<int> customValue) {
-    int final = customValue.value_or(100);  // Use default if empty
+    int final = customValue.value_or(100);  // Default 100 if not provided
+}
+
+// ✅ Replacing nullable pointer
+std::optional<SensorData> readSensor(int id) {
+    // No heap allocation, clear semantics
+    if (isValidId(id)) return SensorData{id, readValue()};
+    return std::nullopt;
 }
 ```
 
-**Gotchas:**
-- `.value()` throws `std::bad_optional_access` if empty
-- `*opt` has undefined behavior if empty (like dereferencing nullptr)
-- Copying can be expensive for large types; consider `std::optional<std::reference_wrapper<T>>`
+**Critical Gotchas:**
 
-#### std::variant<Ts...> - Type-Safe Union
+- **UB with operator\*:** `*empty_optional` is undefined behavior (like dereferencing nullptr)
+- **Exception from value():** `.value()` throws `std::bad_optional_access` if empty
+- **Large type overhead:** Copying optional<LargeType> copies entire type; use `optional<reference_wrapper<T>>` for references
+- **Bool confusion:** `optional<bool>` checking: `if(opt)` checks presence, not bool value
 
-`std::variant<Ts...>` is a type-safe union that holds exactly one value from a fixed set of types. It combines the space efficiency of unions with type safety and awareness.
+---
 
-**Key features:**
-- **Inline storage**: No heap allocation (unlike std::any)
-- **Type-safe access**: `std::get<T>(v)` checks type at runtime
-- **Visitor pattern**: `std::visit` for type-based dispatch
-- **Zero overhead**: Same size as largest type + discriminator
+#### 2. std::variant<Ts...> - Type-Safe Discriminated Union
 
-**Access methods:**
+**Definition:** `std::variant<Ts...>` is a type-safe union that holds exactly one value from a fixed set of types known at compile time, combining the space efficiency of C unions with runtime type safety.
+
+**Core Characteristics:**
+
+| Aspect | Description | Comparison to Alternatives |
+|--------|-------------|----------------------------|
+| **Storage** | Inline (stack-based) | No heap allocation (unlike `any`) |
+| **Type set** | Fixed at compile time | Closed type set (unlike `any`) |
+| **Size** | `max(sizeof(Ts...)) + discriminator` | Typically 1-8 bytes overhead |
+| **Type tracking** | Automatic discriminator | Type-safe (unlike raw `union`) |
+| **Performance** | Zero-overhead abstraction | No vtable (unlike virtual inheritance) |
+| **Lifetime management** | Automatic destruction | Calls correct destructor automatically |
+
+**Access Methods Comparison:**
+
+| Method | Syntax | Safety | Returns | Use When |
+|--------|--------|--------|---------|----------|
+| **std::get<T>(v)** | `std::get<int>(v)` | Throws if wrong type | Value (or ref) | Know type, want exception |
+| **std::get<Index>(v)** | `std::get<0>(v)` | Throws if wrong index | Value (or ref) | Index-based access |
+| **std::holds_alternative<T>** | `if (holds_alternative<int>(v))` | Check only | bool | Check before get |
+| **std::get_if<T>(&v)** | `auto* p = get_if<int>(&v)` | Returns nullptr | Pointer or nullptr | Prefer nullptr over throw |
+| **std::visit** | `visit([](auto&& val){...}, v)` | Exhaustive | Return from lambda | Handle all types |
+
+**Access Pattern Examples:**
+
 ```cpp
 std::variant<int, string> v = 42;
 
-// Direct access (throws if wrong type)
-int x = std::get<int>(v);           // OK
-// int x = std::get<string>(v);     // Throws std::bad_variant_access
+// ❌ Direct get without check - throws if wrong type
+int x = std::get<int>(v);  // OK
+// int y = std::get<string>(v);  // Throws std::bad_variant_access
 
-// Safe check before access
+// ✅ Safe check before access
 if (std::holds_alternative<int>(v)) {
-    int x = std::get<int>(v);
+    int x = std::get<int>(v);  // Guaranteed safe
 }
 
-// Pointer-based check (returns nullptr if wrong type)
+// ✅ Pointer-based check (no exceptions)
 if (auto* p = std::get_if<int>(&v)) {
-    int x = *p;
+    int x = *p;  // Pointer is valid
 }
 
-// Index-based access
+// ✅ Index-based access (for generic code)
 int x = std::get<0>(v);  // First type in variant
-```
 
-**Visitor pattern:**
-```cpp
+// ✅ Visit pattern (exhaustive handling)
 std::visit([](auto&& value) {
     using T = std::decay_t<decltype(value)>;
     if constexpr (std::is_same_v<T, int>) {
@@ -103,174 +147,363 @@ std::visit([](auto&& value) {
 }, v);
 ```
 
-**Use cases:**
-- Alternative to inheritance when types are known at compile time
-- State machines with different state types
-- Return multiple possible types from a function
-- Avoid vtable overhead of virtual functions
+**variant vs Inheritance Comparison:**
 
-**Pitfalls:**
-- **Ambiguous construction**: `std::variant<int, long> v = 42;` ambiguous (use `std::in_place_type<int>`)
-- **Valueless by exception**: Can enter invalid state if assignment throws
-- **Size overhead**: Size is max of all types plus discriminator (usually 1-8 bytes)
+| Feature | `variant<A, B, C>` | Virtual Inheritance |
+|---------|-------------------|---------------------|
+| **Storage** | Stack (inline) | Heap (usually) |
+| **Overhead** | Discriminator only | vtable pointer + heap |
+| **Type set** | Closed (fixed at compile time) | Open (can add derived classes) |
+| **Dispatch** | `visit` or switch on index | Virtual function call |
+| **Performance** | Cache-friendly, no indirection | Vtable lookup, pointer chase |
+| **Exhaustiveness** | Compiler-checked with `visit` | Manual checking required |
+| **Copy semantics** | Value semantics | Slicing risk |
 
-#### std::any - Runtime Type Flexibility
+**Common Use Cases:**
 
-`std::any` is a type-erased container for single values of any type. Unlike `void*`, it preserves type information and provides safe casting.
+- **State machines:** Each state is a different type with type-specific data
+- **Error handling:** `variant<Result, Error>` instead of exceptions
+- **Polymorphism alternative:** When type set is fixed and known at compile time
+- **Return types:** Function returning one of several possible types
+- **Avoiding vtable overhead:** Value semantics with zero-overhead type dispatch
 
-**Key characteristics:**
-- **Type erasure**: Stores any type, preserves type info internally
-- **Heap allocation**: May allocate for large types (small buffer optimization for small types)
-- **Runtime type checking**: Safe casting with `std::any_cast`
+**Critical Pitfalls:**
 
-**Usage:**
+| Pitfall | Example | Solution |
+|---------|---------|----------|
+| **Ambiguous construction** | `variant<int, long> v = 42;` | Use `in_place_type`: `variant<int, long>(in_place_type<int>, 42)` |
+| **Valueless by exception** | Assignment throws during type change | Check `valueless_by_exception()` after throws |
+| **Size overhead** | Storing small types wastes space | Size is always `max(Ts...) + discriminator` |
+| **Type duplication** | `variant<int, int>` is invalid | Each type must be unique in variant |
+
+---
+
+#### 3. std::any - Runtime Type Erasure
+
+**Definition:** `std::any` is a type-erased container that can store a single value of **any type**, preserving runtime type information for safe casting. It's a type-safe replacement for `void*`.
+
+**Core Characteristics:**
+
+| Aspect | Behavior | Implication |
+|--------|----------|-------------|
+| **Type set** | Any type (determined at runtime) | Maximum flexibility |
+| **Storage** | Small buffer optimization + heap | May allocate for large types |
+| **Type tracking** | `std::type_info` stored internally | Enables runtime type checking |
+| **Size** | Fixed (typically 16-32 bytes) | Same size regardless of stored type |
+| **Performance** | Allocation + RTTI overhead | Slower than `variant` |
+| **CV qualifiers** | Strips const/volatile | Stored type is always non-const |
+
+**Operations Table:**
+
+| Operation | Syntax | Throws | Returns |
+|-----------|--------|--------|---------|
+| **Create empty** | `std::any a;` | No | Empty any |
+| **Create with value** | `std::any a = 42;` | No | any holding int |
+| **Assign value** | `a = std::string("hi");` | No | Changes type |
+| **Check if has value** | `a.has_value()` | No | bool |
+| **Get type info** | `a.type()` | No | `const std::type_info&` |
+| **Cast to type** | `any_cast<int>(a)` | `bad_any_cast` if wrong | Value (copy) |
+| **Cast to type (pointer)** | `any_cast<int>(&a)` | No | Pointer or nullptr |
+| **Clear value** | `a.reset();` | No | Empties any |
+| **Emplace value** | `a.emplace<T>(args...)` | Depends on T | Reference to value |
+
+**Type Erasure Comparison:**
+
+| Feature | `std::any` | `void*` | `variant<Ts...>` |
+|---------|-----------|---------|------------------|
+| **Type safety** | Safe (runtime check) | **Unsafe** | Safe (compile-time) |
+| **Type set** | Open (any type) | Open (any type) | Closed (fixed types) |
+| **Type info preservation** | Yes (RTTI) | No | Yes (discriminator) |
+| **Casting** | `any_cast` with check | Manual cast (unsafe) | `get`/`visit` |
+| **Allocation** | May allocate | No allocation | No allocation |
+| **Performance** | RTTI + potential heap | Fast (raw pointer) | Fastest (inline) |
+
+**any vs optional vs variant Decision Matrix:**
+
+| Scenario | Best Choice | Reason |
+|----------|-------------|--------|
+| **May not have value of type T** | `optional<T>` | Explicit "no value" semantics |
+| **One of 2-10 known types** | `variant<Ts...>` | Type-safe, zero-overhead |
+| **One of many (>10) known types** | Consider inheritance | variant gets unwieldy |
+| **Truly unknown types (plugins)** | `any` | Only option for runtime types |
+| **Performance critical** | `variant` or `optional` | Avoid `any` overhead |
+| **Header-only value storage** | `variant` or `optional` | `any` requires RTTI |
+
+**Safe Access Patterns:**
+
 ```cpp
 std::any a = 42;
-std::any b = std::string("hello");
-std::any c = std::vector<int>{1, 2, 3};
 
-// Access (throws if wrong type)
-int x = std::any_cast<int>(a);
+// ❌ Direct cast without check - throws if wrong type
+int x = std::any_cast<int>(a);  // Throws bad_any_cast if not int
 
-// Safe pointer-based access
+// ✅ Pointer-based check (no exceptions)
 if (auto* p = std::any_cast<int>(&a)) {
-    int x = *p;
+    int x = *p;  // Safe, p is valid
 }
 
-// Check if empty
-if (a.has_value()) { /* ... */ }
-
-// Type info
-const std::type_info& t = a.type();
-```
-
-**When to use:**
-- Plugin systems with unknown types
-- Scripting language integration
-- Dynamic configuration systems
-- Replacing `void*` in legacy APIs
-
-**When NOT to use:**
-- When types are known at compile time (use `variant` instead)
-- Performance-critical code (has overhead)
-- When you need compile-time type safety
-
-**Comparison:**
-- `std::optional<T>`: May or may not have value of fixed type T
-- `std::variant<Ts...>`: Has value of one of fixed types Ts
-- `std::any`: Has value of any type (determined at runtime)
-
-#### std::string_view - Non-Owning String Reference
-
-`std::string_view` is a lightweight, non-owning reference to a character sequence. It's like a pointer+length pair but with string-like interface.
-
-**Key benefits:**
-- **Zero copy**: No allocation, just references existing memory
-- **Works with multiple sources**: `std::string`, C strings, string literals, substrings
-- **Efficient substring**: O(1) `substr` operation (just adjusts view)
-
-**Common use cases:**
-```cpp
-// Function parameter (avoids copy)
-void process(std::string_view sv) {
-    std::cout << sv;  // No allocation needed
+// ✅ Type info check before cast
+if (a.type() == typeid(int)) {
+    int x = std::any_cast<int>(a);  // Guaranteed safe
 }
 
-process("literal");          // OK
-process(std::string("str")); // OK, no copy
-process(cstring);            // OK
-
-// Efficient substring
-std::string_view sv = "hello world";
-auto sub = sv.substr(0, 5);  // O(1), no allocation
-```
-
-**Critical safety warning:**
-`string_view` does NOT own the data it references. The underlying string must outlive the view:
-
-```cpp
-std::string_view danger() {
-    std::string s = "temporary";
-    return s;  // ❌ DANGLING! s destroyed, view is invalid
-}
-
-std::string_view safe(const std::string& s) {
-    return s;  // ✅ OK if s outlives the returned view
-}
-```
-
-**Best practices:**
-- Use for function parameters instead of `const std::string&`
-- Never return `string_view` from a function unless input outlives output
-- Don't store `string_view` in long-lived objects
-- Be careful with temporaries
-
-#### std::filesystem - Portable File Operations
-
-`std::filesystem` provides a portable, object-oriented interface for file and directory operations. It replaces platform-specific APIs with a single, standard interface.
-
-**Core types:**
-- `std::filesystem::path`: Represents file system paths
-- `std::filesystem::directory_entry`: Represents a directory entry
-- `std::filesystem::directory_iterator`: Iterates over directory contents
-
-**Common operations:**
-```cpp
-namespace fs = std::filesystem;
-
-// Path manipulation
-fs::path p = "/usr/local/bin/app";
-p.filename();      // "app"
-p.extension();     // ""
-p.parent_path();   // "/usr/local/bin"
-p / "subdir";      // "/usr/local/bin/app/subdir" (append)
-
-// File queries
-fs::exists(p);
-fs::is_regular_file(p);
-fs::is_directory(p);
-fs::file_size(p);
-fs::last_write_time(p);
-
-// Directory operations
-fs::create_directory(p);
-fs::create_directories(p);  // Create all parents
-fs::remove(p);
-fs::remove_all(p);  // Recursive delete
-fs::copy(src, dst);
-
-// Directory iteration
-for (const auto& entry : fs::directory_iterator("/path")) {
-    std::cout << entry.path() << "\n";
-}
-
-// Recursive iteration
-for (const auto& entry : fs::recursive_directory_iterator("/path")) {
-    if (entry.is_regular_file()) {
-        std::cout << entry.path() << "\n";
+// ✅ Check if has value
+if (a.has_value()) {
+    // Try to cast, handle exception if wrong type
+    try {
+        int x = std::any_cast<int>(a);
+    } catch (const std::bad_any_cast&) {
+        // Handle wrong type
     }
 }
 ```
 
-**Error handling:**
-Most operations have two overloads:
-1. Throwing version: Throws `std::filesystem::filesystem_error`
-2. Non-throwing version: Takes `std::error_code&` parameter
+**When to Use vs NOT Use:**
+
+| Use When | Avoid When |
+|----------|------------|
+| Plugin systems with unknown types | Types known at compile time |
+| Scripting language bindings | Performance-critical paths |
+| Dynamic configuration (runtime-loaded) | Compile-time type safety needed |
+| Replacing `void*` in legacy APIs | Working with value types (use variant) |
+| Heterogeneous containers (rare) | Simple optional values (use optional) |
+
+**Critical Gotchas:**
+
+- **CV qualifiers stripped:** `any` storing `const int` holds `int`; cast to `int`, not `const int`
+- **Heap allocation:** Large types always allocated; small types may use SBO (small buffer optimization)
+- **RTTI required:** `any` requires RTTI enabled (usually default, but some embedded systems disable it)
+- **No implicit conversion:** Must cast to exact type; `any_cast<long>(any{42})` fails even though 42 is int
+
+---
+
+#### 4. std::string_view - Non-Owning String References
+
+**Definition:** `std::string_view` is a lightweight, non-owning reference to a contiguous character sequence (pointer + length), providing a string-like interface without allocation or ownership.
+
+**Core Characteristics:**
+
+| Aspect | Behavior | Implication |
+|--------|----------|-------------|
+| **Ownership** | Non-owning reference | **Source must outlive view** |
+| **Size** | Typically 16 bytes (pointer + length) | Lightweight, pass by value |
+| **Allocation** | Zero allocation | Fast, no heap access |
+| **Mutability** | Read-only view | Cannot modify source |
+| **Null-termination** | **Not guaranteed** | Not always null-terminated |
+| **Source types** | String literals, `std::string`, C strings, char arrays | Universal string parameter type |
+
+**Operations Performance:**
+
+| Operation | `std::string` | `std::string_view` | Benefit |
+|-----------|---------------|-------------------|---------|
+| **Construction** | O(n) - allocates + copies | O(1) - pointer + length | No allocation |
+| **Copy** | O(n) - deep copy | O(1) - copy pointer | Trivial copy |
+| **Substring** | O(n) - allocates new string | O(1) - adjust pointer | No allocation |
+| **Pass as parameter** | O(n) - copy or reference | O(1) - copy view | Always cheap |
+
+**Replacing Function Parameters:**
 
 ```cpp
-std::error_code ec;
-if (fs::remove("file.txt", ec)) {
-    std::cout << "Removed\n";
-} else {
-    std::cout << "Error: " << ec.message() << "\n";
+// ❌ C++14: Forces string construction from literals
+void process(const std::string& s) {  // "hello" creates temporary string
+    std::cout << s;
+}
+
+// ✅ C++17: Zero-copy for all string sources
+void process(std::string_view sv) {  // No temporary for "hello"
+    std::cout << sv;
+}
+
+// Works with all string sources:
+process("literal");               // ✅ No allocation
+process(std::string("owned"));    // ✅ No copy
+process(c_string);                // ✅ No conversion
+```
+
+**Critical Lifetime Safety:**
+
+| Pattern | Safety | Explanation |
+|---------|--------|-------------|
+| **Function parameter** | ✅ Safe | Caller's string outlives parameter |
+| **Return from function** | ⚠️ **Dangerous** | Returned view may outlive source |
+| **Store in member variable** | ⚠️ **Risky** | Object may outlive source |
+| **View of temporary** | ❌ **Unsafe** | Temporary destroyed, view dangles |
+| **View of string literal** | ✅ Safe | Literals have static lifetime |
+
+**Dangling Reference Scenarios:**
+
+```cpp
+// ❌ DANGER: Returning view to local string
+std::string_view getBadView() {
+    std::string s = "local";
+    return s;  // s destroyed, view dangles!
+}
+
+// ❌ DANGER: View of temporary
+std::string_view sv = std::string("temp");  // Temporary destroyed
+std::cout << sv;  // UB - dangling reference
+
+// ❌ DANGER: Storing view of short-lived string
+class Config {
+    std::string_view name;  // Risky!
+public:
+    Config(const std::string& s) : name(s) {}  // s may not outlive Config
+};
+
+// ✅ SAFE: View of string literal (static lifetime)
+std::string_view safe1 = "literal";
+
+// ✅ SAFE: View of parameter (caller guarantees lifetime)
+void safe2(std::string_view sv) { std::cout << sv; }
+
+// ✅ SAFE: Return view if source outlives caller
+std::string_view safe3(const std::string& s) {
+    return s;  // OK if caller's s outlives the returned view
 }
 ```
 
-**Use cases in automotive:**
-- Log file management (rotation, cleanup)
-- Configuration file loading
-- Recording data storage
-- Map data file operations
+**Best Practices:**
+
+- **Use for function parameters:** Replace `const std::string&` with `string_view` for read-only string parameters
+- **Never return from functions:** Unless returning a view to a parameter or static data
+- **Don't store in objects:** Avoid `string_view` members unless lifetime is carefully managed
+- **Check for null-termination:** Don't assume `sv.data()` is null-terminated; use `std::string(sv).c_str()` if needed
+- **Substring efficiency:** Use `sv.substr()` for O(1) substrings without allocation
+
+**Common Pitfalls:**
+
+| Pitfall | Code | Fix |
+|---------|------|-----|
+| **View of temporary** | `string_view sv = string("tmp");` | Store as `string`, not `string_view` |
+| **Assuming null-termination** | `some_c_api(sv.data());` | Use `string(sv).c_str()` |
+| **Returning view to local** | `return string_view(local_str);` | Return `string` by value |
+| **String modification invalidates view** | `string s="hi"; string_view sv=s; s+="!";` | Refresh view after mutation |
+
+---
+
+#### 5. std::filesystem - Portable File System Operations
+
+**Definition:** `std::filesystem` provides a platform-independent, object-oriented interface for file and directory operations, replacing platform-specific APIs (POSIX, Windows) with a standard C++ abstraction.
+
+**Core Types:**
+
+| Type | Purpose | Key Methods |
+|------|---------|-------------|
+| **`path`** | Represents filesystem path | `filename()`, `extension()`, `parent_path()`, `stem()`, `/` operator |
+| **`directory_entry`** | Single directory entry | `path()`, `is_regular_file()`, `is_directory()`, `file_size()` |
+| **`directory_iterator`** | Non-recursive iteration | Range-based for loop |
+| **`recursive_directory_iterator`** | Recursive traversal | Range-based for loop with subdirectories |
+| **`file_status`** | File type and permissions | `type()`, `permissions()` |
+
+**Path Manipulation Operations:**
+
+| Operation | Example | Result | Purpose |
+|-----------|---------|--------|---------|
+| **Concatenation** | `p / "subdir"` | Appends with correct separator | Portable path building |
+| **Filename** | `p.filename()` | Last component | Extract filename |
+| **Extension** | `p.extension()` | File extension (with `.`) | Get file type |
+| **Stem** | `p.stem()` | Filename without extension | Base name |
+| **Parent path** | `p.parent_path()` | Directory containing path | Navigate up |
+| **Replace extension** | `p.replace_extension(".txt")` | Changes extension | Rename file type |
+| **Make absolute** | `fs::absolute(p)` | Absolute path | Resolve relative paths |
+| **Canonical path** | `fs::canonical(p)` | Resolved path (no `.`, `..`, symlinks) | Normalize path |
+
+**File Query Operations:**
+
+| Query | Function | Returns | Use Case |
+|-------|----------|---------|----------|
+| **Exists** | `fs::exists(p)` | bool | Check before accessing |
+| **File type** | `fs::is_regular_file(p)` | bool | Distinguish files |
+| **Directory** | `fs::is_directory(p)` | bool | Check if directory |
+| **Symlink** | `fs::is_symlink(p)` | bool | Detect symbolic links |
+| **File size** | `fs::file_size(p)` | `uintmax_t` | Get size in bytes |
+| **Last write time** | `fs::last_write_time(p)` | `file_time_type` | Modification timestamp |
+| **Space info** | `fs::space(p)` | `space_info` (capacity, free, available) | Disk space checks |
+
+**File Modification Operations:**
+
+| Operation | Function | Effect | Error Handling |
+|-----------|----------|--------|----------------|
+| **Create directory** | `fs::create_directory(p)` | Single directory | Throws if exists |
+| **Create directories** | `fs::create_directories(p)` | All parent directories | Safe if exists |
+| **Remove file** | `fs::remove(p)` | Delete single file/empty dir | Returns bool |
+| **Remove recursively** | `fs::remove_all(p)` | Delete directory tree | Returns count |
+| **Copy file** | `fs::copy(src, dst)` | Copy file or directory | Throws on error |
+| **Rename/Move** | `fs::rename(old, new)` | Move/rename file | Atomic on same filesystem |
+| **Create symlink** | `fs::create_symlink(target, link)` | Creates symbolic link | Platform-dependent |
+
+**Practical Usage Patterns:**
+
+```cpp
+namespace fs = std::filesystem;
+
+// ✅ Path manipulation (portable)
+fs::path log_file = fs::current_path() / "logs" / "app.log";
+log_file.replace_extension(".bak");  // app.bak
+
+// ✅ File queries
+if (fs::exists(log_file) && fs::file_size(log_file) > 10'000'000) {
+    // Rotate large log files
+}
+
+// ✅ Directory iteration (non-recursive)
+for (const auto& entry : fs::directory_iterator("/var/log")) {
+    if (entry.is_regular_file()) {
+        std::cout << entry.path().filename() << "\n";
+    }
+}
+
+// ✅ Recursive directory traversal
+for (const auto& entry : fs::recursive_directory_iterator("/data")) {
+    if (entry.path().extension() == ".conf") {
+        processConfigFile(entry.path());
+    }
+}
+```
+
+**Error Handling Strategies:**
+
+| Approach | Syntax | When to Use |
+|----------|--------|-------------|
+| **Throwing** | `fs::remove(p)` | Errors are exceptional |
+| **Non-throwing** | `fs::remove(p, ec)` | Errors are expected |
+
+```cpp
+// ✅ Throwing version (cleaner for unexpected errors)
+try {
+    fs::copy("src.txt", "dst.txt");
+} catch (const fs::filesystem_error& e) {
+    std::cerr << "Error: " << e.what() << "\n";
+}
+
+// ✅ Non-throwing version (for expected failures)
+std::error_code ec;
+if (fs::remove("optional_file.txt", ec)) {
+    std::cout << "Removed\n";
+} else if (ec) {
+    std::cout << "Not found (ok): " << ec.message() << "\n";
+}
+```
+
+**Automotive/Embedded Use Cases:**
+
+| Use Case | Operations | Pattern |
+|----------|------------|---------|
+| **Log rotation** | `file_size()`, `rename()`, `remove_all()` | Check size, rotate, cleanup old |
+| **Config loading** | `exists()`, `is_regular_file()`, `ifstream(path)` | Validate before reading |
+| **Data recording** | `create_directories()`, `ofstream(path)`, `space()` | Ensure directory, check space |
+| **Map data access** | `directory_iterator()`, extension filtering | Find all `.map` files |
+| **Firmware updates** | `copy()`, `rename()`, `permissions()` | Atomic replace patterns |
+
+**Critical Pitfalls:**
+
+| Pitfall | Issue | Solution |
+|---------|-------|----------|
+| **Symlink following** | Most ops follow symlinks by default | Use `symlink_status()` to check link itself |
+| **Race conditions** | File state can change between check and use | Use error_code version, handle errors |
+| **Cross-platform paths** | Hard-coded `/` or `\\` | Always use `/` operator or `path::preferred_separator` |
+| **Permission errors** | Operations may fail silently | Always check error_code or catch exceptions |
+| **Recursive delete** | `remove_all()` is destructive | Double-check path before calling |
 
 ---
 

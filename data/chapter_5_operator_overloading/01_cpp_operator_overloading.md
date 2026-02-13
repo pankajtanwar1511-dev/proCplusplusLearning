@@ -4,13 +4,428 @@
 
 ### THEORY_SECTION: Core Concepts and Fundamentals
 
-**Operator overloading** in C++ allows you to redefine the behavior of operators (like `+`, `-`, `[]`, `()`, etc.) for user-defined types. This enables objects to behave more naturally and intuitively, making code more readable and expressive. When you overload an operator, you're essentially creating a function with a special name that the compiler recognizes and calls when that operator is used with your class objects.
+#### 1. What is Operator Overloading and How It Works
 
-Operator overloading can be implemented in two primary ways: as **member functions** or as **non-member functions** (typically declared as `friend`). Member functions have implicit access to the left operand through the `this` pointer, while non-member functions treat both operands explicitly. The choice between these approaches depends on the operator's semantics and whether you need commutativity (e.g., allowing both `obj + 5` and `5 + obj`).
+Operator overloading allows you to redefine how operators (`+`, `-`, `*`, `[]`, `()`, etc.) behave when applied to user-defined types (classes). This enables custom types to interact using familiar syntax, making code more intuitive and expressive.
 
-#### Why It Matters
+**Core Principle: Operators are functions with special names that the compiler recognizes.**
 
-Operator overloading is fundamental to creating intuitive class interfaces in C++. It enables you to work with custom types as naturally as built-in types, which is essential for mathematical classes (Complex numbers, Vectors), container classes (custom arrays, matrices), and smart pointers. Understanding operator overloading is critical for interviews because it tests your knowledge of C++ semantics, object lifetime, function overloading rules, and design decisions. It's also the foundation for understanding STL algorithms, functors, and modern C++ features like lambdas.
+When you write `a + b`, the compiler translates this to either:
+- `a.operator+(b)` (if `operator+` is a member function), or
+- `operator+(a, b)` (if `operator+` is a non-member function)
+
+| Aspect | Details |
+|--------|---------|
+| **What it is** | Giving custom meaning to operators for user-defined types |
+| **Syntax** | `ReturnType operator@(parameters)` where `@` is the operator symbol |
+| **Mechanism** | Compiler translates `a @ b` to function call `operator@(a, b)` or `a.operator@(b)` |
+| **Purpose** | Make custom types behave like built-in types |
+| **Scope** | Can only redefine existing operators; cannot create new operators |
+| **Semantics** | Behavior changes, but precedence, associativity, and arity remain fixed |
+
+**What Can and Cannot Be Overloaded**
+
+| Category | Operators | Can Overload? |
+|----------|-----------|---------------|
+| **Arithmetic** | `+`, `-`, `*`, `/`, `%` | ✅ Yes |
+| **Comparison** | `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>` (C++20) | ✅ Yes |
+| **Logical** | `&&`, `||`, `!` | ✅ Yes (but avoid `&&` and `||`) |
+| **Bitwise** | `&`, `|`, `^`, `~`, `<<`, `>>` | ✅ Yes |
+| **Assignment** | `=`, `+=`, `-=`, `*=`, `/=`, etc. | ✅ Yes |
+| **Increment/Decrement** | `++`, `--` (both pre and post) | ✅ Yes |
+| **Subscript** | `[]` | ✅ Yes |
+| **Function call** | `()` | ✅ Yes |
+| **Member access** | `->`, `->*` | ✅ Yes (`->` only, `->*` rarely) |
+| **Comma** | `,` | ✅ Yes (but shouldn't) |
+| **Memory management** | `new`, `delete`, `new[]`, `delete[]` | ✅ Yes |
+| **Type conversion** | `operator T()` | ✅ Yes |
+| **Scope resolution** | `::` | ❌ **Cannot** overload |
+| **Member selection** | `.` | ❌ **Cannot** overload |
+| **Pointer-to-member** | `.*` | ❌ **Cannot** overload |
+| **Ternary conditional** | `?:` | ❌ **Cannot** overload |
+| **sizeof** | `sizeof` | ❌ **Cannot** overload |
+| **typeid** | `typeid` | ❌ **Cannot** overload |
+
+**Why Certain Operators Cannot Be Overloaded**
+
+| Operator | Why Not Overloadable | Reasoning |
+|----------|---------------------|-----------|
+| `::` | Scope resolution | Requires compile-time name resolution |
+| `.` | Member access | Compiler needs fixed offset calculation at compile time |
+| `.*` | Pointer-to-member | Requires compile-time member offset knowledge |
+| `?:` | Ternary conditional | Short-circuit evaluation must be preserved |
+| `sizeof` | Size query | Must resolve at compile time |
+| `typeid` | Type information | Requires compile-time RTTI access |
+
+**Code Example: Basic Operator Overloading**
+
+```cpp
+#include <iostream>
+
+class Complex {
+    double real_, imag_;
+
+public:
+    Complex(double r = 0, double i = 0) : real_(r), imag_(i) {}
+
+    // ✅ MEMBER FUNCTION: left operand is implicit 'this'
+    Complex operator+(const Complex& rhs) const {
+        return Complex(real_ + rhs.real_, imag_ + rhs.imag_);
+    }
+
+    // ✅ MEMBER FUNCTION: compound assignment
+    Complex& operator+=(const Complex& rhs) {
+        real_ += rhs.real_;
+        imag_ += rhs.imag_;
+        return *this;  // Return reference for chaining
+    }
+
+    // ✅ FRIEND FUNCTION: enables symmetric operations
+    friend Complex operator-(const Complex& lhs, const Complex& rhs) {
+        return Complex(lhs.real_ - rhs.real_, lhs.imag_ - rhs.imag_);
+    }
+
+    void print() const {
+        std::cout << real_ << " + " << imag_ << "i\n";
+    }
+};
+
+int main() {
+    Complex c1(3, 4), c2(1, 2);
+
+    // Using overloaded operators
+    Complex c3 = c1 + c2;      // Calls c1.operator+(c2)
+    c3.print();                 // 4 + 6i
+
+    c1 += c2;                   // Calls c1.operator+=(c2)
+    c1.print();                 // 4 + 6i
+
+    Complex c4 = c1 - c2;       // Calls operator-(c1, c2)
+    c4.print();                 // 3 + 4i
+}
+```
+
+**Operator Overloading vs Regular Functions**
+
+| Feature | Operator Overloading | Regular Function |
+|---------|---------------------|------------------|
+| **Syntax** | `a + b` | `add(a, b)` |
+| **Readability** | More intuitive for mathematical/container types | More explicit about what's happening |
+| **Name** | Fixed (`operator+`, `operator[]`, etc.) | Any valid identifier |
+| **Call site** | Looks like built-in operation | Function call syntax |
+| **Precedence** | Fixed by language (can't change) | N/A (not used in expressions) |
+| **When to use** | Types with clear operator semantics (math, containers) | Operations without obvious operator mapping |
+
+---
+
+#### 2. Member Functions vs Friend Functions - When to Use Each
+
+Operator overloading can be implemented as either **member functions** or **non-member functions** (typically `friend` to access private members). The choice significantly impacts design and usage.
+
+**Member Function Approach**
+
+```cpp
+class Vector {
+    double x_, y_;
+
+public:
+    Vector(double x, double y) : x_(x), y_(y) {}
+
+    // Member function: left operand is implicit 'this'
+    Vector operator+(const Vector& rhs) const {
+        return Vector(x_ + rhs.x_, y_ + rhs.y_);
+    }
+
+    // Signature: Vector Vector::operator+(const Vector&) const
+    // Usage: v1 + v2  →  v1.operator+(v2)
+};
+```
+
+**Friend Function Approach**
+
+```cpp
+class Vector {
+    double x_, y_;
+
+public:
+    Vector(double x, double y) : x_(x), y_(y) {}
+
+    // Friend function: both operands are explicit
+    friend Vector operator+(const Vector& lhs, const Vector& rhs) {
+        return Vector(lhs.x_ + rhs.x_, lhs.y_ + rhs.y_);
+    }
+
+    // Signature: Vector operator+(const Vector&, const Vector&)
+    // Usage: v1 + v2  →  operator+(v1, v2)
+};
+```
+
+**Member vs Friend: Key Differences**
+
+| Aspect | Member Function | Friend/Non-Member Function |
+|--------|----------------|----------------------------|
+| **Left operand** | Must be object of the class (implicit `this`) | Can be any type (explicit parameter) |
+| **Parameters** | N-1 (for binary operators) | N (all explicit) |
+| **Signature** | `T T::operator@(const T&) const` | `T operator@(const T&, const T&)` |
+| **Access to private** | Direct (member of class) | Via `friend` declaration or public interface |
+| **Implicit conversions** | Only on right operand | On both operands |
+| **Symmetric operations** | ❌ Cannot do `5 + obj` | ✅ Can do both `obj + 5` and `5 + obj` |
+| **Typical use** | When left operand is always the class | When symmetry or external types needed |
+
+**When Member Functions Fail: The Symmetry Problem**
+
+```cpp
+class Dollars {
+    double amount_;
+
+public:
+    Dollars(double amt) : amount_(amt) {}
+
+    // ❌ MEMBER FUNCTION: only works one way
+    Dollars operator+(double rhs) const {
+        return Dollars(amount_ + rhs);
+    }
+};
+
+Dollars d(100);
+Dollars d1 = d + 50;    // ✅ Works: d.operator+(50)
+Dollars d2 = 50 + d;    // ❌ ERROR: int doesn't have operator+(Dollars)
+```
+
+**Solution: Friend Function for Symmetry**
+
+```cpp
+class Dollars {
+    double amount_;
+
+public:
+    Dollars(double amt) : amount_(amt) {}
+
+    // ✅ FRIEND FUNCTION: symmetric operations
+    friend Dollars operator+(const Dollars& lhs, double rhs) {
+        return Dollars(lhs.amount_ + rhs);
+    }
+
+    friend Dollars operator+(double lhs, const Dollars& rhs) {
+        return Dollars(lhs + rhs.amount_);
+    }
+};
+
+Dollars d(100);
+Dollars d1 = d + 50;    // ✅ Works: operator+(d, 50)
+Dollars d2 = 50 + d;    // ✅ Works: operator+(50, d)
+```
+
+**Which Operators MUST Be Members**
+
+C++ language rules **require** certain operators to be member functions:
+
+| Operator | Must Be Member? | Reason |
+|----------|----------------|---------|
+| `=` (assignment) | ✅ **Yes** | Ensures left operand is always an object of the class |
+| `[]` (subscript) | ✅ **Yes** | Requires object context for array-like access |
+| `()` (function call) | ✅ **Yes** | Defines callable behavior of objects (functors) |
+| `->` (arrow) | ✅ **Yes** | Smart pointer semantics require object as base |
+| Type conversion (`operator T()`) | ✅ **Yes** | Conversion from class type requires member |
+
+**Decision Tree: Member or Friend?**
+
+```
+Is the operator one of =, [], (), ->, or a conversion operator?
+├─ Yes → MUST be member function (language requirement)
+└─ No → Continue...
+    ↓
+Do you need symmetric operations (like int + Complex AND Complex + int)?
+├─ Yes → Use friend/non-member function
+└─ No → Continue...
+    ↓
+Is the left operand always your class?
+├─ Yes → Prefer member function (simpler, natural)
+└─ No → Use friend/non-member function
+    ↓
+Does the operator modify the left operand (like +=, -=, *=)?
+├─ Yes → Prefer member function (natural to modify 'this')
+└─ No → Either works; choose based on style/design
+```
+
+**Best Practices Summary**
+
+| Operator Type | Recommended Implementation | Example |
+|---------------|---------------------------|---------|
+| **Assignment** (`=`, `+=`, `-=`, etc.) | Member (required for `=`) | `T& operator=(const T&)` |
+| **Arithmetic** (`+`, `-`, `*`, `/`) | Friend (for symmetry) | `friend T operator+(const T&, const T&)` |
+| **Comparison** (`==`, `!=`, `<`, etc.) | Friend (for symmetry) | `friend bool operator==(const T&, const T&)` |
+| **Stream I/O** (`<<`, `>>`) | Friend (stream is left operand) | `friend ostream& operator<<(ostream&, const T&)` |
+| **Subscript** (`[]`) | Member (required) | `T& operator[](size_t)` |
+| **Function call** (`()`) | Member (required) | `RetType operator()(Args...)` |
+| **Increment/Decrement** (`++`, `--`) | Member (modifies object) | `T& operator++()` |
+| **Arrow** (`->`) | Member (required) | `T* operator->()` |
+| **Unary** (`-`, `!`, `~`) | Member (single operand) | `T operator-() const` |
+
+---
+
+#### 3. Common Patterns and Return Type Guidelines
+
+Understanding correct return types is crucial for proper operator overloading. Incorrect return types can break chaining, cause inefficiency, or create dangling references.
+
+**Assignment Operators: Return *this by Reference**
+
+| Operator | Return Type | Reason | Example |
+|----------|-------------|--------|---------|
+| `operator=` | `T&` | Enable chaining (`a = b = c`), avoid copy | `T& operator=(const T& rhs) { /*...*/ return *this; }` |
+| `operator+=` | `T&` | Modify in place, enable chaining | `T& operator+=(const T& rhs) { /*...*/ return *this; }` |
+| `operator-=` | `T&` | Modify in place, enable chaining | `T& operator-=(const T& rhs) { /*...*/ return *this; }` |
+| All compound assignment | `T&` | Consistent with built-in behavior | `T& operator@=(const T&)` |
+
+**Arithmetic Operators: Return by Value**
+
+| Operator | Return Type | Reason | Example |
+|----------|-------------|--------|---------|
+| `operator+` | `T` (by value) | Create new object, don't modify operands | `T operator+(const T& lhs, const T& rhs)` |
+| `operator-` | `T` (by value) | Create new object | `T operator-(const T& lhs, const T& rhs)` |
+| `operator*` | `T` (by value) | Create new object | `T operator*(const T& lhs, const T& rhs)` |
+| Unary `-` | `T` (by value) | Return negated copy | `T operator-() const` |
+
+**Increment/Decrement: Pre vs Post**
+
+| Operator | Return Type | Dummy Parameter | Returns | Example |
+|----------|-------------|----------------|---------|---------|
+| Pre-increment `++obj` | `T&` (reference) | None | Modified object (efficient) | `T& operator++() { ++val; return *this; }` |
+| Post-increment `obj++` | `T` (by value) | `int` (unused) | Old value (copy) | `T operator++(int) { T tmp = *this; ++val; return tmp; }` |
+| Pre-decrement `--obj` | `T&` (reference) | None | Modified object | `T& operator--() { --val; return *this; }` |
+| Post-decrement `obj--` | `T` (by value) | `int` (unused) | Old value (copy) | `T operator--(int) { T tmp = *this; --val; return tmp; }` |
+
+**Why Post-increment is Less Efficient**
+
+```cpp
+// Pre-increment: efficient
+Iterator& operator++() {
+    advance();           // Move forward
+    return *this;        // Return reference (no copy)
+}
+
+// Post-increment: less efficient
+Iterator operator++(int) {
+    Iterator old = *this;  // ❌ Create copy
+    advance();              // Move forward
+    return old;             // ❌ Return copy (another copy on return)
+}
+
+// Performance comparison
+for (Iterator it = begin; it != end; ++it)   // ✅ Efficient: no copies
+for (Iterator it = begin; it != end; it++)   // ❌ Less efficient: 2 copies per iteration
+```
+
+**Comparison Operators: Return bool**
+
+| Operator | Return Type | Example |
+|----------|-------------|---------|
+| `operator==` | `bool` | `bool operator==(const T& lhs, const T& rhs)` |
+| `operator!=` | `bool` | `bool operator!=(const T& lhs, const T& rhs)` |
+| `operator<` | `bool` | `bool operator<(const T& lhs, const T& rhs)` |
+| `operator>` | `bool` | `bool operator>(const T& lhs, const T& rhs)` |
+| `operator<=` | `bool` | `bool operator<=(const T& lhs, const T& rhs)` |
+| `operator>=` | `bool` | `bool operator>=(const T& lhs, const T& rhs)` |
+| `operator<=>` (C++20) | `auto` or ordering type | `auto operator<=>(const T&) const = default;` |
+
+**Subscript Operator: Both Const and Non-Const**
+
+```cpp
+class Array {
+    int* data_;
+    size_t size_;
+
+public:
+    // ✅ Non-const: allows modification
+    int& operator[](size_t idx) {
+        return data_[idx];
+    }
+
+    // ✅ Const: read-only access
+    const int& operator[](size_t idx) const {
+        return data_[idx];
+    }
+};
+
+Array arr;
+arr[0] = 10;          // Calls non-const version
+
+const Array carr;
+int x = carr[0];      // Calls const version
+// carr[0] = 10;      // ❌ Error: const version returns const reference
+```
+
+**Stream Operators: Return Stream by Reference**
+
+| Operator | Signature | Return | Purpose |
+|----------|-----------|--------|---------|
+| `operator<<` | `ostream& operator<<(ostream& os, const T& obj)` | `ostream&` | Enable chaining: `cout << a << b << c` |
+| `operator>>` | `istream& operator>>(istream& is, T& obj)` | `istream&` | Enable chaining: `cin >> a >> b >> c` |
+
+```cpp
+class Point {
+    int x_, y_;
+
+public:
+    friend ostream& operator<<(ostream& os, const Point& p) {
+        os << "(" << p.x_ << ", " << p.y_ << ")";
+        return os;  // ✅ Must return stream for chaining
+    }
+};
+
+Point p1(3, 4), p2(5, 6);
+cout << "Points: " << p1 << " and " << p2 << "\n";
+// Chaining works because each operator<< returns ostream&
+```
+
+**Function Call Operator (Functors)**
+
+```cpp
+class Multiplier {
+    int factor_;
+
+public:
+    Multiplier(int f) : factor_(f) {}
+
+    // Can have multiple overloads with different signatures
+    int operator()(int x) const {
+        return x * factor_;
+    }
+
+    int operator()(int x, int y) const {
+        return (x + y) * factor_;
+    }
+};
+
+Multiplier times3(3);
+cout << times3(10);       // 30  (calls operator()(int))
+cout << times3(10, 20);   // 90  (calls operator()(int, int))
+```
+
+**Common Return Type Mistakes**
+
+| Mistake | Code | Problem | Fix |
+|---------|------|---------|-----|
+| **Return by value from assignment** | `T operator=(const T&)` | Breaks chaining, inefficient | `T& operator=(const T&)` |
+| **Return by reference from post-increment** | `T& operator++(int)` | Dangling reference to local | `T operator++(int)` |
+| **Not returning stream** | `void operator<<(ostream&, const T&)` | Breaks chaining | `ostream& operator<<(...)` |
+| **Return by value from subscript** | `T operator[](size_t)` | Can't modify: `arr[i] = x` fails | `T& operator[](size_t)` |
+| **Forgetting const in comparison** | `bool operator==(const T&)` | Can't compare const objects | `bool operator==(const T&) const` |
+
+**Best Practice Checklist**
+
+| Pattern | Guideline |
+|---------|-----------|
+| ✅ Assignment operators return `*this` by reference | Enables chaining and matches built-in behavior |
+| ✅ Arithmetic operators return new object by value | Don't modify operands |
+| ✅ Comparison operators marked `const` | Don't modify objects being compared |
+| ✅ Pre-increment returns reference, post returns value | Efficiency and correct semantics |
+| ✅ Provide both const and non-const `operator[]` | Const-correctness |
+| ✅ Stream operators return stream by reference | Enable chaining |
+| ✅ Check for self-assignment in `operator=` | Prevent bugs: `if (this != &other)` |
+| ✅ Mark conversion operators `explicit` | Prevent unwanted implicit conversions |
+| ❌ Don't overload `&&`, `||`, `,` | Lose important built-in semantics |
+| ❌ Don't change semantics dramatically | `+` should add, not multiply |
 
 ---
 

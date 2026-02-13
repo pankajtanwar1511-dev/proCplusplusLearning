@@ -2,23 +2,289 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-**Mutex** (mutual exclusion) is the fundamental synchronization primitive that allows only one thread to access a shared resource at a time. When multiple threads attempt to read and modify shared data concurrently without synchronization, they create **race conditions**—bugs where the program's behavior depends on the unpredictable timing of thread execution. A mutex protects critical sections of code by ensuring exclusive access: when one thread holds the lock, other threads attempting to acquire it will block until it's released.
+#### 1. Mutex Overview
 
-#### The Need for Synchronization
+**Definition:**
+- **Mutex** = Mutual Exclusion
+- Fundamental synchronization primitive
+- Ensures only ONE thread accesses shared resource at a time
+- Protects critical sections from concurrent access
 
-In concurrent programming, unsynchronized access to shared mutable state leads to data corruption. Consider a simple counter increment: `++counter` appears atomic but actually consists of three operations at the machine level: load value from memory into register, increment register, store register back to memory. If two threads execute this sequence simultaneously, both might read the same initial value, increment it, and write back the same result—losing one increment. This is a classic **data race**, where the outcome depends on thread scheduling.
+**The Problem: Race Conditions**
+```cpp
+// ❌ WITHOUT MUTEX - Race condition
+int counter = 0;
 
-#### RAII Locking with std::lock_guard and std::unique_lock
+void increment() {
+    ++counter;  // NOT atomic! Actually 3 operations:
+                // 1. Load counter from memory
+                // 2. Increment in register
+                // 3. Store back to memory
+}
 
-C++11 provides RAII (Resource Acquisition Is Initialization) wrappers for mutex management. **`std::lock_guard`** acquires the mutex in its constructor and releases it in its destructor, ensuring exception-safe locking—even if an exception is thrown in the critical section, the destructor releases the lock during stack unwinding. **`std::unique_lock`** provides additional flexibility: it can be locked and unlocked multiple times, supports deferred locking, try-locking, and timed locking, making it essential for condition variables which need to release and reacquire locks.
+// Multiple threads → lost updates
+```
 
-#### Types of Mutexes
+**Core Mechanism:**
 
-C++ provides several mutex types for different scenarios: **`std::mutex`** (basic non-recursive), **`std::recursive_mutex`** (allows the same thread to lock multiple times), **`std::timed_mutex`** (supports timeout-based locking), and **`std::shared_mutex`** (C++17, allows multiple readers or single writer). Each has performance and safety trade-offs. Recursive mutexes enable nested locking but can mask design issues and have higher overhead. Timed mutexes enable deadlock avoidance by backing off if a lock cannot be acquired within a timeout.
+| Operation | Effect | Thread Behavior |
+|-----------|--------|----------------|
+| `lock()` | Acquire exclusive access | Blocks if already locked |
+| `unlock()` | Release exclusive access | Wakes waiting threads |
+| Critical section | Code between lock/unlock | Only one thread executes |
 
-#### Why Mutex Design Matters in Real-Time Systems
+---
 
-In autonomous driving software, sensor fusion algorithms merge data from cameras, LiDAR, and radar. Each sensor might run in a separate thread, updating shared world models. Without proper synchronization, a planning algorithm might read partially-updated data, causing incorrect path decisions. However, coarse-grained locking (one mutex for the entire world model) creates contention bottlenecks. Fine-grained locking (separate mutexes for spatial regions) reduces contention but increases complexity and deadlock risk. Understanding mutex design patterns is critical for building correct, performant real-time systems.
+#### 2. The Need for Synchronization
+
+**What is a Data Race?**
+- Multiple threads access shared data concurrently
+- At least one is writing
+- No synchronization mechanism
+- **Result:** Undefined behavior, data corruption
+
+**Example: Counter Increment**
+
+```
+Thread 1                Thread 2
+--------                --------
+Read counter (0)        Read counter (0)
+Increment (1)           Increment (1)
+Write counter (1)       Write counter (1)
+
+Expected: 2
+Actual: 1 (lost update!)
+```
+
+**Common Data Race Scenarios:**
+
+| Scenario | Problem | Solution |
+|----------|---------|----------|
+| Shared counter | Lost updates | Mutex or atomic |
+| Shared container | Corruption, crashes | Mutex protection |
+| Config reload | Partial reads | Readers-writer lock |
+| Bank transfer | Inconsistent state | Multi-mutex locking |
+
+---
+
+#### 3. RAII Locking - The Modern Way
+
+**std::lock_guard - Simple RAII**
+
+```cpp
+std::mutex mtx;
+
+void safe_increment() {
+    std::lock_guard<std::mutex> lock(mtx);  // ✅ Locks on construction
+    ++counter;
+    // Exception-safe: always unlocks on destruction
+}  // ← Automatic unlock here
+```
+
+**Characteristics:**
+
+| Feature | lock_guard | Manual lock/unlock |
+|---------|------------|-------------------|
+| **Exception Safety** | ✅ Automatic | ❌ Must use try-catch |
+| **Early Return Safety** | ✅ Automatic | ❌ Must unlock before return |
+| **Overhead** | Zero (compiler optimized) | Same |
+| **Flexibility** | Limited | Full control |
+
+**std::unique_lock - Flexible RAII**
+
+```cpp
+void flexible_locking() {
+    std::unique_lock<std::mutex> lock(mtx);  // Locked
+
+    critical_work();
+
+    lock.unlock();  // ✅ Manual unlock
+    non_critical_work();
+    lock.lock();    // ✅ Re-lock
+
+    more_critical_work();
+}  // Automatic unlock
+```
+
+**When to Use Each:**
+
+| Lock Type | Use When... |
+|-----------|------------|
+| `lock_guard` | Simple scope-based locking |
+| `unique_lock` | Need manual lock/unlock control |
+| `unique_lock` | Using with condition variables |
+| `unique_lock` | Need deferred or timed locking |
+
+---
+
+#### 4. Mutex Types
+
+**Available Mutex Types:**
+
+| Mutex Type | Recursive | Timeout | Shared Lock | Use Case |
+|------------|-----------|---------|-------------|----------|
+| `std::mutex` | ❌ | ❌ | ❌ | Basic mutual exclusion |
+| `std::recursive_mutex` | ✅ | ❌ | ❌ | Nested locking (same thread) |
+| `std::timed_mutex` | ❌ | ✅ | ❌ | Timeout-based locking |
+| `std::shared_mutex` (C++17) | ❌ | ❌ | ✅ | Multiple readers, one writer |
+
+**std::recursive_mutex Example:**
+
+```cpp
+std::recursive_mutex rmtx;
+
+void outer() {
+    std::lock_guard<std::recursive_mutex> lock(rmtx);
+    inner();  // ✅ OK - can relock
+}
+
+void inner() {
+    std::lock_guard<std::recursive_mutex> lock(rmtx);  // Same thread
+    // Works because mutex is recursive
+}
+```
+
+**std::timed_mutex Example:**
+
+```cpp
+std::timed_mutex tmtx;
+
+if (tmtx.try_lock_for(std::chrono::milliseconds(100))) {
+    // ✅ Got lock within 100ms
+    critical_section();
+    tmtx.unlock();
+} else {
+    // ❌ Timeout - handle gracefully
+    log_contention();
+}
+```
+
+**std::shared_mutex Example (Readers-Writer Lock):**
+
+```cpp
+std::shared_mutex smtx;
+std::unordered_map<int, std::string> cache;
+
+void read(int key) {
+    std::shared_lock<std::shared_mutex> lock(smtx);  // ✅ Multiple readers OK
+    auto value = cache[key];
+}
+
+void write(int key, std::string value) {
+    std::unique_lock<std::shared_mutex> lock(smtx);  // Exclusive writer
+    cache[key] = value;
+}
+```
+
+**Performance Trade-offs:**
+
+| Mutex Type | Overhead | Notes |
+|------------|----------|-------|
+| `std::mutex` | Lowest | Best for simple cases |
+| `std::recursive_mutex` | ~1.5-2x | Tracks ownership + lock count |
+| `std::timed_mutex` | ~1.5-2x | Timeout logic overhead |
+| `std::shared_mutex` | ~2-3x reads, ~3-4x writes | Bookkeeping for multiple readers |
+
+---
+
+#### 5. Mutex Design in Real-Time Systems
+
+**Autonomous Vehicle Example:**
+
+```
+Sensor Threads:          Shared World Model           Planning Thread:
+- Camera (30 Hz)  ─┐                                 ┌─ Path Planning (10 Hz)
+- LiDAR (10 Hz)   ─┼──> [Protected by Mutex] <──────┤
+- Radar (20 Hz)   ─┘                                 └─ Uses latest data
+```
+
+**Lock Granularity Trade-off:**
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Coarse-grained** (One mutex for all) | Simple, no deadlock | High contention, poor scalability |
+| **Fine-grained** (Mutex per region) | Low contention, good scalability | Complex, deadlock risk |
+
+**Coarse-Grained Example:**
+
+```cpp
+// ❌ One mutex protects entire world model
+std::mutex world_mutex;
+WorldModel world;
+
+void update_camera_data() {
+    std::lock_guard<std::mutex> lock(world_mutex);  // Blocks everything
+    world.update_vision();
+}
+
+void update_lidar_data() {
+    std::lock_guard<std::mutex> lock(world_mutex);  // Also blocks everything
+    world.update_lidar();
+}
+// Problem: Updates serialize even though they touch different data
+```
+
+**Fine-Grained Example:**
+
+```cpp
+// ✅ Separate mutexes for different data
+struct WorldModel {
+    std::mutex vision_mutex;
+    std::mutex lidar_mutex;
+    VisionData vision;
+    LiDARData lidar;
+};
+
+void update_camera_data() {
+    std::lock_guard<std::mutex> lock(world.vision_mutex);  // Only locks vision
+    world.vision.update();
+}
+
+void update_lidar_data() {
+    std::lock_guard<std::mutex> lock(world.lidar_mutex);  // Only locks lidar
+    world.lidar.update();
+}
+// Benefit: Parallel updates possible
+```
+
+**Critical Requirements:**
+
+- **Correctness:** No data races, consistent state
+- **Performance:** Minimize lock hold time
+- **Latency:** Bounded wait times for real-time threads
+- **Deadlock Freedom:** Careful lock ordering or std::lock()
+
+---
+
+#### 6. Key Concepts Summary
+
+**RAII Lock Wrappers:**
+
+| Wrapper | Lock on Construction | Manual Lock/Unlock | Movable | Use Case |
+|---------|---------------------|-------------------|---------|----------|
+| `lock_guard` | ✅ | ❌ | ❌ | Simple scope lock |
+| `unique_lock` | ✅ (unless defer_lock) | ✅ | ✅ | Flexible locking |
+| `scoped_lock` (C++17) | ✅ | ❌ | ❌ | Multi-mutex lock |
+
+**Locking Strategies:**
+
+```cpp
+// Strategy 1: Simple scope lock
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    // Critical section
+}  // Auto unlock
+
+// Strategy 2: Deferred lock
+std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
+// ... preparation ...
+lock.lock();  // Lock when ready
+
+// Strategy 3: Multi-mutex (deadlock-free)
+std::lock(mtx1, mtx2);  // Atomic acquisition
+std::lock_guard<std::mutex> lock1(mtx1, std::adopt_lock);
+std::lock_guard<std::mutex> lock2(mtx2, std::adopt_lock);
+```
 
 ---
 

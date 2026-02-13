@@ -4,213 +4,431 @@ I'll format this C++ Memory Management study material according to your comprehe
 
 ### THEORY_SECTION: Core Concepts and Resource Management
 
-#### 1. Stack vs Heap Memory - Core Differences
-
-Memory management in C++ involves two primary regions: **stack** and **heap**. Understanding their characteristics, trade-offs, and appropriate use cases is fundamental to writing efficient, safe C++ code.
-
-**Comparison Table: Stack vs Heap Memory**
-
-| Characteristic | Stack Memory | Heap Memory |
-|----------------|--------------|-------------|
-| **Allocation Speed** | Extremely fast (single pointer increment) | Slower (allocator searches free blocks) |
-| **Deallocation** | Automatic at scope exit | Manual (new/delete or RAII) |
-| **Lifetime** | LIFO - destroyed in reverse order | Persists until explicitly freed |
-| **Size Limit** | Small (1-8 MB typically) | Large (limited by system RAM) |
-| **Access Pattern** | Sequential, cache-friendly | Random, potential cache misses |
-| **Fragmentation** | None (contiguous, self-compacting) | Can fragment over time |
-| **Thread Safety** | Each thread has own stack | Shared - requires synchronization |
-| **Management** | Compiler-managed automatically | Programmer-managed explicitly |
-| **Error Types** | Stack overflow | Leaks, dangling pointers, double-delete |
-| **Best For** | Small, short-lived objects | Large objects, dynamic lifetime |
-
-**When to Use Each Memory Region**
-
-| Scenario | Stack | Heap | Reason |
-|----------|-------|------|--------|
-| Small local variables (int, double, small structs) | ✅ | ❌ | Fast allocation, automatic cleanup |
-| Large arrays (>1 MB) | ❌ | ✅ | Stack size limited, risk overflow |
-| Object lifetime beyond function scope | ❌ | ✅ | Stack memory reclaimed at return |
-| Polymorphic objects for dynamic dispatch | ❌ | ✅ | Base pointers to derived objects |
-| Fixed-size compile-time arrays | ✅ | ❌ | Zero overhead, cache-friendly |
-| Dynamic-size collections | ❌ | ✅ | Size unknown at compile time |
-| Temporary function results | ✅ | ❌ | RVO/NRVO optimizes away copies |
-| Shared ownership across scopes | ❌ | ✅ | Multiple references to same object |
-
-**Code Example: Stack vs Heap Allocation**
-
-```cpp
-void demonstrateStackVsHeap() {
-    // ✅ Stack allocation - automatic lifetime
-    int stack_var = 42;                    // Fast: ~1 CPU instruction
-    int stack_array[100];                  // Contiguous, cache-friendly
-    // Automatically destroyed at scope exit
-
-    // ✅ Heap allocation - manual lifetime (with RAII)
-    auto heap_ptr = std::make_unique<int>(42);        // Slower: allocator call
-    auto heap_array = std::make_unique<int[]>(100);   // Flexible size
-    // Automatically destroyed via unique_ptr destructor
-
-    // ❌ Stack overflow danger with large objects
-    // int huge_array[10000000];  // ~40 MB - exceeds stack limit!
-
-    // ✅ Correct approach for large data
-    std::vector<int> large_data(10000000);  // Heap-allocated, RAII-managed
-}
-```
-
-**Key Principle**: Default to stack allocation for small, short-lived objects. Use heap allocation (via RAII containers/smart pointers) for large data, objects with complex lifetimes, or when size is runtime-determined.
+Memory management in C++ provides **direct control** over program memory allocation and deallocation. Understanding the fundamental distinction between stack and heap memory, proper allocation/deallocation patterns, and modern RAII principles is essential for writing safe, efficient C++ code.
 
 ---
 
-#### 2. RAII (Resource Acquisition Is Initialization)
+#### 1. Stack Memory - Automatic Lifetime Management
 
-**RAII** is the cornerstone idiom of modern C++ resource management. It ties resource lifetime directly to object lifetime, guaranteeing cleanup through automatic destructor invocation.
+**Definition:**
+- **Automatic storage duration** - managed entirely by the compiler
+- Follows **LIFO (Last In First Out)** principle
+- Memory allocated during function call, freed on function return
+- Part of the thread's **call stack**
 
-**RAII Core Principles**
+**Characteristics:**
 
-| Principle | Description | Benefit |
-|-----------|-------------|---------|
-| **Acquire in Constructor** | Resources allocated during object construction | Initialization and resource acquisition are atomic |
-| **Release in Destructor** | Resources freed when object goes out of scope | Guaranteed cleanup, even with exceptions |
-| **Deterministic Cleanup** | Destructors called at predictable times | No manual tracking of cleanup points |
-| **Exception Safety** | Stack unwinding invokes destructors | Resources freed even when exceptions thrown |
-| **Scope-Based Management** | Resource lifetime bound to object scope | Clear ownership semantics |
+| Property | Details |
+|----------|---------|
+| **Allocation Speed** | Extremely fast (single pointer increment) |
+| **Size Limit** | Small: typically 1-8 MB (platform-dependent) |
+| **Lifetime** | Scope-based (automatic cleanup at `}`) |
+| **Access Pattern** | Sequential, highly cache-friendly |
+| **Fragmentation** | None - linear allocation/deallocation |
+| **Thread Safety** | Thread-local (no synchronization needed) |
 
-**RAII Types in Standard Library**
+**What Lives on the Stack:**
+- Local variables declared in functions
+- Function parameters
+- Return addresses and stack frames
+- Small temporary objects
+- Built-in types (`int`, `double`, `char`, etc.)
 
-| Type | Resource Managed | Acquire | Release |
-|------|------------------|---------|---------|
-| `std::unique_ptr<T>` | Heap memory (single owner) | Constructor/make_unique | Destructor (delete) |
-| `std::shared_ptr<T>` | Heap memory (shared owner) | Constructor/make_shared | Destructor when refcount=0 |
-| `std::vector<T>` | Dynamic array | Constructor/resize | Destructor (delete[] internal) |
-| `std::string` | Dynamic character array | Constructor/assignment | Destructor |
-| `std::fstream` | File handle | open()/constructor | Destructor (close()) |
-| `std::lock_guard` | Mutex lock | Constructor (lock) | Destructor (unlock) |
-| `std::unique_lock` | Mutex lock (flexible) | Constructor (lock) | Destructor (unlock) |
-
-**Code Example: RAII Guarantees Cleanup**
-
+**Example:**
 ```cpp
-// ❌ Manual management - exception unsafe
-void unsafeFunction() {
-    Resource* r = new Resource();  // Manual allocation
+void stackDemo() {
+    int x = 42;           // Stack: allocated here
+    double pi = 3.14;     // Stack: allocated here
+    char ch = 'A';        // Stack: allocated here
 
-    if (errorCondition()) {
-        throw std::runtime_error("Error");  // LEAK: r never deleted!
-    }
+    {
+        int y = 100;      // Stack: allocated in inner scope
+    }                     // y destroyed here (automatic)
 
-    delete r;  // Never reached if exception thrown
-}
-
-// ✅ RAII - automatically exception-safe
-void safeFunction() {
-    auto r = std::make_unique<Resource>();  // RAII allocation
-
-    if (errorCondition()) {
-        throw std::runtime_error("Error");  // OK: r destructor runs during stack unwinding
-    }
-
-    // r automatically destroyed at scope exit or during exception unwinding
-}
+    // x, pi, ch still alive
+}  // All stack variables destroyed here (automatic)
 ```
 
-**Stack Unwinding and Destructor Invocation**
+**Memory Layout:**
+```
+High Address
+│
+├─ int y = 100        (inner scope)
+├─ char ch = 'A'
+├─ double pi = 3.14
+├─ int x = 42
+├─ Return address
+│
+Low Address (Stack grows downward)
+```
 
-When exceptions are thrown, C++ performs **stack unwinding**: calling destructors for all stack-allocated objects in reverse construction order before propagating the exception. This mechanism makes RAII objects self-cleaning.
+**Performance:**
+- **Allocation:** ~1-2 CPU cycles (just increment stack pointer)
+- **Deallocation:** ~1-2 CPU cycles (just decrement stack pointer)
+- **Cache behavior:** Excellent - sequential access, high locality
 
+**When to Use Stack:**
+- Small objects (< 1 KB as a guideline)
+- Short-lived data (within function scope)
+- Fixed-size objects known at compile time
+- Performance-critical code paths
+
+---
+
+#### 2. Heap Memory - Manual Lifetime Management
+
+**Definition:**
+- **Dynamic storage duration** - programmer controls lifetime
+- Also called **free store** or **dynamic memory**
+- Memory persists until explicitly freed
+- Managed by the **system allocator** (malloc/free, new/delete)
+
+**Characteristics:**
+
+| Property | Details |
+|----------|---------|
+| **Allocation Speed** | Slower (involves allocator algorithms) |
+| **Size Limit** | Large: limited only by available system memory (GBs) |
+| **Lifetime** | Manual (programmer-controlled) |
+| **Access Pattern** | Random, scattered across memory |
+| **Fragmentation** | Can fragment over time (external fragmentation) |
+| **Thread Safety** | Requires synchronization (global allocator) |
+
+**What Lives on the Heap:**
+- Objects created with `new` or `malloc`
+- Objects whose size is unknown at compile time
+- Objects that must outlive their creation scope
+- Large data structures (arrays, buffers, images)
+- Dynamically-sized containers (`std::vector` internal storage)
+
+**Example:**
 ```cpp
-void demonstrateStackUnwinding() {
-    std::vector<int> vec(1000);           // RAII object 1
-    auto ptr = std::make_unique<Data>();  // RAII object 2
-    std::lock_guard<std::mutex> lock(m);  // RAII object 3
+void heapDemo() {
+    // Heap allocation - manual lifetime
+    int* ptr = new int(42);           // Allocate on heap
+    int* arr = new int[1000];         // Large array on heap
 
-    riskyOperation();  // May throw exception
+    // Memory persists even after function returns
+    // (until explicitly deleted)
 
-    // If exception thrown above:
-    // 1. lock_guard destructor runs (unlocks mutex) - reverse order
-    // 2. unique_ptr destructor runs (deletes Data)
-    // 3. vector destructor runs (frees internal array)
-    // All cleanup automatic - no manual try-catch needed!
+    delete ptr;         // Must manually free single object
+    delete[] arr;       // Must manually free array
 }
+
+// Example: Object outliving scope
+int* createNumber() {
+    int* num = new int(100);  // Heap allocation
+    return num;               // ✅ Valid - heap memory persists
+}  // Function returns, but heap object still alive
+```
+
+**Memory Layout:**
+```
+Heap (grows upward from low address)
+│
+├─ [allocated block] ← new int[1000]
+├─ [free space]
+├─ [allocated block] ← new int(42)
+├─ [free space]
+├─ [allocated block] ← earlier allocation
+│
+(Scattered, non-contiguous)
+```
+
+**Performance:**
+- **Allocation:** ~100-1000+ CPU cycles (search free list, update metadata)
+- **Deallocation:** ~100-1000+ CPU cycles (coalesce free blocks, update metadata)
+- **Cache behavior:** Poor - random access, low locality
+
+**When to Use Heap:**
+- Large objects (> 1 KB)
+- Objects with dynamic/unknown size at compile time
+- Objects that outlive their creation scope
+- Shared data across multiple scopes
+- Polymorphic objects (via pointers to base class)
+
+---
+
+#### 3. Stack vs Heap - Direct Comparison
+
+**Code Comparison:**
+```cpp
+// STACK ALLOCATION
+void stackExample() {
+    int numbers[100];  // ✅ Fast: instant allocation
+    numbers[0] = 42;
+}  // ✅ Instant deallocation
+
+// HEAP ALLOCATION
+void heapExample() {
+    int* numbers = new int[100];  // ⏱️ Slower: allocator overhead
+    numbers[0] = 42;
+    delete[] numbers;             // ⏱️ Must remember to free
+}
+
+// HYBRID APPROACH (Modern C++)
+void modernExample() {
+    std::vector<int> numbers(100);  // ✅ Heap storage, RAII management
+    numbers[0] = 42;
+}  // ✅ Automatic cleanup (RAII)
+```
+
+**Decision Matrix:**
+
+```
+Object Size:
+├─ < 1 KB           → Stack
+├─ 1 KB - 100 KB    → Heap (with RAII)
+└─ > 100 KB         → Heap (with RAII)
+
+Lifetime:
+├─ Within function  → Stack
+├─ Across functions → Heap
+└─ Unknown duration → Heap
+
+Size Known:
+├─ Compile-time     → Stack (or std::array)
+└─ Runtime          → Heap (std::vector, smart pointers)
 ```
 
 ---
 
-#### 3. Modern C++ Memory Management Strategy
+#### 4. RAII - Resource Acquisition Is Initialization
 
-Modern C++ (C++11 and later) provides comprehensive tools to eliminate manual memory management entirely through RAII and smart pointers.
+**Core Principle:**
+> **Tie resource lifetime to object lifetime**
 
-**Memory Management Evolution**
+**The RAII Pattern:**
+1. **Acquire resources in constructor** (allocation, opening files, acquiring locks)
+2. **Release resources in destructor** (deallocation, closing files, releasing locks)
+3. **Compiler guarantees destructor runs** when object goes out of scope
 
-| Era | Approach | Tools | Safety Level |
-|-----|----------|-------|--------------|
-| **C-style (avoid)** | malloc/free | malloc, calloc, realloc, free | ❌ No constructors, no RAII, unsafe |
-| **Early C++** | Manual new/delete | new, delete, new[], delete[] | ❌ Exception-unsafe, leak-prone |
-| **Modern C++** | RAII + Smart Pointers | unique_ptr, shared_ptr, vector, string | ✅ Exception-safe, leak-proof |
-| **Best Practice** | Rule of Zero | Use only STL containers/smart pointers | ✅ Zero manual memory management |
-
-**Decision Tree: Which Memory Management Tool?**
-
-| Scenario | Tool | Reason |
-|----------|------|--------|
-| Single ownership, exclusive resource | `std::unique_ptr` | Zero overhead, move-only, prevents double-delete |
-| Shared ownership, multiple references | `std::shared_ptr` | Reference counting, automatic cleanup when all owners gone |
-| Dynamic array, contiguous memory | `std::vector` | Automatic growth, cache-friendly, exception-safe |
-| Fixed-size array, compile-time size | `std::array` | Stack-allocated, zero overhead, bounds checking |
-| Character strings | `std::string` | SSO optimization, automatic memory management |
-| Non-owning observer (breaks cycles) | `std::weak_ptr` | Observes shared_ptr without affecting refcount |
-| Custom memory pool or allocator | Placement new + explicit destructor | Advanced: fine-grained control |
-
-**Critical Safety Rules**
-
-| Rule | Description | Violation Consequence |
-|------|-------------|----------------------|
-| **Match operators** | new→delete, new[]→delete[], malloc→free | ❌ UB: heap corruption, crashes |
-| **One owner per resource** | Each allocated resource has exactly one delete | ❌ Double-delete crashes or memory leaks |
-| **No raw owning pointers** | Never hold raw pointer responsible for deletion | ❌ Leaks when exceptions or early returns occur |
-| **Set to nullptr after delete** | `delete p; p = nullptr;` | ❌ Use-after-free becomes dangling pointer |
-| **Prefer make_unique/make_shared** | Use factory functions over raw new | ✅ Exception-safe, fewer type redundancies |
-
-**Code Example: Modern C++ Best Practices**
-
+**Why RAII is Fundamental:**
 ```cpp
-class SensorDataProcessor {
-private:
-    // ✅ All RAII members - compiler-generated destructor works perfectly
-    std::vector<double> raw_data;              // Dynamic array
-    std::unique_ptr<Filter> filter;            // Exclusive ownership
-    std::shared_ptr<Logger> logger;            // Shared across systems
-    std::string sensor_id;                     // String management
+// ❌ MANUAL MANAGEMENT - DANGEROUS
+void manualWay() {
+    int* data = new int[1000];
 
+    doSomeWork();           // What if this throws?
+
+    if (errorCondition()) {
+        return;             // ❌ LEAK! delete never called
+    }
+
+    moreWork();             // What if this throws?
+
+    delete[] data;          // ❌ May never execute
+}
+
+// ✅ RAII - SAFE
+void raiiWay() {
+    std::vector<int> data(1000);  // Constructor allocates
+
+    doSomeWork();           // ✅ Safe: destructor will run
+
+    if (errorCondition()) {
+        return;             // ✅ Safe: destructor runs
+    }
+
+    moreWork();             // ✅ Safe: destructor will run
+
+}  // ✅ Destructor ALWAYS runs (automatic cleanup)
+```
+
+**RAII Guarantees:**
+- ✅ **Deterministic cleanup** - resources freed at scope exit
+- ✅ **Exception-safe** - destructors run during stack unwinding
+- ✅ **No manual cleanup** - compiler handles it
+- ✅ **Prevents leaks** - impossible to forget cleanup
+
+**RAII in Standard Library:**
+
+| Type | Resource Managed | Constructor | Destructor |
+|------|------------------|-------------|------------|
+| `std::unique_ptr<T>` | Heap memory (exclusive ownership) | Allocates/takes ownership | Deletes object |
+| `std::shared_ptr<T>` | Heap memory (shared ownership) | Allocates + ref count | Decrements ref, deletes if 0 |
+| `std::vector<T>` | Dynamic array | Allocates heap storage | Deletes all elements |
+| `std::string` | Character data | Allocates buffer | Frees buffer |
+| `std::fstream` | File handle | Opens file | Closes file |
+| `std::lock_guard` | Mutex lock | Acquires lock | Releases lock |
+
+**Example - RAII with Smart Pointers:**
+```cpp
+#include <memory>
+
+class Sensor {
 public:
-    SensorDataProcessor(const std::string& id, size_t capacity)
-        : raw_data(capacity, 0.0),
-          filter(std::make_unique<Filter>()),
-          logger(std::make_shared<Logger>(id)),
-          sensor_id(id) {
-        // All resources acquired via RAII - no manual allocation
+    Sensor(const std::string& name) {
+        std::cout << "Sensor " << name << " initialized\n";
     }
-
-    // ✅ Rule of Zero: No need to define destructor, copy/move operations
-    // Compiler-generated versions handle everything correctly!
-
-    // No manual new/delete anywhere in class
-    // Exception-safe by default
-    // No memory leaks possible
+    ~Sensor() {
+        std::cout << "Sensor destroyed\n";
+    }
 };
+
+void testRAII() {
+    // Old way - manual management ❌
+    Sensor* s1 = new Sensor("lidar");
+    // ... must remember to delete ...
+    delete s1;  // Easy to forget!
+
+    // Modern way - RAII ✅
+    auto s2 = std::make_unique<Sensor>("camera");
+    // ... no manual cleanup needed ...
+}  // s2 automatically destroyed here
 ```
 
-**Why Manual Memory Management Fails**
+**Exception Safety Through RAII:**
+```cpp
+void processData() {
+    // All RAII objects
+    std::vector<int> buffer(10000);
+    auto file = std::make_unique<std::fstream>("data.txt");
+    std::string result;
 
-| Problem | Manual Approach | RAII Approach |
-|---------|-----------------|---------------|
-| **Memory Leaks** | Forget delete or early return skips cleanup | Destructors always run at scope exit |
-| **Exception Safety** | Throw between new and delete = leak | Stack unwinding calls destructors |
-| **Dangling Pointers** | Use pointer after delete = UB | Smart pointers prevent access after destruction |
-| **Double Delete** | Two deletes on same memory = crash | unique_ptr prevents copy, shared_ptr uses refcount |
-| **Cognitive Load** | Track every allocation/deallocation pair | Write allocation once, forget about cleanup |
+    // Even if exception thrown here...
+    riskyOperation();
 
-**Key Takeaway**: Modern C++ makes manual memory management **obsolete**. Default to `std::vector`, `std::unique_ptr`, and `std::string`. Reserve raw new/delete only for extremely specialized scenarios (custom allocators, memory pools). Embrace the **Rule of Zero**: classes using only RAII members need no custom destructor, copy, or move operations.
+    // ...all destructors run during stack unwinding:
+    // 1. result.~string()
+    // 2. file.~unique_ptr() → closes file
+    // 3. buffer.~vector()   → frees memory
+}
+```
+
+---
+
+#### 5. Memory Management Evolution in C++
+
+**C++98/03 - Manual Era:**
+```cpp
+void oldWay() {
+    int* arr = new int[100];
+    // ... manual tracking ...
+    delete[] arr;  // Easy to forget, no exception safety
+}
+```
+- ❌ Manual new/delete everywhere
+- ❌ Memory leaks common
+- ❌ Exception-unsafe code
+- ❌ Complex ownership tracking
+
+**C++11 - RAII Revolution:**
+```cpp
+void modernWay() {
+    auto arr = std::make_unique<int[]>(100);
+    // Automatic cleanup, exception-safe
+}
+```
+- ✅ Smart pointers (`unique_ptr`, `shared_ptr`)
+- ✅ Move semantics (efficient transfers)
+- ✅ `make_unique`, `make_shared` factories
+- ✅ Exception-safe by default
+
+**C++14+ - Best Practices:**
+```cpp
+void bestPractice() {
+    std::vector<int> arr(100);  // Prefer containers
+    // Zero manual memory management
+}
+```
+- ✅ Prefer containers over raw arrays
+- ✅ **Rule of Zero** - no custom destructors
+- ✅ Smart pointers only when necessary
+- ✅ Value semantics by default
+
+---
+
+#### 6. Why Memory Management Matters
+
+**Common Bugs Without Proper Management:**
+
+| Bug Type | Example | Consequence | Detection |
+|----------|---------|-------------|-----------|
+| **Memory Leak** | Forgetting `delete` | Gradual memory exhaustion | Valgrind, ASan |
+| **Dangling Pointer** | Using pointer after `delete` | Undefined behavior, crashes | ASan, nullptr checks |
+| **Double Delete** | `delete` same pointer twice | Heap corruption, crash | Smart pointers |
+| **Buffer Overflow** | `arr[1000]` on `arr[100]` | Memory corruption, security | Bounds checking, ASan |
+| **Use After Free** | Reading freed memory | Unpredictable behavior | ASan, sanitizers |
+| **Stack Overflow** | Large local arrays | Program crash | Heap allocation |
+
+**Production Impact:**
+```cpp
+// Real-world scenario: Autonomous vehicle perception
+void perceptionLoop() {
+    while (true) {
+        int* lidarData = new int[100000];  // ❌ Leak!
+        processLidar(lidarData);
+        // Missing delete[]
+    }
+    // After 10 minutes: Out of memory crash
+    // Vehicle loses perception → CRITICAL FAILURE
+}
+
+// RAII solution
+void perceptionLoopSafe() {
+    while (true) {
+        std::vector<int> lidarData(100000);  // ✅ RAII
+        processLidar(lidarData.data());
+    }  // Automatic cleanup every iteration
+    // Runs reliably for days/weeks
+}
+```
+
+**Security Implications:**
+- **Memory leaks** → Denial of service attacks
+- **Buffer overflows** → Code injection exploits
+- **Use-after-free** → Remote code execution
+- **Dangling pointers** → Information disclosure
+
+**Modern C++ Solution:**
+```
+Manual Memory Management
+        ↓
+Use RAII Everywhere
+        ↓
+Prefer Containers (vector, string)
+        ↓
+Use Smart Pointers When Needed
+        ↓
+Rule of Zero (no custom destructors)
+        ↓
+Safe, Fast, Maintainable Code
+```
+
+---
+
+#### 7. Best Practices Summary
+
+**✅ DO:**
+- Use `std::vector` instead of raw arrays
+- Use `std::unique_ptr` for exclusive ownership
+- Use `std::shared_ptr` for shared ownership
+- Prefer stack allocation when possible
+- Use `std::make_unique` and `std::make_shared`
+- Follow Rule of Zero (let compiler generate special members)
+
+**❌ DON'T:**
+- Use raw `new`/`delete` (unless absolutely necessary)
+- Mix `malloc`/`free` with `new`/`delete`
+- Return pointers to local variables
+- Forget to `delete` allocated memory
+- Use mismatched operators (`new`/`delete[]`)
+
+**Quick Decision Tree:**
+```
+Need dynamic memory?
+    │
+    ├─ No  → Use stack allocation (local variables)
+    │
+    └─ Yes → What ownership model?
+            │
+            ├─ Single owner → std::unique_ptr
+            │
+            ├─ Shared owners → std::shared_ptr
+            │
+            └─ Collection → std::vector/std::array
+```
 
 ---
 

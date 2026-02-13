@@ -2,19 +2,210 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-**`std::thread`** is the fundamental building block for multithreading in C++11, providing a portable, high-level interface to create and manage concurrent threads of execution. Introduced in the `<thread>` header, it represents a single thread of execution that begins running immediately upon construction, executing a callable object (function pointer, lambda, functor, or member function) with optional arguments.
+#### 1. std::thread Overview
 
-#### What is a Thread?
+**Definition:**
+- Fundamental building block for C++11 multithreading
+- Portable, high-level interface for concurrent execution
+- Defined in `<thread>` header
+- Thread starts **immediately** upon construction
 
-A thread is the smallest unit of execution within a process. Unlike processes, threads within the same process share the same memory space, allowing efficient communication but requiring careful synchronization to avoid data races. In C++11, `std::thread` wraps platform-specific threading APIs (POSIX threads on Linux, Win32 threads on Windows) into a unified interface, making concurrent programming portable across platforms.
+**Key Characteristics:**
 
-#### Thread Lifecycle and Ownership
+| Property | Details |
+|----------|---------|
+| **Execution Start** | Immediate (upon object construction) |
+| **Callable Types** | Function pointer, lambda, functor, member function |
+| **Argument Passing** | Supports multiple arguments via perfect forwarding |
+| **Platform Abstraction** | Wraps POSIX threads (Linux) or Win32 threads (Windows) |
+| **Move Semantics** | Move-only (no copying allowed) |
 
-Each `std::thread` object represents ownership of a thread of execution. The thread starts immediately when the `std::thread` object is constructed. Before the `std::thread` object is destroyed, it must be either **joined** (blocking wait for completion) or **detached** (allowing independent execution). Failing to do so calls `std::terminate()`, which aborts the program. This strict requirement forces programmers to explicitly manage thread lifetimes, preventing accidental resource leaks or dangling threads.
+**Basic Usage:**
+```cpp
+#include <thread>
 
-#### Why std::thread Matters in High-Performance Systems
+void task() {
+    // Work happens here
+}
 
-In autonomous driving systems, multithreading is essential for parallel processing of sensor data (cameras, LiDAR, radar), path planning computations, and control system updates. A typical autonomous vehicle application might have separate threads for perception, localization, planning, and control, all running concurrently at different frequencies. Understanding thread creation, synchronization, and lifetime management is critical for building robust, real-time systems where timing guarantees matter.
+int main() {
+    std::thread t(task);  // Thread starts immediately
+    t.join();             // Wait for completion
+}
+```
+
+---
+
+#### 2. What is a Thread?
+
+**Core Concept:**
+- **Smallest unit of execution** within a process
+- Shares memory space with other threads in same process
+- Enables concurrent (parallel) execution
+
+**Thread vs Process:**
+
+| Aspect | Thread | Process |
+|--------|--------|---------|
+| **Memory** | Shared within process | Isolated memory space |
+| **Creation Cost** | Low (1-10ms) | High (10-100ms+) |
+| **Communication** | Direct (shared memory) | IPC needed (pipes, sockets) |
+| **Synchronization** | Required (mutexes, locks) | Optional (separate address spaces) |
+| **Crash Impact** | Can crash entire process | Isolated (doesn't affect others) |
+
+**Platform Abstraction:**
+- C++11 `std::thread` provides **unified interface** across platforms
+- Linux: Uses `pthread_create`, `pthread_join` internally
+- Windows: Uses `CreateThread`, `WaitForSingleObject` internally
+- Portable code works everywhere without platform-specific changes
+
+---
+
+#### 3. Thread Lifecycle and Ownership
+
+**Lifecycle Stages:**
+
+```
+Construction → Joinable → Joined/Detached → Destroyed
+     ↓            ↓            ↓              ↓
+  Starts       Running      Completed      Cleanup
+immediately
+```
+
+**Critical Rules:**
+
+| Rule | Requirement | Consequence if Violated |
+|------|-------------|------------------------|
+| **Join or Detach** | Must call one before destruction | `std::terminate()` → Program aborts |
+| **Single Join** | Can only join once | Undefined behavior |
+| **Single Detach** | Can only detach once | Undefined behavior |
+| **Explicit Ownership** | Thread object owns thread | Prevents resource leaks |
+
+**Example:**
+```cpp
+void correct_lifecycle() {
+    std::thread t([]{ /* work */ });
+
+    // MUST choose one:
+    t.join();    // Option 1: Wait for completion
+    // OR
+    t.detach();  // Option 2: Run independently
+
+}  // ✅ Safe destruction
+
+void dangerous_lifecycle() {
+    std::thread t([]{ /* work */ });
+    // ❌ Missing join/detach
+}  // std::terminate() called → program aborts!
+```
+
+**Why This Design?**
+- **Prevents accidental bugs:** Forces explicit lifetime management
+- **No implicit behavior:** Programmer must decide join vs detach
+- **RAII principle:** Resource (thread) tied to object lifetime
+
+---
+
+#### 4. Thread States
+
+**Joinable State:**
+
+| State | Description | `joinable()` Returns | Operations Allowed |
+|-------|-------------|---------------------|-------------------|
+| **Default-constructed** | No thread running | `false` | Assignment, destruction |
+| **Active/Running** | Thread executing | `true` | `join()`, `detach()`, `move` |
+| **Joined** | Thread completed | `false` | Destruction, assignment |
+| **Detached** | Running independently | `false` | Destruction, assignment |
+| **Moved-from** | Ownership transferred | `false` | Destruction, assignment |
+
+**State Transitions:**
+```cpp
+std::thread t;                    // State: Not joinable
+std::cout << t.joinable();        // Output: false
+
+t = std::thread([]{ /* work */ }); // State: Joinable
+std::cout << t.joinable();         // Output: true
+
+t.join();                          // State: Not joinable
+std::cout << t.joinable();         // Output: false
+```
+
+---
+
+#### 5. Why std::thread Matters in Real-World Systems
+
+**Autonomous Vehicle Example:**
+
+A typical autonomous vehicle requires parallel processing of:
+
+| Component | Thread Responsibility | Frequency |
+|-----------|---------------------|-----------|
+| **Perception** | Process camera/LiDAR data | 10-30 Hz |
+| **Localization** | GPS + IMU fusion | 100 Hz |
+| **Planning** | Path planning algorithms | 10 Hz |
+| **Control** | Steering/throttle commands | 50-100 Hz |
+| **Safety Monitor** | Collision detection | 100 Hz |
+
+**Why Multithreading:**
+- **Parallelism:** Process multiple sensors simultaneously
+- **Latency:** Meet strict timing deadlines (33ms for 30Hz camera)
+- **Responsiveness:** Control loop runs while planning updates
+- **Resource Utilization:** Use all CPU cores efficiently
+
+**Critical Requirements:**
+- **Deterministic timing:** Threads must complete within deadlines
+- **No data races:** Shared state requires synchronization (mutexes)
+- **Exception safety:** One thread crash shouldn't kill system
+- **Resource management:** Proper join/detach to prevent leaks
+
+**Code Example:**
+```cpp
+// Simplified autonomous vehicle threading
+void perception_thread() {
+    while (running) {
+        auto frame = camera.capture();
+        detect_objects(frame);  // 20ms budget
+    }
+}
+
+void planning_thread() {
+    while (running) {
+        auto path = compute_path();
+        publish(path);  // 100ms budget
+    }
+}
+
+int main() {
+    std::thread perception(perception_thread);
+    std::thread planning(planning_thread);
+
+    // Threads run in parallel
+
+    perception.join();
+    planning.join();
+}
+```
+
+---
+
+#### 6. Quick Reference
+
+**Creation Patterns:**
+
+| Pattern | Code | Use Case |
+|---------|------|----------|
+| Function | `std::thread t(func, args)` | Simple functions |
+| Lambda | `std::thread t([]{...})` | Inline tasks |
+| Member Function | `std::thread t(&Class::method, &obj)` | Object methods |
+
+**Lifecycle Management:**
+
+| Operation | Code | Purpose |
+|-----------|------|---------|
+| Join | `t.join()` | Wait for thread to finish |
+| Detach | `t.detach()` | Let thread run independently |
+| Check state | `t.joinable()` | Test if join/detach allowed |
+| Move | `t2 = std::move(t1)` | Transfer ownership |
 
 ---
 

@@ -4,17 +4,159 @@ I'll format this C++ study material according to your specifications. Let me reo
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-#### What Are Classes and Structs?
+#### 1. Classes vs Structs - Identical Except Default Access
 
-**Classes** and **structs** are user-defined types in C++ that allow you to bundle data and functions together. They are functionally identical except for their default access specifier. A **struct** has public members by default, while a **class** has private members by default. This seemingly small difference reflects their intended use: structs are traditionally used for simple data structures (Plain Old Data types), while classes are used for objects with encapsulation and behavior.
+**Definition:** Classes and structs are user-defined types that bundle data (members) and functions (methods) together. They are **functionally identical** - the ONLY differences are their default access specifiers and default inheritance modes.
 
-#### Access Specifiers Explained
+**Core Differences Table:**
 
-C++ provides three **access specifiers** to control visibility of class members: `public` (accessible from anywhere), `protected` (accessible within the class and derived classes), and `private` (accessible only within the class itself). These specifiers are fundamental to implementing **encapsulation**, one of the core principles of object-oriented programming. Access control is a compile-time feature that helps enforce design contracts and prevent misuse of internal implementation details.
+| Aspect | `struct` | `class` |
+|--------|----------|---------|
+| **Default member access** | `public` | `private` |
+| **Default inheritance mode** | `public` | `private` |
+| **Typical usage** | Simple data containers (PODs) | Encapsulated objects with behavior |
+| **Can have constructors?** | ✅ Yes | ✅ Yes |
+| **Can have virtual functions?** | ✅ Yes | ✅ Yes |
+| **Can be used as base class?** | ✅ Yes | ✅ Yes |
+| **Memory layout difference** | **None** - identical layout | **None** - identical layout |
 
-#### Why It Matters in Interviews
+**Before/After Examples:**
 
-Understanding classes, structs, and access specifiers is foundational for demonstrating OOP knowledge. Interviewers frequently test whether candidates understand the subtle differences between struct and class, especially in systems programming contexts. Access control questions often appear in discussions about API design, inheritance patterns, and encapsulation strategies. Moreover, confusion about how access specifiers interact with inheritance, virtual functions, and friend declarations is a common source of interview problems.
+```cpp
+// ✅ Struct - public by default
+struct Point {
+    int x, y;  // Implicitly public
+    void print() { std::cout << x << ", " << y; }
+};
+
+Point p;
+p.x = 10;  // ✅ Direct access allowed
+
+// ✅ Class - private by default
+class Point2 {
+    int x, y;  // Implicitly private
+public:
+    void setX(int val) { x = val; }
+    void print() { std::cout << x << ", " << y; }
+};
+
+Point2 p2;
+// p2.x = 10;  // ❌ Error: x is private
+p2.setX(10);   // ✅ Use public setter
+```
+
+**When to Use Which:**
+
+| Use `struct` when | Use `class` when |
+|-------------------|------------------|
+| Simple data container (POD) | Object requires encapsulation |
+| All members should be public | Need to enforce invariants |
+| C compatibility needed | Implementing design patterns |
+| No behavior, just data | Complex behavior and state |
+| Aggregate initialization desired | Constructor validation needed |
+
+---
+
+#### 2. Access Specifiers - Compile-Time Visibility Control
+
+**Definition:** Access specifiers are keywords that control the visibility and accessibility of class members, enforcing **encapsulation** at compile time.
+
+**Three Access Levels:**
+
+| Specifier | Accessible From | Use Case | Memory Impact |
+|-----------|----------------|----------|---------------|
+| **`public`** | Anywhere (inside class, derived classes, outside) | Public interface, API | None |
+| **`protected`** | Inside class + derived classes only | Protected interface for inheritance | None |
+| **`private`** | Inside class only | Internal implementation details | None |
+
+**Access Control Matrix:**
+
+| Context | Can Access Public | Can Access Protected | Can Access Private |
+|---------|-------------------|---------------------|-------------------|
+| **Same class** | ✅ | ✅ | ✅ |
+| **Derived class** | ✅ | ✅ | ❌ |
+| **Outside code** | ✅ | ❌ | ❌ |
+| **Friend function/class** | ✅ | ✅ | ✅ |
+
+**Practical Example:**
+
+```cpp
+class BankAccount {
+private:
+    double balance;        // Only accessible within BankAccount
+    void validateAmount(double amt) { /* ... */ }
+
+protected:
+    std::string accountType;  // Accessible in derived classes
+
+public:
+    void deposit(double amt) {  // Public API
+        if (amt > 0) balance += amt;
+    }
+    double getBalance() const { return balance; }
+};
+
+class SavingsAccount : public BankAccount {
+    void test() {
+        // balance = 100;        // ❌ Error: private in base
+        accountType = "Savings"; // ✅ OK: protected accessible
+        deposit(50);             // ✅ OK: public accessible
+    }
+};
+```
+
+**Critical Characteristics:**
+
+- **Compile-time only:** Access control is checked during compilation, not at runtime
+- **No memory impact:** Access specifiers don't affect object size or memory layout
+- **Per-class, not per-object:** Member functions can access private members of ANY instance of the same class
+- **Not security:** Can be bypassed with unsafe pointer casts (undefined behavior)
+
+---
+
+#### 3. Encapsulation - Why Access Control Matters
+
+**Definition:** Encapsulation is the OOP principle of bundling data and methods together while hiding internal implementation details from external code.
+
+**Benefits of Access Control:**
+
+| Benefit | Description | Example |
+|---------|-------------|---------|
+| **Invariant enforcement** | Prevent invalid state | `balance` can't go negative if only modified through `deposit()/withdraw()` |
+| **Interface stability** | Change internals without breaking users | Can change `balance` storage from `double` to `Cents` class |
+| **Reduced coupling** | Users depend on interface, not implementation | External code doesn't know or care about internal data structures |
+| **Compile-time safety** | Catch misuse at compile time | Attempt to modify `private` member causes compiler error |
+
+**Encapsulation Patterns:**
+
+```cpp
+// ✅ Good encapsulation - private data, public interface
+class GoodDesign {
+private:
+    int value;
+    bool isValid() const { return value >= 0; }
+
+public:
+    void setValue(int v) {
+        if (v < 0) throw std::invalid_argument("Negative value");
+        value = v;
+    }
+    int getValue() const { return value; }
+};
+
+// ❌ Poor encapsulation - public data
+class PoorDesign {
+public:
+    int value;  // Anyone can modify without validation
+};
+```
+
+**Interview Relevance:**
+
+- **Common question:** "What's the difference between struct and class?" → Default access
+- **Design questions:** "How would you design a class to ensure X invariant?" → Use private + validation
+- **Inheritance questions:** How access specifiers interact with inheritance modes
+- **Friend declarations:** When and why to break encapsulation intentionally
 
 ### EDGE_CASES: Tricky Scenarios and Deep Internals
 

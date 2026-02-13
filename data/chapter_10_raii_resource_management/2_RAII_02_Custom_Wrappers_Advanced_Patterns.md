@@ -2,19 +2,620 @@
 
 ### THEORY_SECTION: Building Custom Resource Managers
 
-**Custom RAII wrappers** are user-defined classes that encapsulate resource management logic following RAII principles. While standard library provides smart pointers, lock guards, and file streams, many resources require specialized wrappers: database connections, network sockets, GPU handles, custom allocators, system resources, and third-party library objects. Creating effective custom RAII wrappers requires understanding ownership semantics, copy/move behavior, and the Rule of Five special member functions that govern resource lifecycle.
+#### 1. Custom RAII Wrappers and the Rule of Five - Ownership Semantics and Special Members
 
-The foundation of any RAII wrapper is clear ownership semantics. A wrapper must definitively answer: Can this resource be shared (copy semantics), must it be unique (move-only), or should it be non-transferable (delete both copy and move)? These decisions drive implementation of special member functions. Unique ownership (like file handles or mutexes) requires deleting copy operations and implementing move operations for ownership transfer. Shared ownership (like reference-counted connections) requires deep copy semantics or shared pointer patterns. Non-transferable resources (like scoped locks) delete all copy and move operations, enforcing single-location lifetime.
+Custom RAII wrappers encapsulate resource management for resources not covered by standard library types: database connections, network sockets, GPU handles, third-party library objects, and system resources.
 
-The Rule of Five states that if a class defines any of the five special member functions—destructor, copy constructor, copy assignment, move constructor, or move assignment—it should explicitly consider all five. RAII classes managing resources almost always need custom destructors to release resources, which triggers the Rule of Five. Proper implementation ensures correct behavior during copying, moving, and destruction, preventing double-frees, leaks, and undefined behavior. Modern C++ makes following this rule easier with `= default` and `= delete` syntax for explicitly defaulting or deleting operations.
+**When to Create Custom RAII Wrappers:**
 
-#### Advanced RAII Patterns
+| Resource Type | Standard Option | Need Custom Wrapper? | Reason |
+|---------------|----------------|---------------------|--------|
+| **Dynamic memory** | `unique_ptr`, `shared_ptr` | ❌ NO | Standard smart pointers sufficient |
+| **Files (C++)** | `std::fstream` | ❌ NO | Standard stream classes available |
+| **Files (C API)** | None | ✅ YES | Need to wrap `FILE*` with RAII |
+| **Mutex locks** | `std::lock_guard`, `std::unique_lock` | ❌ NO | Standard guards available |
+| **Database connections** | None | ✅ YES | Library-specific resource |
+| **Network sockets** | None | ✅ YES | OS-specific resource |
+| **GPU buffers** | None | ✅ YES | CUDA/OpenCL-specific |
+| **Third-party resources** | None | ✅ YES | External library handles |
+| **Custom allocators** | None | ✅ YES | Domain-specific memory |
 
-Beyond basic resource wrapping, advanced RAII patterns solve complex ownership scenarios. **Two-phase initialization** separates object construction from resource acquisition, allowing failure handling without exceptions. **Scope guards** generalize RAII by accepting arbitrary cleanup lambdas for one-off resource management. **Transfer of ownership patterns** use move semantics and factories to safely pass resources between functions. **RAII hierarchies** manage composite resources where one wrapper depends on others, requiring careful initialization order and exception safety.
+**Ownership Semantics Decision Tree:**
 
-**Conditional resource ownership** handles scenarios where wrappers sometimes own resources and sometimes just reference them. A file wrapper might own a FILE* it opened but just reference an externally-provided handle. This requires tracking ownership state and conditionally releasing resources in destructors. **Custom deleters** extend RAII to resources with non-standard cleanup functions, allowing unique_ptr-style wrappers for any resource type. **Thread-safe RAII** combines resource management with synchronization, ensuring mutexes protecting resources are properly acquired and released even during exceptions.
+The first question when designing a RAII wrapper: **What ownership semantics does this resource require?**
 
-**Lazy acquisition** defers resource allocation until first use, reducing overhead for resources that might never be accessed. The wrapper provides initialization checking in accessor methods, throwing or returning errors if initialization fails. **Multi-resource transactional RAII** manages multiple related resources as an atomic unit, rolling back all acquisitions if any fail. **Nested RAII scopes** create resource hierarchies where outer scopes guarantee lifetime of inner resources, enabling patterns like connection pools with scoped connections and request-specific scopes in web servers.
+| Ownership Model | Copy Allowed? | Move Allowed? | Example Resources | Implementation |
+|-----------------|---------------|---------------|-------------------|----------------|
+| **Unique Ownership** | ❌ NO | ✅ YES | File handles, sockets, mutexes | Delete copy, implement move |
+| **Shared Ownership** | ✅ YES (deep) | ✅ YES | Reference-counted connections | Implement copy + move or use `shared_ptr` |
+| **Non-Transferable** | ❌ NO | ❌ NO | Scoped locks, RAII timers | Delete copy and move |
+| **View/Reference** | ✅ YES (shallow) | ✅ YES | Non-owning wrappers | Trivially copyable |
+
+**The Rule of Five for RAII Classes:**
+
+If you define **any one** of these five special members, you should explicitly consider **all five**:
+
+| Special Member | Purpose | RAII Consideration |
+|----------------|---------|-------------------|
+| **Destructor** | `~T()` | ✅ **Always needed** to release resource |
+| **Copy Constructor** | `T(const T&)` | Delete for unique, implement for shared |
+| **Copy Assignment** | `T& operator=(const T&)` | Delete for unique, implement for shared |
+| **Move Constructor** | `T(T&&)` | Implement for transferable resources |
+| **Move Assignment** | `T& operator=(T&&)` | Implement for transferable resources |
+
+**Unique Ownership Pattern (Most Common):**
+
+```cpp
+class FileHandle {
+    FILE* file;
+
+public:
+    // Constructor: Acquire resource
+    explicit FileHandle(const char* filename, const char* mode) {
+        file = fopen(filename, mode);
+        if (!file) throw std::runtime_error("Failed to open file");
+    }
+
+    // Destructor: Release resource
+    ~FileHandle() noexcept {
+        if (file) {
+            fclose(file);
+        }
+    }
+
+    // Delete copy operations (unique ownership)
+    FileHandle(const FileHandle&) = delete;
+    FileHandle& operator=(const FileHandle&) = delete;
+
+    // Implement move operations (transfer ownership)
+    FileHandle(FileHandle&& other) noexcept : file(other.file) {
+        other.file = nullptr;  // ✅ Leave other in safe state
+    }
+
+    FileHandle& operator=(FileHandle&& other) noexcept {
+        if (this != &other) {  // ✅ Check for self-assignment
+            if (file) fclose(file);  // Release current resource
+            file = other.file;        // Transfer ownership
+            other.file = nullptr;     // Nullify source
+        }
+        return *this;
+    }
+
+    // Accessor
+    FILE* get() const { return file; }
+};
+```
+
+**Rule of Five Implementation Checklist:**
+
+| Step | Action | Code Pattern |
+|------|--------|--------------|
+| **1. Destructor** | Always mark `noexcept`, release resource | `~T() noexcept { cleanup(); }` |
+| **2. Decide ownership** | Unique, shared, or non-transferable? | See decision tree above |
+| **3. Copy constructor** | Delete for unique, implement for shared | `T(const T&) = delete;` or deep copy |
+| **4. Copy assignment** | Delete for unique, implement for shared | `T& operator=(const T&) = delete;` |
+| **5. Move constructor** | Implement for transferable resources | Transfer + nullify source |
+| **6. Move assignment** | Check self-assignment, then transfer | `if (this != &other) { ... }` |
+
+**Common Implementation Patterns:**
+
+**Pattern 1: Unique Ownership (Move-Only)**
+
+```cpp
+class UniqueResource {
+    Resource* handle;
+public:
+    explicit UniqueResource(/* params */) : handle(acquire()) {}
+    ~UniqueResource() noexcept { if (handle) release(handle); }
+
+    // Delete copy
+    UniqueResource(const UniqueResource&) = delete;
+    UniqueResource& operator=(const UniqueResource&) = delete;
+
+    // Implement move
+    UniqueResource(UniqueResource&& other) noexcept : handle(other.handle) {
+        other.handle = nullptr;
+    }
+
+    UniqueResource& operator=(UniqueResource&& other) noexcept {
+        if (this != &other) {
+            if (handle) release(handle);
+            handle = other.handle;
+            other.handle = nullptr;
+        }
+        return *this;
+    }
+};
+```
+
+**Pattern 2: Shared Ownership (Reference Counting)**
+
+```cpp
+class SharedResource {
+    struct ControlBlock {
+        Resource* handle;
+        size_t refcount;
+    };
+    ControlBlock* ctrl;
+
+public:
+    explicit SharedResource(/* params */)
+        : ctrl(new ControlBlock{acquire(), 1}) {}
+
+    ~SharedResource() noexcept {
+        if (ctrl && --ctrl->refcount == 0) {
+            release(ctrl->handle);
+            delete ctrl;
+        }
+    }
+
+    // Implement copy (increment refcount)
+    SharedResource(const SharedResource& other) : ctrl(other.ctrl) {
+        if (ctrl) ++ctrl->refcount;
+    }
+
+    SharedResource& operator=(const SharedResource& other) {
+        if (this != &other) {
+            if (ctrl && --ctrl->refcount == 0) {
+                release(ctrl->handle);
+                delete ctrl;
+            }
+            ctrl = other.ctrl;
+            if (ctrl) ++ctrl->refcount;
+        }
+        return *this;
+    }
+
+    // Implement move
+    SharedResource(SharedResource&& other) noexcept : ctrl(other.ctrl) {
+        other.ctrl = nullptr;
+    }
+
+    SharedResource& operator=(SharedResource&& other) noexcept {
+        if (this != &other) {
+            if (ctrl && --ctrl->refcount == 0) {
+                release(ctrl->handle);
+                delete ctrl;
+            }
+            ctrl = other.ctrl;
+            other.ctrl = nullptr;
+        }
+        return *this;
+    }
+};
+```
+
+**Pattern 3: Non-Transferable (Delete All)**
+
+```cpp
+class ScopedLock {
+    std::mutex& mtx;
+public:
+    explicit ScopedLock(std::mutex& m) : mtx(m) { mtx.lock(); }
+    ~ScopedLock() noexcept { mtx.unlock(); }
+
+    // Delete copy and move (lock must stay in scope)
+    ScopedLock(const ScopedLock&) = delete;
+    ScopedLock& operator=(const ScopedLock&) = delete;
+    ScopedLock(ScopedLock&&) = delete;
+    ScopedLock& operator=(ScopedLock&&) = delete;
+};
+```
+
+**Self-Assignment Protection:**
+
+| Operation | Need Self-Check? | Consequence if Missing |
+|-----------|-----------------|------------------------|
+| **Copy assignment** | ✅ YES | May delete resource before copying |
+| **Move assignment** | ✅ YES | May nullify resource before using |
+| **Copy constructor** | ❌ NO | Cannot copy from self |
+| **Move constructor** | ❌ NO | Cannot move from self |
+
+```cpp
+// ✅ Correct move assignment with self-check
+UniqueResource& operator=(UniqueResource&& other) noexcept {
+    if (this != &other) {  // ✅ Essential check
+        if (handle) release(handle);
+        handle = other.handle;
+        other.handle = nullptr;
+    }
+    return *this;
+}
+
+// ❌ Without self-check
+UniqueResource& operator=(UniqueResource&& other) noexcept {
+    if (handle) release(handle);  // ❌ Deletes resource
+    handle = other.handle;         // ❌ If other is *this, handle is dangling
+    other.handle = nullptr;        // ❌ Sets our handle to nullptr
+    return *this;
+}
+```
+
+---
+
+#### 2. Advanced RAII Patterns - Scope Guards, Conditional Ownership, and Custom Deleters
+
+Beyond basic wrappers, advanced patterns handle complex resource management scenarios.
+
+**Pattern 1: Scope Guard - Arbitrary Cleanup Logic**
+
+Scope guards execute arbitrary cleanup code on scope exit, generalizing RAII for one-off resource management.
+
+```cpp
+template<typename Func>
+class ScopeGuard {
+    Func cleanup;
+    bool dismissed = false;
+
+public:
+    explicit ScopeGuard(Func f) : cleanup(std::move(f)) {}
+
+    ~ScopeGuard() noexcept {
+        if (!dismissed) {
+            try {
+                cleanup();  // Execute cleanup
+            } catch (...) {
+                // Swallow exceptions (destructor must not throw)
+            }
+        }
+    }
+
+    void dismiss() { dismissed = true; }  // Cancel cleanup
+
+    // Non-transferable
+    ScopeGuard(const ScopeGuard&) = delete;
+    ScopeGuard& operator=(const ScopeGuard&) = delete;
+};
+
+// Usage
+void processWithCleanup() {
+    void* resource = acquireResource();
+    ScopeGuard guard([resource]() {
+        releaseResource(resource);  // ✅ Always called
+    });
+
+    riskyOperation();  // May throw
+
+    // Resource automatically released
+}
+```
+
+**Scope Guard Use Cases:**
+
+| Scenario | Traditional Approach | Scope Guard Approach |
+|----------|---------------------|---------------------|
+| **Temporary file cleanup** | try-catch with manual delete | `ScopeGuard([&]() { remove(tmpfile); });` |
+| **Restore state** | Save, process, restore in finally | `ScopeGuard([old]() { state = old; });` |
+| **Decrement counter** | Manual decrement on all paths | `ScopeGuard([&]() { --counter; });` |
+| **Log exit** | Log at every return | `ScopeGuard([]() { log("exit"); });` |
+| **Multiple cleanups** | Nested try-catch | Multiple guards in order |
+
+**Pattern 2: Conditional Ownership - Sometimes Owns, Sometimes References**
+
+```cpp
+class FileWrapper {
+    FILE* file;
+    bool owns;  // ✅ Track ownership
+
+public:
+    // Constructor: Take ownership
+    explicit FileWrapper(const char* filename, const char* mode)
+        : file(fopen(filename, mode)), owns(true) {
+        if (!file) throw std::runtime_error("Open failed");
+    }
+
+    // Constructor: Non-owning reference
+    explicit FileWrapper(FILE* existingFile)
+        : file(existingFile), owns(false) {
+        if (!file) throw std::invalid_argument("Null file");
+    }
+
+    ~FileWrapper() noexcept {
+        if (owns && file) {  // ✅ Only close if we own it
+            fclose(file);
+        }
+    }
+
+    // Move transfers ownership status
+    FileWrapper(FileWrapper&& other) noexcept
+        : file(other.file), owns(other.owns) {
+        other.file = nullptr;
+        other.owns = false;
+    }
+
+    FileWrapper& operator=(FileWrapper&& other) noexcept {
+        if (this != &other) {
+            if (owns && file) fclose(file);
+            file = other.file;
+            owns = other.owns;
+            other.file = nullptr;
+            other.owns = false;
+        }
+        return *this;
+    }
+
+    // Delete copy
+    FileWrapper(const FileWrapper&) = delete;
+    FileWrapper& operator=(const FileWrapper&) = delete;
+};
+```
+
+**Pattern 3: Custom Deleters with unique_ptr**
+
+For resources with non-standard cleanup, use `unique_ptr` with custom deleters:
+
+```cpp
+// Custom deleter for FILE*
+struct FileDeleter {
+    void operator()(FILE* f) const {
+        if (f) fclose(f);
+    }
+};
+
+using FilePtr = std::unique_ptr<FILE, FileDeleter>;
+
+// Usage
+FilePtr openFile(const char* filename) {
+    FILE* f = fopen(filename, "r");
+    if (!f) throw std::runtime_error("Open failed");
+    return FilePtr(f);  // ✅ Custom deleter handles cleanup
+}
+
+void process() {
+    auto file = openFile("data.txt");
+    // Use file.get()
+}  // ✅ fclose called automatically via FileDeleter
+```
+
+**Custom Deleter Patterns:**
+
+| Resource | Acquisition | Release | Deleter Implementation |
+|----------|-------------|---------|----------------------|
+| **FILE*** | `fopen()` | `fclose()` | `void operator()(FILE* f) { fclose(f); }` |
+| **Socket** | `socket()` | `close()` | `void operator()(int s) { if (s >= 0) close(s); }` |
+| **SDL Surface** | `SDL_CreateSurface()` | `SDL_FreeSurface()` | `void operator()(SDL_Surface* s) { SDL_FreeSurface(s); }` |
+| **OpenGL texture** | `glGenTextures()` | `glDeleteTextures()` | `void operator()(GLuint t) { glDeleteTextures(1, &t); }` |
+| **Database handle** | `db_connect()` | `db_disconnect()` | `void operator()(DB* db) { db_disconnect(db); }` |
+
+**Pattern 4: Two-Phase Initialization - Construction Separate from Acquisition**
+
+For resources where acquisition may fail without throwing:
+
+```cpp
+class DatabaseConnection {
+    DB_Handle* handle = nullptr;
+    bool connected = false;
+
+public:
+    // Phase 1: Construction (doesn't acquire)
+    DatabaseConnection() = default;
+
+    // Phase 2: Explicit initialization (can fail)
+    bool connect(const char* host, int port) {
+        handle = db_connect(host, port);
+        connected = (handle != nullptr);
+        return connected;
+    }
+
+    ~DatabaseConnection() noexcept {
+        if (connected && handle) {
+            db_disconnect(handle);
+        }
+    }
+
+    // Check before use
+    bool isConnected() const { return connected; }
+
+    DB_Handle* get() const {
+        if (!connected) throw std::logic_error("Not connected");
+        return handle;
+    }
+
+    // Delete copy, allow move
+    DatabaseConnection(const DatabaseConnection&) = delete;
+    DatabaseConnection& operator=(const DatabaseConnection&) = delete;
+
+    DatabaseConnection(DatabaseConnection&& other) noexcept
+        : handle(other.handle), connected(other.connected) {
+        other.handle = nullptr;
+        other.connected = false;
+    }
+};
+```
+
+**Two-Phase vs Single-Phase Comparison:**
+
+| Aspect | Single-Phase (Constructor Acquires) | Two-Phase (Explicit Initialize) |
+|--------|-----------------------------------|--------------------------------|
+| **Failure signaling** | Exception only | Return bool or error code |
+| **Invalid state possible** | ❌ NO | ✅ YES (before initialize) |
+| **RAII guarantee** | ✅ Strong | ⚠️ Weak (need to check) |
+| **Use case** | Acquisition always succeeds | Acquisition may fail |
+| **Error handling** | try-catch | Check return value |
+
+---
+
+#### 3. RAII Design Patterns - Transactional Management and Composite Resources
+
+**Pattern 1: Transaction Pattern - Commit or Rollback**
+
+Manage operations that should either fully succeed or fully rollback:
+
+```cpp
+class Transaction {
+    Database& db;
+    bool committed = false;
+
+public:
+    explicit Transaction(Database& database) : db(database) {
+        db.begin();  // Start transaction
+    }
+
+    ~Transaction() noexcept {
+        if (!committed) {
+            try {
+                db.rollback();  // ✅ Auto-rollback if not committed
+            } catch (...) {
+                // Log error, but don't throw from destructor
+            }
+        }
+    }
+
+    void commit() {
+        db.commit();
+        committed = true;  // ✅ Mark as committed
+    }
+
+    // Non-transferable
+    Transaction(const Transaction&) = delete;
+    Transaction& operator=(const Transaction&) = delete;
+    Transaction(Transaction&&) = delete;
+    Transaction& operator=(Transaction&&) = delete;
+};
+
+// Usage
+void updateDatabase(Database& db) {
+    Transaction txn(db);  // ✅ BEGIN TRANSACTION
+
+    db.execute("INSERT INTO ...");
+    db.execute("UPDATE ...");
+
+    if (validationFails()) {
+        return;  // ✅ Auto-rollback
+    }
+
+    txn.commit();  // ✅ COMMIT
+}  // If commit not called, rollback happens
+```
+
+**Pattern 2: Multi-Resource Transactional RAII**
+
+Manage multiple resources atomically - all acquired or all rolled back:
+
+```cpp
+class MultiResourceManager {
+    std::unique_ptr<ResourceA> resA;
+    std::unique_ptr<ResourceB> resB;
+    std::unique_ptr<ResourceC> resC;
+
+public:
+    MultiResourceManager(/* params */) {
+        try {
+            resA = std::make_unique<ResourceA>(/* ... */);
+            // ✅ If next throws, resA cleaned up
+
+            resB = std::make_unique<ResourceB>(/* ... */);
+            // ✅ If next throws, resA and resB cleaned up
+
+            resC = std::make_unique<ResourceC>(/* ... */);
+            // ✅ All resources acquired
+
+        } catch (...) {
+            // ✅ unique_ptr destructors handle cleanup
+            throw;  // Re-throw after cleanup
+        }
+    }
+
+    // Destructor automatically correct - members destroyed in reverse order
+    ~MultiResourceManager() = default;
+};
+```
+
+**Pattern 3: Nested RAII Scopes - Resource Hierarchies**
+
+```cpp
+class ConnectionPool {
+    std::vector<DatabaseConnection> connections;
+
+public:
+    class ScopedConnection {
+        DatabaseConnection& conn;
+        ConnectionPool& pool;
+
+    public:
+        ScopedConnection(ConnectionPool& p)
+            : conn(p.acquire()), pool(p) {}
+
+        ~ScopedConnection() {
+            pool.release(conn);  // ✅ Return to pool
+        }
+
+        DatabaseConnection& get() { return conn; }
+
+        // Non-transferable
+        ScopedConnection(const ScopedConnection&) = delete;
+        ScopedConnection& operator=(const ScopedConnection&) = delete;
+    };
+
+    ScopedConnection getConnection() {
+        return ScopedConnection(*this);
+    }
+
+private:
+    DatabaseConnection& acquire();
+    void release(DatabaseConnection& conn);
+};
+
+// Usage
+void processRequest(ConnectionPool& pool) {
+    auto conn = pool.getConnection();  // ✅ Acquire from pool
+    conn.get().execute("SELECT ...");
+}  // ✅ Auto-return to pool
+```
+
+**Pattern 4: Lazy Initialization RAII**
+
+Defer resource acquisition until first use:
+
+```cpp
+class LazyResource {
+    mutable std::unique_ptr<ExpensiveResource> resource;
+    mutable std::mutex mtx;
+
+public:
+    LazyResource() = default;  // ✅ No acquisition yet
+
+    ExpensiveResource& get() const {
+        std::lock_guard<std::mutex> lock(mtx);
+        if (!resource) {  // ✅ Initialize on first access
+            resource = std::make_unique<ExpensiveResource>();
+        }
+        return *resource;
+    }
+
+    // Destructor automatically releases if initialized
+    ~LazyResource() = default;
+};
+```
+
+**RAII Pattern Selection Matrix:**
+
+| Need | Use This Pattern | Key Benefit |
+|------|-----------------|-------------|
+| **Single resource, unique ownership** | Basic RAII wrapper | Automatic cleanup |
+| **Shared ownership** | `shared_ptr` or custom refcount | Multiple owners |
+| **Arbitrary cleanup** | Scope guard | No custom class needed |
+| **Sometimes owns, sometimes references** | Conditional ownership flag | Flexible usage |
+| **Non-standard cleanup** | `unique_ptr` with custom deleter | Reuse `unique_ptr` logic |
+| **Commit or rollback** | Transaction pattern | All-or-nothing semantics |
+| **Multiple related resources** | Transactional multi-resource | Atomic acquisition |
+| **Resource pooling** | Nested scopes | Automatic return to pool |
+| **Expensive initialization** | Lazy initialization | Defer cost until needed |
+
+**Best Practices Summary:**
+
+| Practice | Rationale |
+|----------|-----------|
+| **Always follow Rule of Five** | Prevent double-free and leaks |
+| **Check self-assignment in move** | Avoid invalidating own resources |
+| **Mark destructors `noexcept`** | Prevent `std::terminate()` |
+| **Use `= delete` for clarity** | Explicit intent vs implicit deletion |
+| **Track ownership state** | Know when to release resources |
+| **Prefer composition over complexity** | Use `unique_ptr` members when possible |
+| **Document ownership semantics** | Make transfer rules clear |
+| **Test move and copy operations** | Verify special members work correctly |
+
+---
 
 ### EDGE_CASES: Advanced Scenarios and Pitfalls
 

@@ -2,29 +2,329 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-#### What are std::async, std::promise, and std::future
+#### 1. The Async Trio - Overview
 
-The std::future, std::promise, and std::async trio provides higher-level abstractions for asynchronous programming in C++11. A future represents a value that will be available at some point in the future, a promise is a write-once channel for setting that value, and async launches tasks that return futures. These primitives enable value propagation across threads without explicit mutex-based synchronization.
+**Three Related Components (C++11):**
 
-std::future acts as a handle to retrieve the result of an asynchronous operation. The future blocks when you call get() until the result is available. A promise is the provider side—one thread sets a value via set_value() which another thread retrieves via the paired future. std::async combines thread creation and future generation, launching a callable and returning a future for its result.
+| Component | Role | Purpose |
+|-----------|------|---------|
+| **std::future** | Receiver/Consumer | Handle to retrieve async result (blocks on get()) |
+| **std::promise** | Sender/Producer | Write-once channel to set value or exception |
+| **std::async** | Task Launcher | Combines thread creation + future generation |
 
-#### Asynchronous Task Execution Model
+**Basic Relationship:**
 
-std::async provides policy-based task execution with two launch policies: async (always creates a new thread) and deferred (lazy evaluation on get/wait). The default policy allows the implementation to choose, potentially using thread pools for efficiency. This flexibility enables the standard library to optimize thread creation overhead, though it requires careful handling when deterministic threading is needed.
+```cpp
+// std::async (easiest):
+std::future<int> fut = std::async([]{ return 42; });
+int result = fut.get();  // Blocks until ready
 
-Unlike raw std::thread which requires explicit join or detach, futures automatically manage thread lifetimes through RAII. The future destructor blocks if the shared state was created by async with launch::async policy, ensuring the task completes before the future is destroyed. This prevents detached thread issues while maintaining safety.
+// std::promise + std::future (manual control):
+std::promise<int> prom;
+std::future<int> fut = prom.get_future();
 
-#### Promise-Future Communication Channel
+std::thread t([prom = std::move(prom)]() mutable {
+    prom.set_value(42);  // Send value to future
+});
 
-A promise-future pair forms a one-time communication channel. The promise acts as the sender, calling set_value() or set_exception() exactly once. The future acts as the receiver, calling get() to retrieve the value, blocking if necessary. After get() is called, the future is invalidated—calling get() again throws std::future_error. This single-use semantic prevents accidental reuse but requires std::shared_future for multiple consumers.
+int result = fut.get();  // Receive value
+t.join();
+```
 
-The shared state between promise and future is internally synchronized, eliminating the need for explicit mutexes. When set_value() is called, the value is made available atomically. If get() was already called and blocked, the thread is woken up. This makes promise-future ideal for one-shot signaling patterns like initialization completion or result delivery in task graphs.
+**Key Benefits:**
 
-#### Why Async Abstractions Matter in System Design
+- ✅ Value propagation across threads without explicit mutexes
+- ✅ Automatic exception propagation
+- ✅ RAII-based thread lifetime management (for async)
+- ✅ Type-safe result delivery
 
-In autonomous vehicle software architecture, perception modules process sensor data asynchronously and deliver results to the planning layer. Using raw threads requires complex synchronization and lifetime management. Async and promises simplify this: perception modules return futures, the planning layer calls get() when ready, and exceptions automatically propagate through the future without manual error handling. This clean separation of concerns is critical in safety-critical real-time systems.
+---
 
-Thread pools for parallel perception tasks (lane detection, object tracking, depth estimation) can leverage async with deferred policy or custom executors. The future abstraction allows composing asynchronous operations without exposing threading details to higher-level logic, improving testability and maintainability in complex autonomous driving stacks with hundreds of concurrent tasks.
+#### 2. std::async - Launch Policies
+
+**Policy Comparison:**
+
+| Policy | Thread Creation | Execution Timing | Use Case |
+|--------|----------------|------------------|----------|
+| **launch::async** | ✅ Guaranteed new thread | Immediate, parallel | True parallelism needed |
+| **launch::deferred** | ❌ No thread | Lazy (runs on get/wait) | Optional computation |
+| **Default (async\|deferred)** | ⚠️ Implementation choice | Unpredictable | ❌ Avoid - portability hazard |
+
+**Critical: Default Policy is Dangerous**
+
+```cpp
+// ❌ AVOID: Default policy
+auto fut = std::async(task);  // May run synchronously!
+
+// ✅ EXPLICIT: Always specify
+auto fut1 = std::async(std::launch::async, task);     // Guaranteed parallel
+auto fut2 = std::async(std::launch::deferred, task);  // Guaranteed lazy
+```
+
+**Lifetime Management:**
+
+| Primitive | join/detach Required? | Lifetime Management |
+|-----------|----------------------|---------------------|
+| **std::thread** | ✅ Must call join() or detach() | Manual |
+| **std::async** | ❌ Automatic via future destructor | RAII (but blocks!) |
+
+**Future Destructor Blocking:**
+
+```cpp
+{
+    auto fut = std::async(std::launch::async, []{
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        return 42;
+    });
+    // ❌ fut destructor BLOCKS HERE for 5 seconds!
+}
+// Execution continues only after task completes
+```
+
+---
+
+#### 3. Promise-Future Communication Channel
+
+**Single-Use Semantics:**
+
+| Operation | Effect | Can Call Again? |
+|-----------|--------|-----------------|
+| **promise.set_value()** | Set result, unblock future | ❌ Throws promise_already_satisfied |
+| **promise.set_exception()** | Set exception for future | ❌ Throws promise_already_satisfied |
+| **future.get()** | Retrieve value, invalidate future | ❌ Throws future_error: no_state |
+| **future.wait()** | Block until ready (no value retrieval) | ✅ Can call multiple times |
+
+**Internal Synchronization:**
+
+```cpp
+// No manual mutex needed!
+std::promise<int> prom;
+std::future<int> fut = prom.get_future();
+
+// Thread 1 (producer):
+data = 42;
+prom.set_value(100);  // Automatically synchronizes
+
+// Thread 2 (consumer):
+int val = fut.get();  // Sees data = 42 (happens-before relationship)
+```
+
+**Happens-Before Guarantee:**
+
+| Event | Synchronization |
+|-------|----------------|
+| promise.set_value() | **synchronizes-with** → future.get() |
+| All operations before set_value() | **visible** to operations after get() |
+
+---
+
+#### 4. std::future vs std::shared_future
+
+**Single vs Multiple Consumers:**
+
+| Feature | std::future | std::shared_future |
+|---------|-------------|-------------------|
+| **Copyable** | ❌ Move-only | ✅ Copyable |
+| **get() calls** | Single-use (invalidates) | Multiple non-destructive reads |
+| **Use Case** | Single consumer | Broadcast to multiple consumers |
+| **Conversion** | `fut.share()` | Construct from future |
+
+**Example: Broadcasting Results**
+
+```cpp
+std::promise<int> prom;
+std::shared_future<int> shared_fut = prom.get_future().share();
+
+// Multiple threads can all read:
+auto reader = [shared_fut]() {
+    int val = shared_fut.get();  // ✅ Non-destructive
+    process(val);
+};
+
+std::thread t1(reader);
+std::thread t2(reader);
+std::thread t3(reader);
+
+prom.set_value(42);  // All threads unblock
+
+t1.join(); t2.join(); t3.join();
+```
+
+---
+
+#### 5. std::packaged_task - Thread Pool Building Block
+
+**Purpose:**
+
+Separates task creation from execution, enabling thread pool implementations.
+
+**Workflow:**
+
+| Step | Action | Component |
+|------|--------|-----------|
+| **1** | Wrap callable | `packaged_task<RetType()> task(callable)` |
+| **2** | Get future | `auto fut = task.get_future()` |
+| **3** | Enqueue task | Add to thread pool queue |
+| **4** | Worker executes | Worker calls `task()` |
+| **5** | Retrieve result | Caller does `fut.get()` |
+
+**Example:**
+
+```cpp
+// Create task:
+std::packaged_task<int(int)> task([](int x) { return x * 2; });
+std::future<int> fut = task.get_future();
+
+// Execute later (possibly in another thread):
+std::thread t(std::move(task), 21);
+
+// Retrieve result:
+int result = fut.get();  // 42
+t.join();
+```
+
+---
+
+#### 6. Timeouts and Waiting
+
+**Non-Blocking Wait Operations:**
+
+| Operation | Return Type | Behavior |
+|-----------|-------------|----------|
+| **wait_for(duration)** | future_status | Wait up to duration |
+| **wait_until(timepoint)** | future_status | Wait until absolute time |
+
+**future_status Values:**
+
+| Status | Meaning |
+|--------|---------|
+| **ready** | Result available |
+| **timeout** | Not ready yet (time expired) |
+| **deferred** | Deferred task not executed yet |
+
+**Example: Real-Time Deadline**
+
+```cpp
+auto fut = std::async(std::launch::async, sensor_processing);
+
+if (fut.wait_for(std::chrono::milliseconds(100)) == std::future_status::ready) {
+    auto result = fut.get();
+    use_result(result);
+} else {
+    // Timeout: use fallback data
+    use_previous_frame();
+}
+```
+
+---
+
+#### 7. Exception Propagation
+
+**Automatic Cross-Thread Exception Transfer:**
+
+```cpp
+// Producer throws:
+auto fut = std::async(std::launch::async, [] {
+    throw std::runtime_error("Sensor failure!");
+    return 42;
+});
+
+// Exception stored (NOT thrown yet)
+std::this_thread::sleep_for(std::chrono::seconds(1));
+
+// Consumer retrieves:
+try {
+    int val = fut.get();  // ⚡ Exception rethrown HERE
+} catch (const std::runtime_error& e) {
+    handle_sensor_failure(e);
+}
+```
+
+**Manual Exception Setting:**
+
+```cpp
+std::promise<int> prom;
+std::future<int> fut = prom.get_future();
+
+try {
+    int result = risky_operation();
+    prom.set_value(result);
+} catch (...) {
+    prom.set_exception(std::current_exception());  // Forward exception
+}
+```
+
+---
+
+#### 8. Real-World: Autonomous Driving
+
+**Sensor Processing Pipeline:**
+
+| Component | Implementation | Benefit |
+|-----------|---------------|---------|
+| **Camera Capture** | `std::async(process_frame)` returns `future<DetectionResult>` | Parallel frame processing |
+| **LiDAR Processing** | Thread pool with `packaged_task` | Efficient worker utilization |
+| **Calibration Init** | `promise` set by callback thread | Clean async initialization |
+| **Planning Coordination** | `shared_future` for map updates | Broadcast to multiple modules |
+| **Real-Time Deadlines** | `wait_for()` with 100ms timeout | Bounded latency guarantees |
+
+**Example: Multi-Sensor Fusion**
+
+```cpp
+// Launch parallel sensor processing:
+auto camera_fut = std::async(std::launch::async, process_camera);
+auto lidar_fut = std::async(std::launch::async, process_lidar);
+auto radar_fut = std::async(std::launch::async, process_radar);
+
+// Collect results with timeout:
+auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
+
+CameraData cam_data;
+if (camera_fut.wait_until(deadline) == std::future_status::ready) {
+    cam_data = camera_fut.get();
+} else {
+    cam_data = use_previous_camera_frame();
+}
+
+// Similar for lidar and radar...
+fuse_sensor_data(cam_data, lidar_data, radar_data);
+```
+
+**Why This Matters:**
+
+| Metric | Raw Threads | std::async + futures |
+|--------|-------------|----------------------|
+| **Code Complexity** | High (manual sync) | Low (automatic sync) |
+| **Exception Handling** | Manual error codes | Automatic propagation |
+| **Lifetime Management** | Manual join/detach | RAII via future |
+| **Result Retrieval** | Shared variables + mutex | Type-safe get() |
+| **Testability** | Hard (threading exposed) | Easy (returns future) |
+
+---
+
+#### 9. Common Pitfalls
+
+**Pitfall Table:**
+
+| Mistake | Problem | Fix |
+|---------|---------|-----|
+| Default launch policy | May run synchronously! | Always specify `launch::async` or `launch::deferred` |
+| Multiple get() calls | Throws `future_error: no_state` | Use `shared_future` for multiple consumers |
+| Ignoring future destructor | Unexpected blocking | Explicitly `get()` or `wait()` before scope exit |
+| Promise not set | Broken promise exception or hang | Use RAII wrapper to set default value |
+| Forgetting exceptions | Silent failures | Always `get()` to detect errors |
+| Calling get() on packaged_task without executing | Hangs forever | Execute task before calling `get()` |
+
+**Best Practices:**
+
+- ✅ Always specify explicit launch policy (`launch::async` or `launch::deferred`)
+- ✅ Store futures from `std::async` to control lifetime
+- ✅ Use `shared_future` for multiple consumers
+- ✅ Always call `get()` to detect exceptions
+- ✅ Use timeouts (`wait_for`) in real-time systems
+- ✅ Prefer `std::async` for simple tasks, `packaged_task` for thread pools
+- ❌ Never rely on default launch policy
+- ❌ Never call `get()` twice on same future
 
 ---
 

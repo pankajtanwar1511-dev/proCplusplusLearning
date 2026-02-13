@@ -4,21 +4,465 @@
 
 ### THEORY_SECTION: Core Concepts and Architecture
 
-#### What is std::deque?
+#### 1. Internal Structure - Deque's Chunked Architecture vs Forward_List's Singly-Linked Nodes
 
-**std::deque** (double-ended queue, pronounced "deck") is a sequence container that allows fast insertion and deletion at both ends while maintaining random access capability. Internally, deque is typically implemented as a dynamic array of fixed-size arrays (chunks or blocks), creating a segmented structure. Unlike vector's single contiguous block, deque consists of multiple memory chunks managed through a map (a central array of pointers to these chunks). This design enables O(1) insertions at both front and back without the reallocation penalty that vector incurs for front insertions.
+These two containers represent different design philosophies: **std::deque** provides random access with double-ended efficiency through a chunked array structure, while **std::forward_list** minimizes memory overhead through singly-linked nodes at the cost of bidirectional capabilities.
 
-The deque's chunk-based architecture provides a middle ground between vector and list. Each chunk is contiguous, offering good cache locality within a chunk, but chunks themselves may be scattered in memory. The map of chunk pointers grows as needed, and deque can allocate new chunks at either end. Random access is achieved by calculating which chunk contains the desired index and the offset within that chunk, making it slightly slower than vector but still O(1). This structure makes deque ideal for queue implementations, sliding window algorithms, and scenarios requiring efficient operations at both ends.
+**Deque Internal Architecture - The Chunked Array Model:**
 
-#### What is std::forward_list?
+```cpp
+// Conceptual deque structure (simplified)
+template<typename T>
+class deque {
+    T** map_;           // Central array of chunk pointers
+    size_t map_size_;   // Number of chunk slots in map
+    T** start_chunk_;   // Pointer to first chunk
+    T** end_chunk_;     // Pointer to last chunk
+    size_t start_offset_;  // Offset of first element in first chunk
+    size_t end_offset_;    // Offset past last element in last chunk
 
-**std::forward_list** is a singly-linked list introduced in C++11, designed as a minimal-overhead alternative to std::list. Each node contains only the element value and a single next pointer, eliminating the prev pointer that doubly-linked list requires. This reduces memory overhead by 50% (8 bytes per element on 64-bit systems instead of 16) and simplifies node structure. However, the trade-off is that forward_list can only traverse in one direction and lacks several conveniences present in list, such as size() member function, bidirectional iteration, and efficient back() operations.
+    static constexpr size_t CHUNK_SIZE = 512; // Typical implementation
+};
+```
 
-Forward_list is optimized for scenarios where memory efficiency and forward-only traversal suffice. It's particularly useful in embedded systems or memory-constrained environments where every byte counts. The container provides insert_after and erase_after operations because, without backward pointers, you need a reference to the node before the insertion/deletion point. The before_begin() iterator provides access to a pseudo-position before the first element, enabling front operations to follow the same after-based pattern. Despite these limitations, forward_list offers the same O(1) insertion/deletion benefits as list while using significantly less memory.
+**Deque Memory Layout Visualization:**
 
-#### Why These Containers Matter
+```
+Central Map (Array of Chunk Pointers):
+┌───────┬───────┬───────┬───────┬───────┐
+│ ptr0  │ ptr1  │ ptr2  │ ptr3  │ ptr4  │
+└───┬───┴───┬───┴───┬───┴───┬───┴───┬───┘
+    │       │       │       │       │
+    ↓       ↓       ↓       ↓       ↓
+Chunk 0  Chunk 1  Chunk 2  Chunk 3  Chunk 4
+┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐
+│  10  │ │  11  │ │  12  │ │  13  │ │  14  │
+│  20  │ │  21  │ │  22  │ │  23  │ │  24  │
+│  ... │ │  ... │ │  ... │ │  ... │ │  ... │
+└──────┘ └──────┘ └──────┘ └──────┘ └──────┘
+  512B     512B     512B     512B     512B
 
-Understanding deque and forward_list expands your container toolkit beyond the common vector-list dichotomy. Deque bridges the gap when you need both efficient end operations and random access—perfect for implementing queues, buffers, or maintaining sliding windows. Forward_list addresses the specific niche where list's memory overhead is prohibitive but you don't need bidirectional traversal. Modern C++ emphasizes choosing the right container for the job: vector for general use, list for mid-container modifications with stable iterators, deque for double-ended operations with random access, and forward_list for memory-critical forward-only scenarios. Each container's design reflects specific trade-offs, and understanding these trade-offs is crucial for writing efficient, maintainable code.
+start_offset_ = index of first element within Chunk 0
+end_offset_ = index past last element within Chunk 4
+```
+
+**Deque vs Vector vs List - Architecture Comparison:**
+
+| Aspect | std::deque | std::vector | std::list |
+|--------|-----------|-------------|-----------|
+| **Storage Model** | Dynamic array of fixed chunks | Single contiguous block | Doubly-linked nodes |
+| **Chunk Size** | Typically 512B-4KB per chunk | N/A (single block) | N/A (individual nodes) |
+| **Central Structure** | Map (array of chunk pointers) | Three pointers (begin, end, cap) | Head/tail pointers |
+| **Memory Contiguity** | ❌ Chunks are separate | ✅ Fully contiguous | ❌ Scattered nodes |
+| **Reallocation** | ❌ Only map (rare) | ✅ Entire array when full | ❌ Never |
+| **Random Access** | ✅ O(1) via chunk calculation | ✅ O(1) via pointer arithmetic | ❌ O(n) traversal |
+| **Front Insertion** | ✅ O(1) allocate chunk | ❌ O(n) shift all | ✅ O(1) |
+| **Back Insertion** | ✅ O(1) allocate chunk | ✅ O(1) amortized | ✅ O(1) |
+
+**Code Example - Deque Random Access Calculation:**
+
+```cpp
+// How deque achieves O(1) random access despite chunked storage:
+template<typename T>
+T& deque::operator[](size_t index) {
+    // Calculate global index from start
+    size_t global_index = start_offset_ + index;
+
+    // Determine which chunk
+    size_t chunk_number = global_index / CHUNK_SIZE;
+
+    // Determine offset within chunk
+    size_t chunk_offset = global_index % CHUNK_SIZE;
+
+    // Access element
+    return map_[chunk_number][chunk_offset];
+    // ✅ Still O(1): just arithmetic, no traversal!
+}
+```
+
+**Forward_List Internal Structure - Minimal Singly-Linked Nodes:**
+
+```cpp
+// Conceptual forward_list node (simplified)
+template<typename T>
+struct ForwardListNode {
+    T value;                    // Element data
+    ForwardListNode* next;      // Only ONE pointer (8 bytes on 64-bit)
+    // NO prev pointer - saves 8 bytes per element!
+};
+
+// Forward_list container
+template<typename T>
+class forward_list {
+    ForwardListNode<T>* head_;  // Pointer to first node
+    // NO tail pointer
+    // NO size member (to save overhead in splice_after)
+};
+```
+
+**Memory Layout - Forward_List vs List:**
+
+```
+std::forward_list<int> (Singly-Linked):
+Node 1            Node 2            Node 3
+┌──────────┐      ┌──────────┐      ┌──────────┐
+│ value: 1 │      │ value: 2 │      │ value: 3 │
+│ next:  ──┼─────→│ next:  ──┼─────→│ next:null│
+└──────────┘      └──────────┘      └──────────┘
+ 12 bytes          12 bytes          12 bytes
+(4B int + 8B ptr) (4B int + 8B ptr) (4B int + 8B ptr)
+
+std::list<int> (Doubly-Linked):
+Node 1                Node 2                Node 3
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│ prev: null   │ ┌───→│ prev: Node1  │ ┌───→│ prev: Node2  │
+│ value: 1     │ │    │ value: 2     │ │    │ value: 3     │
+│ next:  ──────┼─┘    │ next:  ──────┼─┘    │ next: null   │
+└──────────────┘      └──────────────┘      └──────────────┘
+ 20 bytes              20 bytes              20 bytes
+(4B + 16B pointers)   (4B + 16B pointers)   (4B + 16B pointers)
+
+Memory savings: 40% less overhead (12B vs 20B per node)
+```
+
+**Container Overhead Comparison:**
+
+| Container | Per-Element Overhead | Container Object Size | Total for 1000 ints (64-bit) |
+|-----------|---------------------|----------------------|------------------------------|
+| **std::vector** | 0 bytes | 24 bytes (3 pointers) | ~4-8KB (depends on capacity) |
+| **std::deque** | ~0.1-1 byte (chunk boundaries) | 24-48 bytes (map + offsets) | ~5-7KB |
+| **std::list** | 16 bytes (2 pointers) | 24 bytes (head, tail, size) | ~20KB |
+| **std::forward_list** | 8 bytes (1 pointer) | 8-16 bytes (head only) | ~12KB |
+
+**Key Architectural Differences:**
+
+| Feature | Deque | Forward_List |
+|---------|-------|-------------|
+| **Design Goal** | Double-ended + random access | Minimal memory overhead |
+| **Traversal** | ✅ Bidirectional + random | ✅ Forward only |
+| **Memory Pattern** | Chunked (intra-chunk locality) | Scattered (one node at a time) |
+| **Pointer Overhead** | None (elements in chunks) | 8 bytes per element |
+| **Allocation Granularity** | 512B-4KB chunks | Per-element (8-12 bytes per alloc) |
+| **Contiguous Storage** | ❌ No (chunks separate) | ❌ No (scattered nodes) |
+| **C API Compatibility** | ❌ No `.data()` method | ❌ No contiguous storage |
+
+---
+
+#### 2. Operations and Complexity - Double-Ended Efficiency vs Forward-Only Minimalism
+
+Understanding the operational characteristics and complexity of deque and forward_list reveals their optimal use cases and limitations.
+
+**Deque Operations - Double-Ended with Random Access:**
+
+| Operation | Complexity | Implementation | Notes |
+|-----------|------------|----------------|-------|
+| **push_front()** | ✅ O(1) amortized | Decrement start_offset or allocate new front chunk | Vector is O(n) |
+| **push_back()** | ✅ O(1) amortized | Increment end_offset or allocate new back chunk | Same as vector |
+| **pop_front()** | ✅ O(1) | Increment start_offset, maybe deallocate chunk | Vector is O(n) |
+| **pop_back()** | ✅ O(1) | Decrement end_offset, maybe deallocate chunk | Same as vector |
+| **operator[i]** | ✅ O(1) | Chunk calculation: `map[i/SIZE][i%SIZE]` | Slightly slower than vector |
+| **at(i)** | ✅ O(1) | Same as `[]` but with bounds checking | Throws `out_of_range` |
+| **insert(pos)** | ❌ O(n) | Shift elements (in chunks) | Better if closer to end |
+| **erase(pos)** | ❌ O(n) | Shift elements (in chunks) | Better if closer to end |
+| **size()** | ✅ O(1) | Cached value | Always O(1) |
+
+**Forward_List Operations - Singly-Linked Constraints:**
+
+| Operation | Complexity | Implementation | Notes |
+|-----------|------------|----------------|-------|
+| **push_front()** | ✅ O(1) | Create node, set next to head, update head | ✅ Available |
+| **push_back()** | ❌ N/A | ❌ Not provided (would be O(n) without tail) | Use list instead |
+| **pop_front()** | ✅ O(1) | Update head to head->next, delete old head | ✅ Available |
+| **pop_back()** | ❌ N/A | ❌ Not provided (would be O(n)) | Use list instead |
+| **insert_after(pos)** | ✅ O(1) | Create node, update pointers | Note: AFTER not BEFORE |
+| **erase_after(pos)** | ✅ O(1) | Update pos->next, delete node | Note: AFTER not BEFORE |
+| **remove(val)** | O(n) | Traverse and remove matches | Member function |
+| **remove_if(pred)** | O(n) | Traverse and remove by predicate | Member function |
+| **sort()** | O(n log n) | Merge sort | Member function required |
+| **reverse()** | O(n) | Rewire next pointers | Swaps pointers, not data |
+| **unique()** | O(n) | Remove consecutive duplicates | Requires sorted list |
+| **splice_after(pos, src)** | ✅ O(1) or O(n) | Rewire pointers | O(1) single/whole, O(n) range |
+| **size()** | ❌ N/A | ❌ Not provided (use `std::distance`) | Deliberate omission |
+
+**Code Example - Deque Double-Ended Operations:**
+
+```cpp
+#include <deque>
+#include <iostream>
+
+int main() {
+    std::deque<int> dq;
+
+    // ✅ Efficient at BOTH ends
+    dq.push_back(1);    // Add to back:  [1]
+    dq.push_front(0);   // Add to front: [0, 1]
+    dq.push_back(2);    // Add to back:  [0, 1, 2]
+    dq.push_front(-1);  // Add to front: [-1, 0, 1, 2]
+
+    std::cout << "Front: " << dq.front() << "\n";  // -1
+    std::cout << "Back: " << dq.back() << "\n";    // 2
+
+    dq.pop_front();  // Remove from front: [0, 1, 2]
+    dq.pop_back();   // Remove from back:  [0, 1]
+
+    // ✅ Random access
+    std::cout << "dq[0] = " << dq[0] << "\n";  // 0 (O(1) access)
+    std::cout << "dq[1] = " << dq[1] << "\n";  // 1 (O(1) access)
+
+    // ✅ Compatible with std::sort (has random access iterators)
+    dq = {5, 2, 8, 1, 9};
+    std::sort(dq.begin(), dq.end());  // ✅ Works!
+}
+```
+
+**Code Example - Forward_List After-Based Operations:**
+
+```cpp
+#include <forward_list>
+#include <iostream>
+
+int main() {
+    std::forward_list<int> fl = {1, 2, 3, 4, 5};
+
+    // ✅ Insert at front
+    fl.push_front(0);  // fl: {0, 1, 2, 3, 4, 5}
+
+    // ✅ Insert AFTER first element using insert_after
+    auto it = fl.begin();  // Points to 0
+    fl.insert_after(it, 99);  // Insert AFTER 0: {0, 99, 1, 2, 3, 4, 5}
+
+    // ✅ Insert at front using before_begin()
+    fl.insert_after(fl.before_begin(), -1);  // {-1, 0, 99, 1, 2, 3, 4, 5}
+
+    // ✅ Erase AFTER first element
+    fl.erase_after(fl.begin());  // Erases element AFTER -1 (which is 0)
+    // fl: {-1, 99, 1, 2, 3, 4, 5}
+
+    // ❌ NO random access
+    // fl[2];  // ❌ Compile error - no operator[]
+
+    // ❌ NO size() function
+    // fl.size();  // ❌ Compile error
+    size_t size = std::distance(fl.begin(), fl.end());  // ✅ O(n)
+
+    // ❌ NO push_back or pop_back
+    // fl.push_back(10);  // ❌ Compile error
+}
+```
+
+**Iterator Invalidation Rules Comparison:**
+
+| Operation | Deque Invalidation | Forward_List Invalidation | List Invalidation |
+|-----------|-------------------|---------------------------|-------------------|
+| **push_front/back** | ✅ Usually none (unless map realloc) | ❌ None | ❌ None |
+| **insert middle** | ✅ All iterators | ❌ None | ❌ None |
+| **erase** | ✅ All iterators | ✅ Only erased element | ✅ Only erased element |
+| **clear()** | ✅ All | ✅ All | ✅ All |
+
+**The before_begin() Pattern:**
+
+```cpp
+// Why forward_list needs before_begin():
+std::forward_list<int> fl = {1, 2, 3};
+
+// ❌ Cannot insert BEFORE begin() directly
+// fl.insert(fl.begin(), 0);  // No such overload
+
+// ✅ Use insert_after with before_begin()
+fl.insert_after(fl.before_begin(), 0);  // fl: {0, 1, 2, 3}
+//                ↑
+//         Sentinel iterator representing position BEFORE first element
+
+// ✅ Erase first element using before_begin()
+fl.erase_after(fl.before_begin());  // Erases element AFTER before_begin (the first element)
+```
+
+**Splice_After - Forward_List's O(1) Transfer:**
+
+```cpp
+std::forward_list<int> source = {1, 2, 3, 4, 5};
+std::forward_list<int> dest = {10, 20, 30};
+
+auto pos = dest.begin();  // Points to 10
+
+// ✅ Splice entire list AFTER position
+dest.splice_after(pos, source);
+// dest: {10, 1, 2, 3, 4, 5, 20, 30}
+// source: {} (empty)
+
+// ✅ No allocations, no copying - just pointer rewiring!
+```
+
+---
+
+#### 3. When to Use Each Container - Performance and Design Trade-offs
+
+Choosing between deque and forward_list (or other containers) depends on specific requirements for access patterns, memory constraints, and operational needs.
+
+**Deque Use Cases and Performance:**
+
+| Scenario | Deque Performance | Comparison to Alternatives |
+|----------|-------------------|---------------------------|
+| **Queue Implementation (FIFO)** | ✅ Ideal | Vector: O(n) pop_front; List: works but slower random access |
+| **Double-Ended Buffer** | ✅ Ideal | Vector: O(n) front ops; List: no random access |
+| **Sliding Window Algorithms** | ✅ Ideal | Can remove from front/back efficiently |
+| **Stack (LIFO)** | ✅ Works well | Vector also good; deque is std::stack default |
+| **Sequential Iteration** | ⚠️ Good (chunk boundaries) | Vector: better (contiguous); List: worse (scattered) |
+| **Random Access** | ✅ Good (O(1) but slower than vector) | Vector: best; List: impossible |
+| **C API Interoperability** | ❌ No | Need contiguous - use vector |
+| **Memory-Constrained** | ⚠️ Moderate overhead | Vector: lower; Forward_list: lowest |
+
+**Code Example - Deque for Queue:**
+
+```cpp
+#include <deque>
+
+template<typename T>
+class Queue {
+    std::deque<T> data_;
+public:
+    void enqueue(T value) {
+        data_.push_back(value);  // ✅ O(1)
+    }
+
+    T dequeue() {
+        T value = data_.front();
+        data_.pop_front();  // ✅ O(1) (vector would be O(n))
+        return value;
+    }
+
+    bool empty() const { return data_.empty(); }
+    size_t size() const { return data_.size(); }
+};
+```
+
+**Forward_List Use Cases and Performance:**
+
+| Scenario | Forward_List Performance | Comparison to Alternatives |
+|----------|--------------------------|---------------------------|
+| **Memory-Critical Applications** | ✅ Ideal (50% less than list) | List: 2x memory; Deque: no splice |
+| **Forward-Only Traversal** | ✅ Ideal | List: overkill; Vector: reallocation issues |
+| **Frequent Front Insert/Erase** | ✅ Ideal (O(1)) | Vector: O(n); Deque: O(1) but more overhead |
+| **Splice Operations** | ✅ Ideal (O(1) transfer) | Deque: no splice; Vector: must copy |
+| **Stack Implementation** | ✅ Works | Deque/Vector: better cache, have size() |
+| **Bidirectional Iteration** | ❌ Impossible | Use list or deque |
+| **Random Access** | ❌ Impossible (O(n)) | Use deque or vector |
+| **Frequent Size Queries** | ❌ O(n) | Use list, deque, or vector (O(1) size) |
+
+**Memory Efficiency - Forward_List's Main Advantage:**
+
+```cpp
+// Scenario: 1 million small integers
+std::vector<int> vec(1000000);          // ~4MB data + overhead
+std::deque<int> dq(1000000);            // ~5-7MB (chunked + map)
+std::list<int> lst(1000000);            // ~20MB (16B overhead per element)
+std::forward_list<int> fl(1000000);     // ~12MB (8B overhead per element)
+
+// ✅ Forward_list: 40% memory savings vs list
+// ✅ Forward_list: Still 3x more than vector (pointer overhead)
+// ✅ Use forward_list when list features needed but memory is critical
+```
+
+**Decision Matrix - Which Container to Choose:**
+
+| Requirement | Deque | Forward_List | Vector | List |
+|-------------|-------|--------------|--------|------|
+| **Front insertion O(1)** | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
+| **Back insertion O(1)** | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
+| **Random access O(1)** | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
+| **Bidirectional iteration** | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
+| **Iterator stability** | ⚠️ Complex | ✅ Excellent | ❌ Poor | ✅ Excellent |
+| **Splice operations** | ❌ No | ✅ Yes | ❌ No | ✅ Yes |
+| **Memory efficiency** | ⚠️ Moderate | ✅ Good | ✅ Excellent | ❌ Poor |
+| **Cache performance** | ⚠️ Good | ❌ Poor | ✅ Excellent | ❌ Poor |
+| **C API compatible** | ❌ No | ❌ No | ✅ Yes | ❌ No |
+| **size() O(1)** | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
+
+**Real-World Performance Benchmark:**
+
+```cpp
+// Task: Process queue of 100,000 tasks (enqueue at back, dequeue from front)
+
+// ✅ Deque: Ideal for this pattern
+std::deque<int> dq;
+for (int i = 0; i < 100000; ++i) {
+    dq.push_back(i);   // O(1)
+}
+while (!dq.empty()) {
+    process(dq.front());
+    dq.pop_front();    // O(1)
+}
+// Time: ~5ms (efficient chunk management)
+
+// ❌ Vector: Poor for this pattern
+std::vector<int> vec;
+for (int i = 0; i < 100000; ++i) {
+    vec.push_back(i);  // O(1)
+}
+while (!vec.empty()) {
+    process(vec.front());
+    vec.erase(vec.begin());  // ❌ O(n) - shifts all elements!
+}
+// Time: ~2500ms (quadratic behavior)
+
+// ✅ List: Works but slower
+std::list<int> lst;
+for (int i = 0; i < 100000; ++i) {
+    lst.push_back(i);  // O(1)
+}
+while (!lst.empty()) {
+    process(lst.front());
+    lst.pop_front();   // O(1)
+}
+// Time: ~15ms (scattered memory, cache misses)
+
+// Result: Deque is 3x faster than list, 500x faster than vector for this use case!
+```
+
+**Summary - Container Selection Decision Tree:**
+
+```
+Need dynamic sequential container?
+├─ YES → Continue
+└─ NO → Consider std::array (fixed size)
+
+Need double-ended O(1) operations?
+├─ YES → Continue
+│   ├─ Also need random access? → Use std::deque
+│   └─ No random access needed? → Continue
+│       ├─ Need bidirectional iteration? → Use std::list
+│       └─ Forward-only sufficient? → Use std::forward_list
+└─ NO → Continue
+
+Need only front operations (stack/LIFO)?
+├─ YES → Continue
+│   ├─ Need size()? → Use std::deque or std::vector
+│   └─ Memory-critical? → Use std::forward_list
+└─ NO → Continue
+
+Need random access O(1)?
+├─ YES → Continue
+│   ├─ Need front insert/erase O(1)? → Use std::deque
+│   └─ Only back operations? → Use std::vector (best cache)
+└─ NO → Continue
+
+Need iterator stability + splice?
+├─ YES → Continue
+│   ├─ Need bidirectional + size()? → Use std::list
+│   └─ Forward-only, memory-critical? → Use std::forward_list
+└─ NO → ✅ Use std::vector (default choice)
+```
+
+**Best Practices Summary:**
+
+| Practice | Deque | Forward_List |
+|----------|-------|-------------|
+| **Default Choice?** | ❌ No (use vector) | ❌ No (use list) |
+| **When to Use** | Queue, double-ended buffer, sliding window | Memory-critical forward-only, stack in embedded systems |
+| **Avoid When** | Need C API interop, pure sequential iteration | Need bidirectional, random access, or size() |
+| **Iterator Storage** | ⚠️ Risky (complex invalidation) | ✅ Safe (only erased invalidate) |
+| **Prefer Member Functions** | Use std::sort (has random access) | Use member sort/remove/unique (no random access) |
+| **Memory Awareness** | Check chunk boundaries for performance | Minimal overhead - use for millions of small elements |
 
 ---
 

@@ -2,23 +2,111 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-#### What is Encapsulation?
+#### 1. Encapsulation - Data Hiding and Controlled Access
 
-**Encapsulation** is the fundamental OOP principle of binding data and methods that operate on that data into a single unit (a class), while restricting direct access to the object's internal state. This is achieved in C++ through access specifiers: `private`, `protected`, and `public`. Encapsulation enables data hiding, interface-based programming, and maintainability by ensuring that the internal representation of an object is hidden from the outside world. Only designated public methods can interact with the private data, allowing controlled and validated access.
+**Definition:** Encapsulation is the OOP principle of bundling data and methods into a single unit (class) while restricting direct access to internal state, enforced through access specifiers (`private`, `protected`, `public`).
 
-Importantly, encapsulation is enforced by the compiler at compile-time, not at the binary level. This means that while the compiler prevents unauthorized access to private members, the data still exists in memory and could theoretically be accessed through unsafe pointer manipulations (though this is undefined behavior). The `friend` keyword provides a legal mechanism to selectively grant access to private members when tight coupling between classes is necessary.
+**Core Characteristics:**
 
-#### What is Inheritance?
+| Aspect | Description | Implementation |
+|--------|-------------|----------------|
+| **Data hiding** | Internal state invisible to external code | `private` data members |
+| **Interface exposure** | Only designated methods access data | `public` member functions |
+| **Compile-time enforcement** | Compiler checks access violations | Not runtime security |
+| **Invariant protection** | Prevents invalid state | Validation in setters |
+| **Friend mechanism** | Legal selective access bypass | `friend` keyword when needed |
 
-**Inheritance** is a mechanism that allows a class (derived or child class) to acquire properties and behaviors from another class (base or parent class). This promotes code reuse, establishes hierarchical relationships, and is essential for achieving polymorphism. When a derived class inherits from a base class, it contains a base class subobject, and data members are laid out in memory from base to derived order.
+**Encapsulation Benefits:**
 
-Inheritance comes in three flavors based on access specifiers: public inheritance (the "is-a" relationship where the derived class can be used polymorphically as the base class), protected inheritance (rarely used, restricts the interface to derived classes only), and private inheritance (models "implemented-in-terms-of" relationships, hiding the inheritance from external code). The inheritance mode acts as a ceiling on access—it can only restrict, never expand, the accessibility of inherited members.
+| Benefit | Example | Impact |
+|---------|---------|--------|
+| **Maintainability** | Change internal `double` to `BigDecimal` | No client code breaks |
+| **Validation** | Ensure balance never goes negative | Prevent invalid states |
+| **Loose coupling** | Clients depend on interface only | Implementation flexibility |
+| **Security** | Hide sensitive data | Compile-time protection |
 
-#### What is Polymorphism?
+**Key Insight:** Encapsulation is compile-time only - memory can be accessed via unsafe pointer casts (UB), so it's not runtime security.
 
-**Polymorphism** is the ability of objects to be treated as instances of their base class while exhibiting the behavior of their derived class at runtime. C++ supports two types of polymorphism: compile-time polymorphism (achieved through function overloading and templates) and runtime polymorphism (achieved through virtual functions and inheritance). Runtime polymorphism is implemented using virtual function tables (vtables) and virtual pointers (vptr).
+---
 
-When a class declares virtual functions, the compiler generates a vtable—a static lookup table containing pointers to the virtual function implementations. Each object of such a class contains a hidden vptr that points to its class's vtable. At runtime, when a virtual function is called through a base pointer or reference, the program uses the vptr to look up the correct function in the vtable, enabling dynamic dispatch. This mechanism is central to design patterns, interface-based programming, and achieving runtime flexibility in object-oriented systems.
+#### 2. Inheritance - Code Reuse and Hierarchical Relationships
+
+**Definition:** Inheritance allows a derived class to acquire properties and behaviors from a base class, creating hierarchical relationships and enabling polymorphism.
+
+**Inheritance Modes:**
+
+| Mode | Syntax | Base Public → Derived | Base Protected → Derived | Use Case |
+|------|--------|----------------------|-------------------------|----------|
+| **Public** | `: public Base` | public | protected | "is-a" relationship (polymorphism) |
+| **Protected** | `: protected Base` | protected | protected | Restricted inheritance hierarchy |
+| **Private** | `: private Base` | private | private | "implemented-in-terms-of" (hide base) |
+
+**Memory Layout:**
+
+- Derived objects contain a complete base class subobject
+- Members laid out base-to-derived order in memory
+- Base class constructor called first, destructor called last
+- Each level adds its own members after the previous level
+
+**Inheritance Principles:**
+
+- **Inheritance mode acts as access ceiling:** Can only restrict, never expand access
+- **Private members never accessible in derived:** They exist in memory but cannot be named
+- **Substitutability:** Public inheritance enables Liskov Substitution Principle
+
+---
+
+#### 3. Polymorphism - Runtime Dynamic Behavior
+
+**Definition:** Polymorphism allows objects to be treated as instances of their base class while exhibiting derived class behavior at runtime, implemented via virtual functions, vtables, and vptrs.
+
+**Two Types of Polymorphism:**
+
+| Type | Mechanism | Resolution Time | Example |
+|------|-----------|-----------------|---------|
+| **Compile-time** | Function overloading, templates | Compile time | `void func(int)` vs `void func(double)` |
+| **Runtime** | Virtual functions + vtable | Runtime | `virtual void draw()` overridden in derived classes |
+
+**Runtime Polymorphism Implementation:**
+
+| Component | Description | Memory Location |
+|-----------|-------------|-----------------|
+| **Virtual function** | Function marked with `virtual` keyword | Code segment |
+| **Vtable** | Per-class table of function pointers | Static/Read-only memory (one per class) |
+| **Vptr** | Hidden pointer to class's vtable | First member of each object (typically) |
+| **Dynamic dispatch** | vptr→vtable[index] lookup at runtime | Runtime indirection |
+
+**How Virtual Dispatch Works:**
+
+```cpp
+class Base {
+public:
+    virtual void foo() { std::cout << "Base::foo\n"; }
+};
+
+class Derived : public Base {
+public:
+    void foo() override { std::cout << "Derived::foo\n"; }
+};
+
+Base* ptr = new Derived();
+ptr->foo();  // Runtime: ptr->vptr->vtable[0]() → Derived::foo
+```
+
+**Step-by-step:**
+1. `Derived` object created with vptr pointing to `Derived`'s vtable
+2. Pointer `ptr` of type `Base*` points to the `Derived` object
+3. Call `ptr->foo()` dereferences vptr to find vtable
+4. Looks up `foo()` entry in `Derived`'s vtable
+5. Calls `Derived::foo()` even though pointer is `Base*`
+
+**Virtual Function Overhead:**
+
+| Cost Type | Impact | Typical Size |
+|-----------|--------|--------------|
+| **Memory per object** | One vptr per object with virtual functions | 8 bytes (64-bit) |
+| **Memory per class** | One vtable per class (shared by all objects) | N × 8 bytes (N = virtual function count) |
+| **Performance** | One extra indirection per virtual call | ~1-2 CPU cycles |
 
 ### EDGE_CASES: Tricky Scenarios and Deep Internals
 

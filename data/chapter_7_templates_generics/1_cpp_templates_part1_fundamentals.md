@@ -2,21 +2,538 @@
 
 ### THEORY_SECTION: Core Template Concepts
 
-#### What are Templates?
+#### 1. What Are Templates and How They Work - Function vs Class Templates
 
-Templates are C++'s primary mechanism for **generic programming**, allowing you to write code that works with any data type without sacrificing type safety. They enable compile-time polymorphism by letting the compiler generate type-specific code from a single template definition. Templates are instantiated at compile time, meaning the compiler creates specific versions of the template for each type used.
+Templates are C++'s primary mechanism for **generic programming**, enabling type-safe code that works with any data type through **compile-time polymorphism**. The compiler generates type-specific code from a single template definition during compilation, creating zero-overhead abstractions without runtime cost.
 
-#### Function Templates
+**Function Templates vs Class Templates - Key Differences:**
 
-**Function templates** allow writing generic functions where types are parameters. The compiler performs **type deduction** from function arguments, or you can explicitly specify template arguments. Function templates support overloading and can coexist with non-template functions in the same overload set.
+| Feature | Function Templates | Class Templates |
+|---------|-------------------|-----------------|
+| **Purpose** | Generic algorithms and operations | Generic data structures and components |
+| **Type Deduction** | ✅ Automatic from call arguments | ❌ Must specify explicitly (pre-C++17)<br>✅ CTAD in C++17+ |
+| **Template Syntax** | `template<typename T> T func(T x)` | `template<typename T> class Container { T data; }` |
+| **Instantiation** | `func(42)` - deduces `T=int` | `Container<int> c;` - explicit type required |
+| **Partial Specialization** | ❌ Not allowed | ✅ Allowed |
+| **Overloading** | ✅ Can overload with non-templates | N/A (classes don't overload, but can specialize) |
+| **Default Template Args** | ✅ Only in declarations (separate from definition) | ✅ In definition or declaration |
+| **Member Functions** | N/A | Lazily instantiated (only used members generate code) |
+| **Instantiation Trigger** | Function call | Object creation, member access |
 
-#### Class Templates
+**Template Type Deduction Rules for Function Templates:**
 
-**Class templates** enable generic data structures and components. Unlike function templates, class templates require explicit template argument specification when instantiating objects (pre-C++17). They can have member function templates, nested types, and static members that are instantiated per-template specialization.
+| Parameter Pattern | Argument Type | Deduced `T` | Const/Reference Handling |
+|-------------------|---------------|-------------|--------------------------|
+| `T param` | `int` | `int` | ❌ Strips top-level const and references |
+| `T param` | `const int` | `int` | ❌ Strips top-level const |
+| `T param` | `int&` | `int` | ❌ Strips reference |
+| `T& param` | `int` | `int` | ✅ Preserves const (if present in argument) |
+| `T& param` | `const int` | `const int` | ✅ Preserves const |
+| `const T& param` | `int` | `int` | ✅ Reference prevents copying |
+| `T&& param` | `int` (lvalue) | `int&` | ✅ Universal reference (forwarding reference) |
+| `T&& param` | `42` (rvalue) | `int` | ✅ Universal reference |
+| `T* param` | `int*` | `int` | ✅ Pointer to `T` |
 
-#### Why Templates Matter
+**Code Example - Function Template Type Deduction:**
 
-Templates are fundamental to modern C++ design, forming the backbone of the Standard Template Library (STL). They enable zero-overhead abstractions by moving work to compile time rather than runtime. Understanding templates is essential for writing efficient, reusable code and is heavily tested in technical interviews. Templates also enable advanced techniques like template metaprogramming, policy-based design, and compile-time computations.
+```cpp
+template<typename T>
+void byValue(T param) { }  // T strips const and references
+
+template<typename T>
+void byRef(T& param) { }   // T preserves const in argument
+
+template<typename T>
+void byConstRef(const T& param) { }  // Universal const reference
+
+int x = 42;
+const int cx = x;
+const int& rx = x;
+
+byValue(x);      // T = int (no const)
+byValue(cx);     // T = int (const stripped)
+byValue(rx);     // T = int (reference and const stripped)
+
+byRef(x);        // T = int, param type = int&
+byRef(cx);       // T = const int, param type = const int&
+// byRef(42);    // ❌ Error: cannot bind non-const lvalue ref to rvalue
+
+byConstRef(x);   // T = int, param type = const int&
+byConstRef(cx);  // T = int, param type = const int&
+byConstRef(42);  // ✅ OK: const lvalue ref can bind to rvalue
+```
+
+**Code Example - Class Template Explicit Instantiation:**
+
+```cpp
+template<typename T>
+class Box {
+    T value;
+public:
+    Box(T v) : value(v) { }
+    T get() const { return value; }
+};
+
+int main() {
+    // ❌ Pre-C++17: Box b(42); // Error: cannot deduce template argument
+
+    Box<int> b1(42);              // ✅ Explicit template argument
+    Box<std::string> b2("hello"); // ✅ Different instantiation
+
+    // C++17 CTAD (Class Template Argument Deduction):
+    Box b3(42);        // ✅ C++17: Deduces Box<int>
+    Box b4("hello");   // ✅ C++17: Deduces Box<const char*>
+}
+```
+
+**Template Instantiation Process:**
+
+| Phase | Timing | What Happens | Errors Detected |
+|-------|--------|--------------|-----------------|
+| **1. Template Definition** | When compiler sees template code | Syntax checking (non-dependent names) | Syntax errors, non-dependent name lookup failures |
+| **2. Template Instantiation** | When template is used with specific type | Code generation for that type | Type-dependent errors (missing operators, invalid operations) |
+| **3. Member Lazy Instantiation** | When member is actually called | Generate code only for used members | Member-specific errors (only if member is called) |
+
+**Two-Phase Name Lookup:**
+
+```cpp
+// ✅ Phase 1: Definition-time check (non-dependent names)
+template<typename T>
+void process(T x) {
+    nonExistentFunc();  // ❌ Error at definition - non-dependent name
+    helper(x);          // ✅ Deferred - dependent name (depends on T)
+}
+
+// ✅ Phase 2: Instantiation-time check (dependent names via ADL)
+void helper(int x) { std::cout << "int: " << x << "\n"; }
+
+int main() {
+    process(42);  // ✅ Finds helper(int) via ADL at instantiation time
+}
+```
+
+**Why Templates Matter - Zero-Overhead Abstractions:**
+
+| Aspect | Templates | Virtual Functions (Runtime Polymorphism) |
+|--------|-----------|------------------------------------------|
+| **Performance** | ✅ Zero overhead (inlining, compile-time resolution) | ❌ Vtable lookup overhead, no inlining of virtual calls |
+| **Code Size** | ❌ Larger (code bloat - each type generates new code) | ✅ Smaller (single implementation, dynamic dispatch) |
+| **Type Safety** | ✅ Compile-time checking | ✅ Runtime type checking (RTTI with `dynamic_cast`) |
+| **Flexibility** | ❌ Types must be known at compile time | ✅ Runtime polymorphism, plugin architectures |
+| **STL Foundation** | ✅ Basis for containers, algorithms, iterators | ❌ Not used in STL (performance reasons) |
+| **Error Messages** | ❌ Notoriously complex error messages | ✅ Clear runtime errors |
+
+---
+
+#### 2. Template Specialization - Full vs Partial Specialization Patterns
+
+Template specialization allows providing custom implementations for specific types or type patterns, enabling type-specific optimizations and behaviors while maintaining a generic interface.
+
+**Specialization Types Comparison:**
+
+| Specialization Type | Syntax | Applies To | Pattern Matching | Use Case |
+|---------------------|--------|------------|------------------|----------|
+| **Primary Template** | `template<typename T> class C { }` | All types (default) | N/A - base case | Default generic implementation |
+| **Full Specialization** | `template<> class C<int> { }` | Exact type match | No patterns | Optimize or customize for specific type |
+| **Partial Specialization** | `template<typename T> class C<T*> { }` | Type patterns | ✅ Pattern matching (`T*`, `T&`, `T[]`, etc.) | Handle categories of types (pointers, references) |
+| **Member Specialization** | `template<> void C<int>::func() { }` | Single member of specialization | N/A | Specialize one member, keep rest generic |
+
+**Full Specialization - Complete Replacement:**
+
+```cpp
+// Primary template
+template<typename T>
+struct Printer {
+    static void print(T value) {
+        std::cout << "Generic: " << value << "\n";
+    }
+};
+
+// ✅ Full specialization for bool
+template<>
+struct Printer<bool> {
+    static void print(bool value) {
+        std::cout << "Boolean: " << (value ? "true" : "false") << "\n";
+    }
+};
+
+int main() {
+    Printer<int>::print(42);      // Generic: 42
+    Printer<bool>::print(true);   // Boolean: true
+}
+```
+
+**Partial Specialization - Pattern Matching:**
+
+| Pattern | Matches | Example | `T` Binds To |
+|---------|---------|---------|--------------|
+| `T*` | Any pointer type | `int*`, `double**` | Pointed-to type (`int`, `double*`) |
+| `T&` | Any lvalue reference | `int&`, `const double&` | Referenced type |
+| `T[N]` | Arrays of size `N` | `int[10]` | Element type (`int`) |
+| `T[]` | Arrays of unknown size | `int[]` | Element type |
+| `C<T>` | Specific template with any argument | `std::vector<int>` | Template argument (`int`) |
+| `T, T` | Same type for both parameters | `Pair<int, int>` | Common type (`int`) |
+| `T, int` | Second parameter is `int` | `Pair<double, int>` | First type (`double`) |
+| `T, U*` | Second parameter is pointer | `Pair<int, double*>` | `T=int`, `U=double` |
+
+**Code Example - Partial Specialization for Pointers:**
+
+```cpp
+// Primary template
+template<typename T>
+struct TypeInfo {
+    static constexpr bool is_pointer = false;
+    static void print() { std::cout << "Regular type\n"; }
+};
+
+// ✅ Partial specialization for pointers
+template<typename T>
+struct TypeInfo<T*> {
+    static constexpr bool is_pointer = true;
+    using PointeeType = T;  // Extract pointed-to type
+    static void print() { std::cout << "Pointer type\n"; }
+};
+
+// ✅ Partial specialization for const pointers
+template<typename T>
+struct TypeInfo<const T*> {
+    static constexpr bool is_pointer = true;
+    static constexpr bool is_const_pointer = true;
+    static void print() { std::cout << "Const pointer type\n"; }
+};
+
+int main() {
+    TypeInfo<int>::print();        // Regular type
+    TypeInfo<int*>::print();       // Pointer type
+    TypeInfo<const int*>::print(); // Const pointer type
+
+    std::cout << TypeInfo<double**>::is_pointer << "\n";  // 1 (T = double*)
+}
+```
+
+**Multi-Parameter Partial Specialization:**
+
+```cpp
+// Primary template
+template<typename T1, typename T2>
+struct Pair {
+    static void show() { std::cout << "Generic pair\n"; }
+};
+
+// ✅ Partial specialization: both types identical
+template<typename T>
+struct Pair<T, T> {
+    static void show() { std::cout << "Homogeneous pair (T, T)\n"; }
+};
+
+// ✅ Partial specialization: second is int
+template<typename T>
+struct Pair<T, int> {
+    static void show() { std::cout << "Second is int (T, int)\n"; }
+};
+
+// ✅ Full specialization: exact match
+template<>
+struct Pair<double, int> {
+    static void show() { std::cout << "Full specialization (double, int)\n"; }
+};
+
+int main() {
+    Pair<float, char>::show();   // Generic pair
+    Pair<int, int>::show();      // Homogeneous pair (most specific match)
+    Pair<float, int>::show();    // Second is int
+    Pair<double, int>::show();   // Full specialization (highest priority)
+}
+```
+
+**Specialization Selection Priority (Most Specific Wins):**
+
+| Priority | Specialization | Example | When Selected |
+|----------|----------------|---------|---------------|
+| **1 (Highest)** | Full Specialization | `template<> class C<int, double>` | Exact type match |
+| **2 (Medium)** | Partial Specialization | `template<typename T> class C<T, int>` | Pattern match |
+| **3 (Lowest)** | Primary Template | `template<typename T, typename U> class C` | No better match |
+
+**Ambiguous Partial Specialization (Compilation Error):**
+
+```cpp
+template<typename T, typename U> struct Test { };
+
+template<typename T> struct Test<T, int> { };   // Specialization A
+template<typename T> struct Test<int, T> { };   // Specialization B
+
+int main() {
+    Test<double, int> t1;  // ✅ OK: A matches
+    Test<int, double> t2;  // ✅ OK: B matches
+    // Test<int, int> t3;  // ❌ Error: Both A and B match equally - ambiguous!
+
+    // ✅ Solution: Add full specialization to resolve ambiguity
+    // template<> struct Test<int, int> { };
+}
+```
+
+**Function Template Specialization (Only Full Specialization Allowed):**
+
+```cpp
+// Primary function template
+template<typename T>
+void process(T value) {
+    std::cout << "Generic: " << value << "\n";
+}
+
+// ✅ Full specialization for int
+template<>
+void process<int>(int value) {
+    std::cout << "Specialized for int: " << value << "\n";
+}
+
+// ❌ Partial specialization NOT allowed for function templates
+// template<typename T>
+// void process<T*>(T* value) { }  // ERROR!
+
+// ✅ Use overloading instead of partial specialization
+template<typename T>
+void process(T* value) {
+    std::cout << "Pointer overload: " << *value << "\n";
+}
+
+int main() {
+    process(42);        // Specialized for int
+    process(3.14);      // Generic
+
+    int x = 10;
+    process(&x);        // Pointer overload (via overloading, not specialization)
+}
+```
+
+**Type Traits - Common Use of Partial Specialization:**
+
+```cpp
+// Primary template - default case
+template<typename T>
+struct RemovePointer {
+    using type = T;  // Not a pointer - return as-is
+};
+
+// Partial specialization - strip one pointer level
+template<typename T>
+struct RemovePointer<T*> {
+    using type = T;  // Remove pointer, return pointed-to type
+};
+
+int main() {
+    RemovePointer<int>::type x = 42;        // int
+    RemovePointer<int*>::type y = 42;       // int (pointer removed)
+    RemovePointer<double**>::type* z;       // double* (one level removed)
+}
+```
+
+---
+
+#### 3. Non-Type Template Parameters and Template Metaprogramming
+
+Non-type template parameters accept compile-time constant values (integers, pointers, references) rather than types, enabling compile-time computation and zero-overhead compile-time configuration.
+
+**Non-Type Parameter Types (C++11/14/17/20 Evolution):**
+
+| C++ Standard | Allowed Non-Type Parameter Types |
+|--------------|-----------------------------------|
+| **C++11** | Integral types (`int`, `size_t`, `bool`), enums, pointers, references (with external linkage) |
+| **C++17** | + `auto` (compiler deduces type from argument) |
+| **C++20** | + Floating-point types, literal class types (structural types), `auto` with deduced types |
+
+**Non-Type Parameter Restrictions:**
+
+| Requirement | Reason | Example |
+|-------------|--------|---------|
+| ✅ Must be compile-time constant | Template instantiation happens at compile time | `template<int N>` - `N` must be `constexpr` |
+| ✅ Pointers must have static storage duration | Address must be stable across translation units | `extern const char* str;` |
+| ❌ Cannot be floating-point (C++17) | Floating-point comparison issues, precision | `template<double D>` - ERROR in C++17 |
+| ❌ Cannot be class type (pre-C++20) | No common representation before structural types | `template<MyClass obj>` - ERROR pre-C++20 |
+
+**Code Example - Fixed-Size Array with Non-Type Parameter:**
+
+```cpp
+template<typename T, size_t N>
+class FixedArray {
+    T data[N];  // ✅ Array size known at compile time (stack allocation)
+public:
+    constexpr size_t size() const { return N; }
+
+    T& operator[](size_t index) {
+        return data[index];  // No bounds checking for performance
+    }
+
+    const T& operator[](size_t index) const {
+        return data[index];
+    }
+};
+
+int main() {
+    FixedArray<int, 5> arr1;      // Stack-allocated 5-element int array
+    FixedArray<double, 10> arr2;  // Stack-allocated 10-element double array
+
+    arr1[0] = 100;
+    std::cout << "Size: " << arr1.size() << "\n";  // Size: 5
+
+    // FixedArray<int, 5> and FixedArray<int, 10> are DIFFERENT TYPES
+    // arr1 = arr2;  // ❌ Error: incompatible types
+}
+```
+
+**Different Sizes = Different Types:**
+
+| Instantiation | Actual Type | Memory Layout | Interchangeable? |
+|---------------|-------------|---------------|------------------|
+| `FixedArray<int, 5>` | `FixedArray_int_5` | 20 bytes (5 × 4 bytes) | ❌ No |
+| `FixedArray<int, 10>` | `FixedArray_int_10` | 40 bytes (10 × 4 bytes) | ❌ No |
+| `FixedArray<double, 5>` | `FixedArray_double_5` | 40 bytes (5 × 8 bytes) | ❌ No |
+
+**Template Metaprogramming - Compile-Time Computation:**
+
+Template metaprogramming uses recursive template instantiation to perform computations at compile time, eliminating all runtime overhead.
+
+**Code Example - Compile-Time Factorial:**
+
+```cpp
+// Recursive case
+template<int N>
+struct Factorial {
+    static constexpr int value = N * Factorial<N - 1>::value;
+};
+
+// Base case (specialization)
+template<>
+struct Factorial<0> {
+    static constexpr int value = 1;
+};
+
+int main() {
+    constexpr int f5 = Factorial<5>::value;   // 120 (computed at compile time)
+    constexpr int f10 = Factorial<10>::value; // 3628800
+
+    // ✅ Can use in contexts requiring compile-time constants
+    int array[Factorial<4>::value];  // int array[24]
+
+    static_assert(Factorial<6>::value == 720, "Factorial incorrect");
+}
+```
+
+**Template Metaprogramming Recursion Pattern:**
+
+| Component | Purpose | Example |
+|-----------|---------|---------|
+| **Primary Template** | Recursive case | `Factorial<N>::value = N * Factorial<N-1>::value` |
+| **Specialized Base Case** | Termination condition | `Factorial<0>::value = 1` |
+| **Static Member** | Store result | `static constexpr int value` |
+| **constexpr** | Compile-time evaluation | Allows use in constant expressions |
+
+**Code Example - Compile-Time Power Calculation:**
+
+```cpp
+template<int Base, unsigned Exp>
+struct Power {
+    static constexpr int value = Base * Power<Base, Exp - 1>::value;
+};
+
+template<int Base>
+struct Power<Base, 0> {
+    static constexpr int value = 1;  // Base^0 = 1
+};
+
+int main() {
+    constexpr int result = Power<2, 10>::value;  // 1024 (2^10)
+    std::cout << "2^10 = " << result << "\n";
+
+    // ✅ Used in array size (compile-time constant required)
+    int buffer[Power<2, 8>::value];  // int buffer[256]
+}
+```
+
+**Template Metaprogramming vs constexpr Functions:**
+
+| Feature | Template Metaprogramming | constexpr Functions (C++11+) |
+|---------|--------------------------|------------------------------|
+| **Syntax** | ❌ Verbose (requires struct + specialization) | ✅ Natural function syntax |
+| **Recursion** | ✅ Via template instantiation | ✅ Via normal function calls |
+| **Readability** | ❌ Low (nested templates) | ✅ High (looks like normal code) |
+| **Compilation Time** | ❌ Slower (template instantiation overhead) | ✅ Faster |
+| **Type Computation** | ✅ Can compute types (e.g., `std::conditional`) | ❌ Cannot compute types |
+| **When to Use** | Type-level computation, type traits | Value-level computation |
+
+**Modern Alternative - constexpr Functions:**
+
+```cpp
+// ✅ Modern C++11+ approach (preferred for value computation)
+constexpr int factorial(int n) {
+    return (n <= 1) ? 1 : n * factorial(n - 1);
+}
+
+int main() {
+    constexpr int f5 = factorial(5);     // ✅ Computed at compile time
+    int array[factorial(4)];              // ✅ Can use in array size
+
+    int n;
+    std::cin >> n;
+    int runtime_result = factorial(n);   // ✅ Can also use at runtime!
+}
+```
+
+**Non-Type Parameter with auto (C++17):**
+
+```cpp
+template<auto N>  // ✅ C++17: auto deduces type from argument
+struct Constant {
+    static constexpr auto value = N;
+};
+
+int main() {
+    Constant<42> c1;        // N deduced as int
+    Constant<42u> c2;       // N deduced as unsigned
+    Constant<true> c3;      // N deduced as bool
+
+    std::cout << c1.value << "\n";  // 42
+    std::cout << c2.value << "\n";  // 42
+    std::cout << c3.value << "\n";  // 1
+}
+```
+
+**Template Parameter Pack (Variadic Templates - C++11):**
+
+```cpp
+// Variadic template with non-type parameter pack
+template<int... Values>
+struct Sum;
+
+// Base case: empty pack
+template<>
+struct Sum<> {
+    static constexpr int value = 0;
+};
+
+// Recursive case: peel off first value
+template<int First, int... Rest>
+struct Sum<First, Rest...> {
+    static constexpr int value = First + Sum<Rest...>::value;
+};
+
+int main() {
+    constexpr int result = Sum<1, 2, 3, 4, 5>::value;  // 15
+    std::cout << "Sum: " << result << "\n";
+}
+```
+
+**Summary - When to Use Each Template Feature:**
+
+| Feature | Use Case | Example |
+|---------|----------|---------|
+| **Function Templates** | Generic algorithms with automatic type deduction | `std::sort`, `std::find` |
+| **Class Templates** | Generic containers and data structures | `std::vector`, `std::map` |
+| **Full Specialization** | Optimize or customize for specific types | `std::hash<std::string>` |
+| **Partial Specialization** | Handle categories of types | Type traits (`is_pointer<T*>`) |
+| **Non-Type Parameters** | Compile-time configuration (sizes, counts) | `std::array<T, N>` |
+| **Template Metaprogramming** | Compile-time type computation | `std::conditional`, `std::enable_if` |
+| **constexpr Functions** | Compile-time value computation | Factorial, power calculations |
 
 ---
 

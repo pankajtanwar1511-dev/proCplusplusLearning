@@ -2,23 +2,156 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-**Race conditions** and **deadlocks** are the two most critical bugs in concurrent programming, often manifesting as intermittent failures that disappear when debugging (Heisenbugs). A **race condition** occurs when multiple threads access shared mutable state concurrently, with at least one performing a write operation, and the outcome depends on the unpredictable timing of thread execution. A **deadlock** occurs when two or more threads are permanently blocked, each waiting for resources held by the others, creating a circular dependency from which no thread can escape.
+#### 1. Race Conditions and Deadlocks - Overview
 
-#### Understanding Race Conditions
+**Definitions:**
 
-At the machine level, seemingly atomic operations like `++counter` decompose into multiple instructions: load from memory into register, increment register, store back to memory. When two threads execute this sequence concurrently without synchronization, both might read the same initial value (say, 100), increment it to 101, and write back 101—losing one increment. The program produces 101 instead of the expected 102. This is a **lost update**, the simplest form of race condition. More subtle variants include **read-modify-write races**, **check-then-act races** (checking a condition then acting on it, but the condition changes between check and act), and **publication races** (one thread publishes a reference before the object is fully constructed).
+| Concurrency Bug | Definition | Symptom |
+|----------------|------------|---------|
+| **Race Condition** | Multiple threads access shared mutable state; at least one writes; outcome depends on unpredictable timing | Non-deterministic results, data corruption |
+| **Deadlock** | Two or more threads permanently blocked, each waiting for resources held by others | System hang, no progress |
 
-#### The Four Coffman Conditions for Deadlock
+**Key Characteristics:**
+- Both manifest as **Heisenbugs** - bugs that disappear when you try to observe them (debugging changes timing)
+- Race conditions cause incorrect results
+- Deadlocks cause complete program freeze
 
-Deadlock occurs when all four Coffman conditions hold simultaneously: **(1) Mutual exclusion** - resources cannot be shared (only one thread can hold a mutex); **(2) Hold and wait** - threads hold resources while waiting for others (holding lock A while waiting for lock B); **(3) No preemption** - resources cannot be forcibly taken away (you cannot force a thread to release a lock); **(4) Circular wait** - a circular chain of threads, each waiting for a resource held by the next (Thread 1 waits for Thread 2's lock, Thread 2 waits for Thread 3's lock, Thread 3 waits for Thread 1's lock). Breaking any one condition prevents deadlock.
+---
 
-#### Detection vs Prevention
+#### 2. Understanding Race Conditions
 
-**Deadlock prevention** designs systems to avoid deadlock by breaking one of the Coffman conditions (most commonly circular wait through lock ordering). **Deadlock avoidance** uses algorithms like banker's algorithm to dynamically ensure safe states (impractical in general-purpose systems). **Deadlock detection** allows deadlocks to occur but periodically detects them (lock timeout, cycle detection in wait-for graphs) and recovers (abort transactions, kill threads). Prevention is preferred in most systems as detection and recovery are complex and have performance costs.
+**At the Machine Level:**
 
-#### Why This Matters in Mission-Critical Systems
+Seemingly atomic operations decompose into multiple instructions:
 
-In autonomous driving, a deadlock in the sensor fusion thread means no updated world model, causing the vehicle to continue with stale data—potentially catastrophic at highway speeds. A race condition in the planning algorithm might cause inconsistent path decisions, leading to erratic vehicle behavior. Real-time requirements mean debugging these issues in production is impractical; they must be prevented through design. Understanding race condition patterns, deadlock prevention strategies, and debugging tools (ThreadSanitizer, Helgrind) is essential for building safe concurrent systems.
+```cpp
+++counter;  // Looks atomic, but...
+
+// Actually executed as:
+// 1. LOAD counter into register (R1 = memory[counter])
+// 2. INCREMENT register (R1 = R1 + 1)
+// 3. STORE register to memory (memory[counter] = R1)
+```
+
+**Race Scenario:**
+
+| Time | Thread 1 | Thread 2 | Counter Value |
+|------|----------|----------|---------------|
+| T0 | - | - | 100 |
+| T1 | LOAD (R1=100) | - | 100 |
+| T2 | - | LOAD (R2=100) | 100 |
+| T3 | INCREMENT (R1=101) | - | 100 |
+| T4 | - | INCREMENT (R2=101) | 100 |
+| T5 | STORE (101) | - | 101 |
+| T6 | - | STORE (101) | 101 |
+
+**Expected: 102, Actual: 101** - Lost one increment
+
+**Common Race Patterns:**
+
+| Pattern | Description | Example |
+|---------|-------------|---------|
+| **Lost Update** | Concurrent read-modify-write loses changes | Two threads increment same counter |
+| **Read-Modify-Write Race** | Multi-step update without atomicity | `counter++`, `balance -= amount` |
+| **Check-Then-Act (TOCTOU)** | Condition changes between check and action | `if (cache.empty()) cache.insert()` |
+| **Publication Race** | Object published before full initialization | Publishing pointer before constructor completes |
+
+---
+
+#### 3. The Four Coffman Conditions for Deadlock
+
+**All four must hold simultaneously for deadlock to occur:**
+
+| # | Condition | Meaning | Example |
+|---|-----------|---------|---------|
+| **1** | **Mutual Exclusion** | Resources cannot be shared (only one owner) | Only one thread can hold a mutex |
+| **2** | **Hold and Wait** | Hold resources while waiting for others | Holding lock A while waiting for lock B |
+| **3** | **No Preemption** | Resources cannot be forcibly taken | Can't force a thread to release a lock |
+| **4** | **Circular Wait** | Circular chain of waiting threads | T1→T2→T3→T1 (where → means "waits for") |
+
+**Breaking Any One Condition Prevents Deadlock:**
+
+| Break Which? | How? | Example Technique |
+|--------------|------|-------------------|
+| Circular Wait | Enforce global lock ordering | Always lock in address order |
+| Hold and Wait | Acquire all locks atomically | `std::lock(m1, m2, m3)` |
+| No Preemption | Allow timeout-based release | `try_lock_for()` with retry |
+| Mutual Exclusion | Use shareable resources | `shared_mutex` for readers |
+
+**ABBA Deadlock Example:**
+
+```cpp
+// Thread 1:          Thread 2:
+lock(A)              lock(B)
+lock(B)  ← waits     lock(A)  ← waits
+         DEADLOCK!
+```
+
+---
+
+#### 4. Deadlock Strategies
+
+**Three Approaches:**
+
+| Strategy | Description | Pros | Cons |
+|----------|-------------|------|------|
+| **Prevention** | Design system to never deadlock (break Coffman condition) | No runtime cost, guaranteed safe | Requires design discipline |
+| **Avoidance** | Dynamically ensure safe states (Banker's algorithm) | Theoretical elegance | Complex, impractical for general use |
+| **Detection + Recovery** | Allow deadlocks, detect (timeouts/graphs), recover (abort/kill) | Flexible | High complexity, performance cost |
+
+**Most Common: Prevention via Lock Ordering**
+
+```cpp
+// ✅ Correct: Same order everywhere
+Thread 1: lock(A); lock(B);
+Thread 2: lock(A); lock(B);  // No deadlock
+
+// ❌ Wrong: Different orders
+Thread 1: lock(A); lock(B);
+Thread 2: lock(B); lock(A);  // Deadlock!
+```
+
+---
+
+#### 5. Mission-Critical Systems Impact
+
+**Autonomous Driving Example:**
+
+| Component | Race Condition Impact | Deadlock Impact |
+|-----------|----------------------|-----------------|
+| **Sensor Fusion (30Hz)** | Inconsistent world model → wrong obstacle positions | Thread freeze → vehicle uses stale data at 120 km/h |
+| **Path Planning (10Hz)** | Erratic path decisions → sudden lane changes | No new paths generated → follows obsolete trajectory |
+| **Control Loop (100Hz)** | Inconsistent brake/throttle commands → jerky motion | Complete freeze → loss of vehicle control |
+
+**Why Prevention is Mandatory:**
+
+- **Heisenbugs**: Intermittent failures impossible to reproduce in testing
+- **Real-time deadlines**: No time for detection/recovery mechanisms
+- **Safety certification (ISO 26262)**: Requires demonstrable absence of data races
+- **Production debugging impractical**: Can't add logging when car is at highway speed
+
+**Required Practices:**
+- Static analysis during development (ThreadSanitizer)
+- Formal verification of lock orderings
+- Lock-free algorithms where feasible
+- Systematic code reviews for shared data access
+
+---
+
+#### 6. Key Debugging Tools
+
+**Detection Methods:**
+
+| Tool | Type | What It Detects | Overhead | Use Case |
+|------|------|----------------|----------|----------|
+| **ThreadSanitizer (TSan)** | Dynamic analysis | Data races via happens-before tracking | 5-15x slowdown | Development, CI testing |
+| **Helgrind (Valgrind)** | Dynamic analysis | Data races via lock-set algorithm | 20-50x slowdown | Legacy code without recompilation |
+| **Timeout Detection** | Runtime check | Potential deadlocks (lock wait > threshold) | Low | Production monitoring |
+| **Wait-for Graph** | Runtime analysis | Circular dependencies | Medium | Database systems |
+
+**Best Practice:**
+- Use TSan during development and in CI pipeline
+- Prevention through design is far superior to runtime detection
 
 ---
 

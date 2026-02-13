@@ -3,60 +3,73 @@
 
 ## THEORY_SECTION
 
-### Class Template Argument Deduction (CTAD)
+### 1. Class Template Argument Deduction (CTAD) - Implicit Template Parameters
 
-**What is CTAD?**
-C++17 introduces Class Template Argument Deduction (CTAD), which allows the compiler to automatically deduce template arguments from constructor arguments, eliminating the need to explicitly specify them.
+**Definition:** CTAD allows the compiler to automatically deduce class template arguments from constructor arguments, eliminating verbose and redundant type specifications.
 
-**Before C++17:**
-```cpp
-std::pair<int, double> p1(42, 3.14);  // Must specify types
-std::vector<int> v1 = {1, 2, 3};      // Must specify element type
-```
+**Before vs After Comparison:**
 
-**With C++17 CTAD:**
-```cpp
-std::pair p2(42, 3.14);               // Deduces std::pair<int, double>
-std::vector v2 = {1, 2, 3};           // Deduces std::vector<int>
-```
+| Scenario | C++14 (Explicit) | C++17 CTAD (Deduced) |
+|----------|------------------|----------------------|
+| **std::pair** | `std::pair<int, double>(42, 3.14)` | `std::pair(42, 3.14)` |
+| **std::vector** | `std::vector<int>{1, 2, 3}` | `std::vector{1, 2, 3}` |
+| **std::tuple** | `std::tuple<int, string, double>(1, "a", 3.14)` | `std::tuple(1, "a", 3.14)` |
+| **std::array** | `std::array<int, 3>{1, 2, 3}` | `std::array{1, 2, 3}` (C++17) |
+| **std::optional** | `std::optional<int>(42)` | `std::optional(42)` |
 
-**How CTAD Works:**
-1. Compiler examines constructor arguments
-2. Matches them against available constructors
-3. Deduces template parameters from constructor parameter types
-4. Uses deduction guides if provided for complex cases
+**How CTAD Works (Mechanism):**
 
-**Deduction Guides:**
-Custom deduction guides allow you to control how CTAD works for your classes:
+1. **Constructor examination:** Compiler analyzes available constructors
+2. **Argument matching:** Maps constructor parameter types to template parameters
+3. **Type deduction:** Deduces template arguments from actual arguments
+4. **Deduction guide lookup:** Applies user-provided or compiler-generated guides
+5. **Instantiation:** Creates class template instance with deduced types
+
+**Deduction Guides - Custom CTAD Rules:**
+
+| Guide Type | Purpose | Example |
+|------------|---------|---------|
+| **User-defined** | Control deduction for custom types | `template<typename T>`<br>`Container(T) -> Container<T>;` |
+| **Aggregate deduction** | Enable CTAD for aggregate types | `template<typename T>`<br>`Point(T, T) -> Point<T>;` |
+| **Explicit** | Force specific deduction | `Container(initializer_list<T>) -> Container<vector<T>>;` |
+| **Compiler-generated** | Automatic for constructors | Generated from public constructors |
+
+**Custom Deduction Guide Example:**
 
 ```cpp
 template<typename T>
 struct Container {
     Container(T val) : data(val) {}
-    T data;
+    Container(std::initializer_list<T> list) : data(list.begin(), list.end()) {}
+    std::vector<T> data;
 };
 
-// Deduction guide for initializer_list
+// Deduction guide: initializer_list deduces to vector storage
 template<typename T>
-Container(std::initializer_list<T>) -> Container<std::vector<T>>;
+Container(std::initializer_list<T>) -> Container<T>;
 
-Container c1(42);              // Deduces Container<int>
-Container c2{1, 2, 3};         // Uses guide: Container<std::vector<int>>
+Container c1(42);              // Deduces Container<int>, data = {42}
+Container c2{1, 2, 3};         // Uses guide: Container<int>, data = {1,2,3}
+Container c3(vec.begin(), vec.end());  // Needs guide for iterator pair
 ```
 
-**When CTAD Doesn't Work:**
-- Template parameters not deducible from constructor arguments
-- Ambiguous deduction (multiple possible types)
-- User-defined constructors without deduction guides in some cases
+**When CTAD Fails (Limitations):**
 
-**Autonomous Driving Example:**
-```cpp
-// Before C++17
-std::pair<std::string, Coordinate> waypoint1("Start", Coordinate{0, 0});
+| Failure Reason | Code Example | Fix |
+|----------------|--------------|-----|
+| **Non-deducible parameters** | `template<typename T, int N>`<br>`Array()` | Provide default or deduction guide |
+| **Ambiguous constructors** | `Wrapper(&x)` matches both `Wrapper(T)` and `Wrapper(T*, size_t)` | Explicit deduction guide or template args |
+| **Private constructors** | Constructor not visible | Make public or add deduction guide |
+| **Copy-list initialization** | `Container c = {1, 2};` may fail | Use direct initialization |
 
-// With C++17 CTAD
-std::pair waypoint2("Start", Coordinate{0, 0});  // Cleaner, no redundancy
-```
+**CTAD Best Practices:**
+
+- **Use for standard containers:** Always use CTAD with std::pair, std::tuple, std::optional, etc.
+- **Avoid for type aliases:** `using IntVec = vector<int>; IntVec v{1,2,3};` doesn't work
+- **Provide guides for ambiguity:** Add deduction guides when multiple constructors could match
+- **Explicit for clarity:** Sometimes explicit types are clearer than CTAD
+
+---
 
 ### Fold Expressions
 

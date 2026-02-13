@@ -2,23 +2,264 @@
 
 ### THEORY_SECTION: Core Concepts and Foundations
 
-**Condition variables** are synchronization primitives that enable threads to wait for specific conditions to become true, avoiding inefficient busy-waiting (polling in loops). A condition variable (`std::condition_variable`) works in conjunction with a mutex to coordinate between threads: one or more threads wait for a condition to be signaled by another thread. When the condition is met, the signaling thread calls `notify_one()` or `notify_all()`, waking waiting threads. This is the foundation for implementing producer-consumer queues, thread pools, event systems, and other coordination patterns.
+#### 1. Condition Variable Overview
 
-#### The Wait-Notify Mechanism
+**Definition:**
+- Synchronization primitive enabling threads to wait for specific conditions without busy-waiting
+- Works with a mutex to coordinate thread communication
+- Defined in `<condition_variable>` header (C++11)
 
-The core operation is `wait(lock, predicate)`, which atomically releases the mutex, blocks the thread until notification, and reacquires the mutex before returning. The predicate (a callable returning bool) is checked before and after waiting to handle **spurious wakeups**—situations where the thread wakes without being notified, caused by implementation details or signal handling. The predicate-based `wait()` is equivalent to `while (!predicate()) cv.wait(lock)` but more concise and less error-prone. Without the predicate check, spurious wakeups can cause incorrect program behavior.
+**Core Mechanism:**
 
-#### Why std::unique_lock is Required
+| Component | Role |
+|-----------|------|
+| **Mutex** | Protects the shared state (the condition itself) |
+| **Condition Variable** | Coordinates waiting and waking of threads |
+| **Predicate** | Boolean condition that determines when thread should wake |
 
-Condition variables require `std::unique_lock` (not `std::lock_guard`) because `wait()` needs to unlock the mutex while blocked and relock it when waking. `std::unique_lock` provides this flexibility—it supports manual lock/unlock operations required by the condition variable implementation. The mutex protects the shared state (the condition itself), and the condition variable coordinates waiting/waking. Always protect condition checks and modifications with the same mutex used with the condition variable.
+**Basic Operations:**
 
-#### Producer-Consumer Pattern
+```cpp
+std::mutex mtx;
+std::condition_variable cv;
+bool ready = false;
 
-The classic use case is the producer-consumer pattern: producers create work items and add them to a queue, consumers take items and process them. Condition variables coordinate this: consumers wait when the queue is empty (wake when producers add items), and producers wait when the queue is full (wake when consumers remove items, in bounded-buffer scenarios). This avoids busy-waiting and provides efficient thread synchronization with minimal CPU overhead.
+// Waiter thread:
+std::unique_lock<std::mutex> lock(mtx);
+cv.wait(lock, []{ return ready; });  // Wait until ready == true
 
-#### Real-World Applications in Autonomous Systems
+// Notifier thread:
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    ready = true;
+}
+cv.notify_one();  // Wake one waiting thread
+```
 
-In autonomous driving, perception threads produce sensor data (camera frames, LiDAR point clouds), placing them in queues for processing threads. A planning thread waits for updated world models from sensor fusion. Control threads wait for new path commands from the planner. Condition variables enable efficient event-driven coordination: threads sleep when no work is available, waking instantly when new data arrives, minimizing latency while conserving CPU for computation.
+---
+
+#### 2. The Wait-Notify Mechanism
+
+**wait() Operation Steps:**
+
+| Step | Action | Details |
+|------|--------|---------|
+| **1** | Check predicate | If already true, return immediately (no wait) |
+| **2** | Unlock mutex | Atomically release lock |
+| **3** | Block thread | OS removes thread from scheduler (sleep) |
+| **4** | Wake on notification | Triggered by notify_one/notify_all or spuriously |
+| **5** | Relock mutex | Atomically reacquire lock before returning |
+| **6** | Recheck predicate | Loop back if still false (spurious wakeup) |
+| **7** | Return | Predicate guaranteed true |
+
+**Predicate Form:**
+
+```cpp
+// ✅ Best practice - handles spurious wakeups automatically
+cv.wait(lock, []{ return ready; });
+
+// Equivalent manual loop:
+while (!ready) {
+    cv.wait(lock);  // Without predicate
+}
+```
+
+**Spurious Wakeups:**
+
+| Concept | Explanation |
+|---------|-------------|
+| **What** | Thread wakes from wait() without being notified |
+| **Why** | Implementation optimization, signal handling, OS scheduling |
+| **Protection** | Always use predicate form of wait() |
+| **Consequence without predicate** | Thread might proceed when condition still false → incorrect behavior |
+
+---
+
+#### 3. Why std::unique_lock is Required
+
+**Lock Type Comparison:**
+
+| Feature | std::lock_guard | std::unique_lock | Required for CV? |
+|---------|----------------|------------------|------------------|
+| **Manual unlock** | ❌ No | ✅ Yes | ✅ Essential |
+| **Manual relock** | ❌ No | ✅ Yes | ✅ Essential |
+| **Overhead** | Zero | Minimal | Worth it for flexibility |
+| **Use with wait()** | ❌ Compilation error | ✅ Works | - |
+
+**Why Flexibility Matters:**
+
+```cpp
+void consumer() {
+    std::unique_lock<std::mutex> lock(mtx);
+
+    // wait() needs to:
+    // 1. Unlock mtx (to let producer modify condition)
+    // 2. Sleep thread
+    // 3. Relock mtx (when woken)
+    // → unique_lock provides unlock()/lock() methods
+
+    cv.wait(lock, []{ return !queue.empty(); });
+    process(queue.front());
+}
+```
+
+---
+
+#### 4. Notification Strategies
+
+**notify_one() vs notify_all():**
+
+| Operation | Wakes | Use When | Example |
+|-----------|-------|----------|---------|
+| **notify_one()** | One thread | Only one thread can proceed | Single item added to queue |
+| **notify_all()** | All threads | Multiple threads can proceed or broadcast event | Shutdown signal, configuration change |
+
+**Notification Timing:**
+
+```cpp
+// Option 1: Notify inside lock
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    ready = true;
+    cv.notify_one();  // Inside lock
+}
+
+// Option 2: Notify outside lock (often better performance)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    ready = true;
+}  // Lock released here
+cv.notify_one();  // ✅ Outside lock - woken thread can acquire immediately
+```
+
+**Performance Trade-off:**
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Notify inside lock | Simple, all state changes atomic | Woken thread blocks again waiting for lock release |
+| Notify outside lock | Woken thread acquires lock faster | Slightly more complex (separate scope) |
+
+---
+
+#### 5. Producer-Consumer Pattern
+
+**Classic Coordination:**
+
+```cpp
+std::mutex mtx;
+std::condition_variable cv_not_empty;
+std::queue<Item> queue;
+
+// Producer:
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    queue.push(item);
+}
+cv_not_empty.notify_one();  // Wake consumer
+
+// Consumer:
+std::unique_lock<std::mutex> lock(mtx);
+cv_not_empty.wait(lock, []{ return !queue.empty(); });
+Item item = queue.front();
+queue.pop();
+```
+
+**Bounded Buffer (Two Condition Variables):**
+
+| Condition Variable | Waits When | Woken When |
+|-------------------|------------|------------|
+| **cv_not_full** | Buffer full (producer waits) | Consumer removes item |
+| **cv_not_empty** | Buffer empty (consumer waits) | Producer adds item |
+
+**Benefits vs Busy-Waiting:**
+
+| Approach | CPU Usage When Waiting | Latency | Power Consumption |
+|----------|----------------------|---------|-------------------|
+| **Busy-waiting** | 100% (spinning in loop) | Low (immediate detection) | High |
+| **Condition Variable** | 0% (thread sleeping) | Low (instant wake on notify) | Minimal |
+
+---
+
+#### 6. Real-World: Autonomous Driving Systems
+
+**Perception Pipeline Example:**
+
+| Component | Thread Role | CV Usage |
+|-----------|-------------|----------|
+| **Camera Capture (30Hz)** | Producer | Pushes frames to queue, notifies processing thread |
+| **Perception Processing** | Consumer | Waits for frames, wakes instantly on arrival |
+| **Planning (10Hz)** | Consumer | Waits for updated world model from sensor fusion |
+| **Control (100Hz)** | Consumer | Waits for new path commands from planner |
+
+**Critical Requirements:**
+
+```cpp
+// Camera thread:
+void camera_capture_thread() {
+    while (!shutdown) {
+        Frame frame = capture();  // 30 FPS
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            frame_queue.push(frame);
+        }
+        cv_frame_ready.notify_one();  // Instant wake
+    }
+}
+
+// Perception thread:
+void perception_thread() {
+    while (true) {
+        Frame frame;
+
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            cv_frame_ready.wait(lock, []{ return shutdown || !frame_queue.empty(); });
+
+            if (shutdown && frame_queue.empty()) break;
+
+            frame = frame_queue.front();
+            frame_queue.pop();
+        }
+
+        process_frame(frame);  // Object detection, 33ms deadline
+    }
+}
+```
+
+**Why This Matters:**
+
+| Metric | Requirement | CV Benefit |
+|--------|-------------|-----------|
+| **Latency** | < 5μs wake-up time | notify() wakes thread in 1-5μs |
+| **CPU Efficiency** | Processing thread should sleep when idle | 0% CPU when waiting vs 100% busy-wait |
+| **Real-time Deadlines** | Frame processing must start immediately | Instant wake on frame arrival |
+| **Power** | Automotive power budget constraints | Sleeping threads consume minimal power |
+
+---
+
+#### 7. Common Patterns Summary
+
+**Pattern Table:**
+
+| Pattern | Use Case | Key Components |
+|---------|----------|----------------|
+| **Producer-Consumer** | Work queue coordination | 1 CV (not_empty), shared queue |
+| **Bounded Buffer** | Limited capacity queue | 2 CVs (not_full, not_empty) |
+| **Barrier Sync** | Wait for N threads to reach point | Counter + CV + generation counter |
+| **Event Broadcast** | Signal all threads (shutdown) | Flag + notify_all() |
+| **Thread Pool** | Task distribution | Queue + workers waiting on CV |
+
+**Best Practices:**
+
+- ✅ Always use predicate form: `cv.wait(lock, predicate)`
+- ✅ Hold mutex when modifying condition
+- ✅ Same mutex for condition modification and wait()
+- ✅ Use `notify_one()` when only one thread can proceed
+- ✅ Use `notify_all()` for broadcast events (shutdown)
+- ✅ Include shutdown flag in predicates for graceful termination
+- ❌ Never use `lock_guard` with wait() (compilation error)
+- ❌ Never modify condition without holding mutex (data race)
 
 ---
 

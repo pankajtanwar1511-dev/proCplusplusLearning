@@ -2,21 +2,126 @@
 
 ### THEORY_SECTION: Core Concepts and Interface Design
 
-#### What are Pure Virtual Functions?
+#### 1. Pure Virtual Functions - Interface Contracts in C++
 
-A **pure virtual function** is a virtual function declared with the `= 0` syntax, indicating that it has no implementation in the base class and must be overridden by derived classes. The syntax `virtual void function() = 0;` tells the compiler that this function is purely an interface specification. Pure virtual functions serve as contracts that derived classes must fulfill, enabling true interface-based programming in C++. Unlike regular virtual functions that can optionally be overridden, pure virtual functions mandate that derived classes provide their own implementations before they can be instantiated.
+**Core characteristics:**
 
-Importantly, a pure virtual function can optionally have a body defined separately from the declaration. This seemingly contradictory feature allows base classes to provide default or shared behavior that derived classes can explicitly call, while still enforcing that derived classes must consciously override the function. This pattern is useful in scenarios where you want to ensure derived classes acknowledge and implement the function, while providing optional shared logic.
+| Aspect | Pure Virtual Function | Regular Virtual Function |
+|--------|----------------------|-------------------------|
+| **Syntax** | `virtual void func() = 0;` | `virtual void func() { /* body */ }` |
+| **Implementation in base** | Optional (can have body defined separately) | Required |
+| **Override requirement** | **Mandatory** - derived classes must override | Optional - derived classes can override |
+| **Makes class abstract** | Yes - class cannot be instantiated | No |
+| **Purpose** | Define interface contracts | Provide customizable behavior |
+| **When used** | When forcing all derived classes to implement | When providing default behavior that can be customized |
 
-#### What are Abstract Base Classes?
+**Key insight:** Despite the `= 0` syntax suggesting "no implementation," pure virtual functions can have a body defined outside the class declaration. This enables shared logic that derived classes can optionally call via `Base::func()` while still enforcing that they must override the function.
 
-An **Abstract Base Class (ABC)** is any class that contains at least one pure virtual function, making it non-instantiable. ABCs serve as interfaces or contracts in C++ object-oriented design, defining a common interface that derived classes must implement. You cannot create objects of abstract classes directly, but you can create pointers and references to them, enabling polymorphic behavior. Abstract base classes can contain data members, constructors, regular member functions, and even implementations for their pure virtual functions—they're not limited to just interface declarations.
+**Code example:**
+```cpp
+class Logger {
+public:
+    virtual void log(const std::string& msg) = 0;  // Pure virtual
+    virtual ~Logger() = default;
+};
 
-The primary purpose of ABCs is to enforce design contracts and enable polymorphism through well-defined interfaces. This pattern is fundamental to many design patterns including Strategy, Template Method, Factory, and Plugin architectures. ABCs allow you to write code against interfaces rather than concrete implementations, promoting loose coupling and enabling runtime flexibility. In interviews, understanding ABCs demonstrates knowledge of advanced OOP design principles and the ability to create maintainable, extensible systems.
+// Pure virtual CAN have a body
+void Logger::log(const std::string& msg) {
+    std::cout << "[BASE] " << msg << "\n";  // Shared logic
+}
 
-#### Why It Matters in Software Design
+class FileLogger : public Logger {
+public:
+    void log(const std::string& msg) override {
+        Logger::log(msg);  // Optionally call base implementation
+        std::cout << "[FILE] Writing to disk\n";
+    }
+};
+```
 
-Pure virtual functions and abstract base classes are essential for creating flexible, maintainable software architectures. They enable the Open/Closed Principle (open for extension, closed for modification) by allowing new functionality through new derived classes without changing existing code. ABCs are the foundation of plugin systems, where different implementations can be loaded at runtime, and they're crucial for dependency inversion, where high-level code depends on abstractions rather than concrete implementations. In interviews, questions about ABCs test your understanding of interface design, polymorphism, and the ability to separate interface from implementation—skills critical for senior engineering roles.
+---
+
+#### 2. Abstract Base Classes (ABCs) - Interface Design
+
+**Definition:** A class becomes abstract when it contains at least one pure virtual function, making it non-instantiable but usable through pointers/references for polymorphism.
+
+**ABC capabilities table:**
+
+| Feature | Abstract Base Class | Pure Interface (Strict) |
+|---------|-------------------|------------------------|
+| **Pure virtual functions** | At least one | All functions are pure virtual |
+| **Regular virtual functions** | Can have | Should not have (interface only) |
+| **Non-virtual functions** | Can have | Should not have |
+| **Data members** | Can have | Should not have (state-free) |
+| **Constructors** | Can have (called during derived construction) | Can have (typically protected) |
+| **Destructors** | Must be virtual | Must be virtual (can be pure) |
+| **Instantiation** | Cannot instantiate directly | Cannot instantiate directly |
+| **Pointers/References** | Can create (for polymorphism) | Can create (for polymorphism) |
+
+**Common ABC usage patterns:**
+
+| Design Pattern | ABC Role | Example |
+|---------------|----------|---------|
+| **Strategy** | Define algorithm interface | `virtual void execute() = 0;` |
+| **Template Method** | Define algorithm structure with hooks | Public non-virtual calls private pure virtuals |
+| **Abstract Factory** | Define object creation interface | `virtual Product* create() = 0;` |
+| **Observer** | Define update interface | `virtual void notify() = 0;` |
+| **Plugin Architecture** | Define plugin interface | Runtime loading of implementations |
+
+---
+
+#### 3. Design Principles and Real-World Impact
+
+**SOLID principles enabled by ABCs:**
+
+| Principle | How ABCs Enable It | Code Impact |
+|-----------|-------------------|-------------|
+| **Open/Closed** | Add new derived classes without modifying base | New functionality via new classes, not edits |
+| **Liskov Substitution** | Any derived object works through base pointer | Polymorphic code uses interfaces uniformly |
+| **Interface Segregation** | Create focused, specific interfaces | Clients depend only on methods they use |
+| **Dependency Inversion** | High-level code depends on abstractions | Decouples implementation from interface |
+
+**When to use ABCs:**
+
+| Scenario | Use ABC | Use Concrete Class |
+|----------|---------|-------------------|
+| Multiple implementations of same behavior | ✅ Define interface | ❌ Too rigid |
+| Plugin/module system | ✅ Load implementations at runtime | ❌ Compile-time only |
+| Testing with mocks | ✅ Mock implementations for tests | ❌ Hard to mock |
+| Dependency injection | ✅ Inject different implementations | ❌ Tight coupling |
+| Fixed, single implementation | ❌ Unnecessary abstraction | ✅ Simpler |
+
+**Code example - Dependency Inversion:**
+```cpp
+// ✅ Good: High-level code depends on abstraction
+class IDatabase {
+public:
+    virtual void save(const Data& d) = 0;
+    virtual ~IDatabase() = default;
+};
+
+class Application {
+    IDatabase* db;  // Depends on interface, not concrete class
+public:
+    Application(IDatabase* database) : db(database) {}
+    void processData(const Data& d) {
+        db->save(d);  // Works with ANY IDatabase implementation
+    }
+};
+
+// Can inject MySQL, PostgreSQL, MockDB, etc. at runtime
+
+// ❌ Bad: High-level code depends on concrete implementation
+class Application {
+    MySQLDatabase db;  // Tightly coupled to MySQL
+public:
+    void processData(const Data& d) {
+        db.save(d);  // Cannot swap database without code changes
+    }
+};
+```
+
+**Key takeaway:** ABCs are essential for writing flexible, testable, maintainable code that depends on interfaces rather than concrete implementations, enabling runtime polymorphism and adherence to SOLID principles.
 
 ### EDGE_CASES: Tricky Scenarios and Deep Internals
 

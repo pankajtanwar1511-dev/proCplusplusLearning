@@ -2,17 +2,142 @@
 
 ### THEORY_SECTION: Core Concepts and Object Construction
 
-#### What are Constructors?
+#### 1. Constructor Types - Object Initialization Mechanisms
 
-**Constructors** are special member functions that are automatically called when an object is created, responsible for initializing the object's state. C++ provides several types of constructors to handle different initialization scenarios: default constructors (taking no arguments), parameterized constructors (taking arguments), copy constructors (creating objects from existing objects of the same type), and move constructors (transferring resources from temporary objects). Each type serves a specific purpose in object lifecycle management and resource handling.
+**Constructor overview:**
 
-Understanding when the compiler generates constructors automatically is critical. If no constructors are defined, the compiler generates a default constructor. However, defining any constructor prevents automatic generation of the default constructor. Similarly, the compiler generates copy and move constructors under specific conditions, but defining custom special member functions can prevent automatic generation of others. This interplay between user-defined and compiler-generated constructors is governed by the Rule of Three/Five/Zero and affects object semantics significantly.
+| Constructor Type | Signature | When Called | Purpose | Auto-Generated |
+|-----------------|-----------|-------------|---------|----------------|
+| **Default** | `T()` or `T(args=defaults)` | No arguments provided | Initialize with default values | ✅ Only if no other constructors exist |
+| **Parameterized** | `T(Type1 arg1, Type2 arg2, ...)` | With specific arguments | Initialize with custom values | ❌ Never auto-generated |
+| **Copy** | `T(const T& other)` | From lvalue of same type | Create duplicate of existing object | ✅ Unless move/copy/destructor user-defined |
+| **Move** | `T(T&& other)` noexcept | From rvalue of same type | Transfer resources from temporary | ✅ Only if no special members user-defined |
 
-#### Member Initialization and Default Values
+**Compiler-generated constructor rules (Rule of Five):**
 
-A critical but often misunderstood aspect of constructors is how data members get their initial values. For built-in types (int, float, pointers) in non-static objects, members are **uninitialized by default**—they contain garbage values unless explicitly initialized. This is a common source of undefined behavior. For class-type members, their default constructors are called automatically. Static and global objects are zero-initialized by default, providing safe initial values.
+| You Declare | Default | Copy | Move | Reason |
+|-------------|---------|------|------|--------|
+| **Nothing** | ✅ Generated | ✅ Generated | ✅ Generated | Full automatic support |
+| **Any constructor** | ❌ Suppressed | ✅ Generated | ✅ Generated | Explicit construction required |
+| **Copy constructor** | ❌ Suppressed | User-defined | ❌ Suppressed | Resource management indicated |
+| **Move constructor** | ❌ Suppressed | ❌ Suppressed | User-defined | Resource management indicated |
+| **Destructor** | ❌ Suppressed | ✅ Generated (deprecated) | ❌ Suppressed | Resource management indicated |
+| **Copy assignment** | ❌ Suppressed | ✅ Generated | ❌ Suppressed | Resource management indicated |
 
-C++ offers multiple ways to initialize members: assignment in the constructor body (least efficient), member initializer lists (most efficient and sometimes mandatory), in-class member initializers (C++11+, good for default values), and delegating constructors (C++11+, reducing code duplication). The member initializer list is preferred because it performs direct initialization rather than default-initialization followed by assignment. It's mandatory for const members, reference members, and members without default constructors. Understanding initialization order—determined by declaration order, not initializer list order—is crucial for avoiding subtle bugs.
+**Key insight:** Declaring any constructor suppresses automatic default constructor generation. Use `= default` to restore: `T() = default;`
+
+**Code example:**
+```cpp
+class Resource {
+public:
+    Resource() { /* default */ }                    // Default constructor
+    Resource(int size) { /* param */ }              // Parameterized
+    Resource(const Resource& other) { /* copy */ }  // Copy constructor
+    Resource(Resource&& other) noexcept { /* move */ }  // Move constructor
+    ~Resource() { /* cleanup */ }                   // Destructor
+};
+```
+
+---
+
+#### 2. Member Initialization - Default Values and Initialization Methods
+
+**Default values by type and context:**
+
+| Member Type | Non-Static Local/Member Object | Static/Global Object | Safe? |
+|-------------|-------------------------------|---------------------|-------|
+| **Built-in types** (int, float, char) | ❌ **Garbage (undefined behavior)** | ✅ Zero-initialized | ❌ Must explicitly initialize |
+| **Pointers** (T*) | ❌ **Garbage (dangerous)** | ✅ nullptr | ❌ Must explicitly initialize |
+| **Class types** (std::string, std::vector) | ✅ Default constructor called | ✅ Default constructor called | ✅ Automatic initialization |
+| **const members** | Must initialize (initializer list) | Must initialize | N/A - Requires explicit initialization |
+| **Reference members** | Must initialize (initializer list) | Must initialize | N/A - Requires explicit initialization |
+
+**CRITICAL:** Built-in types in non-static objects contain **garbage values** unless explicitly initialized. This is a common source of undefined behavior, security vulnerabilities, and heisenbugs.
+
+**Member initialization methods comparison:**
+
+| Method | Syntax | Performance | When to Use | Restrictions |
+|--------|--------|-------------|-------------|--------------|
+| **Constructor body assignment** | `T() { member = value; }` | ❌ Slow (default-construct + assign) | Avoid if possible | Cannot use for const/ref members |
+| **Member initializer list** | `T() : member(value) {}` | ✅ Optimal (direct initialization) | **Preferred method** | Required for const/ref/no-default-ctor |
+| **In-class initializer (C++11+)** | `int member = 0;` | ✅ Optimal | Default values for all constructors | Overridden by initializer list |
+| **Delegating constructor (C++11+)** | `T() : T(default_value) {}` | ✅ Optimal | Reduce code duplication | Cannot mix with member initialization |
+
+**Code example - initialization methods:**
+```cpp
+class Configuration {
+    // In-class initializers (C++11+) - provide defaults
+    int timeout = 30;
+    bool enabled = true;
+    std::string mode = "standard";
+    const int maxConnections;  // Must initialize in initializer list
+
+public:
+    // ✅ Good: Member initializer list (direct initialization)
+    Configuration(int max) : maxConnections(max) {
+        // timeout, enabled, mode use in-class defaults
+    }
+
+    // ✅ Good: Overrides defaults with initializer list
+    Configuration(int max, int t, bool e)
+        : maxConnections(max), timeout(t), enabled(e) {}
+
+    // ❌ Bad: Assignment in constructor body (inefficient)
+    // Configuration(int max) {
+    //     maxConnections = max;  // ❌ Error: cannot assign to const
+    //     mode = "custom";       // ❌ Inefficient: default-construct then assign
+    // }
+};
+```
+
+---
+
+#### 3. Initialization Order and Pitfalls
+
+**Member initialization order (CRITICAL):**
+
+| Order Step | What Initializes | Determined By | Common Mistake |
+|-----------|------------------|---------------|----------------|
+| **1. Virtual base classes** | Most derived class controls initialization | Inheritance hierarchy | Forgetting virtual base init |
+| **2. Direct base classes** | Left to right in declaration order | Class declaration | Wrong base init order assumed |
+| **3. Member variables** | **Declaration order (NOT initializer list order)** | Class declaration | **Relying on list order instead** |
+| **4. Constructor body** | Executes after all members initialized | Code execution | Assuming members uninitialized in body |
+
+**DANGER:** Members are initialized in **declaration order**, not initializer list order. Relying on list order causes undefined behavior.
+
+**Code example - initialization order bug:**
+```cpp
+class Dangerous {
+    int second;  // Declared first
+    int first;   // Declared second
+
+public:
+    // ❌ Bug: initializer list order doesn't matter
+    Dangerous(int x) : first(x), second(first + 1) {
+        // Actual order: second initialized first (declaration order)
+        // second = first + 1, but first is UNINITIALIZED
+        // Result: second contains garbage
+    }
+
+    // ✅ Fix: Match initializer list to declaration order
+    Dangerous(int x) : second(x), first(second + 1) {
+        // Now safe: second initialized first with x,
+        // then first initialized with second + 1
+    }
+};
+```
+
+**Best practices for avoiding initialization bugs:**
+
+| Practice | Why | Example |
+|----------|-----|---------|
+| **Match initializer list to declaration order** | Prevents using uninitialized members | List members top-to-bottom as declared |
+| **Avoid inter-member dependencies** | Safer initialization | Each member initialized independently |
+| **Always initialize built-in types** | Prevent garbage values | `int x = 0;` or `: x(0)` |
+| **Use const for values that shouldn't change** | Compile-time enforcement | `const int maxSize = 100;` |
+| **Use initializer lists, not body assignment** | Required for const/ref, more efficient | `: member(value)` |
+
+**Key takeaway:** Always use member initializer lists for efficiency and correctness. Members initialize in **declaration order**, not list order. Explicitly initialize all built-in types to avoid undefined behavior.
 
 ### EDGE_CASES: Tricky Scenarios and Deep Internals
 
