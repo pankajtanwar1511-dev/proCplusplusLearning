@@ -1,8 +1,13 @@
 import axios from 'axios';
 
 // Create axios instance with default config
+// Use environment variable for API URL in production, fallback to /api for local development
+const API_BASE_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api`
+  : '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

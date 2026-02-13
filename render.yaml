@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cpp-master-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r app/backend/requirements_v2.txt
+    startCommand: cd app/backend && gunicorn --bind 0.0.0.0:$PORT app_v3:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
