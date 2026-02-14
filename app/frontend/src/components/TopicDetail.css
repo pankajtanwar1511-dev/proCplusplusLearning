@@ -211,15 +211,30 @@
   font-weight: 500;
 }
 
+/* Table wrapper for mobile scrolling */
+.markdown-content {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Responsive table */
 @media (max-width: 768px) {
   .markdown-content table {
     font-size: 0.8rem;
+    display: table;
+    width: max-content;
+    min-width: 100%;
   }
 
   .markdown-content table th,
   .markdown-content table td {
     padding: 0.75rem 0.5rem;
+  }
+
+  /* Ensure content card allows horizontal scroll */
+  .content-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
