@@ -26,23 +26,24 @@ const CatalogDashboard = ({ user }) => {
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
       // Load catalog info
-      const catalogsResponse = await fetch('http://localhost:5000/api/catalogs');
+      const catalogsResponse = await fetch(`${API_URL}/api/catalogs`);
       const catalogsData = await catalogsResponse.json();
       const currentCatalog = catalogsData.catalogs.find(c => c.name === catalog);
       setCatalogInfo(currentCatalog);
 
       // Load catalog-specific stats
-      const statsResponse = await fetch(`http://localhost:5000/api/${catalog}/stats`);
+      const statsResponse = await fetch(`${API_URL}/api/${catalog}/stats`);
       const statsData = await statsResponse.json();
 
       // Load chapters
-      const chaptersResponse = await fetch(`http://localhost:5000/api/${catalog}/chapters`);
+      const chaptersResponse = await fetch(`${API_URL}/api/${catalog}/chapters`);
       const chaptersData = await chaptersResponse.json();
 
       // Load all topics
-      const topicsResponse = await fetch('http://localhost:5000/api/topics');
+      const topicsResponse = await fetch(`${API_URL}/api/topics`);
       const topicsData = await topicsResponse.json();
 
       // Filter topics for this catalog and group by chapter
@@ -60,7 +61,7 @@ const CatalogDashboard = ({ user }) => {
       });
 
       // Load quiz history
-      const historyResponse = await fetch('http://localhost:5000/api/quiz/history');
+      const historyResponse = await fetch(`${API_URL}/api/quiz/history`);
       const historyData = await historyResponse.json();
 
       // Filter quizzes for this catalog
