@@ -9,6 +9,7 @@
   padding: 2rem;
   transition: margin-left 0.3s ease-in-out;
   overflow-y: auto;
+  min-width: 0; /* prevent flex overflow */
 }
 
 .main-content.sidebar-open {
@@ -19,15 +20,37 @@
   margin-left: 80px;
 }
 
+/* Sidebar overlay - shown on mobile when sidebar is open */
+.sidebar-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    animation: fadeIn 0.2s ease-in-out;
+  }
+
   .main-content {
     padding: 1rem;
+    padding-top: 0.75rem;
   }
 
   .main-content.sidebar-open,
   .main-content.sidebar-closed {
     margin-left: 0;
     padding-bottom: 80px; /* Space for mobile bottom nav */
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0.75rem;
+    padding-bottom: 80px;
   }
 }
 

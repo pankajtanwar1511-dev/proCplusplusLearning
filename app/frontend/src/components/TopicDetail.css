@@ -486,11 +486,11 @@
   .quiz-intro-card,
   .quiz-history-section,
   .notes-content {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .quiz-intro-card {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
   }
 
   .quiz-stats {
@@ -504,11 +504,31 @@
 
   .tabs {
     gap: 0;
+    padding-bottom: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .tab {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.75rem 0.75rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .markdown-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1rem;
   }
 
   .quiz-history-item {
@@ -528,5 +548,45 @@
 
   .theory-actions .btn {
     flex: 1;
+  }
+
+  .notes-editor textarea {
+    min-height: 280px;
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+}
+
+@media (max-width: 480px) {
+  .tab {
+    padding: 0.625rem 0.5rem;
+    font-size: 0.75rem;
+    gap: 0.25rem;
+  }
+
+  .tab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .topic-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .topic-subtitle {
+    font-size: 1rem;
+  }
+
+  .content-card,
+  .example-card {
+    padding: 1rem;
+  }
+
+  .code-block-wrapper pre {
+    font-size: 0.75rem;
+  }
+
+  .copy-button {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.7rem;
   }
 }

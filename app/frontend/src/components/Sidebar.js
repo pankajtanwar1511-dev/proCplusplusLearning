@@ -95,6 +95,12 @@ const Sidebar = ({ isOpen, onToggle, user }) => {
               key={item.path}
               to={item.path}
               className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+              onClick={() => {
+                // Close sidebar on mobile when a nav item is clicked
+                if (window.innerWidth <= 768 && onToggle) {
+                  onToggle();
+                }
+              }}
             >
               <item.icon size={20} />
               {isOpen && <span>{item.label}</span>}

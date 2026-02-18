@@ -141,7 +141,7 @@
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
@@ -473,10 +473,14 @@
   }
 
   /* ===== TABLES ===== */
-  table {
+  /* Only make actual HTML tables scrollable, not div-based tables */
+  .markdown-content table,
+  .content-card > table,
+  .table-scroll {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    max-width: 100%;
   }
 
   /* ===== IMAGES ===== */
@@ -537,9 +541,9 @@
     border-radius: 0.75rem;
   }
 
-  /* Single column stats */
+  /* Keep 2-column stats grid on small phones for density */
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   /* Compact catalog cards */

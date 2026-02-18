@@ -16,7 +16,8 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Start sidebar closed on mobile (width <= 768px), open on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
 
   useEffect(() => {
     console.log('🚀 APP.JS VERSION: 2025-02-11-LATEST - NO loadChapters function exists in this version');
@@ -69,6 +70,8 @@ function App() {
           element={
             <div className="app">
               <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} user={user} />
+              {/* Overlay to close sidebar on mobile tap-outside */}
+              {sidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar} />}
               <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
                 <Routes>
                   <Route path="dashboard" element={<CatalogDashboard user={user} />} />
@@ -91,6 +94,7 @@ function App() {
           element={
             <div className="app">
               <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} user={user} />
+              {sidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar} />}
               <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
                 <Routes>
                   <Route path="/dashboard" element={<Dashboard user={user} />} />
