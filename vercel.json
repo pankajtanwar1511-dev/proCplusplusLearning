@@ -1,8 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "installCommand": "npm install",
-  "framework": "create-react-app",
-  "rootDirectory": "app/frontend"
+  "buildCommand": "cd app/frontend && npm install && npm run build",
+  "outputDirectory": "app/frontend/build",
+  "installCommand": "echo 'install handled in buildCommand'"
 }
