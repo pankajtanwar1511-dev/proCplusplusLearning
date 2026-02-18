@@ -40,6 +40,7 @@ const TopicsList = () => {
     if (urlCatalog !== 'all' && urlCatalog !== selectedCatalog) {
       setSelectedCatalog(urlCatalog);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlCatalog]);
 
   const loadTopics = async () => {

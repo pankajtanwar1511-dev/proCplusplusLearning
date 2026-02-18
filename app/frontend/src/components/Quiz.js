@@ -39,6 +39,7 @@ const Quiz = () => {
 
   useEffect(() => {
     loadTopic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId]);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ const Quiz = () => {
 
       return () => clearInterval(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizStarted, quizCompleted]);
 
   const loadTopic = async () => {

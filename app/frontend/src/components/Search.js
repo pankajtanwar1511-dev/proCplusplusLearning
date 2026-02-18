@@ -41,6 +41,7 @@ const Search = () => {
     }, 300); // Debounce search
 
     return () => clearTimeout(delaySearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const performSearch = async () => {
