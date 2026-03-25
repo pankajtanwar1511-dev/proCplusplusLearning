@@ -4,7 +4,7 @@
 
 ### Step 1: Backup Your Current Files
 ```bash
-cd /home/pankaj/cplusplus/proCplusplus/app/frontend_v2
+cd /home/pankaj/cplusplus/proCplusplus/app/frontend
 
 # Backup current config
 cp tailwind.config.js tailwind.config.OLD.js
