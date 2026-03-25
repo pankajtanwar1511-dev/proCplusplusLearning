@@ -1721,7 +1721,7 @@ if (map.size() >= map.bucket_count() * map.max_load_factor() - 5) {
 
 ### PRACTICE_TASKS: Output Prediction and Code Analysis
 
-#### Task 1
+#### Q1
 ```cpp
 #include <vector>
 #include <thread>
@@ -1749,7 +1749,7 @@ int main() {
 // What are the possible outputs? Is this code safe?
 ```
 
-#### Task 2
+#### Q2
 ```cpp
 const std::map<int, std::string> config = {{1, "one"}, {2, "two"}};
 
@@ -1761,7 +1761,7 @@ void thread1() {
 // Does this compile? Why or why not?
 ```
 
-#### Task 3
+#### Q3
 ```cpp
 std::unordered_map<int, int> map;
 
@@ -1780,7 +1780,7 @@ void thread2() {
 // What can go wrong in this code?
 ```
 
-#### Task 4
+#### Q4
 ```cpp
 std::vector<bool> flags(10);
 
@@ -1790,7 +1790,7 @@ void thread2() { flags[1] = true; }
 // Is this safe? Why or why not?
 ```
 
-#### Task 5
+#### Q5
 ```cpp
 std::vector<int> vec = {1, 2, 3, 4, 5};
 
@@ -1807,7 +1807,7 @@ void thread2() {
 // What could happen when thread1 dereferences the iterator?
 ```
 
-#### Task 6
+#### Q6
 ```cpp
 std::unordered_map<int, int> map;
 map.reserve(100);
@@ -1827,7 +1827,7 @@ void thread2() {
 // Is this safe because we called reserve(100)?
 ```
 
-#### Task 7
+#### Q7
 ```cpp
 const std::vector<int> vec = {1, 2, 3, 4, 5};
 
@@ -1838,7 +1838,7 @@ void reader3() { int z = vec[2]; }
 // Can all three threads run concurrently without synchronization?
 ```
 
-#### Task 8
+#### Q8
 ```cpp
 std::map<int, int> map;
 std::mutex mtx;
@@ -1859,7 +1859,7 @@ void find(int key) {
 // Is this implementation thread-safe? Any improvements possible?
 ```
 
-#### Task 9
+#### Q9
 ```cpp
 std::vector<int> results;
 
@@ -1873,7 +1873,7 @@ void compute_worker(int start, int end) {
 // What's the problem?
 ```
 
-#### Task 10
+#### Q10
 ```cpp
 std::unordered_map<int, int> map;
 

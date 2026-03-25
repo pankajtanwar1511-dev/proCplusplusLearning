@@ -2,13 +2,31 @@
 """
 Markdown to JSON Converter for C++ Learning Content
 
-This script parses structured markdown files from the data/ directory
-and converts them into structured JSON format for use in the learning app.
+This script parses structured markdown files into JSON format for the C++ learning platform.
+
+ACCEPTED MARKDOWN FORMATS:
+================================================================================
+Section Headers (both formats accepted):
+  - ### SECTION_NAME: Subtitle  (preferred - includes descriptive subtitle)
+  - ### SECTION_NAME             (also accepted - no subtitle)
+
+Required sections: THEORY_SECTION, EDGE_CASES, CODE_EXAMPLES, INTERVIEW_QA,
+                   PRACTICE_TASKS, QUICK_REFERENCE
+
+Subsection Formats:
+  - Edge Cases:     #### Edge Case N: Title
+  - Code Examples:  #### Example N: Title
+  - Interview QA:   #### QN: Question text?  (question in header - preferred)
+                    #### QN                  (question in body - also accepted)
+  - Practice Tasks: #### QN                  (description follows in body)
+  - Quick Reference: No subsections required
 
 Usage:
-    python markdown_to_json.py
-    python markdown_to_json.py --chapter 1  # Process specific chapter
-    python markdown_to_json.py --output custom_output/  # Custom output dir
+    python3 markdown_to_json.py                    # Process all chapters
+    python3 markdown_to_json.py --chapter 1        # Process specific chapter
+    python3 markdown_to_json.py --output custom/   # Custom output directory
+
+Output: Generates JSON files in processed_data/json_output/
 """
 
 import os
@@ -21,15 +39,18 @@ from collections import defaultdict
 
 
 class MarkdownParser:
-    """Parses structured C++ learning markdown files into JSON format."""
+    """Parses structured C++ learning markdown files with STRICT pattern enforcement."""
 
     def __init__(self, data_dir: str = "../../data", output_dir: str = "../json_output"):
         self.data_dir = Path(data_dir)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.warnings = []  # Track pattern violations
 
     def parse_file(self, filepath: Path) -> Dict[str, Any]:
         """Parse a single markdown file into structured JSON."""
+        self.warnings = []  # Reset warnings for each file
+
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
 
@@ -43,7 +64,10 @@ class MarkdownParser:
             topic_match = re.search(r'^#\s+Topic\s+[\d.]+:\s+(.+)$', content, re.MULTILINE)
             topic_name = topic_match.group(1).strip() if topic_match else filepath.stem
 
-        # Parse each major section
+        # Validate section headers follow strict format
+        self._validate_section_headers(content, filepath.name)
+
+        # Parse each major section with strict patterns
         sections = {
             "topic": topic_name,
             "filename": filepath.name,
@@ -55,33 +79,49 @@ class MarkdownParser:
             "quick_reference": self._parse_quick_reference(content)
         }
 
+        # Print warnings if any pattern violations found
+        if self.warnings:
+            print(f"  ⚠️  Pattern warnings in {filepath.name}:")
+            for warning in self.warnings:
+                print(f"      {warning}")
+
         return sections
 
+    def _validate_section_headers(self, content: str, filename: str):
+        """Validate that all section headers follow the standardized pattern: ### SECTION_NAME: Subtitle"""
+        required_sections = [
+            'THEORY_SECTION',
+            'EDGE_CASES',
+            'CODE_EXAMPLES',
+            'INTERVIEW_QA',
+            'PRACTICE_TASKS',
+            'QUICK_REFERENCE'
+        ]
+
+        for section in required_sections:
+            # Check for correct format: ### SECTION_NAME (with or without colon/subtitle)
+            if f'### {section}' not in content:
+                # Check if wrong formats exist
+                if f'## {section}' in content:
+                    self.warnings.append(f"Section '{section}' uses ## instead of ### (should be: ### {section})")
+
     def _parse_theory_section(self, content: str) -> Dict[str, Any]:
-        """Extract THEORY_SECTION content."""
-        # Try ### first (3 hashes - standard format) - colon is optional
+        """Extract THEORY_SECTION content - Accepts with or without subtitle."""
+        # Pattern accepts: ### THEORY_SECTION or ### THEORY_SECTION: Subtitle
         match = re.search(
-            r'### THEORY_SECTION:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### THEORY_SECTION(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (2 hashes - used in some chapters like 9, 11-16) - colon is optional
-        if not match:
-            match = re.search(
-                r'## THEORY_SECTION:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return {"subsections": []}
 
-        theory_content = match.group(2).strip()
+        theory_content = match.group(1).strip()
 
-        # Split by ### or #### headers (subsections) - support both 3 and 4 hashes
+        # Split by #### headers (subsections) - STRICT: only 4 hashes
         subsections = []
-        subsection_pattern = r'####+\s+(.+?)\n(.*?)(?=\n####+|\Z)'
+        subsection_pattern = r'####\s+(.+?)\n(.*?)(?=\n####|\Z)'
 
         for sub_match in re.finditer(subsection_pattern, theory_content, re.DOTALL):
             subsections.append({
@@ -95,78 +135,58 @@ class MarkdownParser:
         }
 
     def _parse_edge_cases(self, content: str) -> List[Dict[str, Any]]:
-        """Extract edge cases with code examples."""
-        # Try ### first (3 hashes) - colon is optional
+        """Extract edge cases - Accepts with or without subtitle."""
+        # Pattern accepts: ### EDGE_CASES or ### EDGE_CASES: Subtitle
         match = re.search(
-            r'### EDGE_CASES:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### EDGE_CASES(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (2 hashes) - colon is optional
-        if not match:
-            match = re.search(
-                r'## EDGE_CASES:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return []
 
-        edge_cases_content = match.group(2).strip()
+        edge_cases_content = match.group(1).strip()
         edge_cases = []
 
-        # Match #### or ### Edge Case N: title (support both 3 and 4 hashes)
-        case_pattern = r'####?\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n####?\s+Edge Case|\Z)'
+        # STRICT PATTERN: #### Edge Case N: title (exactly 4 hashes, with colon)
+        case_pattern = r'####\s+Edge Case (\d+):\s+(.+?)\n(.*?)(?=\n####\s+Edge Case|\Z)'
 
         for case_match in re.finditer(case_pattern, edge_cases_content, re.DOTALL):
-            title = case_match.group(1).strip()
-            body = case_match.group(2).strip()
-
-            # Extract code blocks
-            code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
-
-            # Keep full markdown content (don't remove code blocks)
-            # ReactMarkdown will render them properly
+            case_num = case_match.group(1)
+            title = case_match.group(2).strip()
+            body = case_match.group(3).strip()
 
             edge_cases.append({
+                "case_number": int(case_num),
                 "title": title,
-                "explanation": body.strip(),  # Keep full content including code blocks
-                "code_examples": [code.strip() for code in code_blocks]
+                "explanation": body.strip()
             })
 
         return edge_cases
 
     def _parse_code_examples(self, content: str) -> List[Dict[str, Any]]:
-        """Extract code examples section."""
-        # Try ### first (3 hashes) - colon is optional
+        """Extract code examples - Accepts with or without subtitle."""
+        # Pattern accepts: ### CODE_EXAMPLES or ### CODE_EXAMPLES: Subtitle
         match = re.search(
-            r'### CODE_EXAMPLES:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### CODE_EXAMPLES(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (2 hashes) - colon is optional
-        if not match:
-            match = re.search(
-                r'## CODE_EXAMPLES:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return []
 
-        examples_content = match.group(2).strip()
+        examples_content = match.group(1).strip()
         examples = []
 
-        # Match #### or ### Example N: title (support both 3 and 4 hashes)
-        example_pattern = r'####?\s+Example \d+:\s+(.+?)\n(.*?)(?=\n####?\s+Example|\Z)'
+        # STRICT PATTERN: #### Example N: title (exactly 4 hashes, with colon)
+        example_pattern = r'####\s+Example (\d+):\s+(.+?)\n(.*?)(?=\n####\s+Example|\Z)'
 
         for ex_match in re.finditer(example_pattern, examples_content, re.DOTALL):
-            title = ex_match.group(1).strip()
-            body = ex_match.group(2).strip()
+            example_num = ex_match.group(1)
+            title = ex_match.group(2).strip()
+            body = ex_match.group(3).strip()
 
             # Extract code blocks
             code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
@@ -175,6 +195,7 @@ class MarkdownParser:
             explanation = re.sub(r'```(?:cpp|c\+\+)?.*?```', '', body, flags=re.DOTALL)
 
             examples.append({
+                "example_number": int(example_num),
                 "title": title,
                 "explanation": explanation.strip(),
                 "code": code_blocks[0].strip() if code_blocks else "",
@@ -184,59 +205,64 @@ class MarkdownParser:
         return examples
 
     def _parse_interview_qa(self, content: str) -> List[Dict[str, Any]]:
-        """Extract interview questions with metadata."""
-        # Try ### first (standard format) - colon is optional
+        """Extract interview QA - Accepts with or without subtitle and question in header."""
+        # Pattern accepts: ### INTERVIEW_QA or ### INTERVIEW_QA: Subtitle
         match = re.search(
-            r'### INTERVIEW_QA:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### INTERVIEW_QA(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (used in some chapter 9 files) - colon is optional
-        if not match:
-            match = re.search(
-                r'## INTERVIEW_QA:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return []
 
-        qa_content = match.group(2).strip()
+        qa_content = match.group(1).strip()
         questions = []
 
-        # Match #### or ### QN: question (support both 3 and 4 hashes)
-        question_pattern = r'####?\s+Q\d+:\s+(.+?)\n(.*?)(?=\n####?\s+Q|\Z)'
+        # Pattern accepts both: #### Q1 or #### Q1: Question text?
+        question_pattern = r'####\s+Q(\d+)(?::\s*([^\n]+))?\s*\n(.*?)(?=\n####\s+Q|\Z)'
 
         for q_match in re.finditer(question_pattern, qa_content, re.DOTALL):
-            question_text = q_match.group(1).strip()
-            body = q_match.group(2).strip()
+            question_num = q_match.group(1)
+            question_in_header = q_match.group(2)  # Question from header (if exists)
+            body = q_match.group(3).strip()
+
+            # Determine question text source
+            if question_in_header:
+                # Question is in header: #### Q1: Question text?
+                question_text = question_in_header.strip()
+                rest_body = body
+            else:
+                # Question is in body (first line)
+                lines = body.split('\n', 1)
+                question_text = lines[0].strip()
+                rest_body = lines[1] if len(lines) > 1 else ""
 
             # Extract metadata tags
-            difficulty = re.search(r'\*\*Difficulty:\*\*\s*([#\w\s]+)', body)
-            category = re.search(r'\*\*Category:\*\*\s*([#\w\s]+)', body)
-            concepts = re.search(r'\*\*Concepts:\*\*\s*([#\w\s]+)', body)
+            difficulty = re.search(r'\*\*Difficulty:\*\*\s*([#\w\s]+)', rest_body)
+            category = re.search(r'\*\*Category:\*\*\s*([#\w\s]+)', rest_body)
+            concepts = re.search(r'\*\*Concepts:\*\*\s*([#\w\s]+)', rest_body)
 
             # Extract answer
-            answer_match = re.search(r'\*\*Answer:\*\*\s*(.*?)(?=\n\*\*|\Z)', body, re.DOTALL)
+            answer_match = re.search(r'\*\*Answer:\*\*\s*(.*?)(?=\n\*\*|\Z)', rest_body, re.DOTALL)
 
             # Extract explanation
-            explanation_match = re.search(r'\*\*Explanation:\*\*\s*(.*?)(?=\n\*\*|\Z)', body, re.DOTALL)
+            explanation_match = re.search(r'\*\*Explanation:\*\*\s*(.*?)(?=\n\*\*|\Z)', rest_body, re.DOTALL)
 
             # Extract code examples
             code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
 
             # Extract key takeaway
-            takeaway_match = re.search(r'\*\*Key takeaway:\*\*\s*(.+?)(?=\n---|$)', body, re.DOTALL)
+            takeaway_match = re.search(r'\*\*Key takeaway:\*\*\s*(.+?)(?=\n---|$)', rest_body, re.DOTALL)
 
             questions.append({
+                "question_number": int(question_num),
                 "question": question_text,
                 "difficulty": self._parse_tags(difficulty.group(1) if difficulty else ""),
                 "category": self._parse_tags(category.group(1) if category else ""),
                 "concepts": self._parse_tags(concepts.group(1) if concepts else ""),
                 "answer": answer_match.group(1).strip() if answer_match else "",
-                "explanation": explanation_match.group(1).strip() if explanation_match else "",
+                "explanation": explanation_match.group(1).strip() if explanation_match else body.strip(),
                 "code_examples": [code.strip() for code in code_blocks],
                 "key_takeaway": takeaway_match.group(1).strip() if takeaway_match else ""
             })
@@ -244,84 +270,67 @@ class MarkdownParser:
         return questions
 
     def _parse_practice_tasks(self, content: str) -> List[Dict[str, Any]]:
-        """Extract practice tasks (output prediction, code analysis)."""
-        # Try ### first (3 hashes) - colon is optional
+        """Extract practice tasks - Accepts with or without subtitle."""
+        # Pattern accepts: ### PRACTICE_TASKS or ### PRACTICE_TASKS: Subtitle
         match = re.search(
-            r'### PRACTICE_TASKS:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### PRACTICE_TASKS(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (2 hashes) - colon is optional
-        if not match:
-            match = re.search(
-                r'## PRACTICE_TASKS:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return []
 
-        practice_content = match.group(2).strip()
+        practice_content = match.group(1).strip()
         tasks = []
 
-        # Match ### or #### QN (like Q1, Q2) or Task N: title or Practice N: title (support both 3 and 4 hashes)
-        task_pattern = r'####?\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n####?\s+(?:Q\d+|Task|Practice)|\Z)'
+        # STRICT PATTERN: #### QN (exactly 4 hashes, no colon)
+        task_pattern = r'####\s+Q(\d+)\s*\n(.*?)(?=\n####\s+Q|\Z)'
 
         for task_match in re.finditer(task_pattern, practice_content, re.DOTALL):
-            # Get question number or title
-            question_num = task_match.group(1)  # Q1, Q2, etc.
-            title = task_match.group(2)  # Task title if provided
-            body = task_match.group(3).strip()
+            question_num = task_match.group(1)
+            body = task_match.group(2).strip()
 
-            # If it's a Q format, use "Question N" as title
-            if question_num:
-                display_title = f"Question {question_num}"
-            else:
-                display_title = title.strip() if title else "Practice Task"
+            # First line is the task description
+            lines = body.split('\n', 1)
+            description = lines[0].strip()
+            rest_body = lines[1] if len(lines) > 1 else ""
 
             # Extract code blocks
             code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
 
-            # Extract expected output (usually in comments or separate blocks)
+            # Extract expected output
             output_match = re.search(r'(?:Output:|Expected output:|Answer:)\s*```?\s*(.+?)```?', body, re.DOTALL | re.IGNORECASE)
 
-            # Remove code blocks to get explanation
-            explanation = re.sub(r'```(?:cpp|c\+\+)?.*?```', '', body, flags=re.DOTALL)
+            # Extract solution if provided
+            solution_match = re.search(r'\*\*Solution:\*\*\s*(.*?)(?=\n\*\*|\Z)', rest_body, re.DOTALL)
 
             tasks.append({
-                "question_number": int(question_num) if question_num else None,
-                "title": display_title,
-                "description": explanation.strip(),
+                "question_number": int(question_num),
+                "title": f"Question {question_num}",
+                "description": description,
+                "full_content": body.strip(),
                 "code": code_blocks[0].strip() if code_blocks else "",
                 "expected_output": output_match.group(1).strip() if output_match else "",
+                "solution": solution_match.group(1).strip() if solution_match else "",
                 "additional_code": [code.strip() for code in code_blocks[1:]]
             })
 
         return tasks
 
     def _parse_quick_reference(self, content: str) -> Dict[str, Any]:
-        """Extract quick reference section (answer keys, comparison tables)."""
-        # Try ### first (3 hashes) - colon is optional
+        """Extract quick reference - Accepts with or without subtitle."""
+        # Pattern accepts: ### QUICK_REFERENCE or ### QUICK_REFERENCE: Subtitle
         match = re.search(
-            r'### QUICK_REFERENCE:?\s*([^\n]*)\n(.*?)(?=\n### [A-Z_]|\Z)',
+            r'### QUICK_REFERENCE(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
             content,
             re.DOTALL
         )
 
-        # Fallback to ## (2 hashes) - colon is optional
-        if not match:
-            match = re.search(
-                r'## QUICK_REFERENCE:?\s*([^\n]*)\n(.*?)(?=\n## [A-Z_]|\Z)',
-                content,
-                re.DOTALL
-            )
-
         if not match:
             return {"content": ""}
 
-        reference_content = match.group(2).strip()
+        reference_content = match.group(1).strip()
 
         # Extract tables (markdown tables)
         tables = []
@@ -362,6 +371,8 @@ class MarkdownParser:
                 topics.append(topic_data)
             except Exception as e:
                 print(f"  ❌ Error parsing {md_file.name}: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
 
         chapter_data = {
@@ -389,8 +400,6 @@ class MarkdownParser:
         """Process all chapter directories."""
         chapter_dirs = sorted([d for d in self.data_dir.iterdir()
                               if d.is_dir() and d.name.startswith('chapter_')])
-
-        # No chapter limit - process all chapters
 
         if chapter_filter:
             chapter_dirs = [d for d in chapter_dirs
@@ -441,7 +450,7 @@ class MarkdownParser:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert C++ learning markdown files to JSON format"
+        description="Convert C++ learning markdown files to JSON format with STRICT pattern enforcement"
     )
     parser.add_argument(
         '--chapter',
@@ -462,7 +471,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "="*60)
-    print("C++ MARKDOWN TO JSON CONVERTER")
+    print("C++ MARKDOWN TO JSON CONVERTER - STRICT PATTERN MODE")
     print("="*60 + "\n")
 
     converter = MarkdownParser(

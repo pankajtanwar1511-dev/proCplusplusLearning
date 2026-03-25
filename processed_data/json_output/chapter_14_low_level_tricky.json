@@ -41,45 +41,34 @@
       },
       "edge_cases": [
         {
+          "case_number": 1,
           "title": "Virtual Function Calls in Constructors/Destructors",
-          "explanation": "```cpp\nstruct Base {\n    Base() { foo(); }  // Calls Base::foo, NOT Derived::foo!\n    virtual void foo() { std::cout << \"Base::foo\\n\"; }\n};\n\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived::foo\\n\"; }\n};\n\nint main() {\n    Derived d;  // Prints \"Base::foo\"\n}\n```\n\nDuring construction, the vptr points to the Base vtable until Base's constructor completes. Similarly, during destruction, the vptr is reset to Base before Derived's destructor runs. This prevents calling pure virtual functions or accessing derived members that haven't been constructed yet (or have already been destroyed).\n\n**Key takeaway:** Virtual dispatch is disabled during construction/destruction to prevent accessing uninitialized or destroyed derived class members.",
-          "code_examples": [
-            "struct Base {\n    Base() { foo(); }  // Calls Base::foo, NOT Derived::foo!\n    virtual void foo() { std::cout << \"Base::foo\\n\"; }\n};\n\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived::foo\\n\"; }\n};\n\nint main() {\n    Derived d;  // Prints \"Base::foo\"\n}"
-          ]
+          "explanation": "```cpp\nstruct Base {\n    Base() { foo(); }  // Calls Base::foo, NOT Derived::foo!\n    virtual void foo() { std::cout << \"Base::foo\\n\"; }\n};\n\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived::foo\\n\"; }\n};\n\nint main() {\n    Derived d;  // Prints \"Base::foo\"\n}\n```\n\nDuring construction, the vptr points to the Base vtable until Base's constructor completes. Similarly, during destruction, the vptr is reset to Base before Derived's destructor runs. This prevents calling pure virtual functions or accessing derived members that haven't been constructed yet (or have already been destroyed).\n\n**Key takeaway:** Virtual dispatch is disabled during construction/destruction to prevent accessing uninitialized or destroyed derived class members."
         },
         {
+          "case_number": 2,
           "title": "Padding Can Change with Member Order",
-          "explanation": "```cpp\nstruct Bad {\n    char a;    // 1 byte\n    int b;     // 4 bytes (needs 4-byte alignment)\n    char c;    // 1 byte\n};  // sizeof(Bad) = 12 due to padding\n\nstruct Good {\n    int b;     // 4 bytes\n    char a;    // 1 byte\n    char c;    // 1 byte\n};  // sizeof(Good) = 8 (a and c share padding after b)\n```\n\nMemory layout of `Bad`:\n```\n[a][pad][pad][pad][b][b][b][b][c][pad][pad][pad]\n 1   3 bytes pad    4 bytes     1   3 bytes pad\n```\n\nMemory layout of `Good`:\n```\n[b][b][b][b][a][c][pad][pad]\n 4 bytes     1  1   2 bytes pad\n```\n\nThe `Good` struct is 33% smaller simply by reordering members. In an embedded system allocating millions of sensor readings, this optimization could save significant memory.\n\n**Key takeaway:** Always order struct members from largest to smallest type to minimize padding waste.",
-          "code_examples": [
-            "struct Bad {\n    char a;    // 1 byte\n    int b;     // 4 bytes (needs 4-byte alignment)\n    char c;    // 1 byte\n};  // sizeof(Bad) = 12 due to padding\n\nstruct Good {\n    int b;     // 4 bytes\n    char a;    // 1 byte\n    char c;    // 1 byte\n};  // sizeof(Good) = 8 (a and c share padding after b)",
-            "[a][pad][pad][pad][b][b][b][b][c][pad][pad][pad]\n 1   3 bytes pad    4 bytes     1   3 bytes pad",
-            "[b][b][b][b][a][c][pad][pad]\n 4 bytes     1  1   2 bytes pad"
-          ]
+          "explanation": "```cpp\nstruct Bad {\n    char a;    // 1 byte\n    int b;     // 4 bytes (needs 4-byte alignment)\n    char c;    // 1 byte\n};  // sizeof(Bad) = 12 due to padding\n\nstruct Good {\n    int b;     // 4 bytes\n    char a;    // 1 byte\n    char c;    // 1 byte\n};  // sizeof(Good) = 8 (a and c share padding after b)\n```\n\nMemory layout of `Bad`:\n```\n[a][pad][pad][pad][b][b][b][b][c][pad][pad][pad]\n 1   3 bytes pad    4 bytes     1   3 bytes pad\n```\n\nMemory layout of `Good`:\n```\n[b][b][b][b][a][c][pad][pad]\n 4 bytes     1  1   2 bytes pad\n```\n\nThe `Good` struct is 33% smaller simply by reordering members. In an embedded system allocating millions of sensor readings, this optimization could save significant memory.\n\n**Key takeaway:** Always order struct members from largest to smallest type to minimize padding waste."
         },
         {
+          "case_number": 3,
           "title": "Const Reference Lifetime Extension vs Local Variables",
-          "explanation": "```cpp\n// ✅ Lifetime extended - SAFE\nconst std::string& safe() {\n    const std::string& r = std::string(\"temp\");  // Temporary lifetime extended\n    return r;  // STILL UNSAFE! r goes out of scope, temporary is destroyed\n}\n\n// ❌ Dangling reference - UNSAFE\nconst std::string& unsafe() {\n    std::string s = \"hello\";  // Named local variable\n    return s;  // s is destroyed, returning dangling reference\n}\n\n// ✅ Safe usage\nvoid correct() {\n    const std::string& r = std::string(\"temp\");  // Lifetime extended to r's scope\n    std::cout << r;  // Safe to use here\n}  // Temporary destroyed when r goes out of scope\n```\n\nThe lifetime extension rule only applies to **binding a temporary to a const reference in the same scope**. Returning the reference from a function doesn't extend the lifetime beyond the function's scope.\n\n**Key takeaway:** Lifetime extension works for temporaries bound to const references, but returning references from functions still creates dangling references.",
-          "code_examples": [
-            "// ✅ Lifetime extended - SAFE\nconst std::string& safe() {\n    const std::string& r = std::string(\"temp\");  // Temporary lifetime extended\n    return r;  // STILL UNSAFE! r goes out of scope, temporary is destroyed\n}\n\n// ❌ Dangling reference - UNSAFE\nconst std::string& unsafe() {\n    std::string s = \"hello\";  // Named local variable\n    return s;  // s is destroyed, returning dangling reference\n}\n\n// ✅ Safe usage\nvoid correct() {\n    const std::string& r = std::string(\"temp\");  // Lifetime extended to r's scope\n    std::cout << r;  // Safe to use here\n}  // Temporary destroyed when r goes out of scope"
-          ]
+          "explanation": "```cpp\n// ✅ Lifetime extended - SAFE\nconst std::string& safe() {\n    const std::string& r = std::string(\"temp\");  // Temporary lifetime extended\n    return r;  // STILL UNSAFE! r goes out of scope, temporary is destroyed\n}\n\n// ❌ Dangling reference - UNSAFE\nconst std::string& unsafe() {\n    std::string s = \"hello\";  // Named local variable\n    return s;  // s is destroyed, returning dangling reference\n}\n\n// ✅ Safe usage\nvoid correct() {\n    const std::string& r = std::string(\"temp\");  // Lifetime extended to r's scope\n    std::cout << r;  // Safe to use here\n}  // Temporary destroyed when r goes out of scope\n```\n\nThe lifetime extension rule only applies to **binding a temporary to a const reference in the same scope**. Returning the reference from a function doesn't extend the lifetime beyond the function's scope.\n\n**Key takeaway:** Lifetime extension works for temporaries bound to const references, but returning references from functions still creates dangling references."
         },
         {
+          "case_number": 4,
           "title": "Mutable and Bitwise vs Logical Constness",
-          "explanation": "```cpp\nstruct Cache {\n    mutable int cached_value;\n    mutable bool is_cached;\n\n    int expensive_compute() const {  // Const function!\n        if (!is_cached) {\n            cached_value = /* expensive computation */;\n            is_cached = true;  // Modifying mutable member in const function\n        }\n        return cached_value;\n    }\n};\n```\n\n**Bitwise constness** means no bits of the object are changed. **Logical constness** means the observable state doesn't change, even if internal cache/optimization members are modified. The `mutable` keyword allows logical constness while violating bitwise constness.\n\nCommon use cases:\n- Lazy evaluation and caching\n- Mutex locks in const member functions (thread safety)\n- Reference counting in smart pointers\n\n**Key takeaway:** Use mutable for members that don't affect the logical state but need to be modified in const contexts (caching, locking, counters).",
-          "code_examples": [
-            "struct Cache {\n    mutable int cached_value;\n    mutable bool is_cached;\n\n    int expensive_compute() const {  // Const function!\n        if (!is_cached) {\n            cached_value = /* expensive computation */;\n            is_cached = true;  // Modifying mutable member in const function\n        }\n        return cached_value;\n    }\n};"
-          ]
+          "explanation": "```cpp\nstruct Cache {\n    mutable int cached_value;\n    mutable bool is_cached;\n\n    int expensive_compute() const {  // Const function!\n        if (!is_cached) {\n            cached_value = /* expensive computation */;\n            is_cached = true;  // Modifying mutable member in const function\n        }\n        return cached_value;\n    }\n};\n```\n\n**Bitwise constness** means no bits of the object are changed. **Logical constness** means the observable state doesn't change, even if internal cache/optimization members are modified. The `mutable` keyword allows logical constness while violating bitwise constness.\n\nCommon use cases:\n- Lazy evaluation and caching\n- Mutex locks in const member functions (thread safety)\n- Reference counting in smart pointers\n\n**Key takeaway:** Use mutable for members that don't affect the logical state but need to be modified in const contexts (caching, locking, counters)."
         },
         {
+          "case_number": 5,
           "title": "Virtual Inheritance Constructor Order",
-          "explanation": "```cpp\nstruct VBase {\n    VBase() { std::cout << \"VBase\\n\"; }\n};\n\nstruct A : virtual VBase {\n    A() { std::cout << \"A\\n\"; }\n};\n\nstruct B : virtual VBase {\n    B() { std::cout << \"B\\n\"; }\n};\n\nstruct C : A, B {\n    C() { std::cout << \"C\\n\"; }\n};\n\nint main() {\n    C obj;\n    // Output: VBase, A, B, C\n}\n```\n\nWith virtual inheritance, the **most derived class** (C) constructs the virtual base (VBase) directly, not A or B. Construction order:\n1. Virtual base classes (VBase)\n2. Direct base classes in declaration order (A, then B)\n3. Derived class (C)\n\nThis is different from normal inheritance where each base class constructs its own bases. With virtual inheritance, intermediate bases (A and B) **skip** constructing VBase because C handles it.\n\n**Key takeaway:** Virtual base classes are constructed by the most derived class, ensuring only one shared instance exists.\n\n---",
-          "code_examples": [
-            "struct VBase {\n    VBase() { std::cout << \"VBase\\n\"; }\n};\n\nstruct A : virtual VBase {\n    A() { std::cout << \"A\\n\"; }\n};\n\nstruct B : virtual VBase {\n    B() { std::cout << \"B\\n\"; }\n};\n\nstruct C : A, B {\n    C() { std::cout << \"C\\n\"; }\n};\n\nint main() {\n    C obj;\n    // Output: VBase, A, B, C\n}"
-          ]
+          "explanation": "```cpp\nstruct VBase {\n    VBase() { std::cout << \"VBase\\n\"; }\n};\n\nstruct A : virtual VBase {\n    A() { std::cout << \"A\\n\"; }\n};\n\nstruct B : virtual VBase {\n    B() { std::cout << \"B\\n\"; }\n};\n\nstruct C : A, B {\n    C() { std::cout << \"C\\n\"; }\n};\n\nint main() {\n    C obj;\n    // Output: VBase, A, B, C\n}\n```\n\nWith virtual inheritance, the **most derived class** (C) constructs the virtual base (VBase) directly, not A or B. Construction order:\n1. Virtual base classes (VBase)\n2. Direct base classes in declaration order (A, then B)\n3. Derived class (C)\n\nThis is different from normal inheritance where each base class constructs its own bases. With virtual inheritance, intermediate bases (A and B) **skip** constructing VBase because C handles it.\n\n**Key takeaway:** Virtual base classes are constructed by the most derived class, ensuring only one shared instance exists.\n\n---"
         }
       ],
       "code_examples": [
         {
+          "example_number": 1,
           "title": "Object Memory Layout with vtable",
           "explanation": "The memory layout of `Derived` is approximately:\n\n\nWhen assigning to `Base b2`, only the vptr and x are copied, losing y and the connection to Derived's vtable. This demonstrates why passing polymorphic objects by pointer or reference is crucial.",
           "code": "#include <iostream>\n\nstruct Base {\n    int x = 1;\n    virtual void foo() { std::cout << \"Base::foo\\n\"; }\n    virtual ~Base() = default;\n};\n\nstruct Derived : Base {\n    int y = 2;\n    void foo() override { std::cout << \"Derived::foo\\n\"; }\n};\n\nint main() {\n    std::cout << \"sizeof(Base): \" << sizeof(Base) << \"\\n\";      // 16 bytes (8-byte vptr + 4-byte int + padding)\n    std::cout << \"sizeof(Derived): \" << sizeof(Derived) << \"\\n\"; // 16 bytes (vptr + x + y + padding)\n\n    Derived d;\n    Base* b = &d;\n    b->foo();  // ✅ Prints \"Derived::foo\" via virtual dispatch\n\n    Base b2 = d;  // ❌ Object slicing!\n    b2.foo();     // Prints \"Base::foo\" - lost Derived vtable\n}",
@@ -88,36 +77,42 @@
           ]
         },
         {
+          "example_number": 2,
           "title": "Alignment and Padding Optimization",
           "explanation": "In autonomous driving systems, sensor data structures are often allocated millions of times. Optimizing from 12 to 8 bytes per structure saves 33% memory, potentially allowing more data to fit in CPU cache for faster processing. Cache line alignment prevents false sharing when different threads access different variables on the same cache line.",
           "code": "#include <iostream>\n\n// ❌ Poorly ordered - 12 bytes\nstruct BadLayout {\n    char a;    // 1 byte\n    int b;     // 4 bytes (needs 4-byte alignment)\n    char c;    // 1 byte\n};\n\n// ✅ Well ordered - 8 bytes\nstruct GoodLayout {\n    int b;     // 4 bytes\n    char a;    // 1 byte\n    char c;    // 1 byte\n    // 2 bytes padding at end\n};\n\n// Cache line alignment for multithreading\nstruct alignas(64) CacheLineAligned {\n    int data;\n    // Padded to 64 bytes to prevent false sharing\n};\n\nint main() {\n    std::cout << \"BadLayout: \" << sizeof(BadLayout) << \"\\n\";    // 12\n    std::cout << \"GoodLayout: \" << sizeof(GoodLayout) << \"\\n\";  // 8\n    std::cout << \"alignof(int): \" << alignof(int) << \"\\n\";      // 4\n    std::cout << \"CacheLineAligned: \" << sizeof(CacheLineAligned) << \"\\n\";  // 64\n}",
           "additional_code": []
         },
         {
+          "example_number": 3,
           "title": "Dangling References and Lifetime Extension",
           "explanation": "A common mistake in autonomous driving code is storing references to temporary sensor readings. Always ensure sensor data is owned (by value or smart pointer) rather than referenced, unless you can prove the source data outlives the reference.",
           "code": "#include <iostream>\n#include <string>\n\n// ❌ UNSAFE - dangling reference to local variable\nconst std::string& danger1() {\n    std::string s = \"local\";\n    return s;  // s destroyed, dangling reference\n}\n\n// ❌ UNSAFE - returning reference to temporary doesn't save it\nconst std::string& danger2() {\n    return std::string(\"temp\");  // Temporary destroyed immediately\n}\n\n// ✅ SAFE - lifetime extended within scope\nvoid safe_usage() {\n    const std::string& r = std::string(\"temp\");  // Lifetime extended to r's scope\n    std::cout << r << \"\\n\";  // Safe to use\n}  // Temporary destroyed here\n\n// ✅ SAFE - returning by value\nstd::string safe_return() {\n    std::string s = \"local\";\n    return s;  // Copy or move (usually move-optimized)\n}\n\nint main() {\n    // const std::string& bad = danger1();  // UB - accessing freed memory\n    // std::cout << bad;  // Crash or garbage\n\n    safe_usage();  // Works correctly\n\n    std::string good = safe_return();  // Safe\n    std::cout << good << \"\\n\";\n}",
           "additional_code": []
         },
         {
+          "example_number": 4,
           "title": "Const Correctness and Mutable",
           "explanation": "This pattern is common in real-time systems where expensive computations should be cached but the object is logically const from the caller's perspective. Mutable allows optimization without breaking const correctness.",
           "code": "#include <iostream>\n#include <cmath>\n\nstruct SensorData {\n    double raw_value;\n    mutable double cached_processed;\n    mutable bool is_cached;\n\n    SensorData(double v) : raw_value(v), cached_processed(0), is_cached(false) {}\n\n    // ✅ Const function with internal caching\n    double get_processed() const {\n        if (!is_cached) {\n            cached_processed = std::sqrt(raw_value * raw_value + 1.0);  // Expensive\n            is_cached = true;\n        }\n        return cached_processed;\n    }\n\n    // ❌ This would be an error without mutable\n    // void compute() const { cached_processed = 5.0; }  // Error: modifying non-mutable member\n};\n\nvoid process_sensor(const SensorData& sensor) {\n    // sensor is const, but get_processed() can still update cache\n    double value = sensor.get_processed();\n    std::cout << \"Processed: \" << value << \"\\n\";\n}\n\nint main() {\n    const SensorData sensor(42.0);\n    process_sensor(sensor);  // First call computes and caches\n    process_sensor(sensor);  // Second call uses cached value\n}",
           "additional_code": []
         },
         {
+          "example_number": 5,
           "title": "Shallow vs Deep Copy and Rule of Three",
           "explanation": "In modern C++, prefer `std::string` or smart pointers to avoid manual memory management. If you must use raw pointers, implement Rule of Five (add move constructor and move assignment) for efficiency.",
           "code": "#include <iostream>\n#include <cstring>\n\n// ❌ Broken - shallow copy causes double delete\nclass BadString {\n    char* data;\npublic:\n    BadString(const char* s) : data(new char[strlen(s) + 1]) {\n        strcpy(data, s);\n    }\n    ~BadString() { delete[] data; }\n    // Missing: copy constructor and assignment operator\n    // Default shallow copy leads to double delete!\n};\n\n// ✅ Correct - Rule of Three implemented\nclass GoodString {\n    char* data;\npublic:\n    GoodString(const char* s) : data(new char[strlen(s) + 1]) {\n        strcpy(data, s);\n    }\n\n    // Copy constructor - deep copy\n    GoodString(const GoodString& other) : data(new char[strlen(other.data) + 1]) {\n        strcpy(data, other.data);\n    }\n\n    // Copy assignment operator - deep copy\n    GoodString& operator=(const GoodString& other) {\n        if (this != &other) {\n            delete[] data;  // Clean up old data\n            data = new char[strlen(other.data) + 1];\n            strcpy(data, other.data);\n        }\n        return *this;\n    }\n\n    ~GoodString() { delete[] data; }\n};\n\nint main() {\n    // BadString b1(\"test\");\n    // BadString b2 = b1;  // Shallow copy - both point to same memory\n    // // When b2 destructs, deletes memory\n    // // When b1 destructs, deletes already-freed memory -> crash!\n\n    GoodString g1(\"test\");\n    GoodString g2 = g1;  // Deep copy - independent memory\n    // Both destruct safely with their own memory\n}",
           "additional_code": []
         },
         {
+          "example_number": 6,
           "title": "Virtual Inheritance and Diamond Problem",
           "explanation": "Note that `GoodHybrid`'s constructor must explicitly initialize `VehicleBase` even though `GoodCar` and `GoodTruck` also inherit from it. The most derived class is responsible for constructing virtual base classes. This is essential in complex automotive software architectures where multiple systems (braking, steering, powertrain) share common base interfaces.",
           "code": "#include <iostream>\n\n// The diamond problem\nstruct VehicleBase {\n    int id;\n    VehicleBase(int i) : id(i) { std::cout << \"VehicleBase(\" << id << \")\\n\"; }\n};\n\n// ❌ Without virtual inheritance - two copies of VehicleBase\nstruct BadCar : VehicleBase {\n    BadCar(int i) : VehicleBase(i) { std::cout << \"BadCar\\n\"; }\n};\n\nstruct BadTruck : VehicleBase {\n    BadTruck(int i) : VehicleBase(i) { std::cout << \"BadTruck\\n\"; }\n};\n\nstruct BadHybrid : BadCar, BadTruck {\n    BadHybrid(int i) : BadCar(i), BadTruck(i) { std::cout << \"BadHybrid\\n\"; }\n    // ERROR: ambiguous access\n    // void print() { std::cout << id; }  // Which id? BadCar::id or BadTruck::id?\n};\n\n// ✅ With virtual inheritance - one shared VehicleBase\nstruct GoodCar : virtual VehicleBase {\n    GoodCar(int i) : VehicleBase(i) { std::cout << \"GoodCar\\n\"; }\n};\n\nstruct GoodTruck : virtual VehicleBase {\n    GoodTruck(int i) : VehicleBase(i) { std::cout << \"GoodTruck\\n\"; }\n};\n\nstruct GoodHybrid : GoodCar, GoodTruck {\n    GoodHybrid(int i) : VehicleBase(i), GoodCar(i), GoodTruck(i) {\n        std::cout << \"GoodHybrid\\n\";\n    }\n    // ✅ Unambiguous access\n    void print() { std::cout << \"Vehicle ID: \" << id << \"\\n\"; }\n};\n\nint main() {\n    std::cout << \"Creating GoodHybrid:\\n\";\n    GoodHybrid h(42);\n    // Output: VehicleBase(42), GoodCar, GoodTruck, GoodHybrid\n    h.print();  // Prints \"Vehicle ID: 42\"\n\n    std::cout << \"Size without virtual inheritance: \" << sizeof(BadHybrid) << \"\\n\";\n    std::cout << \"Size with virtual inheritance: \" << sizeof(GoodHybrid) << \"\\n\";\n    // Virtual inheritance adds pointer overhead\n}",
           "additional_code": []
         },
         {
+          "example_number": 7,
           "title": "Undefined Behavior Examples",
           "explanation": "In safety-critical automotive systems, undefined behavior is unacceptable. Use static analyzers (Clang-Tidy, Coverity), runtime sanitizers (ASan, UBSan), and defensive programming (bounds checking, assertions) to catch UB before it reaches production.\n\n---",
           "code": "#include <iostream>\n\nvoid demonstrate_ub() {\n    // ❌ UB: Null pointer dereference\n    int* p = nullptr;\n    // *p = 5;  // Crash or UB\n\n    // ❌ UB: Out of bounds array access\n    int arr[5] = {1, 2, 3, 4, 5};\n    // std::cout << arr[10];  // UB - may crash, may read garbage\n\n    // ❌ UB: Use after free\n    int* heap = new int(42);\n    delete heap;\n    // std::cout << *heap;  // UB - accessing freed memory\n\n    // ❌ UB: Signed integer overflow\n    int max = 2147483647;  // INT_MAX\n    // int overflow = max + 1;  // UB - signed overflow\n\n    // ✅ Defined: Unsigned integer overflow (wraps around)\n    unsigned int umax = 4294967295u;  // UINT_MAX\n    unsigned int wrap = umax + 1;  // Defined: wraps to 0\n    std::cout << \"Unsigned wrap: \" << wrap << \"\\n\";\n\n    // ❌ UB: Uninitialized variable\n    int uninit;\n    // std::cout << uninit;  // UB - may be any value\n\n    // ❌ UB: Dangling pointer\n    int* dangling;\n    {\n        int local = 10;\n        dangling = &local;\n    }\n    // std::cout << *dangling;  // UB - local is destroyed\n}\n\n// ✅ Safe alternatives\nvoid safe_code() {\n    // Use smart pointers\n    auto p = std::make_unique<int>(42);\n    std::cout << *p << \"\\n\";  // Safe\n\n    // Use vector with bounds checking\n    std::vector<int> vec = {1, 2, 3, 4, 5};\n    try {\n        std::cout << vec.at(10);  // Throws exception instead of UB\n    } catch (const std::out_of_range& e) {\n        std::cout << \"Caught: \" << e.what() << \"\\n\";\n    }\n}\n\nint main() {\n    safe_code();\n}",
@@ -126,6 +121,7 @@
       ],
       "interview_qa": [
         {
+          "question_number": 1,
           "question": "What is a vtable and how does it enable runtime polymorphism?",
           "difficulty": [
             "intermediate"
@@ -149,6 +145,7 @@
           "key_takeaway": "Vtables enable runtime polymorphism through indirection, trading a small performance cost for flexibility."
         },
         {
+          "question_number": 2,
           "question": "What is object slicing and why is it dangerous?",
           "difficulty": [
             "intermediate"
@@ -171,6 +168,7 @@
           "key_takeaway": "Pass polymorphic objects by pointer or reference, never by value, to avoid slicing."
         },
         {
+          "question_number": 3,
           "question": "How does struct member ordering affect memory usage?",
           "difficulty": [
             "beginner"
@@ -193,6 +191,7 @@
           "key_takeaway": "Order struct members from largest to smallest to minimize padding and memory usage."
         },
         {
+          "question_number": 4,
           "question": "Explain the difference between `const int* p` and `int* const p`.",
           "difficulty": [
             "beginner"
@@ -214,6 +213,7 @@
           "key_takeaway": "const applies to what's immediately to its left (or right if nothing is to its left); use this to reason about pointer constness."
         },
         {
+          "question_number": 5,
           "question": "Why can't you call a non-const member function on a const object?",
           "difficulty": [
             "beginner"
@@ -235,6 +235,7 @@
           "key_takeaway": "const member functions can be called on const objects; non-const functions cannot, enforcing const correctness at compile time."
         },
         {
+          "question_number": 6,
           "question": "What is the purpose of the `mutable` keyword?",
           "difficulty": [
             "intermediate"
@@ -257,6 +258,7 @@
           "key_takeaway": "Use mutable for members that don't affect logical state but need modification in const contexts (caching, locking, counters)."
         },
         {
+          "question_number": 7,
           "question": "What happens when you dereference a null pointer?",
           "difficulty": [
             "beginner"
@@ -278,6 +280,7 @@
           "key_takeaway": "Always validate pointers before dereferencing; use smart pointers and defensive checks to avoid null pointer UB."
         },
         {
+          "question_number": 8,
           "question": "Is signed integer overflow defined behavior in C++?",
           "difficulty": [
             "intermediate"
@@ -299,6 +302,7 @@
           "key_takeaway": "Use unsigned types for wrapping arithmetic; detect signed overflow explicitly before it happens, or use compiler flags like `-ftrapv` for debugging."
         },
         {
+          "question_number": 9,
           "question": "What is the difference between shallow copy and deep copy?",
           "difficulty": [
             "beginner"
@@ -321,6 +325,7 @@
           "key_takeaway": "Default copy constructor does shallow copy for pointers; implement deep copy manually or use smart pointers for automatic ownership management."
         },
         {
+          "question_number": 10,
           "question": "What is the Rule of Three?",
           "difficulty": [
             "intermediate"
@@ -344,6 +349,7 @@
           "key_takeaway": "When managing resources, implement Rule of Three (or Five); otherwise, use smart pointers to automate resource management."
         },
         {
+          "question_number": 11,
           "question": "How do smart pointers help avoid shallow copy problems?",
           "difficulty": [
             "intermediate"
@@ -367,6 +373,7 @@
           "key_takeaway": "Prefer smart pointers over raw pointers for ownership; they automate resource management and prevent common bugs."
         },
         {
+          "question_number": 12,
           "question": "What problem does virtual inheritance solve?",
           "difficulty": [
             "intermediate"
@@ -388,6 +395,7 @@
           "key_takeaway": "Use virtual inheritance to solve the diamond problem, ensuring a single shared base class instance in multiple inheritance hierarchies."
         },
         {
+          "question_number": 13,
           "question": "How does virtual inheritance affect object size?",
           "difficulty": [
             "intermediate"
@@ -410,6 +418,7 @@
           "key_takeaway": "Virtual inheritance adds pointer overhead and indirection; use it only when necessary to solve diamond problems."
         },
         {
+          "question_number": 14,
           "question": "Who constructs the virtual base class in virtual inheritance?",
           "difficulty": [
             "advanced"
@@ -431,6 +440,7 @@
           "key_takeaway": "The most derived class constructs virtual base classes to ensure single initialization in diamond inheritance."
         },
         {
+          "question_number": 15,
           "question": "When are virtual functions resolved during object construction?",
           "difficulty": [
             "advanced"
@@ -453,6 +463,7 @@
           "key_takeaway": "Virtual dispatch is disabled during construction/destruction to prevent accessing uninitialized or destroyed derived class members; avoid calling virtual functions in constructors/destructors."
         },
         {
+          "question_number": 16,
           "question": "What is the lifetime extension rule for const references?",
           "difficulty": [
             "intermediate"
@@ -475,6 +486,7 @@
           "key_takeaway": "Const reference lifetime extension works for temporaries in the same scope, but doesn't prevent dangling references from returned references."
         },
         {
+          "question_number": 17,
           "question": "Why is `alignas` useful in multithreading scenarios?",
           "difficulty": [
             "advanced"
@@ -497,6 +509,7 @@
           "key_takeaway": "Use cache line alignment (`alignas(64)`) for frequently modified variables accessed by different threads to prevent false sharing."
         },
         {
+          "question_number": 18,
           "question": "What is the difference between bitwise and logical constness?",
           "difficulty": [
             "advanced"
@@ -519,6 +532,7 @@
           "key_takeaway": "C++ enforces bitwise constness; use mutable for members that don't affect logical state but need modification in const contexts."
         },
         {
+          "question_number": 19,
           "question": "Can you modify a const object through a non-const pointer?",
           "difficulty": [
             "advanced"
@@ -540,6 +554,7 @@
           "key_takeaway": "Never use const_cast to modify a truly const object (declared const) - it's UB; only cast away const when the object was originally non-const."
         },
         {
+          "question_number": 20,
           "question": "What is the effect of struct padding on cache performance?",
           "difficulty": [
             "advanced"
@@ -566,161 +581,201 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    int x = 1;\n    virtual void foo() { std::cout << \"A::foo\\n\"; }\n};\nstruct B : A {\n    int y = 2;\n    void foo() override { std::cout << \"B::foo\\n\"; }\n};\nint main() {\n    B b;\n    A a = b;\n    a.foo();\n    std::cout << a.x;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** A::foo<br>1\n\n**Explanation:** Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo.\n\n**Key Concept:** #object_slicing #virtual_functions\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct A {\n    int x = 1;\n    virtual void foo() { std::cout << \"A::foo\\n\"; }\n};\nstruct B : A {\n    int y = 2;\n    void foo() override { std::cout << \"B::foo\\n\"; }\n};\nint main() {\n    B b;\n    A a = b;\n    a.foo();\n    std::cout << a.x;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    char a;\n    int b;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 12\n\n**Explanation:** Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment.\n\n**Key Concept:** #padding #alignment\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct S {\n    char a;\n    int b;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\n#include <string>\nconst std::string& foo() {\n    std::string s = \"hello\";\n    return s;\n}\nint main() {\n    const std::string& r = foo();\n    std::cout << r;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior (likely crash or garbage)\n\n**Explanation:** `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB.\n\n**Key Concept:** #dangling_reference #lifetime\n\n</details>\n\n---",
           "code": "#include <iostream>\n#include <string>\nconst std::string& foo() {\n    std::string s = \"hello\";\n    return s;\n}\nint main() {\n    const std::string& r = foo();\n    std::cout << r;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    int val = 10;\n    void set(int v) const { val = v; }\n};\nint main() {\n    const A a;\n    a.set(20);\n    std::cout << a.val;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error.\n\n**Key Concept:** #const_correctness #const_member_function\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct A {\n    int val = 10;\n    void set(int v) const { val = v; }\n};\nint main() {\n    const A a;\n    a.set(20);\n    std::cout << a.val;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct B {\n    int* p;\n    B(int v) : p(new int(v)) {}\n    ~B() { delete p; }\n};\nint main() {\n    B b1(5);\n    B b2 = b1;\n    std::cout << *b2.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 5 (but double delete crash at end)\n\n**Explanation:** Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash.\n\n**Key Concept:** #shallow_copy #double_delete\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct B {\n    int* p;\n    B(int v) : p(new int(v)) {}\n    ~B() { delete p; }\n};\nint main() {\n    B b1(5);\n    B b2 = b1;\n    std::cout << *b2.p;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct VBase { int v; };\nstruct A : virtual VBase { int a; };\nstruct B : virtual VBase { int b; };\nstruct C : A, B { int c; };\nint main() {\n    std::cout << sizeof(C);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 24-32 (platform dependent)\n\n**Explanation:** Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes.\n\n**Key Concept:** #virtual_inheritance #memory_layout\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct VBase { int v; };\nstruct A : virtual VBase { int a; };\nstruct B : virtual VBase { int b; };\nstruct C : A, B { int c; };\nint main() {\n    std::cout << sizeof(C);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    Base() { foo(); }\n    virtual void foo() { std::cout << \"Base\\n\"; }\n};\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived\\n\"; }\n};\nint main() {\n    Derived d;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Base\n\n**Explanation:** During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members.\n\n**Key Concept:** #constructor #virtual_functions #vptr\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct Base {\n    Base() { foo(); }\n    virtual void foo() { std::cout << \"Base\\n\"; }\n};\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived\\n\"; }\n};\nint main() {\n    Derived d;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    int b;\n    char a;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 8\n\n**Explanation:** Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes.\n\n**Key Concept:** #padding #memory_optimization\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct S {\n    int b;\n    char a;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nvoid test() {\n    const int& r = 42;\n    std::cout << r;\n}\nint main() {\n    test();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function.\n\n**Key Concept:** #lifetime_extension #const_reference\n\n</details>\n\n---",
           "code": "#include <iostream>\nvoid test() {\n    const int& r = 42;\n    std::cout << r;\n}\nint main() {\n    test();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    mutable int cache = 0;\n    int get() const {\n        cache = 100;\n        return cache;\n    }\n};\nint main() {\n    const A a;\n    std::cout << a.get();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100\n\n**Explanation:** `mutable` allows modifying `cache` in const function. Prints 100.\n\n**Key Concept:** #mutable #const_correctness\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct A {\n    mutable int cache = 0;\n    int get() const {\n        cache = 100;\n        return cache;\n    }\n};\nint main() {\n    const A a;\n    std::cout << a.get();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nint main() {\n    int* p = nullptr;\n    *p = 5;\n    std::cout << *p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior (likely segfault)\n\n**Explanation:** Dereferencing null pointer is UB, typically causes segmentation fault crash.\n\n**Key Concept:** #null_pointer #undefined_behavior\n\n</details>\n\n---",
           "code": "#include <iostream>\nint main() {\n    int* p = nullptr;\n    *p = 5;\n    std::cout << *p;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nint main() {\n    unsigned int u = 4294967295u;\n    u = u + 1;\n    std::cout << u;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 0\n\n**Explanation:** Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior.\n\n**Key Concept:** #unsigned_overflow #wrapping\n\n</details>\n\n---",
           "code": "#include <iostream>\nint main() {\n    unsigned int u = 4294967295u;\n    u = u + 1;\n    std::cout << u;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    virtual ~Base() = default;\n    int x = 1;\n};\nstruct Derived : Base {\n    int y = 2;\n};\nint main() {\n    Derived* d = new Derived();\n    Base* b = d;\n    delete b;\n    std::cout << \"OK\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** OK\n\n**Explanation:** Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs.\n\n**Key Concept:** #virtual_destructor #polymorphism\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct Base {\n    virtual ~Base() = default;\n    int x = 1;\n};\nstruct Derived : Base {\n    int y = 2;\n};\nint main() {\n    Derived* d = new Derived();\n    Base* b = d;\n    delete b;\n    std::cout << \"OK\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    char a;\n    double d;\n    char b;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 24\n\n**Explanation:** Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes.\n\n**Key Concept:** #alignment #padding\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct S {\n    char a;\n    double d;\n    char b;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\n#include <memory>\nstruct A {\n    std::unique_ptr<int> p;\n    A(int v) : p(std::make_unique<int>(v)) {}\n};\nint main() {\n    A a1(10);\n    A a2 = std::move(a1);\n    std::cout << *a2.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10\n\n**Explanation:** `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely.\n\n**Key Concept:** #unique_ptr #move_semantics\n\n</details>\n\n---",
           "code": "#include <iostream>\n#include <memory>\nstruct A {\n    std::unique_ptr<int> p;\n    A(int v) : p(std::make_unique<int>(v)) {}\n};\nint main() {\n    A a1(10);\n    A a2 = std::move(a1);\n    std::cout << *a2.p;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct VBase {\n    VBase() { std::cout << \"VBase \"; }\n};\nstruct A : virtual VBase {\n    A() { std::cout << \"A \"; }\n};\nstruct B : virtual VBase {\n    B() { std::cout << \"B \"; }\n};\nstruct C : A, B {\n    C() { std::cout << \"C\"; }\n};\nint main() {\n    C c;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** VBase A B C\n\n**Explanation:** Virtual base VBase is constructed once by most derived class C, then A, then B, then C.\n\n**Key Concept:** #virtual_inheritance #constructor_order\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct VBase {\n    VBase() { std::cout << \"VBase \"; }\n};\nstruct A : virtual VBase {\n    A() { std::cout << \"A \"; }\n};\nstruct B : virtual VBase {\n    B() { std::cout << \"B \"; }\n};\nstruct C : A, B {\n    C() { std::cout << \"C\"; }\n};\nint main() {\n    C c;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nint main() {\n    alignas(16) char x = 'A';\n    std::cout << sizeof(x) << \" \" << alignof(decltype(x));\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 16\n\n**Explanation:** `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas).\n\n**Key Concept:** #alignas #alignment\n\n</details>\n\n---",
           "code": "#include <iostream>\nint main() {\n    alignas(16) char x = 'A';\n    std::cout << sizeof(x) << \" \" << alignof(decltype(x));\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    const int* p;\n    A(int v) : p(new int(v)) {}\n    void set(int v) const {\n        *p = v;\n    }\n};\nint main() {\n    const A a(10);\n    a.set(20);\n    std::cout << *a.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const.\n\n**Key Concept:** #const_pointer #const_correctness\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct A {\n    const int* p;\n    A(int v) : p(new int(v)) {}\n    void set(int v) const {\n        *p = v;\n    }\n};\nint main() {\n    const A a(10);\n    a.set(20);\n    std::cout << *a.p;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    int x;\n    virtual void foo() {}\n};\nstruct D1 : Base {};\nstruct D2 : Base {};\nstruct Final : D1, D2 {};\nint main() {\n    Final f;\n    f.x = 10;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error (ambiguous)\n\n**Explanation:** Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve.\n\n**Key Concept:** #diamond_problem #ambiguity\n\n</details>\n\n---",
           "code": "#include <iostream>\nstruct Base {\n    int x;\n    virtual void foo() {}\n};\nstruct D1 : Base {};\nstruct D2 : Base {};\nstruct Final : D1, D2 {};\nint main() {\n    Final f;\n    f.x = 10;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "---",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\n#include <string>\nint main() {\n    std::string s1 = \"test\";\n    std::string s2 = s1;\n    s2[0] = 'b';\n    std::cout << s1 << \" \" << s2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** test best\n\n**Explanation:** `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`.\n\n**Key Concept:** #deep_copy #std_string\n\n</details>\n\n---",
           "code": "#include <iostream>\n#include <string>\nint main() {\n    std::string s1 = \"test\";\n    std::string s2 = s1;\n    s2[0] = 'b';\n    std::cout << s1 << \" \" << s2;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         }
       ],
@@ -767,60 +822,50 @@
       },
       "edge_cases": [
         {
+          "case_number": 1,
           "title": "The Fermat's Last Theorem \"Disproof\"",
-          "explanation": "```cpp\n#include <iostream>\n\n// This function attempts to find a counterexample to Fermat's Last Theorem\n// a³ + b³ = c³ (which has no integer solutions)\nint fermat_disproof() {\n    const int MAX = 1000;\n    int a = 1, b = 1, c = 1;\n\n    // Search for counterexample\n    while (true) {  // ❌ Infinite loop with no side effects = UB\n        if (a*a*a == b*b*b + c*c*c) {\n            std::cout << \"Fermat's Last Theorem disproved!\\n\";\n            std::cout << a << \"³ + \" << b << \"³ = \" << c << \"³\\n\";\n            return 1;\n        }\n\n        ++a;\n        if (a > MAX) { a = 1; ++b; }\n        if (b > MAX) { b = 1; ++c; }\n        if (c > MAX) { c = 1; }  // Loop resets, making it truly infinite\n    }\n\n    return 0;  // Never reached\n}\n\n// Compiled with -O3 (aggressive optimization)\n// OUTPUT: Returns 0 immediately, loop is REMOVED entirely!\n```\n\n**What Happens:**\nWith optimization enabled, the compiler recognizes:\n1. The loop is infinite (no break statement that can be reached in reasonable time)\n2. The loop has no observable side effects (the `if` with `cout` is never true)\n3. Infinite loops with no side effects are **undefined behavior** (C++11 §1.10/24)\n4. Since UB never occurs in correct programs, the loop can be **removed entirely**\n5. The function optimizes to `return 0;`\n\n**Why It's Dangerous:**\n- The code appears to work correctly (it's searching for something)\n- It passes code review (looks like valid search logic)\n- Debug builds work as expected (no optimization)\n- Release builds mysteriously \"skip\" the expensive computation\n\n**Real-World Impact:**\nThis pattern appears in search algorithms, verification loops, and timeout implementations that can be unexpectedly optimized away.\n\n**Autonomous Vehicle Context:**\n```cpp\nbool wait_for_sensor_calibration(Sensor& sensor) {\n    const int MAX_ATTEMPTS = 1000;\n    int attempts = 0;\n\n    while (true) {\n        if (sensor.is_calibrated()) {\n            return true;\n        }\n\n        ++attempts;\n        if (attempts > MAX_ATTEMPTS) {\n            break;  // ✅ This break makes it NOT infinite\n        }\n\n        std::this_thread::sleep_for(std::chrono::milliseconds(10));  // ✅ Side effect\n    }\n\n    return false;\n}\n```\n\n**Fix:** Add observable side effects (I/O, thread sleep, volatile access) or guaranteed termination.\n\n---",
-          "code_examples": [
-            "#include <iostream>\n\n// This function attempts to find a counterexample to Fermat's Last Theorem\n// a³ + b³ = c³ (which has no integer solutions)\nint fermat_disproof() {\n    const int MAX = 1000;\n    int a = 1, b = 1, c = 1;\n\n    // Search for counterexample\n    while (true) {  // ❌ Infinite loop with no side effects = UB\n        if (a*a*a == b*b*b + c*c*c) {\n            std::cout << \"Fermat's Last Theorem disproved!\\n\";\n            std::cout << a << \"³ + \" << b << \"³ = \" << c << \"³\\n\";\n            return 1;\n        }\n\n        ++a;\n        if (a > MAX) { a = 1; ++b; }\n        if (b > MAX) { b = 1; ++c; }\n        if (c > MAX) { c = 1; }  // Loop resets, making it truly infinite\n    }\n\n    return 0;  // Never reached\n}\n\n// Compiled with -O3 (aggressive optimization)\n// OUTPUT: Returns 0 immediately, loop is REMOVED entirely!",
-            "bool wait_for_sensor_calibration(Sensor& sensor) {\n    const int MAX_ATTEMPTS = 1000;\n    int attempts = 0;\n\n    while (true) {\n        if (sensor.is_calibrated()) {\n            return true;\n        }\n\n        ++attempts;\n        if (attempts > MAX_ATTEMPTS) {\n            break;  // ✅ This break makes it NOT infinite\n        }\n\n        std::this_thread::sleep_for(std::chrono::milliseconds(10));  // ✅ Side effect\n    }\n\n    return false;\n}"
-          ]
+          "explanation": "```cpp\n#include <iostream>\n\n// This function attempts to find a counterexample to Fermat's Last Theorem\n// a³ + b³ = c³ (which has no integer solutions)\nint fermat_disproof() {\n    const int MAX = 1000;\n    int a = 1, b = 1, c = 1;\n\n    // Search for counterexample\n    while (true) {  // ❌ Infinite loop with no side effects = UB\n        if (a*a*a == b*b*b + c*c*c) {\n            std::cout << \"Fermat's Last Theorem disproved!\\n\";\n            std::cout << a << \"³ + \" << b << \"³ = \" << c << \"³\\n\";\n            return 1;\n        }\n\n        ++a;\n        if (a > MAX) { a = 1; ++b; }\n        if (b > MAX) { b = 1; ++c; }\n        if (c > MAX) { c = 1; }  // Loop resets, making it truly infinite\n    }\n\n    return 0;  // Never reached\n}\n\n// Compiled with -O3 (aggressive optimization)\n// OUTPUT: Returns 0 immediately, loop is REMOVED entirely!\n```\n\n**What Happens:**\nWith optimization enabled, the compiler recognizes:\n1. The loop is infinite (no break statement that can be reached in reasonable time)\n2. The loop has no observable side effects (the `if` with `cout` is never true)\n3. Infinite loops with no side effects are **undefined behavior** (C++11 §1.10/24)\n4. Since UB never occurs in correct programs, the loop can be **removed entirely**\n5. The function optimizes to `return 0;`\n\n**Why It's Dangerous:**\n- The code appears to work correctly (it's searching for something)\n- It passes code review (looks like valid search logic)\n- Debug builds work as expected (no optimization)\n- Release builds mysteriously \"skip\" the expensive computation\n\n**Real-World Impact:**\nThis pattern appears in search algorithms, verification loops, and timeout implementations that can be unexpectedly optimized away.\n\n**Autonomous Vehicle Context:**\n```cpp\nbool wait_for_sensor_calibration(Sensor& sensor) {\n    const int MAX_ATTEMPTS = 1000;\n    int attempts = 0;\n\n    while (true) {\n        if (sensor.is_calibrated()) {\n            return true;\n        }\n\n        ++attempts;\n        if (attempts > MAX_ATTEMPTS) {\n            break;  // ✅ This break makes it NOT infinite\n        }\n\n        std::this_thread::sleep_for(std::chrono::milliseconds(10));  // ✅ Side effect\n    }\n\n    return false;\n}\n```\n\n**Fix:** Add observable side effects (I/O, thread sleep, volatile access) or guaranteed termination.\n\n---"
         },
         {
+          "case_number": 2,
           "title": "Null Pointer Check Removal After Dereference",
-          "explanation": "```cpp\n#include <iostream>\n\n// ❌ DANGEROUS: Appears to have safety check, but optimizer removes it\nvoid process_sensor_data(int* data) {\n    // Dereference happens first\n    int value = *data;  // If data is null, this is UB\n\n    // ... 50 lines of complex processing ...\n    int processed = value * 2 + 10;\n    int result = processed / (value - 5);\n\n    // Safety check (or so it appears)\n    if (data == nullptr) {  // ❌ Compiler removes this check!\n        std::cerr << \"ERROR: Null pointer detected!\\n\";\n        return;\n    }\n\n    // Use the data\n    std::cout << \"Processed value: \" << result << \"\\n\";\n}\n\n// With optimization, the null check is COMPLETELY REMOVED\n// Compiler reasoning:\n// \"If we reached the null check, the dereference *data must have succeeded,\n//  therefore data cannot be null, so the check always fails,\n//  so I can remove the entire if block.\"\n```\n\n**What Happens:**\n1. `*data` dereferences the pointer\n2. If `data` is null, that's UB—program can do anything\n3. Compiler assumes UB never happens (because your code is \"correct\")\n4. Therefore, if we reach the null check, `data` must be non-null\n5. The null check is **provably false** and gets removed\n\n**Disassembly Comparison:**\n```asm\n; Without optimization (-O0)\nmov eax, [rdi]        ; *data\n; ... processing ...\ntest rdi, rdi         ; if (data == nullptr)\nje .error_label       ; jump if zero\n\n; With optimization (-O3)\nmov eax, [rdi]        ; *data\n; ... processing ...\n; (null check completely absent)\n```\n\n**Real CVE Example:**\n**LibTIFF CVE-2019-14973**: Similar pattern where overflow checks were optimized away after operations that would trigger UB if overflow occurred.\n\n**Autonomous Vehicle Context:**\n```cpp\n// ❌ WRONG: Check after use\nvoid update_vehicle_state(SensorReading* reading) {\n    current_velocity = reading->velocity;  // Dereference first\n\n    if (reading == nullptr) {  // Removed by optimizer!\n        log_error(\"Null sensor reading\");\n        return;\n    }\n\n    apply_velocity(current_velocity);\n}\n\n// ✅ CORRECT: Check before use\nvoid update_vehicle_state(SensorReading* reading) {\n    if (reading == nullptr) {  // Check FIRST\n        log_error(\"Null sensor reading\");\n        return;\n    }\n\n    current_velocity = reading->velocity;  // Dereference after check\n    apply_velocity(current_velocity);\n}\n```\n\n**Key Lesson:** Always validate pointers **before** dereferencing, never after.\n\n---",
-          "code_examples": [
-            "#include <iostream>\n\n// ❌ DANGEROUS: Appears to have safety check, but optimizer removes it\nvoid process_sensor_data(int* data) {\n    // Dereference happens first\n    int value = *data;  // If data is null, this is UB\n\n    // ... 50 lines of complex processing ...\n    int processed = value * 2 + 10;\n    int result = processed / (value - 5);\n\n    // Safety check (or so it appears)\n    if (data == nullptr) {  // ❌ Compiler removes this check!\n        std::cerr << \"ERROR: Null pointer detected!\\n\";\n        return;\n    }\n\n    // Use the data\n    std::cout << \"Processed value: \" << result << \"\\n\";\n}\n\n// With optimization, the null check is COMPLETELY REMOVED\n// Compiler reasoning:\n// \"If we reached the null check, the dereference *data must have succeeded,\n//  therefore data cannot be null, so the check always fails,\n//  so I can remove the entire if block.\"",
-            "**Real CVE Example:**\n**LibTIFF CVE-2019-14973**: Similar pattern where overflow checks were optimized away after operations that would trigger UB if overflow occurred.\n\n**Autonomous Vehicle Context:**"
-          ]
+          "explanation": "```cpp\n#include <iostream>\n\n// ❌ DANGEROUS: Appears to have safety check, but optimizer removes it\nvoid process_sensor_data(int* data) {\n    // Dereference happens first\n    int value = *data;  // If data is null, this is UB\n\n    // ... 50 lines of complex processing ...\n    int processed = value * 2 + 10;\n    int result = processed / (value - 5);\n\n    // Safety check (or so it appears)\n    if (data == nullptr) {  // ❌ Compiler removes this check!\n        std::cerr << \"ERROR: Null pointer detected!\\n\";\n        return;\n    }\n\n    // Use the data\n    std::cout << \"Processed value: \" << result << \"\\n\";\n}\n\n// With optimization, the null check is COMPLETELY REMOVED\n// Compiler reasoning:\n// \"If we reached the null check, the dereference *data must have succeeded,\n//  therefore data cannot be null, so the check always fails,\n//  so I can remove the entire if block.\"\n```\n\n**What Happens:**\n1. `*data` dereferences the pointer\n2. If `data` is null, that's UB—program can do anything\n3. Compiler assumes UB never happens (because your code is \"correct\")\n4. Therefore, if we reach the null check, `data` must be non-null\n5. The null check is **provably false** and gets removed\n\n**Disassembly Comparison:**\n```asm\n; Without optimization (-O0)\nmov eax, [rdi]        ; *data\n; ... processing ...\ntest rdi, rdi         ; if (data == nullptr)\nje .error_label       ; jump if zero\n\n; With optimization (-O3)\nmov eax, [rdi]        ; *data\n; ... processing ...\n; (null check completely absent)\n```\n\n**Real CVE Example:**\n**LibTIFF CVE-2019-14973**: Similar pattern where overflow checks were optimized away after operations that would trigger UB if overflow occurred.\n\n**Autonomous Vehicle Context:**\n```cpp\n// ❌ WRONG: Check after use\nvoid update_vehicle_state(SensorReading* reading) {\n    current_velocity = reading->velocity;  // Dereference first\n\n    if (reading == nullptr) {  // Removed by optimizer!\n        log_error(\"Null sensor reading\");\n        return;\n    }\n\n    apply_velocity(current_velocity);\n}\n\n// ✅ CORRECT: Check before use\nvoid update_vehicle_state(SensorReading* reading) {\n    if (reading == nullptr) {  // Check FIRST\n        log_error(\"Null sensor reading\");\n        return;\n    }\n\n    current_velocity = reading->velocity;  // Dereference after check\n    apply_velocity(current_velocity);\n}\n```\n\n**Key Lesson:** Always validate pointers **before** dereferencing, never after.\n\n---"
         },
         {
+          "case_number": 3,
           "title": "Integer Overflow Check Removal",
-          "explanation": "```cpp\n#include <iostream>\n\n// Attempt to detect signed integer overflow\nbool will_overflow_addition(int x, int y) {\n    // ❌ This check is REMOVED by the optimizer!\n    if (x + y < x) {  // Detect overflow by wraparound\n        std::cout << \"Overflow detected!\\n\";\n        return true;\n    }\n    return false;\n}\n\n// Compiled with -O2:\n// The function ALWAYS returns false!\n// Compiler reasoning:\n// \"Signed overflow is UB (C++ standard §5/4)\n//  I can assume it never happens\n//  Therefore x + y >= x is always true\n//  Therefore x + y < x is always false\n//  Remove the entire if block\"\n\n// ✅ CORRECT: Use unsigned arithmetic or check before operation\nbool will_overflow_addition_correct(int x, int y) {\n    // Method 1: Check before operation\n    if (y > 0 && x > INT_MAX - y) {\n        return true;\n    }\n    if (y < 0 && x < INT_MIN - y) {\n        return true;\n    }\n    return false;\n}\n\n// Method 2: Use unsigned arithmetic (wrapping is defined)\nbool will_overflow_unsigned(unsigned int x, unsigned int y) {\n    unsigned int sum = x + y;\n    return sum < x;  // ✅ Works for unsigned (wrapping is defined)\n}\n```\n\n**Why Signed Overflow Detection Fails:**\n- Signed integer overflow is **undefined behavior** (C++11 §5/4)\n- The compiler assumes UB never occurs\n- Therefore `x + y` cannot overflow\n- Therefore `x + y < x` is always false\n- The check is optimized away\n\n**Contrast with Unsigned:**\n```cpp\nunsigned int x = UINT_MAX;\nunsigned int y = 1;\nunsigned int sum = x + y;  // ✅ Defined behavior: wraps to 0\n// sum < x is true, overflow detected\n```\n\n**Real-World Vulnerabilities:**\n- **LibTIFF CVE-2019-14973**: Multiple overflow checks removed\n- **Google Native Client**: Security vulnerability from undefined shift operation\n\n**Autonomous Vehicle Context:**\n```cpp\n// ❌ DANGEROUS: Overflow check removed\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    int new_speed = current_speed + acceleration;\n    if (new_speed < current_speed) {  // Removed!\n        return false;  // Overflow detected\n    }\n    return new_speed <= MAX_SAFE_SPEED;\n}\n\n// ✅ SAFE: Check before operation\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    if (acceleration > MAX_SAFE_SPEED - current_speed) {\n        return false;  // Would overflow\n    }\n    return true;\n}\n```\n\n**Detection Tools:**\n```bash\n# Compile with sanitizers to detect overflow at runtime\ng++ -fsanitize=signed-integer-overflow -g program.cpp\n\n# Use compiler warnings\ng++ -Wall -Wextra -Wsign-conversion program.cpp\n```\n\n---",
-          "code_examples": [
-            "#include <iostream>\n\n// Attempt to detect signed integer overflow\nbool will_overflow_addition(int x, int y) {\n    // ❌ This check is REMOVED by the optimizer!\n    if (x + y < x) {  // Detect overflow by wraparound\n        std::cout << \"Overflow detected!\\n\";\n        return true;\n    }\n    return false;\n}\n\n// Compiled with -O2:\n// The function ALWAYS returns false!\n// Compiler reasoning:\n// \"Signed overflow is UB (C++ standard §5/4)\n//  I can assume it never happens\n//  Therefore x + y >= x is always true\n//  Therefore x + y < x is always false\n//  Remove the entire if block\"\n\n// ✅ CORRECT: Use unsigned arithmetic or check before operation\nbool will_overflow_addition_correct(int x, int y) {\n    // Method 1: Check before operation\n    if (y > 0 && x > INT_MAX - y) {\n        return true;\n    }\n    if (y < 0 && x < INT_MIN - y) {\n        return true;\n    }\n    return false;\n}\n\n// Method 2: Use unsigned arithmetic (wrapping is defined)\nbool will_overflow_unsigned(unsigned int x, unsigned int y) {\n    unsigned int sum = x + y;\n    return sum < x;  // ✅ Works for unsigned (wrapping is defined)\n}",
-            "unsigned int x = UINT_MAX;\nunsigned int y = 1;\nunsigned int sum = x + y;  // ✅ Defined behavior: wraps to 0\n// sum < x is true, overflow detected",
-            "// ❌ DANGEROUS: Overflow check removed\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    int new_speed = current_speed + acceleration;\n    if (new_speed < current_speed) {  // Removed!\n        return false;  // Overflow detected\n    }\n    return new_speed <= MAX_SAFE_SPEED;\n}\n\n// ✅ SAFE: Check before operation\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    if (acceleration > MAX_SAFE_SPEED - current_speed) {\n        return false;  // Would overflow\n    }\n    return true;\n}"
-          ]
+          "explanation": "```cpp\n#include <iostream>\n\n// Attempt to detect signed integer overflow\nbool will_overflow_addition(int x, int y) {\n    // ❌ This check is REMOVED by the optimizer!\n    if (x + y < x) {  // Detect overflow by wraparound\n        std::cout << \"Overflow detected!\\n\";\n        return true;\n    }\n    return false;\n}\n\n// Compiled with -O2:\n// The function ALWAYS returns false!\n// Compiler reasoning:\n// \"Signed overflow is UB (C++ standard §5/4)\n//  I can assume it never happens\n//  Therefore x + y >= x is always true\n//  Therefore x + y < x is always false\n//  Remove the entire if block\"\n\n// ✅ CORRECT: Use unsigned arithmetic or check before operation\nbool will_overflow_addition_correct(int x, int y) {\n    // Method 1: Check before operation\n    if (y > 0 && x > INT_MAX - y) {\n        return true;\n    }\n    if (y < 0 && x < INT_MIN - y) {\n        return true;\n    }\n    return false;\n}\n\n// Method 2: Use unsigned arithmetic (wrapping is defined)\nbool will_overflow_unsigned(unsigned int x, unsigned int y) {\n    unsigned int sum = x + y;\n    return sum < x;  // ✅ Works for unsigned (wrapping is defined)\n}\n```\n\n**Why Signed Overflow Detection Fails:**\n- Signed integer overflow is **undefined behavior** (C++11 §5/4)\n- The compiler assumes UB never occurs\n- Therefore `x + y` cannot overflow\n- Therefore `x + y < x` is always false\n- The check is optimized away\n\n**Contrast with Unsigned:**\n```cpp\nunsigned int x = UINT_MAX;\nunsigned int y = 1;\nunsigned int sum = x + y;  // ✅ Defined behavior: wraps to 0\n// sum < x is true, overflow detected\n```\n\n**Real-World Vulnerabilities:**\n- **LibTIFF CVE-2019-14973**: Multiple overflow checks removed\n- **Google Native Client**: Security vulnerability from undefined shift operation\n\n**Autonomous Vehicle Context:**\n```cpp\n// ❌ DANGEROUS: Overflow check removed\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    int new_speed = current_speed + acceleration;\n    if (new_speed < current_speed) {  // Removed!\n        return false;  // Overflow detected\n    }\n    return new_speed <= MAX_SAFE_SPEED;\n}\n\n// ✅ SAFE: Check before operation\nbool safe_to_accelerate(int current_speed, int acceleration) {\n    if (acceleration > MAX_SAFE_SPEED - current_speed) {\n        return false;  // Would overflow\n    }\n    return true;\n}\n```\n\n**Detection Tools:**\n```bash\n# Compile with sanitizers to detect overflow at runtime\ng++ -fsanitize=signed-integer-overflow -g program.cpp\n\n# Use compiler warnings\ng++ -Wall -Wextra -Wsign-conversion program.cpp\n```\n\n---"
         },
         {
+          "case_number": 4,
           "title": "Array Bounds Check Optimization",
-          "explanation": "```cpp\n#include <iostream>\n\n// Search for value in 4-element array\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {  // ❌ BUG: should be i < 4\n        if (arr[i] == needle) {\n            return true;\n        }\n    }\n    return false;\n}\n\n// With optimization, this becomes:\n// bool exists_in_array(int* arr, int needle) {\n//     return true;  // ❌ ALWAYS returns true!\n// }\n```\n\n**Compiler's Reasoning:**\n1. When `i == 4`, accessing `arr[4]` is out of bounds (UB)\n2. If the function returns false, all loop iterations completed\n3. But completing iteration with `i == 4` causes UB\n4. UB never happens in correct programs\n5. Therefore, the loop must have returned true before reaching `i == 4`\n6. The function can be optimized to `return true;`\n\n**Proof via Compiler Explorer:**\n```cpp\n// Input code\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {\n        if (arr[i] == needle) return true;\n    }\n    return false;\n}\n\n// GCC -O3 output (x86-64)\nexists_in_array(int*, int):\n    mov eax, 1        ; return true\n    ret               ; that's it - no loop!\n```\n\n**Autonomous Vehicle Context:**\n```cpp\n// Sensor array check\nconst int NUM_SENSORS = 4;\n\n// ❌ DANGEROUS: Loop bound off by one\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i <= NUM_SENSORS; ++i) {  // BUG!\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}\n\n// With optimization: Always returns false (or random data from out-of-bounds)\n// Even worse: May access sensors[4] which is UB\n\n// ✅ CORRECT: Proper loop bounds\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i < NUM_SENSORS; ++i) {  // ✅ Correct\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}\n```\n\n---",
-          "code_examples": [
-            "#include <iostream>\n\n// Search for value in 4-element array\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {  // ❌ BUG: should be i < 4\n        if (arr[i] == needle) {\n            return true;\n        }\n    }\n    return false;\n}\n\n// With optimization, this becomes:\n// bool exists_in_array(int* arr, int needle) {\n//     return true;  // ❌ ALWAYS returns true!\n// }",
-            "// Input code\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {\n        if (arr[i] == needle) return true;\n    }\n    return false;\n}\n\n// GCC -O3 output (x86-64)\nexists_in_array(int*, int):\n    mov eax, 1        ; return true\n    ret               ; that's it - no loop!",
-            "// Sensor array check\nconst int NUM_SENSORS = 4;\n\n// ❌ DANGEROUS: Loop bound off by one\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i <= NUM_SENSORS; ++i) {  // BUG!\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}\n\n// With optimization: Always returns false (or random data from out-of-bounds)\n// Even worse: May access sensors[4] which is UB\n\n// ✅ CORRECT: Proper loop bounds\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i < NUM_SENSORS; ++i) {  // ✅ Correct\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}"
-          ]
+          "explanation": "```cpp\n#include <iostream>\n\n// Search for value in 4-element array\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {  // ❌ BUG: should be i < 4\n        if (arr[i] == needle) {\n            return true;\n        }\n    }\n    return false;\n}\n\n// With optimization, this becomes:\n// bool exists_in_array(int* arr, int needle) {\n//     return true;  // ❌ ALWAYS returns true!\n// }\n```\n\n**Compiler's Reasoning:**\n1. When `i == 4`, accessing `arr[4]` is out of bounds (UB)\n2. If the function returns false, all loop iterations completed\n3. But completing iteration with `i == 4` causes UB\n4. UB never happens in correct programs\n5. Therefore, the loop must have returned true before reaching `i == 4`\n6. The function can be optimized to `return true;`\n\n**Proof via Compiler Explorer:**\n```cpp\n// Input code\nbool exists_in_array(int* arr, int needle) {\n    for (int i = 0; i <= 4; ++i) {\n        if (arr[i] == needle) return true;\n    }\n    return false;\n}\n\n// GCC -O3 output (x86-64)\nexists_in_array(int*, int):\n    mov eax, 1        ; return true\n    ret               ; that's it - no loop!\n```\n\n**Autonomous Vehicle Context:**\n```cpp\n// Sensor array check\nconst int NUM_SENSORS = 4;\n\n// ❌ DANGEROUS: Loop bound off by one\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i <= NUM_SENSORS; ++i) {  // BUG!\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}\n\n// With optimization: Always returns false (or random data from out-of-bounds)\n// Even worse: May access sensors[4] which is UB\n\n// ✅ CORRECT: Proper loop bounds\nbool is_sensor_active(Sensor* sensors, int sensor_id) {\n    for (int i = 0; i < NUM_SENSORS; ++i) {  // ✅ Correct\n        if (sensors[i].id == sensor_id) {\n            return sensors[i].is_active;\n        }\n    }\n    return false;\n}\n```\n\n---"
         }
       ],
       "code_examples": [
         {
+          "example_number": 1,
           "title": "Detecting Optimizer Behavior with Godbolt",
           "explanation": "**How to Check:**\n1. Go to https://godbolt.org\n2. Paste code\n3. Compare assembly for `-O0` vs `-O3`\n4. First version: Check disappears with optimization\n5. Second version: Check remains (no UB)\n\n---",
           "code": "#include <iostream>\n\n// Example showing how optimizer removes checks\n\n// ❌ DANGEROUS: Overflow check\nint add_with_check(int a, int b) {\n    int sum = a + b;\n    if (sum < a) {  // Overflow check - REMOVED by optimizer\n        std::cout << \"Overflow detected!\\n\";\n        return INT_MAX;\n    }\n    return sum;\n}\n\n// ✅ SAFE: Check before operation\nint add_with_check_correct(int a, int b) {\n    if (b > 0 && a > INT_MAX - b) {  // Check before overflow\n        std::cout << \"Overflow would occur!\\n\";\n        return INT_MAX;\n    }\n    if (b < 0 && a < INT_MIN - b) {\n        std::cout << \"Underflow would occur!\\n\";\n        return INT_MIN;\n    }\n    return a + b;\n}\n\n// View on Compiler Explorer (godbolt.org):\n// g++ -O0 (no optimization): Both versions have checks\n// g++ -O3 (optimization): First version's check is REMOVED",
           "additional_code": []
         },
         {
+          "example_number": 2,
           "title": "Move Semantics in Practice",
           "explanation": "---",
           "code": "#include <iostream>\n#include <vector>\n#include <string>\n#include <chrono>\n\nclass LargeSensorData {\npublic:\n    std::vector<double> readings;  // 1 million readings\n    std::string metadata;\n\n    LargeSensorData(size_t size) : readings(size, 0.0), metadata(\"Sensor Data\") {\n        std::cout << \"Constructed with \" << size << \" readings\\n\";\n    }\n\n    // ❌ WRONG: Doesn't actually move\n    LargeSensorData(LargeSensorData&& other)\n        : readings(other.readings),  // COPIES the vector!\n          metadata(other.metadata)   // COPIES the string!\n    {\n        std::cout << \"Move constructor (WRONG version)\\n\";\n    }\n\n    // ✅ CORRECT: Actually moves\n    LargeSensorData(LargeSensorData&& other) noexcept\n        : readings(std::move(other.readings)),  // Moves the vector\n          metadata(std::move(other.metadata))   // Moves the string\n    {\n        std::cout << \"Move constructor (CORRECT version)\\n\";\n    }\n\n    LargeSensorData(const LargeSensorData&) = delete;  // Prevent accidental copies\n    LargeSensorData& operator=(const LargeSensorData&) = delete;\n};\n\nvoid benchmark_move_semantics() {\n    using namespace std::chrono;\n\n    const size_t DATA_SIZE = 1'000'000;\n    const int ITERATIONS = 1000;\n\n    auto start = high_resolution_clock::now();\n\n    for (int i = 0; i < ITERATIONS; ++i) {\n        LargeSensorData data(DATA_SIZE);\n        LargeSensorData moved = std::move(data);  // Move operation\n    }\n\n    auto end = high_resolution_clock::now();\n    auto duration = duration_cast<milliseconds>(end - start);\n\n    std::cout << \"Total time: \" << duration.count() << \"ms\\n\";\n    std::cout << \"Average per move: \" << duration.count() / (double)ITERATIONS << \"ms\\n\";\n}\n\n// Performance difference:\n// Wrong version (copy): ~1000ms (memcpy 1M doubles * 1000 times)\n// Correct version (move): ~10ms (pointer swap * 1000 times)\n// 100x speedup!",
           "additional_code": []
         },
         {
+          "example_number": 3,
           "title": "Perfect Forwarding Demonstration",
           "explanation": "---",
           "code": "#include <iostream>\n#include <utility>\n#include <vector>\n\nvoid process(const std::vector<int>& v) {\n    std::cout << \"Lvalue overload: \" << v.size() << \" elements\\n\";\n}\n\nvoid process(std::vector<int>&& v) {\n    std::cout << \"Rvalue overload: \" << v.size() << \" elements (moving)\\n\";\n    v.clear();  // Consume the rvalue\n}\n\n// ❌ Imperfect forwarding\ntemplate<typename T>\nvoid bad_forward(T arg) {\n    process(arg);  // Always calls lvalue overload (arg is lvalue)\n}\n\n// ✅ Perfect forwarding\ntemplate<typename T>\nvoid good_forward(T&& arg) {\n    process(std::forward<T>(arg));  // Preserves value category\n}\n\nint main() {\n    std::vector<int> vec = {1, 2, 3};\n\n    std::cout << \"=== Bad Forward ===\\n\";\n    bad_forward(vec);                        // Lvalue\n    bad_forward(std::vector<int>{4, 5, 6});  // Rvalue, but still calls lvalue overload!\n\n    std::cout << \"\\n=== Good Forward ===\\n\";\n    good_forward(vec);                        // Lvalue → calls lvalue overload\n    good_forward(std::vector<int>{7, 8, 9}); // Rvalue → calls rvalue overload\n}\n\n// Output:\n// === Bad Forward ===\n// Lvalue overload: 3 elements\n// Lvalue overload: 3 elements  ← WRONG! Should be rvalue\n//\n// === Good Forward ===\n// Lvalue overload: 3 elements\n// Rvalue overload: 3 elements (moving)  ← CORRECT!",
           "additional_code": []
         },
         {
+          "example_number": 4,
           "title": "Autonomous Vehicle - Safe Sensor Data Processing",
           "explanation": "---",
           "code": "#include <iostream>\n#include <vector>\n#include <optional>\n#include <limits>\n\nstruct SensorReading {\n    double value;\n    uint64_t timestamp_us;\n    bool valid;\n};\n\nclass SensorProcessor {\npublic:\n    // ✅ SAFE: Validates before processing\n    std::optional<double> process_safe(const SensorReading* reading) {\n        // Check pointer BEFORE dereferencing\n        if (reading == nullptr) {\n            std::cerr << \"ERROR: Null reading pointer\\n\";\n            return std::nullopt;\n        }\n\n        // Check validity\n        if (!reading->valid) {\n            std::cerr << \"WARNING: Invalid sensor reading\\n\";\n            return std::nullopt;\n        }\n\n        // Check value range (detect overflow before operation)\n        const double MAX_SENSOR_VALUE = 1000.0;\n        if (reading->value > MAX_SENSOR_VALUE) {\n            std::cerr << \"ERROR: Sensor value out of range\\n\";\n            return std::nullopt;\n        }\n\n        // Safe to process\n        double processed = reading->value * 2.0 + 10.0;\n        return processed;\n    }\n\n    // ❌ UNSAFE: Checks after dereferencing\n    std::optional<double> process_unsafe(const SensorReading* reading) {\n        // Dereference FIRST (if null, this is UB)\n        double value = reading->value;\n        uint64_t timestamp = reading->timestamp_us;\n\n        // Too late - if reading was null, UB already occurred\n        if (reading == nullptr) {  // Optimizer removes this!\n            std::cerr << \"ERROR: Null reading pointer\\n\";\n            return std::nullopt;\n        }\n\n        // Check after potential overflow\n        double processed = value * 2.0 + 10.0;\n        if (processed < value) {  // Overflow check - optimizer removes this!\n            std::cerr << \"ERROR: Overflow detected\\n\";\n            return std::nullopt;\n        }\n\n        return processed;\n    }\n\n    // ✅ SAFE: Overflow checking before operation\n    std::optional<int> safe_acceleration(int current_speed, int delta) {\n        const int MAX_SPEED = 200;  // km/h\n\n        // Check BEFORE addition\n        if (delta > 0 && current_speed > MAX_SPEED - delta) {\n            std::cerr << \"ERROR: Acceleration would exceed max speed\\n\";\n            return std::nullopt;\n        }\n\n        if (delta < 0 && current_speed < -delta) {\n            std::cerr << \"ERROR: Deceleration would result in negative speed\\n\";\n            return std::nullopt;\n        }\n\n        return current_speed + delta;\n    }\n};\n\nint main() {\n    SensorProcessor processor;\n\n    // Test with valid reading\n    SensorReading valid_reading{50.0, 1000000, true};\n    auto result1 = processor.process_safe(&valid_reading);\n    if (result1) {\n        std::cout << \"Processed: \" << *result1 << \"\\n\";\n    }\n\n    // Test with null pointer\n    auto result2 = processor.process_safe(nullptr);  // ✅ Safely handled\n\n    // Test overflow check\n    auto speed1 = processor.safe_acceleration(190, 15);  // ✅ Would exceed max\n    auto speed2 = processor.safe_acceleration(190, 5);   // ✅ OK\n\n    return 0;\n}",
@@ -829,6 +874,7 @@
       ],
       "interview_qa": [
         {
+          "question_number": 1,
           "question": "Why can the compiler remove an infinite loop from your code?",
           "difficulty": [
             "advanced"
@@ -850,6 +896,7 @@
           "key_takeaway": "Ensure all loops either terminate or have observable side effects (I/O, sleep, volatile access)."
         },
         {
+          "question_number": 2,
           "question": "Why does checking for null AFTER dereferencing fail?",
           "difficulty": [
             "intermediate"
@@ -871,6 +918,7 @@
           "key_takeaway": "Always validate pointers BEFORE dereferencing, never after."
         },
         {
+          "question_number": 3,
           "question": "Why don't signed integer overflow checks work?",
           "difficulty": [
             "advanced"
@@ -892,6 +940,7 @@
           "key_takeaway": "Check for overflow BEFORE performing the operation; use unsigned arithmetic if wrapping behavior is needed."
         },
         {
+          "question_number": 4,
           "question": "What does std::move actually do?",
           "difficulty": [
             "intermediate"
@@ -913,6 +962,7 @@
           "key_takeaway": "`std::move` is a cast that enables moving; the actual move happens in move constructors/assignment operators."
         },
         {
+          "question_number": 5,
           "question": "Why is a named rvalue reference an lvalue?",
           "difficulty": [
             "advanced"
@@ -934,6 +984,7 @@
           "key_takeaway": "Named variables are always lvalues; use `std::move` explicitly in move constructors/assignments."
         },
         {
+          "question_number": 6,
           "question": "When does perfect forwarding fail?",
           "difficulty": [
             "advanced"
@@ -955,6 +1006,7 @@
           "key_takeaway": "Perfect forwarding is \"imperfect\"—know the edge cases where it fails and have workarounds ready."
         },
         {
+          "question_number": 7,
           "question": "What's the difference between T&& in a function template vs a class template member?",
           "difficulty": [
             "advanced"
@@ -976,6 +1028,7 @@
           "key_takeaway": "Forwarding references require deduction at the point of use; use a separate template parameter in member functions for true forwarding."
         },
         {
+          "question_number": 8,
           "question": "What does consteval guarantee that constexpr doesn't?",
           "difficulty": [
             "intermediate"
@@ -996,6 +1049,7 @@
           "key_takeaway": "Use `consteval` when you need a guarantee of compile-time execution; use `constexpr` for flexibility."
         },
         {
+          "question_number": 9,
           "question": "What is constinit and when would you use it?",
           "difficulty": [
             "advanced"
@@ -1016,6 +1070,7 @@
           "key_takeaway": "Use `constinit` for static variables that need guaranteed initialization order but must be mutable at runtime."
         },
         {
+          "question_number": 10,
           "question": "Why should you never return const from a function?",
           "difficulty": [
             "intermediate"
@@ -1037,7 +1092,108 @@
           "key_takeaway": "Always return by value (non-const) from functions; let the compiler optimize with moves and RVO."
         }
       ],
-      "practice_tasks": [],
+      "practice_tasks": [
+        {
+          "question_number": 1,
+          "title": "Question 1",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <iostream>\n\nint search(int* arr, int size, int target) {\n    for (int i = 0; i <= size; ++i) {  // Note: <= size\n        if (arr[i] == target) {\n            return i;\n        }\n    }\n    return -1;\n}\n\nint main() {\n    int data[] = {1, 2, 3, 4, 5};\n    std::cout << search(data, 5, 10) << \"\\n\";\n}\n\n// What can the optimizer do to this code?\n```",
+          "code": "#include <iostream>\n\nint search(int* arr, int size, int target) {\n    for (int i = 0; i <= size; ++i) {  // Note: <= size\n        if (arr[i] == target) {\n            return i;\n        }\n    }\n    return -1;\n}\n\nint main() {\n    int data[] = {1, 2, 3, 4, 5};\n    std::cout << search(data, 5, 10) << \"\\n\";\n}\n\n// What can the optimizer do to this code?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 2,
+          "title": "Question 2",
+          "description": "```cpp",
+          "full_content": "```cpp\nvoid process(int* ptr) {\n    int value = *ptr;\n\n    // ... 100 lines of code using value ...\n\n    if (ptr == nullptr) {\n        std::cerr << \"Error: null pointer\\n\";\n        return;\n    }\n\n    std::cout << \"Value: \" << value << \"\\n\";\n}\n\n// Is the null check effective? Why or why not?\n```",
+          "code": "void process(int* ptr) {\n    int value = *ptr;\n\n    // ... 100 lines of code using value ...\n\n    if (ptr == nullptr) {\n        std::cerr << \"Error: null pointer\\n\";\n        return;\n    }\n\n    std::cout << \"Value: \" << value << \"\\n\";\n}\n\n// Is the null check effective? Why or why not?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 3,
+          "title": "Question 3",
+          "description": "```cpp",
+          "full_content": "```cpp\nclass Data {\n    std::vector<int> vec;\npublic:\n    Data(Data&& other)\n        : vec(other.vec)  // Move constructor\n    {}\n};\n\n// Does this actually move the vector? Explain.\n```",
+          "code": "class Data {\n    std::vector<int> vec;\npublic:\n    Data(Data&& other)\n        : vec(other.vec)  // Move constructor\n    {}\n};\n\n// Does this actually move the vector? Explain.",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 4,
+          "title": "Question 4",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid forward_call(T&& arg) {\n    func(arg);\n}\n\nvoid func(std::vector<int>&& v) {\n    std::cout << \"Rvalue\\n\";\n}\n\nvoid func(const std::vector<int>& v) {\n    std::cout << \"Lvalue\\n\";\n}\n\nint main() {\n    forward_call(std::vector<int>{1, 2, 3});\n}\n\n// What is printed? Why?\n```",
+          "code": "template<typename T>\nvoid forward_call(T&& arg) {\n    func(arg);\n}\n\nvoid func(std::vector<int>&& v) {\n    std::cout << \"Rvalue\\n\";\n}\n\nvoid func(const std::vector<int>& v) {\n    std::cout << \"Lvalue\\n\";\n}\n\nint main() {\n    forward_call(std::vector<int>{1, 2, 3});\n}\n\n// What is printed? Why?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 5,
+          "title": "Question 5",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int compute(int x) {\n    return x * x + 10;\n}\n\nconsteval int compute_compile(int x) {\n    return x * x + 10;\n}\n\nint main() {\n    int runtime_value = 5;\n    std::cin >> runtime_value;\n\n    int a = compute(runtime_value);\n    int b = compute_compile(runtime_value);\n\n    std::cout << a << \" \" << b << \"\\n\";\n}\n\n// Does this compile? Which lines have issues?\n```",
+          "code": "constexpr int compute(int x) {\n    return x * x + 10;\n}\n\nconsteval int compute_compile(int x) {\n    return x * x + 10;\n}\n\nint main() {\n    int runtime_value = 5;\n    std::cin >> runtime_value;\n\n    int a = compute(runtime_value);\n    int b = compute_compile(runtime_value);\n\n    std::cout << a << \" \" << b << \"\\n\";\n}\n\n// Does this compile? Which lines have issues?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 6,
+          "title": "Question 6",
+          "description": "```cpp",
+          "full_content": "```cpp\nbool check_overflow(int x, int y) {\n    int sum = x + y;\n    if (sum < x) {\n        return true;  // Overflow detected\n    }\n    return false;\n}\n\nint main() {\n    std::cout << check_overflow(INT_MAX, 10) << \"\\n\";\n}\n\n// With -O3 optimization, what does this print?\n```",
+          "code": "bool check_overflow(int x, int y) {\n    int sum = x + y;\n    if (sum < x) {\n        return true;  // Overflow detected\n    }\n    return false;\n}\n\nint main() {\n    std::cout << check_overflow(INT_MAX, 10) << \"\\n\";\n}\n\n// With -O3 optimization, what does this print?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 7,
+          "title": "Question 7",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nclass Container {\npublic:\n    void process(T&& item) {\n        // Process item\n    }\n};\n\nint main() {\n    Container<int> c;\n    int x = 42;\n    c.process(x);  // Does this compile?\n}\n```",
+          "code": "template<typename T>\nclass Container {\npublic:\n    void process(T&& item) {\n        // Process item\n    }\n};\n\nint main() {\n    Container<int> c;\n    int x = 42;\n    c.process(x);  // Does this compile?\n}",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 8,
+          "title": "Question 8",
+          "description": "```cpp",
+          "full_content": "```cpp\nconst Widget make_widget() {\n    Widget w;\n    // ... initialize w ...\n    return w;\n}\n\nWidget w = make_widget();\n\n// Is move constructor or copy constructor called for w?\n```",
+          "code": "const Widget make_widget() {\n    Widget w;\n    // ... initialize w ...\n    return w;\n}\n\nWidget w = make_widget();\n\n// Is move constructor or copy constructor called for w?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 9,
+          "title": "Question 9",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid call_func(T&& arg) {\n    func(std::forward<T>(arg));\n}\n\nvoid func(std::vector<int> v) {\n    std::cout << \"Received: \" << v.size() << \"\\n\";\n}\n\nint main() {\n    call_func({1, 2, 3, 4, 5});\n}\n\n// Does this compile? Why or why not?\n```",
+          "code": "template<typename T>\nvoid call_func(T&& arg) {\n    func(std::forward<T>(arg));\n}\n\nvoid func(std::vector<int> v) {\n    std::cout << \"Received: \" << v.size() << \"\\n\";\n}\n\nint main() {\n    call_func({1, 2, 3, 4, 5});\n}\n\n// Does this compile? Why or why not?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        },
+        {
+          "question_number": 10,
+          "title": "Question 10",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstinit int counter = 0;\n\nvoid increment() {\n    counter++;\n}\n\nint main() {\n    increment();\n    std::cout << counter << \"\\n\";\n}\n\n// Is this valid? What guarantees does constinit provide?\n```\n\n---",
+          "code": "constinit int counter = 0;\n\nvoid increment() {\n    counter++;\n}\n\nint main() {\n    increment();\n    std::cout << counter << \"\\n\";\n}\n\n// Is this valid? What guarantees does constinit provide?",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": []
+        }
+      ],
       "quick_reference": {
         "content": "#### Answer Key for Practice Tasks\n\n| Task | Answer | Explanation | Key Concept |\n|------|--------|-------------|-------------|\n| 1 | Optimizer can transform to `return -1;` or remove loop | Loop with `i <= size` accesses out of bounds on last iteration (UB), so optimizer assumes loop returns early | #undefined_behavior #array_bounds |\n| 2 | No, check is removed | Dereferencing `*ptr` before null check means if ptr is null, UB already occurred. Optimizer removes \"unreachable\" check. | #null_pointer #optimization |\n| 3 | No, copies the vector | `other.vec` is lvalue expression (named variable). Need `std::move(other.vec)` to actually move. | #move_semantics #named_rvalue |\n| 4 | Prints \"Lvalue\" | `arg` in `forward_call` is lvalue (named parameter). Without `std::forward`, always calls lvalue overload. | #perfect_forwarding #value_category |\n| 5 | No, line with `compute_compile` fails | `runtime_value` is not compile-time constant. `consteval` requires compile-time arguments. | #consteval #compile_time |\n| 6 | Prints `0` (false) | Optimizer removes overflow check because signed overflow is UB, assumes it never happens, so condition is always false. | #integer_overflow #undefined_behavior |\n| 7 | No, compilation error | `T&&` in class template member is rvalue reference (T already known). Cannot bind lvalue `x` to rvalue reference. | #forwarding_reference #class_template |\n| 8 | Copy constructor | Const return value prevents move (move ctor needs non-const rvalue ref). Falls back to copy constructor. | #const_return #move_prevention |\n| 9 | No, compilation error | Braced initializer list cannot be deduced in template. Template deduction fails for `{1,2,3,4,5}`. | #perfect_forwarding #braced_init |\n| 10 | Yes, valid | `constinit` guarantees compile-time initialization but allows runtime modification. Counter can be incremented at runtime. | #constinit #C++20 |\n\n---\n\n#### Undefined Behavior Optimizer Exploits\n\n| UB Type | What Compiler Assumes | Optimization Result | Detection |\n|---------|----------------------|-------------------|-----------|\n| Null pointer dereference | Pointer is never null | Removes null checks after dereference | AddressSanitizer |\n| Signed overflow | Overflow never happens | Removes overflow detection checks | `-fsanitize=signed-integer-overflow` |\n| Array out of bounds | Array access always in bounds | Can remove entire loops or always return | AddressSanitizer |\n| Infinite loop without side effects | Loop must terminate | Removes entire loop | Manual code review |\n| Use after free | Freed memory not accessed | Unpredictable behavior | AddressSanitizer |\n\n---\n\n#### Move Semantics Pitfall Summary\n\n| Situation | Problem | Solution |\n|-----------|---------|----------|\n| Named rvalue reference | `rhs.member` is lvalue | Use `std::move(rhs.member)` |\n| Const rvalue | Binds to copy ctor, not move | Don't return const from functions |\n| Moving in loop | Repeated `std::move` on same object | Only move once, or reset state |\n| Conditional move | Move in if branch, use in else | Always treat moved-from objects as invalid |\n| Base class move | Forgetting to move base | `Base(std::move(other))` in derived move ctor |\n\n---\n\n#### Perfect Forwarding Failure Cases\n\n| Case | Why It Fails | Workaround |\n|------|-------------|-----------|\n| Braced initializers `{1,2,3}` | No type for template deduction | Create variable: `auto x = {1,2,3}; fwd(x);` |\n| Bitfields | Cannot take address | Copy to local variable first |\n| Overloaded function names | Ambiguous without type | Cast to function pointer type |\n| 0 or NULL as nullptr | Deduced as int | Use `nullptr` keyword |\n| Static const integral members | Some compilers require definition | Provide out-of-class definition |\n\n---\n\n#### C++20 const Keywords Comparison\n\n| Feature | `const` | `constexpr` | `consteval` | `constinit` |\n|---------|---------|-------------|-------------|-------------|\n| Compile-time init required? | ❌ | ✅ | N/A (functions) | ✅ |\n| Compile-time execution? | ❌ | Optional | ✅ Always | ❌ |\n| Runtime mutable? | ❌ | ❌ | N/A | ✅ |\n| Use case | Runtime constants | Compile-time constants | Forced compile-time | Init-order-safe static |\n| Example | `const int x = f();` | `constexpr int x = 10;` | `consteval int f(int x)` | `constinit int x = 10;` |\n\n---\n\n#### Autonomous Vehicle Safety Checklist\n\n| Risk | Unsafe Pattern | Safe Pattern |\n|------|---------------|--------------|\n| Null pointer crash | Check after dereference | Check BEFORE dereference |\n| Speed overflow | `new_speed < old_speed` check | Check before: `delta > MAX - speed` |\n| Sensor array bounds | `i <= N` in loop | `i < N` in loop |\n| Large buffer copy | Named rvalue without move | `std::move()` explicitly |\n| Infinite calibration | `while(true) { check(); }` | Add timeout or side effects |\n\n---\n\n#### Compiler Sanitizer Flags\n\n| Sanitizer | Flag | Detects |\n|-----------|------|---------|\n| AddressSanitizer | `-fsanitize=address` | Null deref, out-of-bounds, use-after-free |\n| UndefinedBehaviorSanitizer | `-fsanitize=undefined` | Integer overflow, null pointer, alignment |\n| ThreadSanitizer | `-fsanitize=thread` | Data races, race conditions |\n| MemorySanitizer | `-fsanitize=memory` | Uninitialized memory reads |\n| LeakSanitizer | `-fsanitize=leak` | Memory leaks |\n\n**Recommended Development Flags:**\n```bash\ng++ -Wall -Wextra -Wpedantic -Werror \\\n    -fsanitize=address,undefined \\\n    -fno-omit-frame-pointer \\\n    -g -O1 \\\n    program.cpp\n```\n\n---\n\n**End of Topic: Advanced C++ Pitfalls**\n\nThis comprehensive guide covers the most subtle and dangerous aspects of modern C++: undefined behavior exploited by optimizers, move semantics confusion, perfect forwarding edge cases, and modern C++20 features. Mastering these pitfalls is essential for writing correct, high-performance code in safety-critical systems like autonomous vehicles where bugs can have catastrophic consequences. Understanding what the compiler is allowed to do—not just what you intend it to do—is the hallmark of expert C++ developers.",
         "tables": [

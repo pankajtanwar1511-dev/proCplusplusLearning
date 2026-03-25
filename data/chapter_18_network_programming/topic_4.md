@@ -3536,7 +3536,7 @@ Topic 4 now has:
 
 ### PRACTICE_TASKS: Hands-On Exercises
 
-#### Task 1: Basic Echo Server [BEGINNER]
+#### Q1
 
 **Objective**: Build a simple echo server using poll() that handles up to 10 clients.
 
@@ -3582,7 +3582,7 @@ Client 4 disconnected
 
 ---
 
-#### Task 2: Chat Room Server [INTERMEDIATE]
+#### Q2
 
 **Objective**: Build a chat room where messages are broadcast to all connected clients except the sender.
 
@@ -3615,7 +3615,7 @@ hey!
 
 ---
 
-#### Task 3: Connection Limit Enforcement [INTERMEDIATE]
+#### Q3
 
 **Objective**: Extend Task 1 to enforce a maximum of 5 connections and reject new connections gracefully.
 
@@ -3645,7 +3645,7 @@ Rejected connection: server at capacity (5/5)
 
 ---
 
-#### Task 4: Idle Connection Cleanup [INTERMEDIATE]
+#### Q4
 
 **Objective**: Add idle timeout detection to kick clients inactive for >30 seconds.
 
@@ -3675,7 +3675,7 @@ Kicking idle client 4 (idle for 31s)
 
 ---
 
-#### Task 5: Partial Send Handling with POLLOUT [ADVANCED]
+#### Q5
 
 **Objective**: Handle large sends that may block using POLLOUT monitoring and write queues.
 
@@ -3708,7 +3708,7 @@ queue_send(client_fd, large_data);
 
 ---
 
-#### Task 6: Per-Client Rate Limiting [ADVANCED]
+#### Q6
 
 **Objective**: Implement bandwidth throttling (max 10 KB/s per client).
 
@@ -3740,7 +3740,7 @@ if (client.bytes_sent_this_second > 10240) {
 
 ---
 
-#### Task 7: Protocol Parser (HTTP-like) [ADVANCED]
+#### Q7
 
 **Objective**: Parse simple HTTP-like requests: `GET /path\r\n\r\n`.
 
@@ -3765,7 +3765,7 @@ Hello from /test
 
 ---
 
-#### Task 8: Server Metrics and Monitoring [ADVANCED]
+#### Q8
 
 **Objective**: Add Prometheus-style metrics endpoint.
 
@@ -3792,7 +3792,7 @@ uptime_seconds 3600
 
 ---
 
-#### Task 9: Graceful Shutdown with Signal Handling [EXPERT]
+#### Q9
 
 **Objective**: Implement clean shutdown on SIGINT/SIGTERM.
 
@@ -3821,7 +3821,7 @@ Goodbye!
 
 ---
 
-#### Task 10: File Transfer Protocol [EXPERT]
+#### Q10
 
 **Objective**: Implement simple file transfer: `SEND filename\r\n` → file contents.
 
@@ -3847,7 +3847,7 @@ myserver
 
 ---
 
-#### Task 11: Zero-Copy sendfile() Integration [EXPERT]
+#### Q11
 
 **Objective**: Use sendfile() for efficient file transfers (Linux-specific).
 
@@ -3869,7 +3869,7 @@ myserver
 
 ---
 
-#### Task 12: Production Deployment [EXPERT]
+#### Q12
 
 **Objective**: Deploy the server as a systemd service with full production features.
 

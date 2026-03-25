@@ -1,6 +1,5 @@
-# TOPIC: Inheritance Control Keywords in C++11
 
-## THEORY_SECTION: Compile-Time Polymorphism Safety
+### THEORY_SECTION: Compile-Time Polymorphism Safety
 
 #### 1. override Keyword - Compile-Time Verification of Virtual Function Overriding
 
@@ -640,9 +639,9 @@ This contextual nature maintains backward compatibility with C++03 code that may
 
 ---
 
-## EDGE_CASES: Virtual Function Override Pitfalls
+### EDGE_CASES: Virtual Function Override Pitfalls
 
-### Edge Case 1: Name Mismatch Detection
+#### Edge Case 1: Name Mismatch Detection
 
 The most common overriding error is a typo in the function name, creating a new virtual function instead of overriding the base class method.
 
@@ -664,7 +663,7 @@ public:
 
 This is one of the primary use cases for `override`. Without it, the typo creates an entirely separate virtual function that will never be called through base class pointers, causing confusing runtime behavior. With `override`, the compiler immediately catches the mistake.
 
-### Edge Case 2: Const-Qualification Mismatch
+#### Edge Case 2: Const-Qualification Mismatch
 
 Forgetting or incorrectly adding `const` qualification creates a signature mismatch that prevents proper overriding.
 
@@ -691,7 +690,7 @@ public:
 
 Const-qualification is part of the function signature for member functions. The `override` keyword ensures that const-correctness is maintained across the inheritance hierarchy, preventing subtle bugs where the wrong overload is called.
 
-### Edge Case 3: Parameter Type Mismatch
+#### Edge Case 3: Parameter Type Mismatch
 
 Even subtle differences in parameter types prevent overriding, which `override` detects at compile time.
 
@@ -713,7 +712,7 @@ public:
 
 Parameter types must match exactly for overriding to occur. Even promotions like `int` to `long` create different signatures. Without `override`, this would silently create overloads rather than overriding, potentially causing unexpected behavior with base class pointers.
 
-### Edge Case 4: Combining override and final
+#### Edge Case 4: Combining override and final
 
 A virtual function can be both an override of a base class function and final, preventing further overriding in derived classes.
 
@@ -737,7 +736,7 @@ public:
 
 This pattern is useful when you want to override a base class method but prevent any further overrides. The order doesn't matter—you can write `final override` or `override final`. This ensures that `Derived::method()` is the final implementation in this hierarchy.
 
-### Edge Case 5: Final Class Prevention
+#### Edge Case 5: Final Class Prevention
 
 When a class is marked `final`, no class can inherit from it, even if the derived class doesn't override any methods.
 
@@ -754,7 +753,7 @@ class Derived : public Base {
 
 Final classes are useful for classes that are designed as complete, sealed implementations. Examples include implementation classes in the pimpl idiom, classes with specific performance assumptions, or utility classes that shouldn't be extended. This prevents accidental misuse through inheritance.
 
-### Edge Case 6: Non-Virtual Function with override
+#### Edge Case 6: Non-Virtual Function with override
 
 The `override` keyword can only be applied to virtual functions. Attempting to use it on non-virtual functions generates a compile error.
 
@@ -773,7 +772,7 @@ public:
 
 This error catches cases where a programmer believes they're overriding a virtual function, but the base function is not virtual. This usually indicates a design error—either the base function should be virtual, or the derived class shouldn't be trying to override it.
 
-### Edge Case 7: Reference Qualifiers with override
+#### Edge Case 7: Reference Qualifiers with override
 
 C++11 also introduced reference qualifiers for member functions (`&` and `&&`), which must match for proper overriding.
 
@@ -797,9 +796,9 @@ Reference qualifiers allow different behavior when the member function is called
 
 ---
 
-## CODE_EXAMPLES: Practical Override and Final Patterns
+### CODE_EXAMPLES: Practical Override and Final Patterns
 
-### Example 1: Basic override Usage
+#### Example 1: Basic override Usage
 
 ```cpp
 class Shape {
@@ -828,7 +827,7 @@ public:
 
 Using `override` makes the code self-documenting and catches errors early. If the base class signature changes (e.g., `area()` loses `const`), all derived classes using `override` will fail to compile, forcing updates. Without `override`, the derived class would silently create a new non-overriding method.
 
-### Example 2: Catching Signature Mismatches
+#### Example 2: Catching Signature Mismatches
 
 ```cpp
 class Base {
@@ -854,7 +853,7 @@ public:
 
 This demonstrates the safety net that `override` provides. Each commented error would silently compile without `override`, creating separate functions that never override the base class versions. With `override`, all these mistakes become immediate compile errors.
 
-### Example 3: Final Method to Seal Implementation
+#### Example 3: Final Method to Seal Implementation
 
 ```cpp
 class Component {
@@ -891,7 +890,7 @@ public:
 
 Making `cleanup()` final ensures that critical cleanup logic in `CriticalComponent` always executes, preventing derived classes from accidentally breaking resource management or invariant maintenance. Initialize can still be customized.
 
-### Example 4: Final Class for Complete Sealing
+#### Example 4: Final Class for Complete Sealing
 
 ```cpp
 class Resource {
@@ -921,7 +920,7 @@ public:
 
 Final classes are appropriate when the implementation is complete and further derivation would violate assumptions. Here, `FileResource` manages a `FILE*` pointer with specific lifecycle requirements that derived classes might inadvertently break. Making it final prevents such misuse.
 
-### Example 5: Virtual Destructor with override
+#### Example 5: Virtual Destructor with override
 
 ```cpp
 class Base {
@@ -945,7 +944,7 @@ int main() {
 
 Virtual destructors should be overridden in derived classes to ensure proper cleanup. Using `override` on the destructor makes this explicit and catches cases where the base destructor is not virtual, which would lead to undefined behavior when deleting through base pointers.
 
-### Example 6: Multiple Inheritance with override
+#### Example 6: Multiple Inheritance with override
 
 ```cpp
 class Interface1 {
@@ -971,7 +970,7 @@ public:
 
 When multiple base classes have virtual functions with the same signature, a single override in the derived class satisfies both. The `override` keyword works correctly in this scenario, providing verification that both base class functions are properly overridden.
 
-### Example 7: Covariant Return Types with override
+#### Example 7: Covariant Return Types with override
 
 ```cpp
 class Base;
@@ -991,7 +990,7 @@ public:
 
 C++ allows covariant return types in overrides—the return type can be a pointer or reference to a more derived class. The `override` keyword correctly recognizes this as a valid override despite the return type difference, because covariance is an exception to the usual signature matching rules.
 
-### Example 8: Private Virtual Functions with override
+#### Example 8: Private Virtual Functions with override
 
 ```cpp
 class Base {
@@ -1445,7 +1444,7 @@ PART 5: Safety Features Demonstrated
 [Sensor] sensor_cleanup destroyed
 ```
 
-### Real-World Applications in Autonomous Vehicles:
+#### Real-World Applications in Autonomous Vehicles:
 
 **1. override for Polymorphism Safety:**
 - **Prevents typos**: Common errors like `calibrat()` instead of `calibrate()` are caught at compile time
@@ -1496,7 +1495,7 @@ void calibrate(int x) override { }  // ❌ Error: parameter mismatch
 
 ---
 
-## INTERVIEW_QA: Polymorphism Safety and Design
+### INTERVIEW_QA: Polymorphism Safety and Design
 
 #### Q1: What problem does the override keyword solve?
 **Difficulty:** #beginner
@@ -2035,9 +2034,7 @@ When a class is marked `final`, the compiler knows no derived classes exist, ena
 
 ---
 
-## PRACTICE_TASKS: Override and Final Scenarios
-
-### PRACTICE_TASKS: Error Detection and Design Validation
+### PRACTICE_TASKS: Override and Final Scenarios
 
 #### Q1
 ```cpp
@@ -2050,7 +2047,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q2
 ```cpp
 class Base {
@@ -2062,7 +2058,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q3
 ```cpp
 class Base {
@@ -2074,7 +2069,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q4
 ```cpp
 class Base {
@@ -2086,7 +2080,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q5
 ```cpp
 class Base {
@@ -2098,7 +2091,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q6
 ```cpp
 class Base final {
@@ -2109,7 +2101,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q7
 ```cpp
 class Base {
@@ -2125,7 +2116,6 @@ class MoreDerived : public Derived {
 };
 // Does this compile?
 ```
-
 #### Q8
 ```cpp
 class Base {
@@ -2137,7 +2127,6 @@ class Derived : public Base {
 };
 // Does this compile and is it good practice?
 ```
-
 #### Q9
 ```cpp
 class Base {
@@ -2149,7 +2138,6 @@ class Derived : public Base {
 };
 // Does this compile? Does order matter?
 ```
-
 #### Q10
 ```cpp
 class Interface {
@@ -2161,7 +2149,6 @@ class Implementation : public Interface {
 };
 // Does this compile?
 ```
-
 #### Q11
 ```cpp
 class Base {
@@ -2173,7 +2160,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q12
 ```cpp
 class Base {
@@ -2185,7 +2171,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q13
 ```cpp
 class Base {
@@ -2197,7 +2182,6 @@ class Derived : public Base {
 };
 // Does this compile?
 ```
-
 #### Q14
 ```cpp
 class Base { };
@@ -2207,7 +2191,6 @@ class Derived final : public Base { };
 class MoreDerived : public Derived { };
 // Does this compile?
 ```
-
 #### Q15
 ```cpp
 class Base {
@@ -2221,7 +2204,6 @@ public:
 };
 // Does this compile? What concept is this?
 ```
-
 #### Q16
 ```cpp
 class Base {
@@ -2235,7 +2217,6 @@ class Derived : public Base {
 Base* ptr = new Derived();
 // Is this valid? Can Derived be instantiated?
 ```
-
 #### Q17
 ```cpp
 class Base {
@@ -2249,7 +2230,6 @@ private:
 };
 // Does this compile? Can private virtual functions be overridden?
 ```
-
 #### Q18
 ```cpp
 class Base {
@@ -2263,7 +2243,6 @@ class Derived : public Base {
 Base* ptr = new Derived();
 ptr->method();  // Which default value is used?
 ```
-
 #### Q19
 ```cpp
 class Base {
@@ -2277,7 +2256,6 @@ class Derived : public Base {
 void Derived::method() { }  // Definition outside class
 // Is this valid?
 ```
-
 #### Q20
 ```cpp
 class Base {
@@ -2291,10 +2269,9 @@ class Derived : public Base {
 ```
 
 ---
+### QUICK_REFERENCE: Override and Final Design Guide
 
-## QUICK_REFERENCE: Override and Final Design Guide
-
-### Answer Key for Practice Questions
+#### Answer Key for Practice Questions
 
 | Q# | Answer | Explanation | Key Concept |
 |----|--------|-------------|-------------|
@@ -2319,7 +2296,7 @@ class Derived : public Base {
 | 19 | Yes | `override` can be used in declaration; definition follows normal rules | #override #declaration_definition |
 | 20 | No, compile error | Pure virtual and final contradicts: cannot override but must provide implementation | #final #pure_virtual #contradiction |
 
-### Override and Final Quick Reference
+#### Override and Final Quick Reference
 
 | Keyword | Applies To | Purpose | Compile-Time Check |
 |---------|-----------|---------|-------------------|
@@ -2328,7 +2305,7 @@ class Derived : public Base {
 | `final` (class) | Class declaration | Prevent inheritance | Yes—error if derived inherits |
 | `override final` | Virtual functions | Override and seal in one step | Both checks apply |
 
-### Common Override Errors Caught
+#### Common Override Errors Caught
 
 | Error Type | Without override | With override | Description |
 |-----------|------------------|---------------|-------------|
@@ -2340,7 +2317,7 @@ class Derived : public Base {
 | Base not virtual | Silently hides base function | Compile error | Overriding non-virtual |
 | Reference qualifier | Silently creates new overload | Compile error | `&` vs `&&` mismatch |
 
-### Design Decision Matrix
+#### Design Decision Matrix
 
 | Scenario | Use override | Use final | Rationale |
 |----------|-------------|-----------|-----------|
@@ -2353,7 +2330,7 @@ class Derived : public Base {
 | Public API base class | N/A | ❌ No | Allow extensibility |
 | Private implementation | ✅ Always | ✅ final class | Seal internal implementation |
 
-### Virtual Function Override Rules
+#### Virtual Function Override Rules
 
 | Aspect | Requirement | Notes |
 |--------|------------|-------|
@@ -2366,7 +2343,7 @@ class Derived : public Base {
 | Access specifier | Can differ | Private virtual can be overridden |
 | Virtual in derived | Optional | Implicitly virtual if overriding |
 
-### Best Practices Checklist
+#### Best Practices Checklist
 
 - [ ] Always use `override` on all virtual function overrides
 - [ ] Use `final` on classes that shouldn't be inherited
@@ -2379,7 +2356,7 @@ class Derived : public Base {
 - [ ] Never use `override` without ensuring base is virtual
 - [ ] Consider `final` for all concrete classes in public APIs
 
-### Interview Talking Points
+#### Interview Talking Points
 
 **override keyword:**
 - "Transforms runtime polymorphism bugs into compile-time errors"
@@ -2399,7 +2376,7 @@ class Derived : public Base {
 - "Zero-cost abstractions—safety without performance penalty"
 - "Essential for maintainable inheritance hierarchies"
 
-### Common Interview Questions
+#### Common Interview Questions
 
 1. **"Why use override if code compiles without it?"**
    - Catches refactoring errors, documents intent, enables tooling, maintains correctness

@@ -4469,7 +4469,7 @@ ab -n 100000 -c 100 http://localhost:8080/
 
 ### PRACTICE_TASKS: Hands-On Exercises
 
-#### Task 1: Basic Echo Server [BEGINNER]
+#### Q1
 
 **Objective**: Implement a simple echo server using select() that handles multiple clients.
 
@@ -4510,7 +4510,7 @@ World  # echoed back
 
 ---
 
-#### Task 2: Broadcast Chat Server [INTERMEDIATE]
+#### Q2
 
 **Objective**: Build a chat server where messages from one client are broadcast to all other clients.
 
@@ -4542,7 +4542,7 @@ World  # echoed back
 
 ---
 
-#### Task 3: Connection Limit Enforcement [INTERMEDIATE]
+#### Q3
 
 **Objective**: Modify echo server to enforce FD_SETSIZE limit and max client count.
 
@@ -4574,7 +4574,7 @@ for (int i = 0; i < 60; i++) {
 
 ---
 
-#### Task 4: Timeout-Based Heartbeat [INTERMEDIATE]
+#### Q4
 
 **Objective**: Implement a server that sends "PING" every 10 seconds and disconnects idle clients after 60 seconds.
 
@@ -4608,7 +4608,7 @@ for (int i = 0; i < 60; i++) {
 
 ---
 
-#### Task 5: Partial Send Handler [ADVANCED]
+#### Q5
 
 **Objective**: Implement robust partial send handling using writefds.
 
@@ -4649,7 +4649,7 @@ send_to_client(fd, large_msg);
 
 ---
 
-#### Task 6: Connection Rate Limiting [ADVANCED]
+#### Q6
 
 **Objective**: Implement per-IP connection limiting and rate limiting.
 
@@ -4687,7 +4687,7 @@ done
 
 ---
 
-#### Task 7: HTTP-Like Protocol Parser [ADVANCED]
+#### Q7
 
 **Objective**: Implement a simple line-based protocol with commands and responses.
 
@@ -4735,7 +4735,7 @@ S→C2: BROADCAST Alice: Hello everyone
 
 ---
 
-#### Task 8: Metrics and Monitoring [ADVANCED]
+#### Q8
 
 **Objective**: Add Prometheus-style metrics endpoint to select() server.
 
@@ -4776,7 +4776,7 @@ server_connections_active 42
 
 ---
 
-#### Task 9: Graceful Shutdown [ADVANCED]
+#### Q9
 
 **Objective**: Implement graceful shutdown with SIGINT/SIGTERM handling.
 
@@ -4814,7 +4814,7 @@ Shutdown complete
 
 ---
 
-#### Task 10: File Transfer Server [ADVANCED]
+#### Q10
 
 **Objective**: Implement a server that can send files to clients using select() efficiently.
 
@@ -4857,7 +4857,7 @@ diff test.bin received.bin
 
 ---
 
-#### Task 11: Zero-Copy File Server [EXPERT]
+#### Q11
 
 **Objective**: Optimize Task 10 using sendfile() for zero-copy transfers.
 
@@ -4890,7 +4890,7 @@ time ./sendfile_server test.bin
 
 ---
 
-#### Task 12: Production Deployment Checklist [EXPERT]
+#### Q12
 
 **Objective**: Take any previous server and make it production-ready.
 

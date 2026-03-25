@@ -2206,6 +2206,19 @@ std::cout << x << " ";
 std::cout << f() << "\n";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10 5 10`
+
+**Explanation:** Mutable lambda modifies its copy, not original; f() returns 10 each time from same copy
+
+**Key Concept:** #mutable #capture
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::vector<std::function<int()>> funcs;
@@ -2218,6 +2231,19 @@ for (auto& f : funcs) {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 3 3` (or UB)
+
+**Explanation:** All lambdas capture reference to same loop variable i, which equals 3 after loop
+
+**Key Concept:** #dangling_reference #loop_capture
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 int a = 100;
@@ -2226,11 +2252,37 @@ a = 200;
 std::cout << f();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `200`
+
+**Explanation:** Reference capture sees modifications to original variable
+
+**Key Concept:** #reference_capture
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 auto lambda = []() { return 42; };
 void (*funcPtr)() = lambda;  // Compile error or OK?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** Return type mismatch - lambda returns int, function pointer expects void return
+
+**Key Concept:** #function_pointer #type_mismatch
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2242,6 +2294,19 @@ std::function<void()> f;
 }
 f();  // What happens?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10`
+
+**Explanation:** Value capture creates copy, safe even after scope ends
+
+**Key Concept:** #lifetime #value_capture
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2259,6 +2324,19 @@ delete w;
 std::cout << l();  // What happens?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Undefined Behavior**
+
+**Explanation:** [=] captures 'this' pointer, which is dangling after delete
+
+**Key Concept:** #this_pointer #dangling_pointer
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 int add(int a, int b, int c) { return a + b + c; }
@@ -2266,6 +2344,19 @@ int add(int a, int b, int c) { return a + b + c; }
 auto bound = std::bind(add, 10, std::placeholders::_1, std::placeholders::_2);
 std::cout << bound(5, 3);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `18`
+
+**Explanation:** bind fixes first arg to 10, placeholders fill others: 10 + 5 + 3
+
+**Key Concept:** #std_bind #partial_application
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2276,6 +2367,19 @@ auto f = [=]() {
 };
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** Cannot modify captured-by-value variable without mutable keyword
+
+**Key Concept:** #const_correctness #mutable
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 auto counter = [n = 0]() mutable { return ++n; };
@@ -2283,6 +2387,19 @@ std::cout << counter() << " ";
 std::cout << counter() << " ";
 std::cout << counter();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 3`
+
+**Explanation:** Mutable lambda maintains state across calls
+
+**Key Concept:** #stateful_lambda #mutable
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2293,6 +2410,19 @@ bool same = std::is_same<decltype(f1), decltype(f2)>::value;
 std::cout << same;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0` (false)
+
+**Explanation:** Each lambda has unique compiler-generated type
+
+**Key Concept:** #unique_type #lambda_type
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 const int x = 100;
@@ -2301,6 +2431,19 @@ auto f = [&x]() {
     return x;
 };
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** Cannot modify const variable even through reference
+
+**Key Concept:** #const_correctness #reference
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2312,6 +2455,19 @@ std::sort(vec.begin(), vec.end(), [](int a, int b) {
 for (int x : vec) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 4 3 1 1`
+
+**Explanation:** Sorts in descending order (a > b comparator)
+
+**Key Concept:** #stl_algorithms #lambda
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 int value = 10;
@@ -2319,6 +2475,19 @@ auto f = std::bind([](int& x) { x += 5; }, value);
 f();
 std::cout << value;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10`
+
+**Explanation:** std::bind copies argument by default, std::ref needed for reference
+
+**Key Concept:** #std_bind #std_ref
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -2328,6 +2497,19 @@ auto oneCap = [x]() { return x; };
 
 std::cout << sizeof(noCap) << " " << sizeof(oneCap);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 4` (typical)
+
+**Explanation:** No-capture lambda has empty class size (1), one-capture has sizeof(int)
+
+**Key Concept:** #sizeof #memory_layout
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2340,6 +2522,19 @@ auto l = make_lambda();
 std::cout << l();  // What happens?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Undefined Behavior**
+
+**Explanation:** Lambda captures local variable by reference, which is destroyed on return
+
+**Key Concept:** #dangling_reference #lifetime
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::function<int(int)> f = [](int x) { return x * 2; };
@@ -2347,6 +2542,19 @@ std::function<int(int)> g = [](int x) { return x + 10; };
 f = g;
 std::cout << f(5);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `15`
+
+**Explanation:** std::function allows assignment between compatible callables; g adds 10
+
+**Key Concept:** #std_function #type_erasure
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2360,10 +2568,36 @@ std::cout << f() << " ";
 std::cout << y;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `15 15`
+
+**Explanation:** Mixed capture: x by value (5), y by reference; y modified from 10 to 15
+
+**Key Concept:** #mixed_capture #reference
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 auto lambda = [](auto x) { return x * 2; };  // Valid in C++11?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** Generic lambdas (auto parameters) require C++14
+
+**Key Concept:** #cpp14 #generic_lambda
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2375,6 +2609,19 @@ std::cout << f() << " ";
 std::cout << counter;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 2`
+
+**Explanation:** Static variables accessible without capture; counter modified directly
+
+**Key Concept:** #static #capture
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::function<int(int)> f;
@@ -2382,7 +2629,19 @@ std::unique_ptr<int> ptr = std::make_unique<int>(42);
 f = [ptr = std::move(ptr)]() { return *ptr; };  // Valid in C++11?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** C++11 std::function cannot store move-only captures
+
+**Key Concept:** #move_semantics #std_function
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

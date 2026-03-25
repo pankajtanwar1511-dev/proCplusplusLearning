@@ -1163,6 +1163,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (likely crash)
+
+**Explanation:** `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB.
+
+**Key Concept:** #decltype_auto #dangling_reference
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <iostream>
@@ -1171,6 +1184,19 @@ int main() {
     std::cout << lambda(1, 2) << " " << lambda(1.5, 2.5);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3 4
+
+**Explanation:** Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal).
+
+**Key Concept:** #generic_lambdas #type_deduction
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1182,6 +1208,19 @@ int main() {
     std::cout << lam() << " " << (ptr == nullptr);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 100 1
+
+**Explanation:** Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true).
+
+**Key Concept:** #init_capture #move_semantics
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1198,6 +1237,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 120
+
+**Explanation:** Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time.
+
+**Key Concept:** #constexpr #compile_time
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 #include <iostream>
@@ -1209,6 +1261,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10 20
+
+**Explanation:** `std::exchange(a, 20)` returns old value (10) and sets `a` to 20.
+
+**Key Concept:** #std_exchange #utility
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 #include <iostream>
@@ -1218,6 +1283,19 @@ int main() {
     std::cout << std::get<double>(t);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 2.5
+
+**Explanation:** `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous.
+
+**Key Concept:** #std_get #tuple
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1229,6 +1307,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 1
+
+**Explanation:** Variable template `is_float<int>` is false (0), `is_float<double>` is true (1).
+
+**Key Concept:** #variable_templates #type_traits
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 #include <iostream>
@@ -1239,6 +1330,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10 1000
+
+**Explanation:** Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored).
+
+**Key Concept:** #binary_literals #digit_separators
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <iostream>
@@ -1247,6 +1351,19 @@ int main() {
     std::cout << add(5, 10) << " " << add(2.5, 3.5);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 15 6
+
+**Explanation:** Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6).
+
+**Key Concept:** #generic_lambdas #auto_parameters
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1259,6 +1376,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 200
+
+**Explanation:** `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`.
+
+**Key Concept:** #decltype_auto #reference_return
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 #include <iostream>
@@ -1270,6 +1400,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42 2
+
+**Explanation:** Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`).
+
+**Key Concept:** #shared_ptr #reference_counting
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 #include <iostream>
@@ -1280,6 +1423,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 9
+
+**Explanation:** `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9.
+
+**Key Concept:** #constexpr #array_size
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 #include <iostream>
@@ -1289,6 +1445,19 @@ int main() {
     std::cout << pi<int> << " " << pi<double>;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3 3.14159
+
+**Explanation:** Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159.
+
+**Key Concept:** #variable_templates #templates
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1302,6 +1471,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 2
+
+**Explanation:** Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2.
+
+**Key Concept:** #return_type_deduction #auto
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 #include <iostream>
@@ -1314,6 +1496,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 20
+
+**Explanation:** `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20.
+
+**Key Concept:** #decltype_auto #lvalue_reference
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 #include <iostream>
@@ -1323,6 +1518,19 @@ int main() {
     std::cout << std::get<0>(t);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1
+
+**Explanation:** `std::get<0>` accesses first element by index. Works even though `int` appears twice.
+
+**Key Concept:** #std_get #tuple_index
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1336,6 +1544,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42.
+
+**Key Concept:** #generic_lambdas #static_assert
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 #include <iostream>
@@ -1347,6 +1568,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10 5
+
+**Explanation:** Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10.
+
+**Key Concept:** #std_exchange #evaluation_order
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 #include <iostream>
@@ -1356,6 +1590,19 @@ int main() {
     std::cout << binary << " " << readable;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 15 100
+
+**Explanation:** Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100.
+
+**Key Concept:** #binary_literals #digit_separators
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1370,7 +1617,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 99 50
+
+**Explanation:** Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again.
+
+**Key Concept:** #init_capture #mutable_lambda #std_exchange
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

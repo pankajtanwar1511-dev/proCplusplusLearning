@@ -1,8 +1,7 @@
 # Topic 6: Advanced Network Patterns
 
-## THEORY_SECTION
-
-### Overview
+### THEORY_SECTION: Core Concepts and Foundations
+#### Overview
 
 After mastering socket fundamentals and I/O multiplexing (select, poll, epoll), production network applications require advanced patterns for scalability, reliability, and performance. This topic covers real-world architectural patterns and optimizations used in high-performance servers.
 
@@ -19,7 +18,7 @@ After mastering socket fundamentals and I/O multiplexing (select, poll, epoll), 
 
 ---
 
-### 1. Zero-Copy I/O: Eliminating Memory Copies
+#### 1. Zero-Copy I/O: Eliminating Memory Copies
 
 **The Problem: Traditional I/O Copies Data Multiple Times**
 
@@ -303,7 +302,7 @@ flock(file_fd, LOCK_UN);  // Unlock
 
 ---
 
-### 2. Architectural Patterns: Reactor vs Proactor
+#### 2. Architectural Patterns: Reactor vs Proactor
 
 **Two fundamental patterns for asynchronous I/O:**
 
@@ -548,7 +547,7 @@ proactor.run();
 
 ---
 
-### 3. Connection Pooling
+#### 3. Connection Pooling
 
 **Problem:** Creating TCP connections is expensive (3-way handshake, slow start).
 
@@ -692,7 +691,7 @@ pool.cleanup_idle();
 ---
 
 
-### 4. Load Balancing Strategies
+#### 4. Load Balancing Strategies
 
 **Problem:** Single backend server can't handle all traffic. Need to distribute load across multiple servers.
 
@@ -932,7 +931,7 @@ std::cout << lb.get_server("bob") << "\n";    // cache1.com
 
 ---
 
-### 5. Protocol Design Best Practices
+#### 5. Protocol Design Best Practices
 
 **Key Principles for Designing Network Protocols:**
 
@@ -1118,7 +1117,7 @@ void send_error(int fd, uint32_t request_id, ErrorCode code, const std::string& 
 
 ---
 
-### 6. Flow Control and Backpressure
+#### 6. Flow Control and Backpressure
 
 **Problem:** Fast producer overwhelms slow consumer.
 
@@ -1191,7 +1190,7 @@ Consumer: "You have 5 MB credit remaining"
 
 ---
 
-### 7. Graceful Degradation Under Load
+#### 7. Graceful Degradation Under Load
 
 **Problem:** Server becomes overloaded during traffic spikes.
 
@@ -1333,7 +1332,7 @@ void handle_connection(int fd) {
 
 ---
 
-### 8. Production-Grade Error Handling
+#### 8. Production-Grade Error Handling
 
 **Common Network Errors and How to Handle Them:**
 
@@ -1451,7 +1450,7 @@ if (client_fd < 0) {
 
 ---
 
-### 9. Performance Monitoring and Metrics
+#### 9. Performance Monitoring and Metrics
 
 **Essential Metrics for Network Servers:**
 
@@ -1555,9 +1554,8 @@ struct ConnectionMetrics {
 **End of THEORY_SECTION**
 
 
-## EDGE_CASES
-
-### Edge Case 1: Zero-Copy with Partial Sends
+### EDGE_CASES: Tricky Scenarios and Deep Internals
+#### Edge Case 1: Zero-Copy with Partial Sends
 
 **Problem:** `sendfile()` can return less than requested bytes. Must handle partial sends.
 
@@ -1608,7 +1606,7 @@ std::cout << "Sent " << (file_size - remaining) << "/" << file_size << " bytes\n
 
 ---
 
-### Edge Case 2: Connection Pool Stale Connections
+#### Edge Case 2: Connection Pool Stale Connections
 
 **Problem:** Connection sits idle in pool, remote server closes it. Next user gets stale connection.
 
@@ -1682,7 +1680,7 @@ int enable_keepalive(int fd) {
 
 ---
 
-### Edge Case 3: Load Balancer Backend Failure Detection
+#### Edge Case 3: Load Balancer Backend Failure Detection
 
 **Problem:** Backend server crashes, load balancer keeps sending traffic to it.
 
@@ -1793,7 +1791,7 @@ try {
 
 ---
 
-### Edge Case 4: Protocol Version Mismatch Recovery
+#### Edge Case 4: Protocol Version Mismatch Recovery
 
 **Problem:** Client sends v2 protocol, server only supports v1. How to fail gracefully?
 
@@ -1860,7 +1858,7 @@ void handle_handshake(int fd) {
 
 ---
 
-### Edge Case 5: Backpressure Deadlock
+#### Edge Case 5: Backpressure Deadlock
 
 **Problem:** Two servers sending data to each other, both hit backpressure, neither can drain the other's buffer.
 
@@ -1933,9 +1931,8 @@ if (write_queue[fd].size() > MAX_QUEUE_SIZE) {
 
 ---
 
-## CODE_EXAMPLES
-
-### Example 1: Production HTTP File Server with sendfile()
+### CODE_EXAMPLES: Practical Demonstrations
+#### Example 1: Production HTTP File Server with sendfile()
 
 **Why:** Demonstrates zero-copy file serving with proper error handling, partial sends, and epoll integration.
 
@@ -2184,7 +2181,7 @@ Try: curl http://localhost:8080/test.txt
 
 ---
 
-### Example 2: Connection Pool with Health Checks
+#### Example 2: Connection Pool with Health Checks
 
 **Why:** Demonstrates production-grade connection pooling with stale connection detection and automatic recovery.
 
@@ -2451,7 +2448,7 @@ Reuse rate: 95%
 ---
 
 
-### Example 3: Reactor Pattern Implementation
+#### Example 3: Reactor Pattern Implementation
 
 **Why:** Clean separation of I/O handling and business logic using event handlers.
 
@@ -2567,7 +2564,7 @@ int main() {
 
 ---
 
-### Example 4: Load Balancer with Multiple Strategies
+#### Example 4: Load Balancer with Multiple Strategies
 
 **Why:** Compare round-robin, least-connections, and circuit-breaker patterns.
 
@@ -2778,9 +2775,8 @@ Next: Break 2 (INTERVIEW_QA) and Break 3 (PRACTICE_TASKS + QUICK_REFERENCE)
 
 ---
 
-## INTERVIEW_QA
-
-### Q1: When should you use sendfile() vs traditional read()/write()? What are the performance implications?
+### INTERVIEW_QA: Comprehensive Questions and Answers
+#### Q1: When should you use sendfile() vs traditional read()/write()? What are the performance implications?
 
 **Answer:**
 
@@ -2828,7 +2824,7 @@ sendfile(socket_fd, file_fd, &offset, file_size);
 
 ---
 
-### Q2: Explain the difference between Reactor and Proactor patterns. Which would you use for a high-traffic web server?
+#### Q2: Explain the difference between Reactor and Proactor patterns. Which would you use for a high-traffic web server?
 
 **Answer:**
 
@@ -2884,7 +2880,7 @@ Application submits read request → Kernel performs I/O → Kernel notifies com
 
 ---
 
-### Q3: How do you detect and handle stale connections in a connection pool? What's the cost of not handling them?
+#### Q3: How do you detect and handle stale connections in a connection pool? What's the cost of not handling them?
 
 **Answer:**
 
@@ -2976,7 +2972,7 @@ Run every 30-60 seconds in background thread.
 
 ---
 
-### Q4: Compare round-robin, least-connections, and consistent hashing load balancing. When would you use each?
+#### Q4: Compare round-robin, least-connections, and consistent hashing load balancing. When would you use each?
 
 **Answer:**
 
@@ -3092,7 +3088,7 @@ int select_backend(const std::string& key) {
 
 ---
 
-### Q5: Explain the circuit breaker pattern. How does it prevent cascading failures?
+#### Q5: Explain the circuit breaker pattern. How does it prevent cascading failures?
 
 **Answer:**
 
@@ -3216,7 +3212,7 @@ Timeline:
 
 ---
 
-### Q6: How do you implement application-level flow control to prevent overwhelming downstream services?
+#### Q6: How do you implement application-level flow control to prevent overwhelming downstream services?
 
 **Answer:**
 
@@ -3407,7 +3403,7 @@ class SlidingWindow {
 
 ---
 
-### Q7: What's the difference between SIGPIPE and EPIPE? How do you handle each in production?
+#### Q7: What's the difference between SIGPIPE and EPIPE? How do you handle each in production?
 
 **Answer:**
 
@@ -3550,7 +3546,7 @@ Defense in depth:
 
 ---
 
-### Q8: How do you handle the EMFILE (too many open files) error in a high-traffic server?
+#### Q8: How do you handle the EMFILE (too many open files) error in a high-traffic server?
 
 **Answer:**
 
@@ -3791,7 +3787,7 @@ void monitor_fds() {
 
 ---
 
-### Q9: Explain TCP keepalive vs application-level heartbeats. When do you need both?
+#### Q9: Explain TCP keepalive vs application-level heartbeats. When do you need both?
 
 **Answer:**
 
@@ -3966,7 +3962,7 @@ HEARTBEAT_TIMEOUT = 40s   // No PONG for 40s = dead
 
 ---
 
-### Q10: How do you implement zero-downtime configuration reload for a network server?
+#### Q10: How do you implement zero-downtime configuration reload for a network server?
 
 **Answer:**
 
@@ -4251,7 +4247,7 @@ Use **SO_REUSEPORT graceful restart** for:
 - Microservices with frequent deployments
 
 
-### Q11: Compare epoll edge-triggered (EPOLLET) vs level-triggered mode. When is each appropriate?
+#### Q11: Compare epoll edge-triggered (EPOLLET) vs level-triggered mode. When is each appropriate?
 
 **Answer:**
 
@@ -4493,7 +4489,7 @@ Switch to **edge-triggered** only if:
 
 ---
 
-### Q12: How do you design a wire protocol for a custom network service? What are the key considerations?
+#### Q12: How do you design a wire protocol for a custom network service? What are the key considerations?
 
 **Answer:**
 
@@ -4906,7 +4902,7 @@ Arrays: *2\r\n$3\r\nGET\r\n$3\r\nkey\r\n
 
 ---
 
-### Q13: Explain how to implement request timeouts in a non-blocking network server.
+#### Q13: Explain how to implement request timeouts in a non-blocking network server.
 
 **Answer:**
 
@@ -5236,7 +5232,7 @@ auto timeout = std::max(
 
 ---
 
-### Q14: How do you implement connection draining for graceful shutdown?
+#### Q14: How do you implement connection draining for graceful shutdown?
 
 **Answer:**
 
@@ -5467,7 +5463,7 @@ spec:
 
 ---
 
-### Q15: Compare SO_REUSEADDR vs SO_REUSEPORT. When do you need each?
+#### Q15: Compare SO_REUSEADDR vs SO_REUSEPORT. When do you need each?
 
 **Answer:**
 
@@ -5714,7 +5710,7 @@ bind(listen_fd, ...);  // ❌ EACCES (permission denied)
 
 ---
 
-### Q16: How do you implement fair scheduling between connections to prevent starvation?
+#### Q16: How do you implement fair scheduling between connections to prevent starvation?
 
 **Answer:**
 
@@ -5957,7 +5953,7 @@ void handle_write_ready(int fd) {
 
 ---
 
-### Q17: Explain TCP_NODELAY and TCP_CORK. When should you use each?
+#### Q17: Explain TCP_NODELAY and TCP_CORK. When should you use each?
 
 **Answer:**
 
@@ -6183,7 +6179,7 @@ setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
 
 ---
 
-### Q18: How do you monitor and debug network performance issues in production?
+#### Q18: How do you monitor and debug network performance issues in production?
 
 **Answer:**
 
@@ -6475,7 +6471,7 @@ void handle_metrics(int fd) {
 
 ---
 
-### Q19: What are the security implications of network programming? How do you mitigate common attacks?
+#### Q19: What are the security implications of network programming? How do you mitigate common attacks?
 
 **Answer:**
 
@@ -6794,7 +6790,7 @@ close(client_fd);
 
 ---
 
-### Q20: How do you optimize network code for modern multi-core CPUs?
+#### Q20: How do you optimize network code for modern multi-core CPUs?
 
 **Answer:**
 
@@ -7056,9 +7052,8 @@ CPU 2: listen_fd2 → epoll2 → handle events (no shared state)
 
 ---
 
-## PRACTICE_TASKS
-
-### Task 1: Production HTTP File Server with Zero-Copy
+### PRACTICE_TASKS: Output Prediction and Code Analysis
+#### Q1
 
 **Objective:** Build a high-performance HTTP file server using sendfile() and epoll edge-triggered mode.
 
@@ -7114,7 +7109,7 @@ CPU usage: <50% (zero-copy efficient)
 
 ---
 
-### Task 2: Advanced Connection Pool with Circuit Breaker
+#### Q2
 
 **Objective:** Implement a production-ready connection pool with health checks and circuit breaker.
 
@@ -7170,7 +7165,7 @@ int fd = pool.acquire();  // HALF_OPEN → test request → SUCCESS → circuit 
 
 ---
 
-### Task 3: Multi-Strategy Load Balancer with Metrics
+#### Q3
 
 **Objective:** Build a TCP load balancer supporting multiple strategies with real-time metrics.
 
@@ -7248,7 +7243,7 @@ kill $(pidof backend_server | awk '{print $1}')
 
 ---
 
-### Task 4: Reactor Pattern Framework
+#### Q4
 
 **Objective:** Build a reusable Reactor pattern framework for network applications.
 
@@ -7342,7 +7337,7 @@ reactor.run();
 
 ---
 
-### Task 5: Zero-Downtime Deployment System
+#### Q5
 
 **Objective:** Implement a server that supports zero-downtime deployments using SO_REUSEPORT.
 
@@ -7414,7 +7409,7 @@ done &
 
 ---
 
-### Task 6: Adaptive Timeout System
+#### Q6
 
 **Objective:** Implement a request timeout system that adapts to backend performance.
 
@@ -7483,7 +7478,7 @@ for (int i = 0; i < 1000; i++) {
 
 ---
 
-### Task 7: Fair Scheduler with Priority Queues
+#### Q7
 
 **Objective:** Implement fair scheduling between connections to prevent starvation.
 
@@ -7543,9 +7538,8 @@ Each round:
 
 ---
 
-## QUICK_REFERENCE
-
-### Socket Options
+### QUICK_REFERENCE: Key Takeaways and Comparison Tables
+#### Socket Options
 
 ```cpp
 // ✅ ALWAYS SET (Production servers)
@@ -7577,7 +7571,7 @@ setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, sizeof(optval));
 
 ---
 
-### Zero-Copy I/O
+#### Zero-Copy I/O
 
 ```cpp
 // sendfile() - File to socket (Linux)
@@ -7638,7 +7632,7 @@ munmap(mapped, file_size);
 
 ---
 
-### epoll Patterns
+#### epoll Patterns
 
 **Edge-Triggered (High Performance):**
 
@@ -7707,7 +7701,7 @@ while (true) {
 
 ---
 
-### Error Handling
+#### Error Handling
 
 ```cpp
 ssize_t safe_send(int fd, const void* data, size_t size) {
@@ -7753,7 +7747,7 @@ ssize_t safe_send(int fd, const void* data, size_t size) {
 
 ---
 
-### Load Balancing Algorithms
+#### Load Balancing Algorithms
 
 ```cpp
 // 1. Round-Robin
@@ -7810,7 +7804,7 @@ int select_consistent(const std::string& key) {
 
 ---
 
-### Connection Pool Pattern
+#### Connection Pool Pattern
 
 ```cpp
 class ConnectionPool {
@@ -7860,7 +7854,7 @@ public:
 
 ---
 
-### Circuit Breaker Pattern
+#### Circuit Breaker Pattern
 
 ```cpp
 enum class State { CLOSED, OPEN, HALF_OPEN };
@@ -7906,7 +7900,7 @@ public:
 
 ---
 
-### Performance Tuning Checklist
+#### Performance Tuning Checklist
 
 **Application Level:**
 
@@ -7965,7 +7959,7 @@ for (int i = 0; i < NUM_CORES; i++) {
 
 ---
 
-### Debugging Commands
+#### Debugging Commands
 
 ```bash
 # Monitor connections
@@ -7994,7 +7988,7 @@ sudo perf report
 
 ---
 
-### Security Best Practices
+#### Security Best Practices
 
 ```cpp
 // 1. Block SIGPIPE
@@ -8034,7 +8028,7 @@ if (++connection_count[client_ip] > MAX_PER_IP) {
 
 **Topic 6: Advanced Network Patterns** covered production-grade techniques for high-performance network programming:
 
-### Key Takeaways:
+#### Key Takeaways:
 
 1. **Zero-Copy I/O:**
    - sendfile(): 3x throughput, 75% lower CPU
@@ -8067,7 +8061,7 @@ if (++connection_count[client_ip] > MAX_PER_IP) {
    - Rate limiting: Max 10 connections per IP
    - TLS/SSL: Prevent MITM attacks
 
-### Performance Benchmarks:
+#### Performance Benchmarks:
 
 | Pattern | Throughput | Latency | CPU Usage |
 |---------|------------|---------|-----------|
@@ -8076,7 +8070,7 @@ if (++connection_count[client_ip] > MAX_PER_IP) {
 | epoll edge-triggered | 100k req/s | 5ms | 50% |
 | SO_REUSEPORT (8 cores) | 800k req/s | 5ms | 400% (8 cores) |
 
-### Production Checklist:
+#### Production Checklist:
 
 - ✅ Zero-copy for file transfers (sendfile)
 - ✅ Connection pooling for backends

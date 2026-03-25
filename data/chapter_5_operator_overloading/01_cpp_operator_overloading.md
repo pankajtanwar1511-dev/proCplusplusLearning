@@ -2212,6 +2212,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 5 7 7
+
+**Explanation:** Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7
+
+**Key Concept:** #increment_operators #return_types
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 class String {
@@ -2236,7 +2249,18 @@ int main() {
 }
 ```
 
-What is the problem with this code?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Double-delete bug and memory leak
+
+**Explanation:** Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory.
+
+**Key Concept:** #rule_of_three #shallow_copy #memory_leak
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2262,6 +2286,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 2 3 4
+
+**Explanation:** operator new runs before constructor (1 2), destructor runs before operator delete (3 4)
+
+**Key Concept:** #operator_new #object_lifecycle
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 class Bool {
@@ -2285,6 +2322,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Called Expensive
+
+**Explanation:** Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value
+
+**Key Concept:** #short_circuit #logical_operators
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 class Complex {
@@ -2301,7 +2351,18 @@ int main() {
 }
 ```
 
-Which lines compile? Why?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Line A compiles, Line B fails
+
+**Explanation:** Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex.
+
+**Key Concept:** #member_function #implicit_conversion #symmetry
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2325,6 +2386,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 30 20
+
+**Explanation:** operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged.
+
+**Key Concept:** #assignment_operator #return_types #chaining
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 class Array {
@@ -2339,7 +2413,18 @@ void test(const Array& arr) {
 }
 ```
 
-Will this compile? Why or why not?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No, won't compile
+
+**Explanation:** Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal
+
+**Key Concept:** #const_correctness #subscript_operator #reference_return
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2355,6 +2440,19 @@ int main() {
     std::cout << f(10, 20);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 35
+
+**Explanation:** Functor's operator() adds x (5) + a (10) + b (20) = 35
+
+**Key Concept:** #functor #operator_call
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -2376,6 +2474,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42 100
+
+**Explanation:** operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100
+
+**Key Concept:** #smart_pointers #operator_overloading
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 class Matrix {
@@ -2389,6 +2500,19 @@ int main() {
     Matrix result = a + b * c;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** * +
+
+**Explanation:** Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +.
+
+**Key Concept:** #operator_precedence #evaluation_order
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -2413,7 +2537,18 @@ int main() {
 }
 ```
 
-Which lines work and why?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Both work
+
+**Explanation:** Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity.
+
+**Key Concept:** #friend_function #symmetry #commutative_operations
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2437,7 +2572,18 @@ int main() {
 }
 ```
 
-What is the problem with post-increment here?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Returns reference to local
+
+**Explanation:** Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment.
+
+**Key Concept:** #increment_operators #return_types #dangling_reference
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2456,6 +2602,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Allocating Ctor
+
+**Explanation:** Custom operator new with parameters (placement-like) runs first with message, then constructor
+
+**Key Concept:** #placement_new #custom_parameters #operator_new
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 class X {
@@ -2473,6 +2632,19 @@ int main() {
     X x = y1 + y2;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles, uses Y::operator+
+
+**Explanation:** Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation.
+
+**Key Concept:** #inheritance #operator_overloading #implicit_conversion
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2493,6 +2665,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10 105
+
+**Explanation:** lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105)
+
+**Key Concept:** #ref_qualifiers #lvalue_rvalue #operator_overloading
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 class Stream {
@@ -2506,6 +2691,19 @@ int main() {
     s << 5 << 3.14 << 10;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** int double int
+
+**Explanation:** Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type.
+
+**Key Concept:** #operator_chaining #stream_operators #overload_resolution
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2533,6 +2731,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Derived= Base=
+
+**Explanation:** Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly.
+
+**Key Concept:** #virtual_functions #operator_overloading #polymorphism
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 class Safe {
@@ -2548,7 +2759,18 @@ int main() {
 }
 ```
 
-What happens at each line?
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** "A" printed, then compile errors
+
+**Explanation:** if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int)
+
+**Key Concept:** #explicit_conversion #operator_bool #implicit_conversion
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2566,6 +2788,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3 6 9 12
+
+**Explanation:** std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12
+
+**Key Concept:** #functor #stl_algorithms #transform
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 class Mystery {
@@ -2582,7 +2817,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** , ,
+
+**Explanation:** Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,)
+
+**Key Concept:** #comma_operator #sequence_point #operator_overloading
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

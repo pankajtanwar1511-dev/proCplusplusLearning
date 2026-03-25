@@ -1478,7 +1478,7 @@ When a function returns const, the return value is immutable. Move constructors 
 
 ### PRACTICE_TASKS: Code Analysis and Prediction
 
-#### Task 1
+#### Q1
 ```cpp
 #include <iostream>
 
@@ -1499,7 +1499,7 @@ int main() {
 // What can the optimizer do to this code?
 ```
 
-#### Task 2
+#### Q2
 ```cpp
 void process(int* ptr) {
     int value = *ptr;
@@ -1517,7 +1517,7 @@ void process(int* ptr) {
 // Is the null check effective? Why or why not?
 ```
 
-#### Task 3
+#### Q3
 ```cpp
 class Data {
     std::vector<int> vec;
@@ -1530,7 +1530,7 @@ public:
 // Does this actually move the vector? Explain.
 ```
 
-#### Task 4
+#### Q4
 ```cpp
 template<typename T>
 void forward_call(T&& arg) {
@@ -1552,7 +1552,7 @@ int main() {
 // What is printed? Why?
 ```
 
-#### Task 5
+#### Q5
 ```cpp
 constexpr int compute(int x) {
     return x * x + 10;
@@ -1575,7 +1575,7 @@ int main() {
 // Does this compile? Which lines have issues?
 ```
 
-#### Task 6
+#### Q6
 ```cpp
 bool check_overflow(int x, int y) {
     int sum = x + y;
@@ -1592,7 +1592,7 @@ int main() {
 // With -O3 optimization, what does this print?
 ```
 
-#### Task 7
+#### Q7
 ```cpp
 template<typename T>
 class Container {
@@ -1609,7 +1609,7 @@ int main() {
 }
 ```
 
-#### Task 8
+#### Q8
 ```cpp
 const Widget make_widget() {
     Widget w;
@@ -1622,7 +1622,7 @@ Widget w = make_widget();
 // Is move constructor or copy constructor called for w?
 ```
 
-#### Task 9
+#### Q9
 ```cpp
 template<typename T>
 void call_func(T&& arg) {
@@ -1640,7 +1640,7 @@ int main() {
 // Does this compile? Why or why not?
 ```
 
-#### Task 10
+#### Q10
 ```cpp
 constinit int counter = 0;
 

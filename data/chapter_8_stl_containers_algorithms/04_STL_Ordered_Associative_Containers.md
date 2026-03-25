@@ -1562,7 +1562,19 @@ auto it = s.find(3);
 s.erase(3);
 std::cout << *it;
 ```
-What does this output? Is it defined behavior?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Dereferencing invalidated iterator after erase
+
+**Key Concept:** #iterator_invalidation
+
+</details>
+
+---
 
 #### Q2
 ```cpp
@@ -1573,7 +1585,19 @@ m[3] = 30;
 for (auto [k, v] : m)
     std::cout << k << " ";
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 3 1`
+
+**Explanation:** std::greater sorts in descending order
+
+**Key Concept:** #custom_comparator
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1581,7 +1605,19 @@ std::map<std::string, int> m;
 std::cout << m["test"];
 std::cout << m.size();
 ```
-What are the two output values?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0` then `1`
+
+**Explanation:** operator[] creates default entry (0), size becomes 1
+
+**Key Concept:** #default_construction
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1589,7 +1625,19 @@ std::set<int> s = {1, 2, 3};
 auto [it, inserted] = s.insert(2);
 std::cout << *it << " " << inserted;
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2 0`
+
+**Explanation:** Insert fails for duplicate, returns iterator to existing, inserted=false
+
+**Key Concept:** #insert_behavior
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1597,7 +1645,19 @@ std::map<int, std::string> m = {{1, "A"}};
 auto [it, inserted] = m.insert({1, "B"});
 std::cout << m[1] << " " << inserted;
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `A 0`
+
+**Explanation:** insert() doesn't overwrite existing keys, inserted=false
+
+**Key Concept:** #insert_semantics
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1606,7 +1666,19 @@ auto lb = s.lower_bound(25);
 auto ub = s.upper_bound(40);
 std::cout << *lb << " " << *ub;
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `30 50`
+
+**Explanation:** lower_bound(25) finds first ≥25 (30), upper_bound(40) finds first >40 (50)
+
+**Key Concept:** #range_queries
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1614,7 +1686,19 @@ struct Point { int x, y; };
 std::set<Point> s;  // No comparator provided
 s.insert({1, 2});
 ```
-Will this compile? Why or why not?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No, compile error
+
+**Explanation:** Point has no operator< and no custom comparator provided
+
+**Key Concept:** #custom_comparator
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1624,7 +1708,19 @@ for (auto& [k, v] : m) {
     v = v * 2;
 }
 ```
-Will this compile? What happens?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** Cannot modify key (k is const), can modify value
+
+**Key Concept:** #const_correctness
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1634,7 +1730,19 @@ s.insert(&a);
 s.insert(&b);
 std::cout << s.size();
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2`
+
+**Explanation:** Compares pointer addresses, not values; different pointers mean different elements
+
+**Key Concept:** #pointer_comparison
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1646,7 +1754,19 @@ try {
 }
 std::cout << m.size();
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `caught0`
+
+**Explanation:** at() throws out_of_range, size remains 0 (no insertion)
+
+**Key Concept:** #exception_safety
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -1656,7 +1776,19 @@ auto it2 = s.find(3);
 s.insert(10);
 std::cout << *it1 << " " << *it2;
 ```
-What does this output? Are the iterators valid?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 3`, both valid
+
+**Explanation:** Insert doesn't invalidate any iterators in ordered containers
+
+**Key Concept:** #iterator_stability
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1664,14 +1796,38 @@ std::map<int, std::string> m = {{1, "A"}, {2, "B"}};
 m.erase(m.begin());
 std::cout << m.begin()->first;
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2`
+
+**Explanation:** Erasing begin() removes first element, new begin() is second element
+
+**Key Concept:** #erasure
+
+</details>
+
+---
 
 #### Q13
 ```cpp
 std::set<int> s = {3, 1, 4, 1, 5, 9};
 std::cout << s.size() << " " << *s.begin() << " " << *s.rbegin();
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 1 9`
+
+**Explanation:** Size is 5 (duplicates removed), min is 1, max is 9
+
+**Key Concept:** #sorted_unique
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1681,7 +1837,19 @@ m[1] = 20;
 m.insert({1, 30});
 std::cout << m[1];
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `20`
+
+**Explanation:** operator[] overwrites, insert() does nothing for existing keys
+
+**Key Concept:** #assignment_vs_insert
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1692,7 +1860,19 @@ if (it != s.end())
 else
     std::cout << "not found";
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `not found`
+
+**Explanation:** find(25) returns end() as 25 doesn't exist
+
+**Key Concept:** #find_behavior
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1701,7 +1881,19 @@ m["nums"] = {1, 2, 3};
 m["nums"].push_back(4);
 std::cout << m["nums"].size();
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4`
+
+**Explanation:** Modifying value through operator[] works correctly
+
+**Key Concept:** #value_mutability
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1711,7 +1903,19 @@ for (auto it = s.begin(); it != s.end(); ++it) {
         s.erase(it);
 }
 ```
-Is this code safe? What happens?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Erasing invalidates iterator being incremented
+
+**Key Concept:** #erase_during_iteration
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1723,7 +1927,19 @@ struct BadCompare {
 std::set<int, BadCompare> s = {1, 2, 3};
 s.insert(2);
 ```
-What is the behavior of this code?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Comparator violates strict weak ordering (uses <=)
+
+**Key Concept:** #strict_weak_ordering
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1732,7 +1948,19 @@ auto [first, last] = m.equal_range(2);
 for (auto it = first; it != last; ++it)
     std::cout << it->second << " ";
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `20`
+
+**Explanation:** equal_range returns [lower_bound, upper_bound); for map, range contains at most 1 element
+
+**Key Concept:** #equal_range
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1743,9 +1971,20 @@ if (s1 == s2)
 else
     std::cout << "not equal";
 ```
-What does this output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `equal`
+
+**Explanation:** Sets support equality comparison; equal elements mean equal sets
+
+**Key Concept:** #set_equality
+
+</details>
 
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

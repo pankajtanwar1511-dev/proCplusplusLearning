@@ -1,9 +1,10 @@
-## TOPIC: Navigation & Nav2 Stack
-
+# Chapter 5: Robotics Applications
+## Topic 5.1: Navigation & Nav2 Stack
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. Nav2 Architecture Overview
 
 **What is Nav2?**

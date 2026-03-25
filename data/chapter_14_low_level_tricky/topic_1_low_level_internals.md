@@ -1320,6 +1320,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** A::foo<br>1
+
+**Explanation:** Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo.
+
+**Key Concept:** #object_slicing #virtual_functions
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <iostream>
@@ -1332,6 +1345,19 @@ int main() {
     std::cout << sizeof(S);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 12
+
+**Explanation:** Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment.
+
+**Key Concept:** #padding #alignment
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1347,6 +1373,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (likely crash or garbage)
+
+**Explanation:** `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB.
+
+**Key Concept:** #dangling_reference #lifetime
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 #include <iostream>
@@ -1360,6 +1399,19 @@ int main() {
     std::cout << a.val;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error.
+
+**Key Concept:** #const_correctness #const_member_function
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1376,6 +1428,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 5 (but double delete crash at end)
+
+**Explanation:** Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash.
+
+**Key Concept:** #shallow_copy #double_delete
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 #include <iostream>
@@ -1387,6 +1452,19 @@ int main() {
     std::cout << sizeof(C);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 24-32 (platform dependent)
+
+**Explanation:** Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes.
+
+**Key Concept:** #virtual_inheritance #memory_layout
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1403,6 +1481,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Base
+
+**Explanation:** During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members.
+
+**Key Concept:** #constructor #virtual_functions #vptr
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 #include <iostream>
@@ -1416,6 +1507,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 8
+
+**Explanation:** Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes.
+
+**Key Concept:** #padding #memory_optimization
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <iostream>
@@ -1427,6 +1531,19 @@ int main() {
     test();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function.
+
+**Key Concept:** #lifetime_extension #const_reference
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1444,6 +1561,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 100
+
+**Explanation:** `mutable` allows modifying `cache` in const function. Prints 100.
+
+**Key Concept:** #mutable #const_correctness
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 #include <iostream>
@@ -1454,6 +1584,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (likely segfault)
+
+**Explanation:** Dereferencing null pointer is UB, typically causes segmentation fault crash.
+
+**Key Concept:** #null_pointer #undefined_behavior
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 #include <iostream>
@@ -1463,6 +1606,19 @@ int main() {
     std::cout << u;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0
+
+**Explanation:** Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior.
+
+**Key Concept:** #unsigned_overflow #wrapping
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1482,6 +1638,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** OK
+
+**Explanation:** Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs.
+
+**Key Concept:** #virtual_destructor #polymorphism
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 #include <iostream>
@@ -1494,6 +1663,19 @@ int main() {
     std::cout << sizeof(S);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 24
+
+**Explanation:** Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes.
+
+**Key Concept:** #alignment #padding
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1509,6 +1691,19 @@ int main() {
     std::cout << *a2.p;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10
+
+**Explanation:** `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely.
+
+**Key Concept:** #unique_ptr #move_semantics
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1530,6 +1725,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** VBase A B C
+
+**Explanation:** Virtual base VBase is constructed once by most derived class C, then A, then B, then C.
+
+**Key Concept:** #virtual_inheritance #constructor_order
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 #include <iostream>
@@ -1538,6 +1746,19 @@ int main() {
     std::cout << sizeof(x) << " " << alignof(decltype(x));
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 16
+
+**Explanation:** `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas).
+
+**Key Concept:** #alignas #alignment
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1556,6 +1777,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const.
+
+**Key Concept:** #const_pointer #const_correctness
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 #include <iostream>
@@ -1572,6 +1806,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error (ambiguous)
+
+**Explanation:** Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve.
+
+**Key Concept:** #diamond_problem #ambiguity
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 #include <iostream>
@@ -1584,7 +1831,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** test best
+
+**Explanation:** `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`.
+
+**Key Concept:** #deep_copy #std_string
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

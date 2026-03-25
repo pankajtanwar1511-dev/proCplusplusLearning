@@ -25,91 +25,90 @@
       },
       "edge_cases": [
         {
+          "case_number": 1,
           "title": "Template Instantiation is Lazy",
-          "explanation": "The compiler only instantiates template code that is actually used. This means template code with errors won't cause compilation failures unless that specific instantiation is triggered.\n\n```cpp\ntemplate<typename T>\nvoid onlyForInt(T x) {\n    static_assert(std::is_same<T, int>::value, \"Only for int\");  // ✅ Compile-time check\n}\n\nint main() {\n    onlyForInt(5);        // ✅ OK - compiles and runs\n    // onlyForInt(\"abc\"); // ❌ Error only if uncommented\n}\n```\n\nThis behavior allows templates to contain code that's invalid for some types, as long as those types never actually use that code path. This is exploited in SFINAE and concept-like programming.",
-          "code_examples": [
-            "template<typename T>\nvoid onlyForInt(T x) {\n    static_assert(std::is_same<T, int>::value, \"Only for int\");  // ✅ Compile-time check\n}\n\nint main() {\n    onlyForInt(5);        // ✅ OK - compiles and runs\n    // onlyForInt(\"abc\"); // ❌ Error only if uncommented\n}"
-          ]
+          "explanation": "The compiler only instantiates template code that is actually used. This means template code with errors won't cause compilation failures unless that specific instantiation is triggered.\n\n```cpp\ntemplate<typename T>\nvoid onlyForInt(T x) {\n    static_assert(std::is_same<T, int>::value, \"Only for int\");  // ✅ Compile-time check\n}\n\nint main() {\n    onlyForInt(5);        // ✅ OK - compiles and runs\n    // onlyForInt(\"abc\"); // ❌ Error only if uncommented\n}\n```\n\nThis behavior allows templates to contain code that's invalid for some types, as long as those types never actually use that code path. This is exploited in SFINAE and concept-like programming."
         },
         {
+          "case_number": 2,
           "title": "Function Template Overloading Priority",
-          "explanation": "When both template and non-template functions exist in an overload set, non-template functions are preferred if they match exactly. Templates are only selected when no exact non-template match exists.\n\n```cpp\nvoid print(int x) {\n    std::cout << \"int: \" << x << \"\\n\";  // ✅ Non-template version\n}\n\ntemplate<typename T>\nvoid print(T x) {\n    std::cout << \"template: \" << x << \"\\n\";  // ✅ Template version\n}\n\nint main() {\n    print(5);         // ✅ Calls non-template (exact match)\n    print(5.0);       // ✅ Calls template (no exact match for double)\n    print(\"test\");    // ✅ Calls template\n}\n```\n\nThis priority system prevents templates from hijacking function calls when more specific implementations exist. However, it can cause subtle bugs if type conversions are involved.",
-          "code_examples": [
-            "void print(int x) {\n    std::cout << \"int: \" << x << \"\\n\";  // ✅ Non-template version\n}\n\ntemplate<typename T>\nvoid print(T x) {\n    std::cout << \"template: \" << x << \"\\n\";  // ✅ Template version\n}\n\nint main() {\n    print(5);         // ✅ Calls non-template (exact match)\n    print(5.0);       // ✅ Calls template (no exact match for double)\n    print(\"test\");    // ✅ Calls template\n}"
-          ]
+          "explanation": "When both template and non-template functions exist in an overload set, non-template functions are preferred if they match exactly. Templates are only selected when no exact non-template match exists.\n\n```cpp\nvoid print(int x) {\n    std::cout << \"int: \" << x << \"\\n\";  // ✅ Non-template version\n}\n\ntemplate<typename T>\nvoid print(T x) {\n    std::cout << \"template: \" << x << \"\\n\";  // ✅ Template version\n}\n\nint main() {\n    print(5);         // ✅ Calls non-template (exact match)\n    print(5.0);       // ✅ Calls template (no exact match for double)\n    print(\"test\");    // ✅ Calls template\n}\n```\n\nThis priority system prevents templates from hijacking function calls when more specific implementations exist. However, it can cause subtle bugs if type conversions are involved."
         },
         {
+          "case_number": 3,
           "title": "Template Argument Deduction with References",
-          "explanation": "Template argument deduction behaves differently with references, potentially preserving or discarding const and reference qualifiers depending on the parameter type.\n\n```cpp\ntemplate<typename T>\nvoid func1(T param) { }        // ✅ T deduced without reference\n\ntemplate<typename T>\nvoid func2(T& param) { }       // ✅ T deduced, param is reference\n\ntemplate<typename T>\nvoid func3(T&& param) { }      // ✅ Universal reference (forwarding reference)\n\nint main() {\n    int x = 42;\n    const int cx = x;\n    \n    func1(cx);   // T = int (const discarded)\n    func2(cx);   // T = const int (const preserved)\n    func3(x);    // T = int& (lvalue)\n    func3(42);   // T = int (rvalue)\n}\n```\n\nUnderstanding these deduction rules is critical for writing correct generic code, especially when dealing with perfect forwarding and move semantics.",
-          "code_examples": [
-            "template<typename T>\nvoid func1(T param) { }        // ✅ T deduced without reference\n\ntemplate<typename T>\nvoid func2(T& param) { }       // ✅ T deduced, param is reference\n\ntemplate<typename T>\nvoid func3(T&& param) { }      // ✅ Universal reference (forwarding reference)\n\nint main() {\n    int x = 42;\n    const int cx = x;\n    \n    func1(cx);   // T = int (const discarded)\n    func2(cx);   // T = const int (const preserved)\n    func3(x);    // T = int& (lvalue)\n    func3(42);   // T = int (rvalue)\n}"
-          ]
+          "explanation": "Template argument deduction behaves differently with references, potentially preserving or discarding const and reference qualifiers depending on the parameter type.\n\n```cpp\ntemplate<typename T>\nvoid func1(T param) { }        // ✅ T deduced without reference\n\ntemplate<typename T>\nvoid func2(T& param) { }       // ✅ T deduced, param is reference\n\ntemplate<typename T>\nvoid func3(T&& param) { }      // ✅ Universal reference (forwarding reference)\n\nint main() {\n    int x = 42;\n    const int cx = x;\n    \n    func1(cx);   // T = int (const discarded)\n    func2(cx);   // T = const int (const preserved)\n    func3(x);    // T = int& (lvalue)\n    func3(42);   // T = int (rvalue)\n}\n```\n\nUnderstanding these deduction rules is critical for writing correct generic code, especially when dealing with perfect forwarding and move semantics."
         },
         {
+          "case_number": 4,
           "title": "Two-Phase Name Lookup",
-          "explanation": "Templates undergo two-phase compilation: first at definition (checking template syntax), second at instantiation (checking type-dependent expressions). This affects when errors are caught.\n\n```cpp\ntemplate<typename T>\nvoid process(T x) {\n    helper(x);  // ✅ Lookup happens at instantiation\n}\n\nvoid helper(int x) { std::cout << x << \"\\n\"; }\n\nint main() {\n    process(42);  // ✅ Finds helper through ADL at instantiation\n}\n```\n\nIf `helper` is only defined after the template, the code still compiles because lookup is deferred. However, this can lead to confusing error messages when instantiation fails.",
-          "code_examples": [
-            "template<typename T>\nvoid process(T x) {\n    helper(x);  // ✅ Lookup happens at instantiation\n}\n\nvoid helper(int x) { std::cout << x << \"\\n\"; }\n\nint main() {\n    process(42);  // ✅ Finds helper through ADL at instantiation\n}"
-          ]
+          "explanation": "Templates undergo two-phase compilation: first at definition (checking template syntax), second at instantiation (checking type-dependent expressions). This affects when errors are caught.\n\n```cpp\ntemplate<typename T>\nvoid process(T x) {\n    helper(x);  // ✅ Lookup happens at instantiation\n}\n\nvoid helper(int x) { std::cout << x << \"\\n\"; }\n\nint main() {\n    process(42);  // ✅ Finds helper through ADL at instantiation\n}\n```\n\nIf `helper` is only defined after the template, the code still compiles because lookup is deferred. However, this can lead to confusing error messages when instantiation fails."
         },
         {
+          "case_number": 5,
           "title": "Default Arguments Must Be Rightmost",
-          "explanation": "Template parameters with default arguments must appear after all parameters without defaults, similar to function parameter rules.\n\n```cpp\ntemplate<typename T = int, typename U>  // ❌ Error: U has no default after T\nstruct Bad { };\n\ntemplate<typename T, typename U = int>  // ✅ Correct: defaults are rightmost\nstruct Good { };\n```\n\nThis restriction ensures the compiler can unambiguously match template arguments to parameters when fewer arguments are provided than parameters exist.\n\n---",
-          "code_examples": [
-            "template<typename T = int, typename U>  // ❌ Error: U has no default after T\nstruct Bad { };\n\ntemplate<typename T, typename U = int>  // ✅ Correct: defaults are rightmost\nstruct Good { };"
-          ]
+          "explanation": "Template parameters with default arguments must appear after all parameters without defaults, similar to function parameter rules.\n\n```cpp\ntemplate<typename T = int, typename U>  // ❌ Error: U has no default after T\nstruct Bad { };\n\ntemplate<typename T, typename U = int>  // ✅ Correct: defaults are rightmost\nstruct Good { };\n```\n\nThis restriction ensures the compiler can unambiguously match template arguments to parameters when fewer arguments are provided than parameters exist.\n\n---"
         }
       ],
       "code_examples": [
         {
+          "example_number": 1,
           "title": "Basic Function Template with Type Deduction",
           "explanation": "The compiler deduces `T` from the function arguments. When both arguments have the same type, deduction succeeds. Explicit template arguments can override deduction and force type conversions.",
           "code": "template<typename T>\nT add(T a, T b) {\n    return a + b;  // ✅ Generic addition\n}\n\nint main() {\n    std::cout << add(3, 4) << \"\\n\";         // ✅ T = int, returns 7\n    std::cout << add(2.5, 3.7) << \"\\n\";     // ✅ T = double, returns 6.2\n    std::cout << add<int>(2.5, 3.7) << \"\\n\"; // ✅ Explicit T = int, returns 5\n}",
           "additional_code": []
         },
         {
+          "example_number": 2,
           "title": "Class Template for Generic Container",
           "explanation": "Class templates require explicit type specification at instantiation. Each instantiation creates a separate class with its own static members and member functions specialized for that type.",
           "code": "template<typename T>\nclass Box {\n    T value;\npublic:\n    Box(T val) : value(val) { }  // ✅ Constructor\n    \n    T get() const { return value; }  // ✅ Getter\n    \n    void set(T val) { value = val; }  // ✅ Setter\n};\n\nint main() {\n    Box<int> intBox(10);              // ✅ Box holding int\n    Box<std::string> strBox(\"hello\");  // ✅ Box holding string\n    \n    std::cout << intBox.get() << \"\\n\";  // 10\n    std::cout << strBox.get() << \"\\n\";  // hello\n}",
           "additional_code": []
         },
         {
+          "example_number": 3,
           "title": "Full Template Specialization",
           "explanation": "Full specialization provides a completely custom implementation for specific types. The `template<>` syntax indicates this is a specialization, not a new template. Specializations must be declared after the primary template.",
           "code": "template<typename T>\nstruct Printer {\n    static void print(T value) {\n        std::cout << \"Generic: \" << value << \"\\n\";  // ✅ Primary template\n    }\n};\n\ntemplate<>\nstruct Printer<bool> {\n    static void print(bool value) {\n        std::cout << \"Bool: \" << (value ? \"true\" : \"false\") << \"\\n\";  // ✅ Specialized for bool\n    }\n};\n\nint main() {\n    Printer<int>::print(42);      // Generic: 42\n    Printer<bool>::print(true);   // Bool: true\n}",
           "additional_code": []
         },
         {
+          "example_number": 4,
           "title": "Partial Specialization for Pointers",
           "explanation": "Partial specialization matches a subset of possible template arguments using pattern matching. The `T*` pattern matches any pointer type, binding `T` to the pointed-to type. This enables type trait implementations.",
           "code": "template<typename T>\nstruct TypeTraits {\n    static const bool is_pointer = false;  // ✅ Primary template\n    static void print() { std::cout << \"Not a pointer\\n\"; }\n};\n\ntemplate<typename T>\nstruct TypeTraits<T*> {\n    static const bool is_pointer = true;  // ✅ Specialization for pointers\n    static void print() { std::cout << \"Pointer type\\n\"; }\n};\n\nint main() {\n    TypeTraits<int>::print();   // Not a pointer\n    TypeTraits<int*>::print();  // Pointer type\n    \n    std::cout << TypeTraits<double>::is_pointer << \"\\n\";   // 0\n    std::cout << TypeTraits<double*>::is_pointer << \"\\n\";  // 1\n}",
           "additional_code": []
         },
         {
+          "example_number": 5,
           "title": "Partial Specialization with Multiple Parameters",
           "explanation": "Multiple partial specializations can coexist. The compiler selects the most specific match. If multiple specializations match equally, the code is ambiguous and won't compile.",
           "code": "template<typename T, typename U>\nstruct Pair {\n    static void print() { std::cout << \"Generic Pair\\n\"; }\n};\n\ntemplate<typename T>\nstruct Pair<T, T> {\n    static void print() { std::cout << \"Same type Pair\\n\"; }  // ✅ Both types identical\n};\n\ntemplate<typename T>\nstruct Pair<T, int> {\n    static void print() { std::cout << \"Second is int\\n\"; }  // ✅ Second parameter is int\n};\n\nint main() {\n    Pair<double, char>::print();  // Generic Pair\n    Pair<int, int>::print();      // Same type Pair\n    Pair<float, int>::print();    // Second is int\n}",
           "additional_code": []
         },
         {
+          "example_number": 6,
           "title": "Default Template Arguments in Class Template",
           "explanation": "Default template arguments simplify common use cases by providing sensible defaults. Users can override defaults by providing explicit arguments. All defaults must be rightmost in the parameter list.",
           "code": "template<typename T = int, typename U = double>\nclass Container {\n    T first;\n    U second;\npublic:\n    Container(T f = T(), U s = U()) : first(f), second(s) { }\n    \n    void print() const {\n        std::cout << first << \", \" << second << \"\\n\";\n    }\n};\n\nint main() {\n    Container<> c1;                    // ✅ T = int, U = double (both defaults)\n    Container<float> c2(1.5f);         // ✅ T = float, U = double (U default)\n    Container<char, bool> c3('A', true); // ✅ T = char, U = bool (explicit)\n    \n    c1.print();  // 0, 0\n    c2.print();  // 1.5, 0\n    c3.print();  // A, 1\n}",
           "additional_code": []
         },
         {
+          "example_number": 7,
           "title": "Non-Type Template Parameters",
           "explanation": "Non-type template parameters accept compile-time constants like integers, pointers, or references. They enable compile-time computation and zero-overhead abstractions by embedding values in types. The array size is known at compile time, enabling stack allocation.",
           "code": "template<typename T, size_t N>\nclass FixedArray {\n    T data[N];  // ✅ Array size is compile-time constant\npublic:\n    size_t size() const { return N; }\n    \n    T& operator[](size_t index) { return data[index]; }\n    const T& operator[](size_t index) const { return data[index]; }\n};\n\nint main() {\n    FixedArray<int, 5> arr;     // ✅ Array of 5 ints\n    arr[0] = 10;\n    arr[1] = 20;\n    \n    std::cout << \"Size: \" << arr.size() << \"\\n\";  // Size: 5\n    std::cout << arr[0] << \", \" << arr[1] << \"\\n\"; // 10, 20\n}",
           "additional_code": []
         },
         {
+          "example_number": 8,
           "title": "Template Metaprogramming with Non-Type Parameters",
           "explanation": "Template recursion combined with specialization enables compile-time computations. The compiler evaluates `Factorial<5>::value` during compilation, generating no runtime overhead. This technique forms the basis of template metaprogramming.",
           "code": "template<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N - 1>::value;  // ✅ Recursive computation\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;  // ✅ Base case\n};\n\nint main() {\n    std::cout << Factorial<5>::value << \"\\n\";  // 120 (computed at compile time)\n    std::cout << Factorial<10>::value << \"\\n\"; // 3628800\n    \n    constexpr int result = Factorial<7>::value;  // ✅ Can be used in constant expressions\n}",
           "additional_code": []
         },
         {
+          "example_number": 9,
           "title": "Autonomous Vehicle - Generic Sensor Fusion System with Templates",
           "explanation": "This comprehensive example demonstrates template fundamentals in an autonomous vehicle sensor fusion context, showing function templates, class templates, specialization, and compile-time optimizations for sensor processing.\n\n\n\n**Output:**\n\n\n**Real-World Applications:**\n\n1. **Generic Sensor Averaging (`average` function template)** - Autonomous vehicles process readings from dozens of sensors (LiDAR distances, radar velocities, IMU accelerations). Generic algorithms eliminate code duplication and work with any numeric type.\n\n2. **Circular Buffer with Compile-Time Size** - Sensor history buffers store recent readings for filtering and trend analysis. Using non-type template parameters (`size_t Capacity`) allows stack allocation with zero overhead—the size is compiled into the type itself. Different sensors can have differently-sized buffers without runtime cost.\n\n3. **Weighted Sensor Fusion** - Autonomous vehicles combine multiple sensor readings with confidence-based weighting. The template approach with compile-time sensor count enables the compiler to fully unroll loops and optimize away all indirection.\n\n4. **Full Specialization for Sensor Validators** - Boolean sensors (door open/closed, brake pressed) need different validation logic than continuous sensors (temperature, speed). Full specialization provides type-specific implementations without runtime overhead.\n\n5. **Partial Specialization for Direct vs. Indirect Sensors** - Some sensors provide values directly, others through shared memory or CAN bus pointers. Partial specialization for pointer types handles both cases with a single template design.\n\n6. **Template Metaprogramming for Calibration** - ADC calibration coefficients and polynomial correction factors can be computed at compile time, eliminating runtime division and producing optimal machine code. In safety-critical automotive systems, compile-time computation reduces runtime errors.\n\n7. **Default Template Arguments** - Most sensors use standard configurations (double precision, 64-bit timestamps, 10-sample buffers). Default arguments reduce boilerplate while allowing customization when needed (e.g., high-frequency IMU might need 100-sample buffer).\n\n**Performance Benefits:**\n- **Zero abstraction cost**: All template code resolves at compile time\n- **Inlining opportunities**: Generic functions can be fully inlined\n- **Type safety**: Compile-time checking prevents sensor type mismatches\n- **Code size optimization**: Only instantiated templates generate code\n- **Cache efficiency**: Fixed-size buffers allow better memory layout\n\n**Template Design Patterns in Automotive:**\n- **Policy-based design**: Sensor fusion strategies as template parameters\n- **Type traits**: Detecting sensor capabilities at compile time (e.g., `has_temperature_reading<T>`)\n- **Tag dispatch**: Selecting algorithms based on sensor category (continuous vs. discrete)\n- **Compile-time computation**: Safety margins, calibration tables, conversion factors\n\nThis example demonstrates how templates provide the foundation for zero-overhead, type-safe generic programming essential in modern autonomous vehicle software.\n\n---",
           "code": "#include <iostream>\n#include <vector>\n#include <array>\n#include <cmath>\n#include <memory>\n#include <string>\n\n// ============================================================================\n// Part 1: Function Templates for Generic Sensor Data Processing\n// ============================================================================\n\n// Function template for averaging sensor readings\ntemplate<typename T>\nT average(const std::vector<T>& values) {\n    if (values.empty()) return T{};  // Value-initialization\n\n    T sum = T{};\n    for (const auto& val : values) {\n        sum = sum + val;  // Requires operator+\n    }\n    return sum / static_cast<T>(values.size());  // Requires operator/\n}\n\n// Function template overloading for different sensor data types\ntemplate<typename T>\nvoid processSensorReading(T value) {\n    std::cout << \"Generic sensor: \" << value << \"\\n\";\n}\n\n// Specialized overload for float (high-precision sensors)\ntemplate<>\nvoid processSensorReading<float>(float value) {\n    std::cout << \"High-precision sensor: \" << value << \" (validated)\\n\";\n}\n\n// Non-template overload (takes precedence for exact int match)\nvoid processSensorReading(int value) {\n    std::cout << \"Integer sensor (discrete): \" << value << \"\\n\";\n}\n\n// ============================================================================\n// Part 2: Class Template for Generic Circular Buffer (Sensor History)\n// ============================================================================\n\ntemplate<typename T, size_t Capacity>\nclass CircularBuffer {\n    std::array<T, Capacity> buffer;  // Fixed-size array\n    size_t head{0};\n    size_t size{0};\n\npublic:\n    void push(const T& value) {\n        buffer[head] = value;\n        head = (head + 1) % Capacity;\n        if (size < Capacity) ++size;\n    }\n\n    size_t getSize() const { return size; }\n    size_t getCapacity() const { return Capacity; }\n\n    T getAverage() const {\n        if (size == 0) return T{};\n        T sum = T{};\n        for (size_t i = 0; i < size; ++i) {\n            sum = sum + buffer[i];\n        }\n        return sum / static_cast<T>(size);\n    }\n\n    // Access the most recent N elements\n    std::vector<T> getRecent(size_t count) const {\n        std::vector<T> result;\n        count = (count > size) ? size : count;\n\n        for (size_t i = 0; i < count; ++i) {\n            size_t index = (head + Capacity - count + i) % Capacity;\n            result.push_back(buffer[index]);\n        }\n        return result;\n    }\n};\n\n// ============================================================================\n// Part 3: Full Specialization for Specific Sensor Types\n// ============================================================================\n\n// Primary template for sensor value validation\ntemplate<typename T>\nstruct SensorValidator {\n    static bool isValid(T value, T min, T max) {\n        return value >= min && value <= max;\n    }\n\n    static void printType() {\n        std::cout << \"Generic sensor validator\\n\";\n    }\n};\n\n// Full specialization for boolean sensors (binary: true/false)\ntemplate<>\nstruct SensorValidator<bool> {\n    static bool isValid(bool value, bool, bool) {\n        // Boolean sensors are always \"valid\" (no range check needed)\n        return true;\n    }\n\n    static void printType() {\n        std::cout << \"Boolean sensor validator (binary)\\n\";\n    }\n};\n\n// ============================================================================\n// Part 4: Partial Specialization for Pointer Types\n// ============================================================================\n\n// Primary template for sensor data\ntemplate<typename T>\nstruct SensorData {\n    T value;\n    uint64_t timestamp;\n\n    void print() const {\n        std::cout << \"Value: \" << value << \", Timestamp: \" << timestamp << \"\\n\";\n    }\n\n    static const char* getCategory() { return \"Direct sensor\"; }\n};\n\n// Partial specialization for pointer types (indirect/reference sensors)\ntemplate<typename T>\nstruct SensorData<T*> {\n    T* value;\n    uint64_t timestamp;\n\n    void print() const {\n        if (value) {\n            std::cout << \"Value (via pointer): \" << *value\n                      << \", Timestamp: \" << timestamp << \"\\n\";\n        } else {\n            std::cout << \"Null pointer sensor data\\n\";\n        }\n    }\n\n    static const char* getCategory() { return \"Indirect/Reference sensor\"; }\n};\n\n// ============================================================================\n// Part 5: Non-Type Template Parameters for Compile-Time Sensor Configuration\n// ============================================================================\n\n// Sensor fusion with compile-time weights\ntemplate<typename T, size_t NumSensors>\nclass WeightedSensorFusion {\n    std::array<T, NumSensors> weights;\n    std::array<T, NumSensors> readings;\n\npublic:\n    WeightedSensorFusion(const std::array<T, NumSensors>& w) : weights(w) {\n        // Normalize weights at construction\n        T sum = T{};\n        for (const auto& weight : weights) {\n            sum = sum + weight;\n        }\n        for (auto& weight : weights) {\n            weight = weight / sum;\n        }\n    }\n\n    void setReadings(const std::array<T, NumSensors>& r) {\n        readings = r;\n    }\n\n    T getFusedValue() const {\n        T result = T{};\n        for (size_t i = 0; i < NumSensors; ++i) {\n            result = result + (readings[i] * weights[i]);\n        }\n        return result;\n    }\n\n    constexpr size_t getSensorCount() const { return NumSensors; }\n};\n\n// ============================================================================\n// Part 6: Template Metaprogramming for Compile-Time Sensor Calibration\n// ============================================================================\n\n// Compute calibration scale factor at compile time\ntemplate<int RawMax, int PhysicalMax>\nstruct CalibrationScale {\n    static constexpr double value =\n        static_cast<double>(PhysicalMax) / static_cast<double>(RawMax);\n};\n\n// Recursive template for computing power (for polynomial calibration)\ntemplate<int Base, unsigned Exp>\nstruct Power {\n    static constexpr int value = Base * Power<Base, Exp - 1>::value;\n};\n\ntemplate<int Base>\nstruct Power<Base, 0> {\n    static constexpr int value = 1;\n};\n\n// ============================================================================\n// Part 7: Default Template Arguments for Common Sensor Configurations\n// ============================================================================\n\ntemplate<typename T = double, typename TimestampType = uint64_t, size_t BufferSize = 10>\nclass GenericSensor {\n    CircularBuffer<T, BufferSize> history;\n    TimestampType last_update{0};\n    std::string sensor_id;\n\npublic:\n    GenericSensor(const std::string& id) : sensor_id(id) {}\n\n    void addReading(T value, TimestampType timestamp) {\n        history.push(value);\n        last_update = timestamp;\n    }\n\n    T getAverage() const {\n        return history.getAverage();\n    }\n\n    void printInfo() const {\n        std::cout << \"Sensor: \" << sensor_id\n                  << \", Buffer: \" << BufferSize\n                  << \" readings, Last update: \" << last_update << \"\\n\";\n    }\n};\n\n// ============================================================================\n// Part 8: Partial Specialization for Multi-Parameter Templates\n// ============================================================================\n\n// Primary template for sensor pairs\ntemplate<typename T1, typename T2>\nstruct SensorPair {\n    static void printTypes() {\n        std::cout << \"Generic sensor pair\\n\";\n    }\n};\n\n// Partial specialization: both sensors same type\ntemplate<typename T>\nstruct SensorPair<T, T> {\n    static void printTypes() {\n        std::cout << \"Homogeneous sensor pair (same type)\\n\";\n    }\n};\n\n// Partial specialization: second sensor is always double\ntemplate<typename T>\nstruct SensorPair<T, double> {\n    static void printTypes() {\n        std::cout << \"Sensor pair (first: varied, second: double)\\n\";\n    }\n};\n\n// ============================================================================\n// Main: Demonstrating All Template Concepts in AV Context\n// ============================================================================\n\nint main() {\n    std::cout << \"=== Autonomous Vehicle Sensor Fusion: Template Fundamentals ===\\n\\n\";\n\n    // 1. Function template with type deduction\n    std::cout << \"=== Function Template Type Deduction ===\\n\";\n    std::vector<double> lidar_distances = {10.5, 11.2, 10.8, 11.0};\n    std::cout << \"LiDAR average distance: \" << average(lidar_distances) << \" m\\n\";\n\n    std::vector<int> camera_confidence = {85, 90, 88, 92};\n    std::cout << \"Camera confidence average: \" << average(camera_confidence) << \"%\\n\\n\";\n\n    // 2. Function template overloading and specialization\n    std::cout << \"=== Function Template Overloading ===\\n\";\n    processSensorReading(42);        // Calls non-template (exact match)\n    processSensorReading(3.14);      // Calls generic template\n    processSensorReading(2.5f);      // Calls specialized template<>\n    std::cout << \"\\n\";\n\n    // 3. Class template with non-type parameter\n    std::cout << \"=== Circular Buffer (Class Template + Non-Type Parameter) ===\\n\";\n    CircularBuffer<double, 5> speedBuffer;\n    speedBuffer.push(15.0);\n    speedBuffer.push(16.5);\n    speedBuffer.push(15.8);\n    speedBuffer.push(16.2);\n    speedBuffer.push(15.5);\n    speedBuffer.push(17.0);  // Overwrites oldest\n\n    std::cout << \"Speed buffer capacity: \" << speedBuffer.getCapacity() << \"\\n\";\n    std::cout << \"Speed buffer size: \" << speedBuffer.getSize() << \"\\n\";\n    std::cout << \"Average speed: \" << speedBuffer.getAverage() << \" m/s\\n\\n\";\n\n    // 4. Full specialization\n    std::cout << \"=== Full Template Specialization ===\\n\";\n    SensorValidator<double>::printType();\n    std::cout << \"Temperature valid (20.5°C): \"\n              << SensorValidator<double>::isValid(20.5, -40.0, 85.0) << \"\\n\";\n\n    SensorValidator<bool>::printType();\n    std::cout << \"Door sensor valid: \"\n              << SensorValidator<bool>::isValid(true, false, true) << \"\\n\\n\";\n\n    // 5. Partial specialization for pointers\n    std::cout << \"=== Partial Specialization for Pointers ===\\n\";\n    SensorData<double> directSensor{45.7, 1000000};\n    directSensor.print();\n    std::cout << \"Category: \" << SensorData<double>::getCategory() << \"\\n\";\n\n    double temp_value = 22.3;\n    SensorData<double*> indirectSensor{&temp_value, 1000100};\n    indirectSensor.print();\n    std::cout << \"Category: \" << SensorData<double*>::getCategory() << \"\\n\\n\";\n\n    // 6. Weighted sensor fusion with non-type parameter\n    std::cout << \"=== Weighted Sensor Fusion (Non-Type Parameters) ===\\n\";\n    WeightedSensorFusion<double, 3> fusion({0.5, 0.3, 0.2});  // 3 sensors\n    fusion.setReadings({15.0, 15.5, 16.0});  // Speed readings from 3 sources\n    std::cout << \"Fused speed value: \" << fusion.getFusedValue() << \" m/s\\n\";\n    std::cout << \"Number of sensors: \" << fusion.getSensorCount() << \"\\n\\n\";\n\n    // 7. Template metaprogramming: compile-time calibration\n    std::cout << \"=== Template Metaprogramming (Compile-Time Computation) ===\\n\";\n    constexpr double scale = CalibrationScale<4095, 100>::value;\n    std::cout << \"ADC calibration scale (12-bit -> 100 units): \" << scale << \"\\n\";\n\n    constexpr int power_result = Power<2, 10>::value;\n    std::cout << \"2^10 (computed at compile time): \" << power_result << \"\\n\\n\";\n\n    // 8. Default template arguments\n    std::cout << \"=== Default Template Arguments ===\\n\";\n    GenericSensor<> sensor1(\"LiDAR_Front\");           // All defaults\n    GenericSensor<float> sensor2(\"Camera_Front\");      // Custom value type\n    GenericSensor<int, uint32_t, 20> sensor3(\"IMU\");   // All custom\n\n    sensor1.addReading(12.5, 1000);\n    sensor1.addReading(13.0, 1001);\n    sensor1.printInfo();\n    std::cout << \"Average: \" << sensor1.getAverage() << \"\\n\\n\";\n\n    // 9. Partial specialization with multiple parameters\n    std::cout << \"=== Partial Specialization (Multiple Parameters) ===\\n\";\n    SensorPair<int, float>::printTypes();     // Generic\n    SensorPair<double, double>::printTypes(); // Both same\n    SensorPair<int, double>::printTypes();    // Second is double\n    std::cout << \"\\n\";\n\n    // 10. Demonstrate template type deduction ambiguity resolution\n    std::cout << \"=== Explicit Template Arguments (Resolving Ambiguity) ===\\n\";\n    std::vector<double> mixed_data = {10, 11.5, 12};  // Mixed int/double\n    // average({10, 11.5, 12});  // Would fail: ambiguous types\n    std::cout << \"Mixed data average (explicit <double>): \"\n              << average<double>({10, 11.5, 12}) << \"\\n\";\n\n    std::cout << \"\\n=== Summary: Template Features Demonstrated ===\\n\";\n    std::cout << \"✓ Function templates with automatic type deduction\\n\";\n    std::cout << \"✓ Function template specialization and overloading\\n\";\n    std::cout << \"✓ Class templates with type and non-type parameters\\n\";\n    std::cout << \"✓ Full specialization for specific types\\n\";\n    std::cout << \"✓ Partial specialization (pointers, multi-parameter)\\n\";\n    std::cout << \"✓ Default template arguments\\n\";\n    std::cout << \"✓ Template metaprogramming (compile-time computation)\\n\";\n    std::cout << \"✓ Non-type parameters for compile-time configuration\\n\";\n\n    return 0;\n}",
@@ -120,6 +119,7 @@
       ],
       "interview_qa": [
         {
+          "question_number": 1,
           "question": "What is the difference between function templates and class templates in terms of template argument deduction?",
           "difficulty": [
             "beginner"
@@ -141,6 +141,7 @@
           "key_takeaway": "Function templates deduce types automatically from arguments; class templates require explicit type specification (pre-C++17)."
         },
         {
+          "question_number": 2,
           "question": "Why are non-template functions preferred over template functions in overload resolution when both match?",
           "difficulty": [
             "intermediate"
@@ -162,6 +163,7 @@
           "key_takeaway": "Exact non-template matches always beat template instantiations in overload resolution."
         },
         {
+          "question_number": 3,
           "question": "What happens if you attempt to use a template with a type that doesn't support the operations used in the template body?",
           "difficulty": [
             "intermediate"
@@ -183,6 +185,7 @@
           "key_takeaway": "Templates impose implicit interface requirements that are only checked at instantiation time."
         },
         {
+          "question_number": 4,
           "question": "Explain the difference between full specialization and partial specialization. Can you fully specialize a function template?",
           "difficulty": [
             "intermediate"
@@ -205,6 +208,7 @@
           "key_takeaway": "Only class templates support partial specialization; function templates must use overloading instead."
         },
         {
+          "question_number": 5,
           "question": "What is template argument deduction and when does it fail?",
           "difficulty": [
             "intermediate"
@@ -226,6 +230,7 @@
           "key_takeaway": "Template argument deduction requires all uses of a template parameter to deduce consistently to the same type."
         },
         {
+          "question_number": 6,
           "question": "Why must default template arguments be specified from right to left?",
           "difficulty": [
             "beginner"
@@ -246,6 +251,7 @@
           "key_takeaway": "Default template arguments must appear rightmost to enable unambiguous parameter matching."
         },
         {
+          "question_number": 7,
           "question": "What is a non-type template parameter and what types can be used?",
           "difficulty": [
             "intermediate"
@@ -267,6 +273,7 @@
           "key_takeaway": "Non-type template parameters accept compile-time constants and enable template metaprogramming."
         },
         {
+          "question_number": 8,
           "question": "What is lazy template instantiation and why is it important?",
           "difficulty": [
             "intermediate"
@@ -288,6 +295,7 @@
           "key_takeaway": "Templates only instantiate used members, allowing templates to contain code invalid for some types."
         },
         {
+          "question_number": 9,
           "question": "How do you force template argument deduction for a specific type?",
           "difficulty": [
             "beginner"
@@ -308,6 +316,7 @@
           "key_takeaway": "Angle bracket notation with explicit types overrides automatic template argument deduction."
         },
         {
+          "question_number": 10,
           "question": "What happens when you specialize a template for a pointer type using partial specialization?",
           "difficulty": [
             "intermediate"
@@ -329,6 +338,7 @@
           "key_takeaway": "Partial specialization with `T*` pattern matches any pointer, extracting the pointed-to type."
         },
         {
+          "question_number": 11,
           "question": "Can function templates have default template arguments? What are the restrictions?",
           "difficulty": [
             "intermediate"
@@ -350,6 +360,7 @@
           "key_takeaway": "Function template default arguments only appear in declarations, not separate definitions."
         },
         {
+          "question_number": 12,
           "question": "What is the \"two-phase name lookup\" in templates and why does it matter?",
           "difficulty": [
             "advanced"
@@ -371,6 +382,7 @@
           "key_takeaway": "Templates check non-dependent code at definition, dependent code at instantiation."
         },
         {
+          "question_number": 13,
           "question": "How do you create a compile-time constant array size using non-type template parameters?",
           "difficulty": [
             "intermediate"
@@ -392,6 +404,7 @@
           "key_takeaway": "Non-type size parameters enable type-safe, zero-overhead fixed-size containers."
         },
         {
+          "question_number": 14,
           "question": "What is the difference between explicit specialization and explicit instantiation?",
           "difficulty": [
             "advanced"
@@ -413,6 +426,7 @@
           "key_takeaway": "Specialization changes implementation; instantiation controls where code is generated."
         },
         {
+          "question_number": 15,
           "question": "How does partial specialization enable type trait implementations?",
           "difficulty": [
             "advanced"
@@ -434,6 +448,7 @@
           "key_takeaway": "Partial specialization enables pattern matching on types for compile-time type queries and transformations."
         },
         {
+          "question_number": 16,
           "question": "Why can't you partially specialize function templates directly?",
           "difficulty": [
             "advanced"
@@ -455,6 +470,7 @@
           "key_takeaway": "Use function template overloading instead of partial specialization for functions."
         },
         {
+          "question_number": 17,
           "question": "What happens when multiple partial specializations match a template instantiation equally well?",
           "difficulty": [
             "advanced"
@@ -476,6 +492,7 @@
           "key_takeaway": "Ambiguous partial specialization matches require explicit full specialization to resolve."
         },
         {
+          "question_number": 18,
           "question": "How do you use template metaprogramming to compute values at compile time?",
           "difficulty": [
             "advanced"
@@ -498,6 +515,7 @@
           "key_takeaway": "Template recursion with specialization enables compile-time computation of complex values."
         },
         {
+          "question_number": 19,
           "question": "What are the advantages and disadvantages of using templates compared to runtime polymorphism?",
           "difficulty": [
             "intermediate"
@@ -520,6 +538,7 @@
           "key_takeaway": "Templates offer zero-overhead abstraction; virtual functions offer runtime flexibility and smaller code size."
         },
         {
+          "question_number": 20,
           "question": "How do default template arguments interact with template argument deduction in function templates?",
           "difficulty": [
             "intermediate"
@@ -545,161 +564,201 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nT getValue() { return T(); }\n\nint main() {\n    std::cout << getValue<int>() << \"\\n\";\n    std::cout << getValue<double>() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0`<br>`0`\n\n**Explanation:** `T()` performs value-initialization, giving 0 for numeric types\n\n**Key Concept:** #value_initialization\n\n</details>\n\n---",
           "code": "template<typename T>\nT getValue() { return T(); }\n\nint main() {\n    std::cout << getValue<int>() << \"\\n\";\n    std::cout << getValue<double>() << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid print(T) { std::cout << \"template\\n\"; }\n\nvoid print(int) { std::cout << \"non-template\\n\"; }\n\nint main() {\n    print(42);\n    print(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `non-template`<br>`template`\n\n**Explanation:** Non-template exact match preferred over template for `int`\n\n**Key Concept:** #overload_resolution\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid print(T) { std::cout << \"template\\n\"; }\n\nvoid print(int) { std::cout << \"non-template\\n\"; }\n\nint main() {\n    print(42);\n    print(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, typename U>\nstruct Pair {\n    static void show() { std::cout << \"generic\\n\"; }\n};\n\ntemplate<typename T>\nstruct Pair<T, T> {\n    static void show() { std::cout << \"same\\n\"; }\n};\n\nint main() {\n    Pair<int, double>::show();\n    Pair<float, float>::show();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `generic`<br>`same`\n\n**Explanation:** Partial specialization `Pair<T, T>` matches when both types are identical\n\n**Key Concept:** #partial_specialization\n\n</details>\n\n---",
           "code": "template<typename T, typename U>\nstruct Pair {\n    static void show() { std::cout << \"generic\\n\"; }\n};\n\ntemplate<typename T>\nstruct Pair<T, T> {\n    static void show() { std::cout << \"same\\n\"; }\n};\n\nint main() {\n    Pair<int, double>::show();\n    Pair<float, float>::show();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T = double, typename U>\nstruct Test { };\n\nint main() {\n    Test<int, float> t;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Default template argument must be rightmost; `U` has no default after `T`\n\n**Key Concept:** #default_arguments\n\n</details>\n\n---",
           "code": "template<typename T = double, typename U>\nstruct Test { };\n\nint main() {\n    Test<int, float> t;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct Container {\n    void valid() { std::cout << \"ok\\n\"; }\n    void invalid() { typename T::invalid_type x; }\n};\n\nint main() {\n    Container<int> c;\n    c.valid();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `ok`\n\n**Explanation:** Lazy instantiation: `invalid()` never called, so its error never triggered\n\n**Key Concept:** #lazy_instantiation\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct Container {\n    void valid() { std::cout << \"ok\\n\"; }\n    void invalid() { typename T::invalid_type x; }\n};\n\nint main() {\n    Container<int> c;\n    c.valid();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct IsPointer { static const bool value = false; };\n\ntemplate<typename T>\nstruct IsPointer<T*> { static const bool value = true; };\n\nint main() {\n    std::cout << IsPointer<int>::value << \" \";\n    std::cout << IsPointer<int*>::value << \" \";\n    std::cout << IsPointer<int**>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0 1 1`\n\n**Explanation:** Primary template for `int`, partial specialization matches `int*` and `int**`\n\n**Key Concept:** #partial_specialization\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct IsPointer { static const bool value = false; };\n\ntemplate<typename T>\nstruct IsPointer<T*> { static const bool value = true; };\n\nint main() {\n    std::cout << IsPointer<int>::value << \" \";\n    std::cout << IsPointer<int*>::value << \" \";\n    std::cout << IsPointer<int**>::value << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<int N>\nstruct Power2 {\n    static constexpr int value = 2 * Power2<N-1>::value;\n};\n\ntemplate<>\nstruct Power2<0> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Power2<5>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `32`\n\n**Explanation:** Template recursion: 2^5 = 32 computed at compile time\n\n**Key Concept:** #template_metaprogramming\n\n</details>\n\n---",
           "code": "template<int N>\nstruct Power2 {\n    static constexpr int value = 2 * Power2<N-1>::value;\n};\n\ntemplate<>\nstruct Power2<0> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Power2<5>::value << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, size_t N>\nclass Array {\n    T data[N];\npublic:\n    size_t size() const { return N; }\n};\n\nint main() {\n    Array<int, 3> a1;\n    Array<int, 5> a2;\n    std::cout << a1.size() << \" \" << a2.size() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `3 5`\n\n**Explanation:** Non-type parameter `N` creates different types with different sizes\n\n**Key Concept:** #non_type_parameters\n\n</details>\n\n---",
           "code": "template<typename T, size_t N>\nclass Array {\n    T data[N];\npublic:\n    size_t size() const { return N; }\n};\n\nint main() {\n    Array<int, 3> a1;\n    Array<int, 5> a2;\n    std::cout << a1.size() << \" \" << a2.size() << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid func(T val) { std::cout << \"value\\n\"; }\n\ntemplate<typename T>\nvoid func(T* val) { std::cout << \"pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(x);\n    func(&x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `value`<br>`pointer`\n\n**Explanation:** Overload resolution: pointer version selected for `&x`\n\n**Key Concept:** #function_overloading\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid func(T val) { std::cout << \"value\\n\"; }\n\ntemplate<typename T>\nvoid func(T* val) { std::cout << \"pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(x);\n    func(&x);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct Traits {\n    static void print() { std::cout << \"primary\\n\"; }\n};\n\ntemplate<>\nstruct Traits<int> {\n    static void print() { std::cout << \"int\\n\"; }\n};\n\ntemplate<>\nstruct Traits<const int> {\n    static void print() { std::cout << \"const int\\n\"; }\n};\n\nint main() {\n    Traits<int>::print();\n    Traits<const int>::print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `int`<br>`const int`\n\n**Explanation:** Both specializations are distinct; each matches its exact type\n\n**Key Concept:** #full_specialization\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct Traits {\n    static void print() { std::cout << \"primary\\n\"; }\n};\n\ntemplate<>\nstruct Traits<int> {\n    static void print() { std::cout << \"int\\n\"; }\n};\n\ntemplate<>\nstruct Traits<const int> {\n    static void print() { std::cout << \"const int\\n\"; }\n};\n\nint main() {\n    Traits<int>::print();\n    Traits<const int>::print();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nT add(T a, T b) { return a + b; }\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add<double>(5, 10) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `15`<br>`15`\n\n**Explanation:** First deduces `T=int`, second forces `T=double` with conversion\n\n**Key Concept:** #type_deduction\n\n</details>\n\n---",
           "code": "template<typename T>\nT add(T a, T b) { return a + b; }\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add<double>(5, 10) << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, typename U = int>\nvoid process(T) { std::cout << sizeof(U) << \"\\n\"; }\n\nint main() {\n    process(42);\n    process<double>(3.14);\n    process<float, long>(1.0f);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `4`<br>`4`<br>`8`\n\n**Explanation:** `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call\n\n**Key Concept:** #default_arguments\n\n</details>\n\n---",
           "code": "template<typename T, typename U = int>\nvoid process(T) { std::cout << sizeof(U) << \"\\n\"; }\n\nint main() {\n    process(42);\n    process<double>(3.14);\n    process<float, long>(1.0f);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct Base {\n    void interface() { std::cout << \"Base\\n\"; }\n};\n\ntemplate<>\nstruct Base<int> {\n    void interface() { std::cout << \"Base<int>\\n\"; }\n};\n\nint main() {\n    Base<double> b1;\n    Base<int> b2;\n    b1.interface();\n    b2.interface();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Base`<br>`Base<int>`\n\n**Explanation:** Full specialization for `int` provides different implementation\n\n**Key Concept:** #full_specialization\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct Base {\n    void interface() { std::cout << \"Base\\n\"; }\n};\n\ntemplate<>\nstruct Base<int> {\n    void interface() { std::cout << \"Base<int>\\n\"; }\n};\n\nint main() {\n    Base<double> b1;\n    Base<int> b2;\n    b1.interface();\n    b2.interface();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N-1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f = Factorial<4>::value;\n    std::cout << f << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `24`\n\n**Explanation:** 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion\n\n**Key Concept:** #template_metaprogramming\n\n</details>\n\n---",
           "code": "template<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N-1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f = Factorial<4>::value;\n    std::cout << f << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T1, typename T2>\nstruct Pair { static void show() { std::cout << \"A\\n\"; } };\n\ntemplate<typename T>\nstruct Pair<T, int> { static void show() { std::cout << \"B\\n\"; } };\n\ntemplate<>\nstruct Pair<double, int> { static void show() { std::cout << \"C\\n\"; } };\n\nint main() {\n    Pair<float, char>::show();\n    Pair<float, int>::show();\n    Pair<double, int>::show();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `A`<br>`B`<br>`C`\n\n**Explanation:** Most specific match selected: primary → partial → full specialization\n\n**Key Concept:** #specialization_priority\n\n</details>\n\n---",
           "code": "template<typename T1, typename T2>\nstruct Pair { static void show() { std::cout << \"A\\n\"; } };\n\ntemplate<typename T>\nstruct Pair<T, int> { static void show() { std::cout << \"B\\n\"; } };\n\ntemplate<>\nstruct Pair<double, int> { static void show() { std::cout << \"C\\n\"; } };\n\nint main() {\n    Pair<float, char>::show();\n    Pair<float, int>::show();\n    Pair<double, int>::show();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid test(T) { std::cout << \"1\\n\"; }\n\ntemplate<typename T>\nvoid test(T&) { std::cout << \"2\\n\"; }\n\nint main() {\n    int x = 42;\n    test(x);\n    test(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `2`<br>`1`\n\n**Explanation:** Lvalue prefers reference overload; rvalue matches value parameter\n\n**Key Concept:** #reference_binding\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid test(T) { std::cout << \"1\\n\"; }\n\ntemplate<typename T>\nvoid test(T&) { std::cout << \"2\\n\"; }\n\nint main() {\n    int x = 42;\n    test(x);\n    test(42);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\nint main() {\n    RemoveConst<int>::type a = 10;\n    RemoveConst<const int>::type b = 20;\n    std::cout << a << \" \" << b << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `10 20`\n\n**Explanation:** Partial specialization strips `const` qualifier from type\n\n**Key Concept:** #type_traits\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\nint main() {\n    RemoveConst<int>::type a = 10;\n    RemoveConst<const int>::type b = 20;\n    std::cout << a << \" \" << b << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<bool B, typename T = void>\nstruct EnableIf { };\n\ntemplate<typename T>\nstruct EnableIf<true, T> { using type = T; };\n\nint main() {\n    EnableIf<true, int>::type x = 42;\n    std::cout << x << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`\n\n**Explanation:** SFINAE-like pattern: only `true` case defines `type` member\n\n**Key Concept:** #enable_if_pattern\n\n</details>\n\n---",
           "code": "template<bool B, typename T = void>\nstruct EnableIf { };\n\ntemplate<typename T>\nstruct EnableIf<true, T> { using type = T; };\n\nint main() {\n    EnableIf<true, int>::type x = 42;\n    std::cout << x << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct Wrapper {\n    static void print() { std::cout << sizeof(T) << \"\\n\"; }\n};\n\nint main() {\n    Wrapper<char>::print();\n    Wrapper<int>::print();\n    Wrapper<double>::print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`4`<br>`8`\n\n**Explanation:** `sizeof` operator returns size of type in bytes (platform-dependent)\n\n**Key Concept:** #sizeof_operator\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct Wrapper {\n    static void print() { std::cout << sizeof(T) << \"\\n\"; }\n};\n\nint main() {\n    Wrapper<char>::print();\n    Wrapper<int>::print();\n    Wrapper<double>::print();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "---",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, int N>\nstruct Array {\n    T data[N];\n    constexpr int size() const { return N; }\n};\n\nint main() {\n    Array<int, 5> a;\n    constexpr int s = a.size();\n    int arr[s];\n    std::cout << sizeof(arr) / sizeof(int) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `5`\n\n**Explanation:** Non-type parameter used as `constexpr` to size array at compile time\n\n**Key Concept:** #compile_time_constants\n\n</details>\n\n---",
           "code": "template<typename T, int N>\nstruct Array {\n    T data[N];\n    constexpr int size() const { return N; }\n};\n\nint main() {\n    Array<int, 5> a;\n    constexpr int s = a.size();\n    int arr[s];\n    std::cout << sizeof(arr) / sizeof(int) << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         }
       ],
@@ -736,110 +795,109 @@
       },
       "edge_cases": [
         {
+          "case_number": 1,
           "title": "SFINAE Only Works in Immediate Context",
-          "explanation": "SFINAE only applies to errors occurring directly during template parameter substitution in the function signature. Errors inside the function body or in called functions are hard errors that stop compilation.\n\n```cpp\ntemplate<typename T>\ntypename std::enable_if<sizeof(T) > 4>::type  // ✅ SFINAE applies here\nfunc(T val) {\n    typename T::nonexistent_type x;  // ❌ Hard error if instantiated, not SFINAE\n}\n```\n\nThis limitation means SFINAE can't detect whether a function body would compile — only whether the signature can be formed. Errors in function bodies always cause compilation failure if the template is instantiated.",
-          "code_examples": [
-            "template<typename T>\ntypename std::enable_if<sizeof(T) > 4>::type  // ✅ SFINAE applies here\nfunc(T val) {\n    typename T::nonexistent_type x;  // ❌ Hard error if instantiated, not SFINAE\n}"
-          ]
+          "explanation": "SFINAE only applies to errors occurring directly during template parameter substitution in the function signature. Errors inside the function body or in called functions are hard errors that stop compilation.\n\n```cpp\ntemplate<typename T>\ntypename std::enable_if<sizeof(T) > 4>::type  // ✅ SFINAE applies here\nfunc(T val) {\n    typename T::nonexistent_type x;  // ❌ Hard error if instantiated, not SFINAE\n}\n```\n\nThis limitation means SFINAE can't detect whether a function body would compile — only whether the signature can be formed. Errors in function bodies always cause compilation failure if the template is instantiated."
         },
         {
+          "case_number": 2,
           "title": "Expression SFINAE with decltype",
-          "explanation": "C++11's `decltype` enables **expression SFINAE** — detecting whether specific expressions are valid for a type. This is more powerful than simple type checks.\n\n```cpp\ntemplate<typename T>\nauto hasToString(int) -> decltype(std::declval<T>().to_string(), std::true_type{}) {\n    return std::true_type{};  // ✅ Enabled if T has to_string()\n}\n\ntemplate<typename T>\nstd::false_type hasToString(...) {  // ✅ Fallback overload\n    return std::false_type{};\n}\n\nstruct A { std::string to_string() { return \"A\"; } };\nstruct B { };\n\nint main() {\n    std::cout << decltype(hasToString<A>(0))::value << \"\\n\";  // 1 (true)\n    std::cout << decltype(hasToString<B>(0))::value << \"\\n\";  // 0 (false)\n}\n```\n\nThe comma operator in `decltype((expr1, expr2))` evaluates both expressions but returns the type of the second. This idiom checks if `expr1` is valid (triggering SFINAE if not) while controlling the return type via `expr2`.",
-          "code_examples": [
-            "template<typename T>\nauto hasToString(int) -> decltype(std::declval<T>().to_string(), std::true_type{}) {\n    return std::true_type{};  // ✅ Enabled if T has to_string()\n}\n\ntemplate<typename T>\nstd::false_type hasToString(...) {  // ✅ Fallback overload\n    return std::false_type{};\n}\n\nstruct A { std::string to_string() { return \"A\"; } };\nstruct B { };\n\nint main() {\n    std::cout << decltype(hasToString<A>(0))::value << \"\\n\";  // 1 (true)\n    std::cout << decltype(hasToString<B>(0))::value << \"\\n\";  // 0 (false)\n}"
-          ]
+          "explanation": "C++11's `decltype` enables **expression SFINAE** — detecting whether specific expressions are valid for a type. This is more powerful than simple type checks.\n\n```cpp\ntemplate<typename T>\nauto hasToString(int) -> decltype(std::declval<T>().to_string(), std::true_type{}) {\n    return std::true_type{};  // ✅ Enabled if T has to_string()\n}\n\ntemplate<typename T>\nstd::false_type hasToString(...) {  // ✅ Fallback overload\n    return std::false_type{};\n}\n\nstruct A { std::string to_string() { return \"A\"; } };\nstruct B { };\n\nint main() {\n    std::cout << decltype(hasToString<A>(0))::value << \"\\n\";  // 1 (true)\n    std::cout << decltype(hasToString<B>(0))::value << \"\\n\";  // 0 (false)\n}\n```\n\nThe comma operator in `decltype((expr1, expr2))` evaluates both expressions but returns the type of the second. This idiom checks if `expr1` is valid (triggering SFINAE if not) while controlling the return type via `expr2`."
         },
         {
+          "case_number": 3,
           "title": "SFINAE with Variadic Templates",
-          "explanation": "SFINAE becomes complex with variadic templates, requiring careful attention to parameter pack expansion.\n\n```cpp\ntemplate<typename... Args>\ntypename std::enable_if<(sizeof...(Args) > 2)>::type  // ✅ Enable if 3+ args\nfunc(Args... args) {\n    std::cout << \"3+ arguments\\n\";\n}\n\ntemplate<typename... Args>\ntypename std::enable_if<(sizeof...(Args) <= 2)>::type  // ✅ Enable if 0-2 args\nfunc(Args... args) {\n    std::cout << \"0-2 arguments\\n\";\n}\n\nint main() {\n    func(1);           // 0-2 arguments\n    func(1, 2, 3);     // 3+ arguments\n}\n```\n\nParameter pack operators like `sizeof...` enable compile-time decisions based on argument counts. This pattern appears in tuple implementations and variadic forwarding functions.",
-          "code_examples": [
-            "template<typename... Args>\ntypename std::enable_if<(sizeof...(Args) > 2)>::type  // ✅ Enable if 3+ args\nfunc(Args... args) {\n    std::cout << \"3+ arguments\\n\";\n}\n\ntemplate<typename... Args>\ntypename std::enable_if<(sizeof...(Args) <= 2)>::type  // ✅ Enable if 0-2 args\nfunc(Args... args) {\n    std::cout << \"0-2 arguments\\n\";\n}\n\nint main() {\n    func(1);           // 0-2 arguments\n    func(1, 2, 3);     // 3+ arguments\n}"
-          ]
+          "explanation": "SFINAE becomes complex with variadic templates, requiring careful attention to parameter pack expansion.\n\n```cpp\ntemplate<typename... Args>\ntypename std::enable_if<(sizeof...(Args) > 2)>::type  // ✅ Enable if 3+ args\nfunc(Args... args) {\n    std::cout << \"3+ arguments\\n\";\n}\n\ntemplate<typename... Args>\ntypename std::enable_if<(sizeof...(Args) <= 2)>::type  // ✅ Enable if 0-2 args\nfunc(Args... args) {\n    std::cout << \"0-2 arguments\\n\";\n}\n\nint main() {\n    func(1);           // 0-2 arguments\n    func(1, 2, 3);     // 3+ arguments\n}\n```\n\nParameter pack operators like `sizeof...` enable compile-time decisions based on argument counts. This pattern appears in tuple implementations and variadic forwarding functions."
         },
         {
+          "case_number": 4,
           "title": "CRTP with Multiple Inheritance",
-          "explanation": "Using CRTP with multiple inheritance requires careful design to avoid ambiguous base class issues and ensure correct `static_cast` behavior.\n\n```cpp\ntemplate<typename Derived>\nstruct LogMixin {\n    void log(const std::string& msg) {\n        static_cast<Derived*>(this)->logImpl(msg);  // ✅ Calls derived implementation\n    }\n};\n\ntemplate<typename Derived>\nstruct SerializeMixin {\n    std::string serialize() {\n        return static_cast<Derived*>(this)->serializeImpl();  // ✅ Calls derived\n    }\n};\n\nclass MyClass : public LogMixin<MyClass>, public SerializeMixin<MyClass> {\npublic:\n    void logImpl(const std::string& msg) { std::cout << \"LOG: \" << msg << \"\\n\"; }\n    std::string serializeImpl() { return \"{data}\"; }\n};\n```\n\nEach CRTP base must be instantiated with the same derived type. Multiple CRTP bases work fine as long as they don't create diamond inheritance or have conflicting member names.",
-          "code_examples": [
-            "template<typename Derived>\nstruct LogMixin {\n    void log(const std::string& msg) {\n        static_cast<Derived*>(this)->logImpl(msg);  // ✅ Calls derived implementation\n    }\n};\n\ntemplate<typename Derived>\nstruct SerializeMixin {\n    std::string serialize() {\n        return static_cast<Derived*>(this)->serializeImpl();  // ✅ Calls derived\n    }\n};\n\nclass MyClass : public LogMixin<MyClass>, public SerializeMixin<MyClass> {\npublic:\n    void logImpl(const std::string& msg) { std::cout << \"LOG: \" << msg << \"\\n\"; }\n    std::string serializeImpl() { return \"{data}\"; }\n};"
-          ]
+          "explanation": "Using CRTP with multiple inheritance requires careful design to avoid ambiguous base class issues and ensure correct `static_cast` behavior.\n\n```cpp\ntemplate<typename Derived>\nstruct LogMixin {\n    void log(const std::string& msg) {\n        static_cast<Derived*>(this)->logImpl(msg);  // ✅ Calls derived implementation\n    }\n};\n\ntemplate<typename Derived>\nstruct SerializeMixin {\n    std::string serialize() {\n        return static_cast<Derived*>(this)->serializeImpl();  // ✅ Calls derived\n    }\n};\n\nclass MyClass : public LogMixin<MyClass>, public SerializeMixin<MyClass> {\npublic:\n    void logImpl(const std::string& msg) { std::cout << \"LOG: \" << msg << \"\\n\"; }\n    std::string serializeImpl() { return \"{data}\"; }\n};\n```\n\nEach CRTP base must be instantiated with the same derived type. Multiple CRTP bases work fine as long as they don't create diamond inheritance or have conflicting member names."
         },
         {
+          "case_number": 5,
           "title": "CRTP Downcast Safety",
-          "explanation": "The `static_cast<Derived*>(this)` in CRTP is only safe if the base is actually part of a `Derived` object. Incorrect usage creates undefined behavior.\n\n```cpp\ntemplate<typename Derived>\nstruct Base {\n    void interface() {\n        static_cast<Derived*>(this)->impl();  // ✅ Safe only if 'this' points to Derived\n    }\n};\n\nclass Wrong : public Base<Wrong> { };\nclass AlsoWrong : public Base<Wrong> { };  // ❌ DANGER: Wrong is not AlsoWrong!\n\nint main() {\n    Wrong w;\n    w.interface();  // ✅ Safe\n    \n    Base<Wrong>* ptr = new Wrong();\n    ptr->interface();  // ✅ Safe\n    \n    // Base<AlsoWrong>* bad = new AlsoWrong();  // ❌ UB: cast to wrong type\n}\n```\n\nAlways ensure the template parameter matches the actual derived class. Mismatches create casts to wrong types, causing undefined behavior.",
-          "code_examples": [
-            "template<typename Derived>\nstruct Base {\n    void interface() {\n        static_cast<Derived*>(this)->impl();  // ✅ Safe only if 'this' points to Derived\n    }\n};\n\nclass Wrong : public Base<Wrong> { };\nclass AlsoWrong : public Base<Wrong> { };  // ❌ DANGER: Wrong is not AlsoWrong!\n\nint main() {\n    Wrong w;\n    w.interface();  // ✅ Safe\n    \n    Base<Wrong>* ptr = new Wrong();\n    ptr->interface();  // ✅ Safe\n    \n    // Base<AlsoWrong>* bad = new AlsoWrong();  // ❌ UB: cast to wrong type\n}"
-          ]
+          "explanation": "The `static_cast<Derived*>(this)` in CRTP is only safe if the base is actually part of a `Derived` object. Incorrect usage creates undefined behavior.\n\n```cpp\ntemplate<typename Derived>\nstruct Base {\n    void interface() {\n        static_cast<Derived*>(this)->impl();  // ✅ Safe only if 'this' points to Derived\n    }\n};\n\nclass Wrong : public Base<Wrong> { };\nclass AlsoWrong : public Base<Wrong> { };  // ❌ DANGER: Wrong is not AlsoWrong!\n\nint main() {\n    Wrong w;\n    w.interface();  // ✅ Safe\n    \n    Base<Wrong>* ptr = new Wrong();\n    ptr->interface();  // ✅ Safe\n    \n    // Base<AlsoWrong>* bad = new AlsoWrong();  // ❌ UB: cast to wrong type\n}\n```\n\nAlways ensure the template parameter matches the actual derived class. Mismatches create casts to wrong types, causing undefined behavior."
         },
         {
+          "case_number": 6,
           "title": "SFINAE with Overload Resolution Ambiguity",
-          "explanation": "When multiple SFINAE-enabled overloads could match, overload resolution can become ambiguous, requiring additional SFINAE constraints.\n\n```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<std::is_floating_point<T>::value>::type\nprocess(T val) { std::cout << \"floating\\n\"; }\n\n// template<typename T>\n// typename std::enable_if<std::is_arithmetic<T>::value>::type  // ❌ Would be ambiguous!\n// process(T val) { }\n\nint main() {\n    process(42);      // integral\n    process(3.14);    // floating\n    // process(\"x\");  // ❌ Error: no matching function\n}\n```\n\nConditions must be mutually exclusive to avoid ambiguity. Overlapping conditions require additional constraints or a priority mechanism using SFINAE with overload ranking.\n\n---",
-          "code_examples": [
-            "template<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<std::is_floating_point<T>::value>::type\nprocess(T val) { std::cout << \"floating\\n\"; }\n\n// template<typename T>\n// typename std::enable_if<std::is_arithmetic<T>::value>::type  // ❌ Would be ambiguous!\n// process(T val) { }\n\nint main() {\n    process(42);      // integral\n    process(3.14);    // floating\n    // process(\"x\");  // ❌ Error: no matching function\n}"
-          ]
+          "explanation": "When multiple SFINAE-enabled overloads could match, overload resolution can become ambiguous, requiring additional SFINAE constraints.\n\n```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<std::is_floating_point<T>::value>::type\nprocess(T val) { std::cout << \"floating\\n\"; }\n\n// template<typename T>\n// typename std::enable_if<std::is_arithmetic<T>::value>::type  // ❌ Would be ambiguous!\n// process(T val) { }\n\nint main() {\n    process(42);      // integral\n    process(3.14);    // floating\n    // process(\"x\");  // ❌ Error: no matching function\n}\n```\n\nConditions must be mutually exclusive to avoid ambiguity. Overlapping conditions require additional constraints or a priority mechanism using SFINAE with overload ranking.\n\n---"
         }
       ],
       "code_examples": [
         {
+          "example_number": 1,
           "title": "Basic SFINAE with enable_if in Return Type",
           "explanation": "The `enable_if` in the return type removes non-matching overloads via SFINAE. When `condition` is false, `enable_if<condition>::type` doesn't exist, causing substitution failure. The compiler silently removes that overload and tries the next one.",
           "code": "#include <type_traits>\n#include <iostream>\n\ntemplate<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocessNumber(T val) {\n    std::cout << val << \" is integral\\n\";  // ✅ Only instantiated for integral types\n}\n\ntemplate<typename T>\ntypename std::enable_if<std::is_floating_point<T>::value>::type\nprocessNumber(T val) {\n    std::cout << val << \" is floating-point\\n\";  // ✅ Only instantiated for floating-point\n}\n\nint main() {\n    processNumber(42);      // 42 is integral\n    processNumber(3.14);    // 3.14 is floating-point\n    // processNumber(\"hi\"); // ❌ Error: no matching function\n}",
           "additional_code": []
         },
         {
+          "example_number": 2,
           "title": "SFINAE with Template Parameter Default",
           "explanation": "Using `enable_if` in a defaulted template parameter keeps the function signature clean. The unnamed template parameter (using `typename =`) serves only for SFINAE purposes without cluttering the function interface.",
           "code": "#include <type_traits>\n#include <iostream>\n\ntemplate<typename T, typename = typename std::enable_if<std::is_pointer<T>::value>::type>\nvoid handlePointer(T ptr) {\n    std::cout << \"Pointer type\\n\";  // ✅ Only enabled for pointer types\n}\n\ntemplate<typename T, typename = typename std::enable_if<!std::is_pointer<T>::value>::type>\nvoid handlePointer(T val) {\n    std::cout << \"Non-pointer type\\n\";  // ✅ Only enabled for non-pointer types\n}\n\nint main() {\n    int x = 42;\n    handlePointer(&x);  // Pointer type\n    handlePointer(x);   // Non-pointer type\n}",
           "additional_code": []
         },
         {
+          "example_number": 3,
           "title": "Expression SFINAE - Detecting Member Functions",
           "explanation": "The first overload uses `decltype` with a comma expression: `declval<T>().to_string()` validates the member call, and `std::true_type{}` provides the return type. If the member doesn't exist, SFINAE removes this overload, leaving the fallback. The `int` vs `...` parameter creates overload priority.",
           "code": "#include <type_traits>\n#include <iostream>\n#include <string>\n\n// Detects if type T has a member function to_string()\ntemplate<typename T>\nauto hasToString(int) -> decltype(std::declval<T>().to_string(), std::true_type{}) {\n    return std::true_type{};\n}\n\ntemplate<typename T>\nstd::false_type hasToString(...) {  // Fallback for types without to_string()\n    return std::false_type{};\n}\n\nstruct WithToString {\n    std::string to_string() const { return \"value\"; }\n};\n\nstruct WithoutToString { };\n\nint main() {\n    std::cout << decltype(hasToString<WithToString>(0))::value << \"\\n\";     // 1\n    std::cout << decltype(hasToString<WithoutToString>(0))::value << \"\\n\";  // 0\n}",
           "additional_code": []
         },
         {
+          "example_number": 4,
           "title": "Tag Dispatch as Alternative to SFINAE",
           "explanation": "Tag dispatch is cleaner than SFINAE for many cases. The public function creates a tag object (`std::true_type` or `std::false_type`) and passes it to implementation functions that overload on the tag type. This avoids complex `enable_if` syntax while achieving the same compile-time dispatch.",
           "code": "#include <iostream>\n#include <type_traits>\n\n// Implementation functions that take tag types\ntemplate<typename T>\nvoid processImpl(T val, std::true_type) {  // ✅ Integral version\n    std::cout << val << \" is integral\\n\";\n}\n\ntemplate<typename T>\nvoid processImpl(T val, std::false_type) {  // ✅ Non-integral version\n    std::cout << val << \" is non-integral\\n\";\n}\n\n// Public interface dispatches to appropriate implementation\ntemplate<typename T>\nvoid process(T val) {\n    processImpl(val, std::is_integral<T>{});  // ✅ Dispatch via tag type\n}\n\nint main() {\n    process(42);      // 42 is integral\n    process(3.14);    // 3.14 is non-integral\n}",
           "additional_code": []
         },
         {
+          "example_number": 5,
           "title": "SFINAE with Member Type Detection",
           "explanation": "The `typename T::value_type{}` expression attempts to access the nested type. If it doesn't exist, SFINAE removes this overload. This pattern detects nested types, type aliases, or any name accessible via `T::name`.",
           "code": "#include <type_traits>\n#include <iostream>\n\n// Detects if type T has a nested type named 'value_type'\ntemplate<typename T>\nauto hasValueType(int) -> decltype(typename T::value_type{}, std::true_type{}) {\n    return std::true_type{};\n}\n\ntemplate<typename T>\nstd::false_type hasValueType(...) {\n    return std::false_type{};\n}\n\ntemplate<typename T>\nstruct Container { using value_type = T; };\n\nstruct NoValueType { };\n\nint main() {\n    std::cout << decltype(hasValueType<Container<int>>(0))::value << \"\\n\";  // 1\n    std::cout << decltype(hasValueType<NoValueType>(0))::value << \"\\n\";     // 0\n}",
           "additional_code": []
         },
         {
+          "example_number": 6,
           "title": "Basic CRTP for Static Polymorphism",
           "explanation": "CRTP enables static polymorphism without virtual functions. The base class `Shape<Derived>` casts `this` to `Derived*` to call the derived implementation. Each instantiation (`Shape<Circle>`, `Shape<Rectangle>`) is a different type with no common base, preventing accidental runtime polymorphism and enabling complete inlining.",
           "code": "#include <iostream>\n\ntemplate<typename Derived>\nclass Shape {\npublic:\n    void draw() {\n        static_cast<Derived*>(this)->drawImpl();  // ✅ Calls derived implementation\n    }\n    \n    double area() {\n        return static_cast<Derived*>(this)->areaImpl();  // ✅ Static dispatch\n    }\n};\n\nclass Circle : public Shape<Circle> {\npublic:\n    void drawImpl() { std::cout << \"Drawing circle\\n\"; }\n    double areaImpl() { return 3.14 * 5 * 5; }  // radius = 5\n};\n\nclass Rectangle : public Shape<Rectangle> {\npublic:\n    void drawImpl() { std::cout << \"Drawing rectangle\\n\"; }\n    double areaImpl() { return 10 * 20; }  // width=10, height=20\n};\n\nint main() {\n    Circle c;\n    c.draw();  // Drawing circle\n    std::cout << \"Area: \" << c.area() << \"\\n\";  // Area: 78.5\n    \n    Rectangle r;\n    r.draw();  // Drawing rectangle\n    std::cout << \"Area: \" << r.area() << \"\\n\";  // Area: 200\n}",
           "additional_code": []
         },
         {
+          "example_number": 7,
           "title": "CRTP Mixin Pattern",
           "explanation": "CRTP mixins add functionality by inheriting from multiple CRTP bases. Each mixin calls specific methods in the derived class via `static_cast`. This enables modular, composable capabilities without virtual function overhead. The derived class must implement all methods required by its mixins.",
           "code": "#include <iostream>\n#include <string>\n\ntemplate<typename Derived>\nclass Printable {\npublic:\n    void print() const {\n        std::cout << static_cast<const Derived*>(this)->toString() << \"\\n\";\n    }\n};\n\ntemplate<typename Derived>\nclass Comparable {\npublic:\n    bool operator<(const Derived& other) const {\n        return static_cast<const Derived*>(this)->compare(other) < 0;\n    }\n};\n\nclass MyData : public Printable<MyData>, public Comparable<MyData> {\n    int value;\npublic:\n    MyData(int v) : value(v) { }\n    \n    std::string toString() const { return \"MyData(\" + std::to_string(value) + \")\"; }\n    int compare(const MyData& other) const { return value - other.value; }\n};\n\nint main() {\n    MyData d1(10), d2(20);\n    d1.print();  // MyData(10)\n    std::cout << (d1 < d2) << \"\\n\";  // 1 (true)\n}",
           "additional_code": []
         },
         {
+          "example_number": 8,
           "title": "CRTP for Counting Instances",
           "explanation": "Each CRTP instantiation has its own static member. `Counter<Widget>::count` is separate from `Counter<Gadget>::count`, enabling per-type instance counting. The derived class inherits increment/decrement logic automatically through CRTP constructor/destructor calls.",
           "code": "#include <iostream>\n\ntemplate<typename Derived>\nclass Counter {\n    static inline int count = 0;  // C++17 inline static\nprotected:\n    Counter() { ++count; }\n    Counter(const Counter&) { ++count; }\n    ~Counter() { --count; }\npublic:\n    static int getCount() { return count; }\n};\n\nclass Widget : public Counter<Widget> { };\nclass Gadget : public Counter<Gadget> { };\n\nint main() {\n    Widget w1, w2;\n    Gadget g1;\n    \n    std::cout << \"Widgets: \" << Widget::getCount() << \"\\n\";  // 2\n    std::cout << \"Gadgets: \" << Gadget::getCount() << \"\\n\";  // 1\n    \n    {\n        Widget w3;\n        std::cout << \"Widgets: \" << Widget::getCount() << \"\\n\";  // 3\n    }\n    \n    std::cout << \"Widgets: \" << Widget::getCount() << \"\\n\";  // 2 (w3 destroyed)\n}",
           "additional_code": []
         },
         {
+          "example_number": 9,
           "title": "SFINAE for Function Overload Selection",
           "explanation": "The first overload uses expression SFINAE with `decltype` to check for `begin()` and `end()` methods. The `void()` cast ensures the return type is always `void` regardless of what `end()` returns. The second overload is disabled for class types to avoid ambiguity with the container version.",
           "code": "#include <iostream>\n#include <vector>\n#include <type_traits>\n\n// Version for types with begin() and end() (containers)\ntemplate<typename T>\nauto printElements(const T& container) \n    -> decltype(container.begin(), container.end(), void()) {\n    for (const auto& elem : container) {\n        std::cout << elem << \" \";\n    }\n    std::cout << \"\\n\";\n}\n\n// Version for single values\ntemplate<typename T>\nauto printElements(const T& value) \n    -> typename std::enable_if<!std::is_class<T>::value>::type {\n    std::cout << value << \"\\n\";\n}\n\nint main() {\n    std::vector<int> vec = {1, 2, 3, 4, 5};\n    printElements(vec);   // 1 2 3 4 5\n    printElements(42);    // 42\n}",
           "additional_code": []
         },
         {
+          "example_number": 10,
           "title": "CRTP with Protected Interface",
           "explanation": "The protected CRTP interface prevents external code from calling implementation methods directly while allowing the base template to access them. The `friend` declaration grants the base class access to private derived methods. This enables the Template Method pattern at compile time.",
           "code": "#include <iostream>\n\ntemplate<typename Derived>\nclass Interface {\nprotected:\n    // Protected interface only accessible to derived\n    void executeImpl() {\n        static_cast<Derived*>(this)->doExecute();\n    }\n    \npublic:\n    void execute() {\n        std::cout << \"Before execution\\n\";\n        executeImpl();  // ✅ Calls derived implementation\n        std::cout << \"After execution\\n\";\n    }\n};\n\nclass ConcreteClass : public Interface<ConcreteClass> {\n    friend class Interface<ConcreteClass>;  // Grant access to base\nprivate:\n    void doExecute() {\n        std::cout << \"ConcreteClass execution\\n\";\n    }\n};\n\nint main() {\n    ConcreteClass obj;\n    obj.execute();\n    // Before execution\n    // ConcreteClass execution\n    // After execution\n}",
           "additional_code": []
         },
         {
+          "example_number": 11,
           "title": "Autonomous Vehicle - Advanced Sensor Framework with SFINAE and CRTP",
           "explanation": "This comprehensive example demonstrates SFINAE and CRTP in an autonomous vehicle sensor processing framework, showing capability detection, compile-time polymorphism, and zero-overhead abstractions essential for real-time safety-critical systems.\n\n\n\n**Output:**\n\n\n**Real-World Applications in Autonomous Vehicles:**\n\n1. **SFINAE Capability Detection** - Different sensor models support different features (calibration, diagnostics, self-tests). SFINAE enables compile-time detection of capabilities without runtime reflection, eliminating overhead in safety-critical real-time loops. This is essential when integrating sensors from multiple vendors with varying feature sets.\n\n2. **CRTP Static Polymorphism** - Traditional virtual function calls add 1-2 CPU cycles per call plus cache misses from vtable lookups. In a sensor processing loop running at 100Hz with 20 sensors, this becomes 4000 indirections/second. CRTP eliminates this entirely—the compiler inlines everything, generating identical machine code to hand-written type-specific functions.\n\n3. **CRTP Mixins for Composable Functionality** - Not all sensors need logging or health monitoring. CRTP mixins let you add capabilities selectively without bloat. LiDAR (safety-critical) gets logging + health monitoring; camera gets only logging; IMU gets neither. Each combination generates a different type with zero unused code.\n\n4. **Per-Type Instance Counting** - Resource management in autonomous vehicles requires knowing how many instances of each sensor type exist for memory budgeting and diagnostics. CRTP provides per-type counters with zero overhead—each sensor type has its own static counter automatically.\n\n5. **CRTP Singleton for Central Management** - The sensor manager controls calibration sequences, shutdown procedures, and emergency protocols. CRTP Singleton ensures exactly one manager instance while allowing type-specific initialization.\n\n6. **Tag Dispatch for Priority Scheduling** - Safety-critical sensors (LiDAR, camera for object detection) require real-time processing; non-critical sensors (temperature, ambient light) can be deferred. Tag dispatch enables compile-time selection of processing paths without runtime branching.\n\n**Performance Benefits Over Virtual Functions:**\n\n\n\nBenchmarks in real autonomous vehicle systems show CRTP reducing sensor processing latency by 15-30% compared to virtual functions—critical when processing 2 million LiDAR points per second at 10Hz.\n\n**Safety-Critical Considerations:**\n- **Compile-time verification**: SFINAE detects missing methods at compile time, not during driving\n- **No runtime failures**: CRTP eliminates vtable corruption risks from memory errors\n- **Deterministic performance**: No cache misses from virtual dispatch—critical for meeting real-time deadlines\n- **Code generation transparency**: Assembly inspection shows exactly what code executes (no hidden indirection)\n\n**When to Use Each Technique:**\n- **SFINAE**: Detecting optional sensor capabilities, conditional API selection\n- **CRTP**: Performance-critical sensor loops, zero-overhead abstractions\n- **Tag Dispatch**: Compile-time algorithm selection with clear intent\n- **Virtual Functions**: Plugin architectures, sensor hot-swapping (not shown here)\n\nThis example demonstrates how modern C++ metaprogramming techniques enable automotive-grade software: type-safe, zero-overhead, and deterministically verifiable at compile time.\n\n---",
           "code": "#include <iostream>\n#include <vector>\n#include <string>\n#include <type_traits>\n#include <chrono>\n#include <memory>\n\n// ============================================================================\n// Part 1: SFINAE for Sensor Capability Detection\n// ============================================================================\n\n// Expression SFINAE: Detect if sensor has calibration capability\ntemplate<typename T>\nauto hasCalibrate(int) -> decltype(std::declval<T>().calibrate(), std::true_type{}) {\n    return std::true_type{};\n}\n\ntemplate<typename T>\nstd::false_type hasCalibrate(...) {\n    return std::false_type{};\n}\n\n// Expression SFINAE: Detect if sensor has self-diagnostic capability\ntemplate<typename T>\nauto hasSelfDiagnostic(int) -> decltype(std::declval<T>().runDiagnostic(), std::true_type{}) {\n    return std::true_type{};\n}\n\ntemplate<typename T>\nstd::false_type hasSelfDiagnostic(...) {\n    return std::false_type{};\n}\n\n// SFINAE in return type: Only enable for sensors with calibration\ntemplate<typename T>\ntypename std::enable_if<decltype(hasCalibrate<T>(0))::value>::type\nsetupSensor(T& sensor) {\n    std::cout << \"Calibrating sensor...\\n\";\n    sensor.calibrate();\n}\n\ntemplate<typename T>\ntypename std::enable_if<!decltype(hasCalibrate<T>(0))::value>::type\nsetupSensor(T& sensor) {\n    std::cout << \"Sensor doesn't require calibration\\n\";\n}\n\n// ============================================================================\n// Part 2: CRTP Base for Static Polymorphic Sensor Processing\n// ============================================================================\n\ntemplate<typename Derived>\nclass SensorBase {\npublic:\n    void processReading() {\n        // Template Method pattern - algorithm structure defined in base\n        std::cout << \"  [Base] Starting sensor read cycle\\n\";\n\n        // Static dispatch to derived implementation\n        auto& derived = static_cast<Derived&>(*this);\n        auto reading = derived.readImpl();\n\n        if (derived.validateImpl(reading)) {\n            derived.storeImpl(reading);\n            std::cout << \"  [Base] Reading processed successfully\\n\";\n        } else {\n            std::cout << \"  [Base] WARNING: Invalid reading detected\\n\";\n        }\n    }\n\n    // Common utility available to all sensors\n    uint64_t getTimestamp() const {\n        return std::chrono::duration_cast<std::chrono::milliseconds>(\n            std::chrono::system_clock::now().time_since_epoch()\n        ).count();\n    }\n};\n\n// ============================================================================\n// Part 3: CRTP Mixin for Adding Sensor Capabilities\n// ============================================================================\n\n// Mixin: Add logging capability\ntemplate<typename Derived>\nclass LoggableMixin {\npublic:\n    void log(const std::string& message) const {\n        std::cout << \"[LOG] \" << static_cast<const Derived*>(this)->getSensorName()\n                  << \": \" << message << \"\\n\";\n    }\n};\n\n// Mixin: Add health monitoring\ntemplate<typename Derived>\nclass HealthMonitorMixin {\n    int failure_count{0};\n    static constexpr int MAX_FAILURES = 3;\n\npublic:\n    void recordFailure() {\n        ++failure_count;\n        if (failure_count >= MAX_FAILURES) {\n            std::cout << \"[HEALTH] \" << static_cast<Derived*>(this)->getSensorName()\n                      << \" exceeded failure threshold!\\n\";\n        }\n    }\n\n    bool isHealthy() const {\n        return failure_count < MAX_FAILURES;\n    }\n\n    int getFailureCount() const { return failure_count; }\n};\n\n// ============================================================================\n// Part 4: Concrete Sensor Implementations Using CRTP\n// ============================================================================\n\nclass LiDARSensor : public SensorBase<LiDARSensor>,\n                    public LoggableMixin<LiDARSensor>,\n                    public HealthMonitorMixin<LiDARSensor> {\n    std::vector<double> point_cloud;\n\npublic:\n    std::string getSensorName() const { return \"LiDAR-Front\"; }\n\n    // Required by SensorBase CRTP\n    double readImpl() {\n        log(\"Reading point cloud data\");\n        return 12.5;  // Simulated distance reading\n    }\n\n    bool validateImpl(double reading) {\n        bool valid = (reading >= 0.1 && reading <= 100.0);\n        if (!valid) recordFailure();\n        return valid;\n    }\n\n    void storeImpl(double reading) {\n        point_cloud.push_back(reading);\n        log(\"Stored reading: \" + std::to_string(reading) + \"m\");\n    }\n\n    // Calibration capability (detected by SFINAE)\n    void calibrate() {\n        std::cout << \"  [LiDAR] Running laser calibration sequence\\n\";\n    }\n\n    // Self-diagnostic capability\n    void runDiagnostic() {\n        std::cout << \"  [LiDAR] Running beam alignment diagnostic\\n\";\n    }\n};\n\nclass CameraSensor : public SensorBase<CameraSensor>,\n                     public LoggableMixin<CameraSensor> {\npublic:\n    std::string getSensorName() const { return \"Camera-Front\"; }\n\n    double readImpl() {\n        log(\"Capturing image frame\");\n        return 1920.0;  // Simulated pixel count\n    }\n\n    bool validateImpl(double reading) {\n        return reading > 0;\n    }\n\n    void storeImpl(double reading) {\n        log(\"Stored frame data\");\n    }\n\n    // Calibration capability\n    void calibrate() {\n        std::cout << \"  [Camera] Running lens and exposure calibration\\n\";\n    }\n\n    // NOTE: No runDiagnostic() - will be detected by SFINAE\n};\n\nclass IMUSensor : public SensorBase<IMUSensor> {\npublic:\n    std::string getSensorName() const { return \"IMU-Main\"; }\n\n    double readImpl() {\n        return 9.81;  // Simulated acceleration reading\n    }\n\n    bool validateImpl(double reading) {\n        return reading >= -20.0 && reading <= 20.0;\n    }\n\n    void storeImpl(double reading) {\n        std::cout << \"  [IMU] Stored acceleration: \" << reading << \" m/s²\\n\";\n    }\n\n    // NOTE: No calibrate() - will be detected by SFINAE\n    // NOTE: No runDiagnostic() - will be detected by SFINAE\n};\n\n// ============================================================================\n// Part 5: CRTP for Per-Type Instance Counting\n// ============================================================================\n\ntemplate<typename Derived>\nclass InstanceCounter {\n    static inline int count = 0;\n\nprotected:\n    InstanceCounter() { ++count; }\n    InstanceCounter(const InstanceCounter&) { ++count; }\n    ~InstanceCounter() { --count; }\n\npublic:\n    static int getInstanceCount() { return count; }\n};\n\nclass CountedLiDAR : public InstanceCounter<CountedLiDAR> {\npublic:\n    void doWork() { std::cout << \"CountedLiDAR working\\n\"; }\n};\n\nclass CountedCamera : public InstanceCounter<CountedCamera> {\npublic:\n    void doWork() { std::cout << \"CountedCamera working\\n\"; }\n};\n\n// ============================================================================\n// Part 6: Tag Dispatch for Sensor Priority Processing\n// ============================================================================\n\nstruct HighPriority {};\nstruct LowPriority {};\n\n// Implementation for high-priority sensors (real-time processing)\ntemplate<typename T>\nvoid processSensorImpl(T& sensor, HighPriority) {\n    std::cout << \"[PRIORITY] Real-time processing for \" << sensor.getSensorName() << \"\\n\";\n    sensor.processReading();\n}\n\n// Implementation for low-priority sensors (deferred processing)\ntemplate<typename T>\nvoid processSensorImpl(T& sensor, LowPriority) {\n    std::cout << \"[PRIORITY] Queued processing for \" << sensor.getSensorName() << \"\\n\";\n    sensor.processReading();\n}\n\n// Public interface uses tag dispatch\ntemplate<typename T, typename Priority>\nvoid processSensor(T& sensor, Priority priority) {\n    processSensorImpl(sensor, priority);\n}\n\n// ============================================================================\n// Part 7: SFINAE for Conditional Diagnostic Execution\n// ============================================================================\n\n// Run diagnostic if sensor supports it (SFINAE)\ntemplate<typename T>\ntypename std::enable_if<decltype(hasSelfDiagnostic<T>(0))::value>::type\nrunDiagnosticIfAvailable(T& sensor) {\n    std::cout << \"Running diagnostic on \" << sensor.getSensorName() << \"\\n\";\n    sensor.runDiagnostic();\n}\n\ntemplate<typename T>\ntypename std::enable_if<!decltype(hasSelfDiagnostic<T>(0))::value>::type\nrunDiagnosticIfAvailable(T& sensor) {\n    std::cout << \"Diagnostic not available for \" << sensor.getSensorName() << \"\\n\";\n}\n\n// ============================================================================\n// Part 8: CRTP Singleton for Sensor Manager\n// ============================================================================\n\ntemplate<typename Derived>\nclass Singleton {\nprotected:\n    Singleton() = default;\n    ~Singleton() = default;\n    Singleton(const Singleton&) = delete;\n    Singleton& operator=(const Singleton&) = delete;\n\npublic:\n    static Derived& instance() {\n        static Derived inst;\n        return inst;\n    }\n};\n\nclass SensorManager : public Singleton<SensorManager> {\n    friend class Singleton<SensorManager>;\n\nprivate:\n    SensorManager() {\n        std::cout << \"[Manager] Sensor management system initialized\\n\";\n    }\n\npublic:\n    void manage() {\n        std::cout << \"[Manager] Managing all vehicle sensors\\n\";\n    }\n};\n\n// ============================================================================\n// Main: Demonstrating SFINAE and CRTP in Autonomous Vehicle Context\n// ============================================================================\n\nint main() {\n    std::cout << \"=== Autonomous Vehicle: Advanced Sensor Framework ===\\n\\n\";\n\n    // 1. SFINAE capability detection at compile time\n    std::cout << \"=== Compile-Time Capability Detection (SFINAE) ===\\n\";\n    LiDARSensor lidar;\n    CameraSensor camera;\n    IMUSensor imu;\n\n    std::cout << \"LiDAR has calibrate: \" << decltype(hasCalibrate<LiDARSensor>(0))::value << \"\\n\";\n    std::cout << \"Camera has calibrate: \" << decltype(hasCalibrate<CameraSensor>(0))::value << \"\\n\";\n    std::cout << \"IMU has calibrate: \" << decltype(hasCalibrate<IMUSensor>(0))::value << \"\\n\\n\";\n\n    std::cout << \"LiDAR has diagnostic: \" << decltype(hasSelfDiagnostic<LiDARSensor>(0))::value << \"\\n\";\n    std::cout << \"Camera has diagnostic: \" << decltype(hasSelfDiagnostic<CameraSensor>(0))::value << \"\\n\";\n    std::cout << \"IMU has diagnostic: \" << decltype(hasSelfDiagnostic<IMUSensor>(0))::value << \"\\n\\n\";\n\n    // 2. SFINAE-based conditional calibration\n    std::cout << \"=== Conditional Setup (SFINAE) ===\\n\";\n    setupSensor(lidar);    // Has calibrate()\n    setupSensor(camera);   // Has calibrate()\n    setupSensor(imu);      // No calibrate()\n    std::cout << \"\\n\";\n\n    // 3. CRTP static polymorphism for sensor processing\n    std::cout << \"=== CRTP Static Polymorphism (Zero-Overhead Dispatch) ===\\n\";\n    std::cout << \"Processing LiDAR:\\n\";\n    lidar.processReading();\n\n    std::cout << \"\\nProcessing Camera:\\n\";\n    camera.processReading();\n\n    std::cout << \"\\nProcessing IMU:\\n\";\n    imu.processReading();\n    std::cout << \"\\n\";\n\n    // 4. CRTP mixins for added functionality\n    std::cout << \"=== CRTP Mixins (Composable Functionality) ===\\n\";\n    std::cout << \"LiDAR health status: \"\n              << (lidar.isHealthy() ? \"HEALTHY\" : \"DEGRADED\") << \"\\n\";\n    std::cout << \"LiDAR failure count: \" << lidar.getFailureCount() << \"\\n\";\n    // Note: Camera doesn't have HealthMonitorMixin\n    // Note: IMU has neither LoggableMixin nor HealthMonitorMixin\n    std::cout << \"\\n\";\n\n    // 5. SFINAE for conditional diagnostic execution\n    std::cout << \"=== Conditional Diagnostics (SFINAE) ===\\n\";\n    runDiagnosticIfAvailable(lidar);    // Has runDiagnostic()\n    runDiagnosticIfAvailable(camera);   // No runDiagnostic()\n    runDiagnosticIfAvailable(imu);      // No runDiagnostic()\n    std::cout << \"\\n\";\n\n    // 6. Tag dispatch for priority-based processing\n    std::cout << \"=== Tag Dispatch (Priority-Based Processing) ===\\n\";\n    processSensor(lidar, HighPriority{});   // Critical sensor\n    processSensor(camera, HighPriority{});  // Critical sensor\n    processSensor(imu, LowPriority{});      // Non-critical sensor\n    std::cout << \"\\n\";\n\n    // 7. CRTP instance counting (per-type)\n    std::cout << \"=== CRTP Instance Counting (Per-Type Tracking) ===\\n\";\n    {\n        CountedLiDAR l1, l2;\n        CountedCamera c1;\n\n        std::cout << \"Active LiDAR instances: \" << CountedLiDAR::getInstanceCount() << \"\\n\";\n        std::cout << \"Active Camera instances: \" << CountedCamera::getInstanceCount() << \"\\n\";\n\n        {\n            CountedLiDAR l3;\n            std::cout << \"After creating l3 - LiDAR instances: \"\n                      << CountedLiDAR::getInstanceCount() << \"\\n\";\n        }\n\n        std::cout << \"After l3 destroyed - LiDAR instances: \"\n                  << CountedLiDAR::getInstanceCount() << \"\\n\";\n    }\n    std::cout << \"After scope exit - LiDAR instances: \"\n              << CountedLiDAR::getInstanceCount() << \"\\n\";\n    std::cout << \"After scope exit - Camera instances: \"\n              << CountedCamera::getInstanceCount() << \"\\n\\n\";\n\n    // 8. CRTP Singleton for centralized management\n    std::cout << \"=== CRTP Singleton (Centralized Management) ===\\n\";\n    SensorManager& mgr1 = SensorManager::instance();\n    SensorManager& mgr2 = SensorManager::instance();\n\n    std::cout << \"Same instance: \" << (&mgr1 == &mgr2 ? \"YES\" : \"NO\") << \"\\n\";\n    mgr1.manage();\n    std::cout << \"\\n\";\n\n    std::cout << \"=== Summary: Techniques Demonstrated ===\\n\";\n    std::cout << \"✓ SFINAE expression detection (hasCalibrate, hasSelfDiagnostic)\\n\";\n    std::cout << \"✓ SFINAE return type enable_if (setupSensor, runDiagnosticIfAvailable)\\n\";\n    std::cout << \"✓ CRTP static polymorphism (SensorBase with zero-overhead dispatch)\\n\";\n    std::cout << \"✓ CRTP mixins (LoggableMixin, HealthMonitorMixin)\\n\";\n    std::cout << \"✓ CRTP instance counting (per-type static members)\\n\";\n    std::cout << \"✓ CRTP singleton pattern (SensorManager)\\n\";\n    std::cout << \"✓ Tag dispatch (HighPriority/LowPriority processing)\\n\";\n    std::cout << \"✓ Template Method pattern via CRTP (processReading)\\n\";\n\n    return 0;\n}",
@@ -851,6 +909,7 @@
       ],
       "interview_qa": [
         {
+          "question_number": 1,
           "question": "What does SFINAE stand for and what is its fundamental purpose?",
           "difficulty": [
             "beginner"
@@ -870,6 +929,7 @@
           "key_takeaway": "SFINAE allows templates to \"fail gracefully\" during substitution, enabling type-based template selection."
         },
         {
+          "question_number": 2,
           "question": "Why is std::enable_if commonly used in return types rather than function parameters?",
           "difficulty": [
             "intermediate"
@@ -891,6 +951,7 @@
           "key_takeaway": "Return type `enable_if` provides cleaner interfaces than parameter-based SFINAE."
         },
         {
+          "question_number": 3,
           "question": "What is the \"immediate context\" rule in SFINAE?",
           "difficulty": [
             "advanced"
@@ -912,6 +973,7 @@
           "key_takeaway": "SFINAE only covers signature substitution errors, not function body errors."
         },
         {
+          "question_number": 4,
           "question": "How does expression SFINAE with decltype work?",
           "difficulty": [
             "intermediate"
@@ -933,6 +995,7 @@
           "key_takeaway": "Expression SFINAE with `decltype` detects whether specific expressions compile for a type."
         },
         {
+          "question_number": 5,
           "question": "What is CRTP and what problem does it solve?",
           "difficulty": [
             "intermediate"
@@ -954,6 +1017,7 @@
           "key_takeaway": "CRTP provides zero-overhead compile-time polymorphism as an alternative to virtual functions."
         },
         {
+          "question_number": 6,
           "question": "Why can't you call a CRTP base class method through a base class pointer?",
           "difficulty": [
             "intermediate"
@@ -975,6 +1039,7 @@
           "key_takeaway": "CRTP types don't share a common base, preventing polymorphic pointer usage."
         },
         {
+          "question_number": 7,
           "question": "What happens if you forget to implement a method required by a CRTP base class?",
           "difficulty": [
             "intermediate"
@@ -996,6 +1061,7 @@
           "key_takeaway": "CRTP interface requirements are checked only when methods are called, not at inheritance time."
         },
         {
+          "question_number": 8,
           "question": "How do you use SFINAE to detect if a type has a specific member function?",
           "difficulty": [
             "advanced"
@@ -1017,6 +1083,7 @@
           "key_takeaway": "Expression SFINAE with `declval` and `decltype` detects member function existence at compile time."
         },
         {
+          "question_number": 9,
           "question": "What is tag dispatch and how does it differ from SFINAE?",
           "difficulty": [
             "intermediate"
@@ -1038,6 +1105,7 @@
           "key_takeaway": "Tag dispatch uses value objects to select overloads; SFINAE uses type substitution failure."
         },
         {
+          "question_number": 10,
           "question": "Can you use CRTP with private inheritance? What changes?",
           "difficulty": [
             "advanced"
@@ -1059,6 +1127,7 @@
           "key_takeaway": "Private CRTP inheritance hides base functionality, exposing only what the derived class explicitly chooses."
         },
         {
+          "question_number": 11,
           "question": "What is the difference between SFINAE and C++20 concepts?",
           "difficulty": [
             "advanced"
@@ -1080,6 +1149,7 @@
           "key_takeaway": "Concepts are cleaner and clearer than SFINAE for constraining template interfaces."
         },
         {
+          "question_number": 12,
           "question": "How do you combine multiple SFINAE conditions with logical operators?",
           "difficulty": [
             "advanced"
@@ -1101,6 +1171,7 @@
           "key_takeaway": "Combine SFINAE conditions with logical operators or C++17 logical type traits."
         },
         {
+          "question_number": 13,
           "question": "What are the dangers of using CRTP with virtual functions?",
           "difficulty": [
             "advanced"
@@ -1122,6 +1193,7 @@
           "key_takeaway": "Don't mix CRTP static dispatch with virtual functions—choose one polymorphism mechanism."
         },
         {
+          "question_number": 14,
           "question": "How do you use SFINAE in template parameter lists instead of return types?",
           "difficulty": [
             "intermediate"
@@ -1143,6 +1215,7 @@
           "key_takeaway": "Template parameter SFINAE requires careful handling to avoid ambiguous overload signatures."
         },
         {
+          "question_number": 15,
           "question": "What is the return type of decltype(std::declval<T>().func()) and why is it useful for SFINAE?",
           "difficulty": [
             "advanced"
@@ -1164,6 +1237,7 @@
           "key_takeaway": "`decltype` with `declval` deduces return types and enables SFINAE without evaluating expressions."
         },
         {
+          "question_number": 16,
           "question": "How do CRTP mixins avoid the diamond problem?",
           "difficulty": [
             "advanced"
@@ -1185,6 +1259,7 @@
           "key_takeaway": "CRTP naturally avoids diamond inheritance because template instantiations are distinct types."
         },
         {
+          "question_number": 17,
           "question": "What is the difference between SFINAE and static_assert for compile-time checks?",
           "difficulty": [
             "intermediate"
@@ -1206,6 +1281,7 @@
           "key_takeaway": "SFINAE enables conditional compilation; `static_assert` enforces requirements with errors."
         },
         {
+          "question_number": 18,
           "question": "Can you use CRTP to implement the Singleton pattern? How?",
           "difficulty": [
             "advanced"
@@ -1227,6 +1303,7 @@
           "key_takeaway": "CRTP Singleton provides reusable singleton infrastructure for any derived class."
         },
         {
+          "question_number": 19,
           "question": "What happens if you try to use SFINAE on a non-dependent type?",
           "difficulty": [
             "advanced"
@@ -1248,6 +1325,7 @@
           "key_takeaway": "SFINAE requires conditions dependent on template parameters to work correctly."
         },
         {
+          "question_number": 20,
           "question": "How do you use CRTP to implement compile-time polymorphic algorithms?",
           "difficulty": [
             "advanced"
@@ -1273,161 +1351,201 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\nint main() {\n    process(42);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `integral`<br>Compilation error\n\n**Explanation:** First call matches integral SFINAE; second fails (no float overload)\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\nint main() {\n    process(42);\n    process(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nauto hasSize(int) -> decltype(std::declval<T>().size(), std::true_type{});\n\ntemplate<typename T>\nstd::false_type hasSize(...);\n\nint main() {\n    std::cout << decltype(hasSize<std::vector<int>>(0))::value << \"\\n\";\n    std::cout << decltype(hasSize<int>(0))::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`0`\n\n**Explanation:** `std::vector` has `.size()` method; `int` doesn't\n\n**Key Concept:** #expression_sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\nauto hasSize(int) -> decltype(std::declval<T>().size(), std::true_type{});\n\ntemplate<typename T>\nstd::false_type hasSize(...);\n\nint main() {\n    std::cout << decltype(hasSize<std::vector<int>>(0))::value << \"\\n\";\n    std::cout << decltype(hasSize<int>(0))::value << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Base {\npublic:\n    void interface() {\n        static_cast<Derived*>(this)->impl();\n    }\n};\n\nclass D : public Base<D> {\npublic:\n    void impl() { std::cout << \"D::impl\\n\"; }\n};\n\nint main() {\n    D d;\n    d.interface();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `D::impl`\n\n**Explanation:** CRTP static dispatch calls derived implementation\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Base {\npublic:\n    void interface() {\n        static_cast<Derived*>(this)->impl();\n    }\n};\n\nclass D : public Base<D> {\npublic:\n    void impl() { std::cout << \"D::impl\\n\"; }\n};\n\nint main() {\n    D d;\n    d.interface();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"pointer\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<!std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"non-pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(&x);\n    func(x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `pointer`<br>`non-pointer`\n\n**Explanation:** SFINAE selects correct overload based on pointer trait\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\ntypename std::enable_if<std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"pointer\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<!std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"non-pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(&x);\n    func(x);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Counter {\n    static inline int count = 0;\nprotected:\n    Counter() { ++count; }\npublic:\n    static int getCount() { return count; }\n};\n\nclass Widget : public Counter<Widget> { };\n\nint main() {\n    Widget w1, w2, w3;\n    std::cout << Widget::getCount() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `3`\n\n**Explanation:** Each `Widget` instance increments static counter in base\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Counter {\n    static inline int count = 0;\nprotected:\n    Counter() { ++count; }\npublic:\n    static int getCount() { return count; }\n};\n\nclass Widget : public Counter<Widget> { };\n\nint main() {\n    Widget w1, w2, w3;\n    std::cout << Widget::getCount() << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid processImpl(T val, std::true_type) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\nvoid processImpl(T val, std::false_type) { std::cout << \"other\\n\"; }\n\ntemplate<typename T>\nvoid process(T val) { processImpl(val, std::is_integral<T>{}); }\n\nint main() {\n    process(10);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `integral`<br>`other`\n\n**Explanation:** Tag dispatch selects overload via `true_type`/`false_type`\n\n**Key Concept:** #tag_dispatch\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid processImpl(T val, std::true_type) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\nvoid processImpl(T val, std::false_type) { std::cout << \"other\\n\"; }\n\ntemplate<typename T>\nvoid process(T val) { processImpl(val, std::is_integral<T>{}); }\n\nint main() {\n    process(10);\n    process(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>\nvoid func(T) { std::cout << \"class\\n\"; }\n\nint main() {\n    struct MyClass { };\n    func(MyClass{});\n    func(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `class`<br>Compilation error\n\n**Explanation:** SFINAE only enables for class types; `int` fails\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>\nvoid func(T) { std::cout << \"class\\n\"; }\n\nint main() {\n    struct MyClass { };\n    func(MyClass{});\n    func(42);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Printable {\npublic:\n    void print() const {\n        std::cout << static_cast<const Derived*>(this)->toString() << \"\\n\";\n    }\n};\n\nclass Data : public Printable<Data> {\npublic:\n    std::string toString() const { return \"Data\"; }\n};\n\nint main() {\n    Data d;\n    d.print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Data`\n\n**Explanation:** CRTP mixin calls derived `toString()` via static cast\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Printable {\npublic:\n    void print() const {\n        std::cout << static_cast<const Derived*>(this)->toString() << \"\\n\";\n    }\n};\n\nclass Data : public Printable<Data> {\npublic:\n    std::string toString() const { return \"Data\"; }\n};\n\nint main() {\n    Data d;\n    d.print();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nauto callFunc(T& obj) -> decltype(obj.func()) {\n    return obj.func();\n}\n\nstruct HasFunc { int func() { return 42; } };\n\nint main() {\n    HasFunc h;\n    std::cout << callFunc(h) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`\n\n**Explanation:** `decltype` deduces return type from `func()` method\n\n**Key Concept:** #decltype\n\n</details>\n\n---",
           "code": "template<typename T>\nauto callFunc(T& obj) -> decltype(obj.func()) {\n    return obj.func();\n}\n\nstruct HasFunc { int func() { return 42; } };\n\nint main() {\n    HasFunc h;\n    std::cout << callFunc(h) << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type\nfunc(T) { std::cout << \"arithmetic non-bool\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n    func(true);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error\n\n**Explanation:** Combined SFINAE conditions; `bool` fails both conditions\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\ntypename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type\nfunc(T) { std::cout << \"arithmetic non-bool\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n    func(true);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Base {\npublic:\n    void doWork() { static_cast<Derived*>(this)->impl(); }\n};\n\nclass Incomplete : public Base<Incomplete> {\n    // Missing impl()\n};\n\nint main() {\n    Incomplete obj;\n    obj.doWork();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Missing `impl()` method in derived class\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Base {\npublic:\n    void doWork() { static_cast<Derived*>(this)->impl(); }\n};\n\nclass Incomplete : public Base<Incomplete> {\n    // Missing impl()\n};\n\nint main() {\n    Incomplete obj;\n    obj.doWork();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nauto test(int) -> decltype(typename T::value_type{}, std::true_type{});\n\ntemplate<typename T>\nstd::false_type test(...);\n\ntemplate<typename T>\nstruct Container { using value_type = T; };\n\nint main() {\n    std::cout << decltype(test<Container<int>>(0))::value << \"\\n\";\n    std::cout << decltype(test<int>(0))::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`0`\n\n**Explanation:** Expression SFINAE detects nested `value_type`\n\n**Key Concept:** #expression_sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\nauto test(int) -> decltype(typename T::value_type{}, std::true_type{});\n\ntemplate<typename T>\nstd::false_type test(...);\n\ntemplate<typename T>\nstruct Container { using value_type = T; };\n\nint main() {\n    std::cout << decltype(test<Container<int>>(0))::value << \"\\n\";\n    std::cout << decltype(test<int>(0))::value << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Singleton {\n    static Derived* instance;\nprotected:\n    Singleton() = default;\npublic:\n    static Derived& getInstance() {\n        if (!instance) instance = new Derived();\n        return *instance;\n    }\n};\n\ntemplate<typename T>\nT* Singleton<T>::instance = nullptr;\n\nclass Database : public Singleton<Database> {\n    friend class Singleton<Database>;\nprivate:\n    Database() { std::cout << \"DB created\\n\"; }\n};\n\nint main() {\n    Database& db1 = Database::getInstance();\n    Database& db2 = Database::getInstance();\n    std::cout << (&db1 == &db2) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `DB created`<br>`1`\n\n**Explanation:** Singleton pattern via CRTP; both references point to same instance\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Singleton {\n    static Derived* instance;\nprotected:\n    Singleton() = default;\npublic:\n    static Derived& getInstance() {\n        if (!instance) instance = new Derived();\n        return *instance;\n    }\n};\n\ntemplate<typename T>\nT* Singleton<T>::instance = nullptr;\n\nclass Database : public Singleton<Database> {\n    friend class Singleton<Database>;\nprivate:\n    Database() { std::cout << \"DB created\\n\"; }\n};\n\nint main() {\n    Database& db1 = Database::getInstance();\n    Database& db2 = Database::getInstance();\n    std::cout << (&db1 == &db2) << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T, \n         typename std::enable_if<std::is_integral<T>::value, int>::type = 0>\nvoid func(T) { std::cout << \"int version\\n\"; }\n\ntemplate<typename T,\n         typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0>\nvoid func(T) { std::cout << \"float version\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `int version`<br>`float version`\n\n**Explanation:** Template parameter SFINAE with different default types\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T, \n         typename std::enable_if<std::is_integral<T>::value, int>::type = 0>\nvoid func(T) { std::cout << \"int version\\n\"; }\n\ntemplate<typename T,\n         typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0>\nvoid func(T) { std::cout << \"float version\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass LogMixin {\npublic:\n    void log(const std::string& msg) {\n        std::cout << \"LOG: \" << msg << \"\\n\";\n        static_cast<Derived*>(this)->extraLog();\n    }\n};\n\nclass MyClass : public LogMixin<MyClass> {\npublic:\n    void extraLog() { std::cout << \"Extra\\n\"; }\n};\n\nint main() {\n    MyClass obj;\n    obj.log(\"test\");\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `LOG: test`<br>`Extra`\n\n**Explanation:** CRTP mixin calls derived `extraLog()` method\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass LogMixin {\npublic:\n    void log(const std::string& msg) {\n        std::cout << \"LOG: \" << msg << \"\\n\";\n        static_cast<Derived*>(this)->extraLog();\n    }\n};\n\nclass MyClass : public LogMixin<MyClass> {\npublic:\n    void extraLog() { std::cout << \"Extra\\n\"; }\n};\n\nint main() {\n    MyClass obj;\n    obj.log(\"test\");\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<sizeof(T) > 4, void>::type\nfunc(T) { std::cout << \"large type\\n\"; }\n\nint main() {\n    func(42L);\n    func('c');\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `large type`<br>Compilation error\n\n**Explanation:** `long` is 8 bytes; `char` is 1 byte (fails SFINAE)\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
           "code": "template<typename T>\ntypename std::enable_if<sizeof(T) > 4, void>::type\nfunc(T) { std::cout << \"large type\\n\"; }\n\nint main() {\n    func(42L);\n    func('c');\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\ntemplate<typename T>\nauto func(T) -> typename RemoveConst<T>::type {\n    return typename RemoveConst<T>::type{};\n}\n\nint main() {\n    const int x = 42;\n    auto result = func(x);\n    std::cout << std::is_const<decltype(result)>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0`\n\n**Explanation:** `RemoveConst` strips const qualifier; result is non-const\n\n**Key Concept:** #type_traits\n\n</details>\n\n---",
           "code": "template<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\ntemplate<typename T>\nauto func(T) -> typename RemoveConst<T>::type {\n    return typename RemoveConst<T>::type{};\n}\n\nint main() {\n    const int x = 42;\n    auto result = func(x);\n    std::cout << std::is_const<decltype(result)>::value << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename Derived>\nclass Interface {\npublic:\n    void execute() {\n        std::cout << \"Before\\n\";\n        static_cast<Derived*>(this)->doExecute();\n        std::cout << \"After\\n\";\n    }\n};\n\nclass Impl : public Interface<Impl> {\npublic:\n    void doExecute() { std::cout << \"Executing\\n\"; }\n};\n\nint main() {\n    Impl obj;\n    obj.execute();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Before`<br>`Executing`<br>`After`\n\n**Explanation:** CRTP Template Method pattern with static dispatch\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
           "code": "template<typename Derived>\nclass Interface {\npublic:\n    void execute() {\n        std::cout << \"Before\\n\";\n        static_cast<Derived*>(this)->doExecute();\n        std::cout << \"After\\n\";\n    }\n};\n\nclass Impl : public Interface<Impl> {\npublic:\n    void doExecute() { std::cout << \"Executing\\n\"; }\n};\n\nint main() {\n    Impl obj;\n    obj.execute();\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid process(T val) {\n    static_assert(std::is_integral<T>::value, \"T must be integral\");\n    std::cout << val << \"\\n\";\n}\n\nint main() {\n    process(42);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`<br>Compilation error\n\n**Explanation:** `static_assert` enforces integral constraint; double fails\n\n**Key Concept:** #static_assert\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid process(T val) {\n    static_assert(std::is_integral<T>::value, \"T must be integral\");\n    std::cout << val << \"\\n\";\n}\n\nint main() {\n    process(42);\n    process(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "---",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nauto add(T a, T b) -> decltype(a + b) {\n    return a + b;\n}\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add(3.14, 2.86) << \"\\n\";\n    std::cout << add(std::string(\"Hello\"), std::string(\" World\")) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `15`<br>`6`<br>`Hello World`\n\n**Explanation:** `decltype(a + b)` deduces result type of addition\n\n**Key Concept:** #decltype\n\n</details>\n\n---",
           "code": "template<typename T>\nauto add(T a, T b) -> decltype(a + b) {\n    return a + b;\n}\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add(3.14, 2.86) << \"\\n\";\n    std::cout << add(std::string(\"Hello\"), std::string(\" World\")) << \"\\n\";\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         }
       ],

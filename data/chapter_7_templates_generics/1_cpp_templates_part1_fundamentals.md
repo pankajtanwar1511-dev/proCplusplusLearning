@@ -1931,6 +1931,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`<br>`0`
+
+**Explanation:** `T()` performs value-initialization, giving 0 for numeric types
+
+**Key Concept:** #value_initialization
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 template<typename T>
@@ -1943,6 +1956,19 @@ int main() {
     print(3.14);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `non-template`<br>`template`
+
+**Explanation:** Non-template exact match preferred over template for `int`
+
+**Key Concept:** #overload_resolution
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1962,6 +1988,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `generic`<br>`same`
+
+**Explanation:** Partial specialization `Pair<T, T>` matches when both types are identical
+
+**Key Concept:** #partial_specialization
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 template<typename T = double, typename U>
@@ -1971,6 +2010,19 @@ int main() {
     Test<int, float> t;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Default template argument must be rightmost; `U` has no default after `T`
+
+**Key Concept:** #default_arguments
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1985,6 +2037,19 @@ int main() {
     c.valid();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `ok`
+
+**Explanation:** Lazy instantiation: `invalid()` never called, so its error never triggered
+
+**Key Concept:** #lazy_instantiation
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2001,6 +2066,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 1 1`
+
+**Explanation:** Primary template for `int`, partial specialization matches `int*` and `int**`
+
+**Key Concept:** #partial_specialization
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 template<int N>
@@ -2015,6 +2093,19 @@ int main() {
     std::cout << Power2<5>::value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `32`
+
+**Explanation:** Template recursion: 2^5 = 32 computed at compile time
+
+**Key Concept:** #template_metaprogramming
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2032,6 +2123,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 5`
+
+**Explanation:** Non-type parameter `N` creates different types with different sizes
+
+**Key Concept:** #non_type_parameters
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 template<typename T>
@@ -2046,6 +2150,19 @@ int main() {
     func(&x);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `value`<br>`pointer`
+
+**Explanation:** Overload resolution: pointer version selected for `&x`
+
+**Key Concept:** #function_overloading
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2070,6 +2187,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `int`<br>`const int`
+
+**Explanation:** Both specializations are distinct; each matches its exact type
+
+**Key Concept:** #full_specialization
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 template<typename T>
@@ -2080,6 +2210,19 @@ int main() {
     std::cout << add<double>(5, 10) << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `15`<br>`15`
+
+**Explanation:** First deduces `T=int`, second forces `T=double` with conversion
+
+**Key Concept:** #type_deduction
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2092,6 +2235,19 @@ int main() {
     process<float, long>(1.0f);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4`<br>`4`<br>`8`
+
+**Explanation:** `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call
+
+**Key Concept:** #default_arguments
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2113,6 +2269,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Base`<br>`Base<int>`
+
+**Explanation:** Full specialization for `int` provides different implementation
+
+**Key Concept:** #full_specialization
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 template<int N>
@@ -2130,6 +2299,19 @@ int main() {
     std::cout << f << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `24`
+
+**Explanation:** 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion
+
+**Key Concept:** #template_metaprogramming
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2149,6 +2331,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `A`<br>`B`<br>`C`
+
+**Explanation:** Most specific match selected: primary → partial → full specialization
+
+**Key Concept:** #specialization_priority
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 template<typename T>
@@ -2163,6 +2358,19 @@ int main() {
     test(42);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2`<br>`1`
+
+**Explanation:** Lvalue prefers reference overload; rvalue matches value parameter
+
+**Key Concept:** #reference_binding
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2179,6 +2387,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10 20`
+
+**Explanation:** Partial specialization strips `const` qualifier from type
+
+**Key Concept:** #type_traits
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 template<bool B, typename T = void>
@@ -2193,6 +2414,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `42`
+
+**Explanation:** SFINAE-like pattern: only `true` case defines `type` member
+
+**Key Concept:** #enable_if_pattern
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 template<typename T>
@@ -2206,6 +2440,19 @@ int main() {
     Wrapper<double>::print();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`<br>`4`<br>`8`
+
+**Explanation:** `sizeof` operator returns size of type in bytes (platform-dependent)
+
+**Key Concept:** #sizeof_operator
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -2223,7 +2470,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** Non-type parameter used as `constexpr` to size array at compile time
+
+**Key Concept:** #compile_time_constants
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

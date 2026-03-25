@@ -1188,6 +1188,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 2
+
+**Explanation:** Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}.
+
+**Key Concept:** #structured_bindings #copy
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <iostream>
@@ -1199,6 +1212,19 @@ int main() {
     std::cout << p.x << " " << p.y;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 100 10
+
+**Explanation:** `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10).
+
+**Key Concept:** #structured_bindings #references
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1218,6 +1244,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 11 3.14
+
+**Explanation:** `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is.
+
+**Key Concept:** #if_constexpr #type_traits
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 #include <iostream>
@@ -1231,6 +1270,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 2
+
+**Explanation:** Inline static variable shared across all instances. Two increments make it 2.
+
+**Key Concept:** #inline_variables #static
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 #include <iostream>
@@ -1242,6 +1294,19 @@ int main() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 12
+
+**Explanation:** Structured bindings unpack map entries. Loop prints keys 1 and 2.
+
+**Key Concept:** #structured_bindings #map
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1260,6 +1325,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 48
+
+**Explanation:** int is 4 bytes, long long is 8 bytes. Prints "4" then "8".
+
+**Key Concept:** #if_constexpr #sizeof
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 #include <iostream>
@@ -1269,6 +1347,19 @@ int main() {
     std::cout << a << " " << c;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 x
+
+**Explanation:** Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x.
+
+**Key Concept:** #structured_bindings #tuple
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1281,6 +1372,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** Inline constexpr static member accessible without instance. Prints 42.
+
+**Key Concept:** #inline_variables #constexpr
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <iostream>
@@ -1291,6 +1395,19 @@ int main() {
     std::cout << arr[0];
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10
+
+**Explanation:** Structured bindings copy array elements. Modifying x doesn't affect arr[0].
+
+**Key Concept:** #structured_bindings #array #copy
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1309,6 +1426,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** truefalse
+
+**Explanation:** if constexpr evaluates template parameter B at compile time. Prints "true" then "false".
+
+**Key Concept:** #if_constexpr #template
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 #include <iostream>
@@ -1318,6 +1448,19 @@ int main() {
     std::cout << x << " " << y.size();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 5
+
+**Explanation:** Unpacks pair<int, string>. x=1, y="hello". y.size() is 5.
+
+**Key Concept:** #structured_bindings #pair
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1329,6 +1472,19 @@ int main() {
     std::cout << a << " " << b;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 5 10
+
+**Explanation:** const auto& creates const references. Prints p.x (5) and p.y (10).
+
+**Key Concept:** #structured_bindings #const_references
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1349,6 +1505,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42 42
+
+**Explanation:** if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42.
+
+**Key Concept:** #if_constexpr #pointers
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 #include <iostream>
@@ -1362,6 +1531,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3
+
+**Explanation:** Each Counter construction increments shared static count. Three instances = 3.
+
+**Key Concept:** #inline_variables #constructor
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 #include <iostream>
@@ -1373,6 +1555,19 @@ int main() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3 7
+
+**Explanation:** Unpacks pairs and prints sums: 1+2=3, 3+4=7.
+
+**Key Concept:** #structured_bindings #vector
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1390,6 +1585,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 1
+
+**Explanation:** Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1).
+
+**Key Concept:** #if_constexpr #constexpr
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 #include <iostream>
@@ -1404,6 +1612,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 12
+
+**Explanation:** Structured bindings copy Data members. x=1, y=2. Concatenates to "12".
+
+**Key Concept:** #structured_bindings #struct
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 #include <iostream>
@@ -1414,6 +1635,19 @@ int main() {
     std::cout << Config::Size;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 100
+
+**Explanation:** Inline constexpr in namespace, accessible with qualified name.
+
+**Key Concept:** #inline_variables #namespace
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1426,6 +1660,19 @@ int main() {
     std::cout << std::get<0>(t);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10
+
+**Explanation:** auto& creates references to tuple elements. Modifying a modifies std::get<0>(t).
+
+**Key Concept:** #structured_bindings #tuple #references
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1447,7 +1694,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** intdoubleother
+
+**Explanation:** if constexpr checks types. int→"int", double→"double", const char*→"other".
+
+**Key Concept:** #if_constexpr #type_checking
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

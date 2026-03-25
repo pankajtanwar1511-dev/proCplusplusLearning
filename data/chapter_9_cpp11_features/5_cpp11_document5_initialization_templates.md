@@ -2773,6 +2773,19 @@ int y{3.14};
 std::cout << x << " " << y;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 (compile error)`
+
+**Explanation:** Traditional init allows narrowing (x=3); brace init prevents it (compile error for y)
+
+**Key Concept:** #narrowing #type_safety
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 struct Widget {
@@ -2783,12 +2796,38 @@ Widget w1(10, 20);
 Widget w2{10, 20};
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `int,int` then `list`
+
+**Explanation:** Parentheses use (int,int) constructor; braces prefer initializer_list
+
+**Key Concept:** #initializer_list #overload
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 std::vector<int> v1(10, 5);
 std::vector<int> v2{10, 5};
 std::cout << v1.size() << " " << v2.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10 2`
+
+**Explanation:** v1(10, 5) creates 10 elements each=5; v2{10, 5} creates 2-element list [10,5]
+
+**Key Concept:** #vector #initialization
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -2800,6 +2839,19 @@ int arr[x];
 std::cout << sizeof(arr) / sizeof(int);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `120`
+
+**Explanation:** factorial(5)=120 computed at compile-time; array size is 120 ints
+
+**Key Concept:** #constexpr #compile_time
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 template<typename... Args>
@@ -2808,6 +2860,19 @@ void count(Args... args) {
 }
 count(1, 2, 3, 4, 5);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** sizeof...(args) returns number of arguments in parameter pack
+
+**Key Concept:** #variadic_template #sizeof
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2818,11 +2883,37 @@ auto list = makeList();
 for (int x : list) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Undefined Behavior**
+
+**Explanation:** Returning initializer_list creates dangling reference to destroyed array
+
+**Key Concept:** #initializer_list #lifetime
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 auto x = {1, 2, 3};
 std::cout << x.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** auto with brace-init deduces std::initializer_list<int>
+
+**Key Concept:** #auto #initializer_list
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2831,6 +2922,19 @@ Point p1{10};
 Point p2{};
 std::cout << p1.x << "," << p1.y << " " << p2.x << "," << p2.y;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10,0 0,0`
+
+**Explanation:** p1{10} initializes x=10, y=0 (remaining zero-init); p2{} zero-initializes all
+
+**Key Concept:** #aggregate #zero_init
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -2841,6 +2945,19 @@ int x = 5;
 constexpr int y = add(x, 10);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** x is not constexpr, so add(x, 10) cannot be used in constexpr context
+
+**Key Concept:** #constexpr #compile_time
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 template<typename T, typename... Rest>
@@ -2850,11 +2967,37 @@ T first(T f, Rest... r) {
 std::cout << first(1, 2, 3, 4, 5);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`
+
+**Explanation:** Returns first argument (1) from parameter pack
+
+**Key Concept:** #variadic_template #first
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::vector<char> v{65, 66, 67, 300};
 for (char c : v) std::cout << c;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** 300 exceeds char range, brace-init prevents narrowing
+
+**Key Concept:** #narrowing #char
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2867,12 +3010,38 @@ Widget w2{};
 Widget w3{{}};
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `default` then `default` then `list`
+
+**Explanation:** w1: default; w2{}: empty braces→default; w3{{}}: explicit empty list
+
+**Key Concept:** #initializer_list #empty_braces
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 constexpr int x = 10;
 x = 20;
 std::cout << x;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** constexpr variables are implicitly const, cannot be modified
+
+**Key Concept:** #constexpr #const
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -2883,12 +3052,38 @@ void print(Args... args) {
 print(1, 2, 3, 4);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 3 4`
+
+**Explanation:** Dummy array trick expands pack, printing each element
+
+**Key Concept:** #variadic_template #pack_expansion
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::vector<int> v1{};
 std::vector<int> v2();
 std::cout << v1.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0` (then compile error)
+
+**Explanation:** v1{} creates empty vector; v2() is function declaration (most vexing parse)
+
+**Key Concept:** #most_vexing_parse #initialization
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -2899,12 +3094,38 @@ constexpr int square(int x) {
 constexpr int y = square(5);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** **Compile Error**
+
+**Explanation:** C++11 constexpr cannot have local variables
+
+**Key Concept:** #constexpr #cpp11_restriction
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 auto list = std::initializer_list<int>{1, 2, 3};
 auto list2 = list;
 std::cout << list.size() << " " << list2.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 3`
+
+**Explanation:** Both list and list2 are views over same underlying array
+
+**Key Concept:** #initializer_list #view
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -2920,6 +3141,19 @@ void process(T first, Args... rest) {
 process(1, 2, 3);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 3 empty`
+
+**Explanation:** Recursive calls print 1, 2, 3, then empty base case
+
+**Key Concept:** #variadic_template #recursion
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 struct Agg { int x; double y; };
@@ -2928,6 +3162,19 @@ Agg b{10};
 std::cout << b.x << " " << b.y;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `10 0`
+
+**Explanation:** Partial aggregate init: x=10 specified, y=0 zero-initialized
+
+**Key Concept:** #aggregate #partial_init
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 constexpr int getValue() { return 42; }
@@ -2935,7 +3182,19 @@ int arr[getValue()];
 std::cout << sizeof(arr) / sizeof(int);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `42`
+
+**Explanation:** getValue() evaluated at compile-time, array has 42 elements
+
+**Key Concept:** #constexpr #array_size
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

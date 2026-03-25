@@ -1,9 +1,10 @@
-## TOPIC: Point Cloud Processing (PCL)
-
+# Chapter 6: Advanced Production Systems
+## Topic 6.6: Point Cloud Processing (PCL)
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. What are Point Clouds?
 
 **Point Cloud:** A set of 3D points representing the surface of an object or environment.

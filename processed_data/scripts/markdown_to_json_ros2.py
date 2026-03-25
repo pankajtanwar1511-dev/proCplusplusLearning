@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 """
-Markdown to JSON Converter for C++ Learning Content
+Markdown to JSON Converter for ROS2 Learning Content
 
-This script parses structured markdown files from the data/ directory
-and converts them into structured JSON format for use in the learning app.
+This script parses ROS2-specific markdown files into JSON format for the dual catalog system.
+
+ACCEPTED MARKDOWN FORMATS:
+================================================================================
+Section Headers (flexible format for ROS2 content):
+  - ## SECTION_NAME       (ROS2 style - 2 hashes)
+  - ### SECTION_NAME      (C++ style - 3 hashes, also accepted)
+  - Can include optional subtitle after colon
+
+Required sections: THEORY_SECTION, EDGE_CASES, CODE_EXAMPLES, INTERVIEW_QA,
+                   PRACTICE_TASKS, QUICK_REFERENCE
+
+Topic Header:
+  - # Topic N.M: Title    (ROS2 format - extracts title)
+  - ## TOPIC: Title       (C++ format - also accepted)
 
 Usage:
-    python markdown_to_json.py
-    python markdown_to_json.py --chapter 1  # Process specific chapter
-    python markdown_to_json.py --output custom_output/  # Custom output dir
+    python3 markdown_to_json_ros2.py                    # Process all ROS2 chapters
+    python3 markdown_to_json_ros2.py --chapter 1        # Process specific chapter
+    python3 markdown_to_json_ros2.py --output custom/   # Custom output directory
+
+Output: Generates JSON files in processed_data/json_output_ros2/
 """
 
 import os
@@ -127,16 +142,10 @@ class MarkdownParser:
         edge_cases_content = match.group(2).strip()
         edge_cases = []
 
-        # Try #### Edge Case N: title (4 hashes)
-        case_pattern = r'####\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n####\s+Edge Case|\n##|\Z)'
-        matches = list(re.finditer(case_pattern, edge_cases_content, re.DOTALL))
+        # Match #### Edge Case N: title
+        case_pattern = r'####\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n####\s+Edge Case|\Z)'
 
-        # If no #### matches, try ### Edge Case N: title (3 hashes)
-        if not matches:
-            case_pattern = r'###\s+Edge Case \d+:\s+(.+?)\n(.*?)(?=\n###\s+Edge Case|\n##|\Z)'
-            matches = list(re.finditer(case_pattern, edge_cases_content, re.DOTALL))
-
-        for case_match in matches:
+        for case_match in re.finditer(case_pattern, edge_cases_content, re.DOTALL):
             title = case_match.group(1).strip()
             body = case_match.group(2).strip()
 
@@ -177,16 +186,10 @@ class MarkdownParser:
         examples_content = match.group(2).strip()
         examples = []
 
-        # Try #### Example N: title (4 hashes)
-        example_pattern = r'####\s+Example \d+:\s+(.+?)\n(.*?)(?=\n####\s+Example|\n##|\Z)'
-        matches = list(re.finditer(example_pattern, examples_content, re.DOTALL))
+        # Match #### Example N: title
+        example_pattern = r'####\s+Example \d+:\s+(.+?)\n(.*?)(?=\n####\s+Example|\Z)'
 
-        # If no #### matches, try ### Example N: title (3 hashes)
-        if not matches:
-            example_pattern = r'###\s+Example \d+:\s+(.+?)\n(.*?)(?=\n###\s+Example|\n##|\Z)'
-            matches = list(re.finditer(example_pattern, examples_content, re.DOTALL))
-
-        for ex_match in matches:
+        for ex_match in re.finditer(example_pattern, examples_content, re.DOTALL):
             title = ex_match.group(1).strip()
             body = ex_match.group(2).strip()
 
@@ -228,16 +231,10 @@ class MarkdownParser:
         qa_content = match.group(2).strip()
         questions = []
 
-        # Try #### QN: question (4 hashes)
-        question_pattern = r'####\s+Q\d+:\s+(.+?)\n(.*?)(?=\n####\s+Q|\n##|\Z)'
-        matches = list(re.finditer(question_pattern, qa_content, re.DOTALL))
+        # Match #### QN: question
+        question_pattern = r'####\s+Q\d+:\s+(.+?)\n(.*?)(?=\n####\s+Q|\Z)'
 
-        # If no #### matches, try ### QN: question (3 hashes)
-        if not matches:
-            question_pattern = r'###\s+Q\d+:\s+(.+?)\n(.*?)(?=\n###\s+Q|\n##|\Z)'
-            matches = list(re.finditer(question_pattern, qa_content, re.DOTALL))
-
-        for q_match in matches:
+        for q_match in re.finditer(question_pattern, qa_content, re.DOTALL):
             question_text = q_match.group(1).strip()
             body = q_match.group(2).strip()
 
@@ -294,16 +291,10 @@ class MarkdownParser:
         practice_content = match.group(2).strip()
         tasks = []
 
-        # Try #### format (4 hashes)
-        task_pattern = r'####\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n####\s+(?:Q\d+|Task|Practice)|\n##|\Z)'
-        matches = list(re.finditer(task_pattern, practice_content, re.DOTALL))
+        # Match #### QN (like Q1, Q2) or #### Task N: title or #### Practice N: title
+        task_pattern = r'####\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n####\s+(?:Q\d+|Task|Practice)|\Z)'
 
-        # If no #### matches, try ### format (3 hashes)
-        if not matches:
-            task_pattern = r'###\s+(?:Q(\d+)|(?:Task|Practice)\s+\d+:\s+(.+?))\n(.*?)(?=\n###\s+(?:Q\d+|Task|Practice)|\n##|\Z)'
-            matches = list(re.finditer(task_pattern, practice_content, re.DOTALL))
-
-        for task_match in matches:
+        for task_match in re.finditer(task_pattern, practice_content, re.DOTALL):
             # Get question number or title
             question_num = task_match.group(1)  # Q1, Q2, etc.
             title = task_match.group(2)  # Task title if provided

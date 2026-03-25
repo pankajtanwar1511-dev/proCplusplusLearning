@@ -1217,6 +1217,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: < 20000 (varies, typically 10000-19000)
+
+**Explanation:** Race condition - concurrent unsynchronized increments
+
+**Key Concept:** Data race / lost updates
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::mutex m1, m2;
@@ -1236,6 +1249,19 @@ void thread2() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Likely deadlock
+
+**Explanation:** ABBA deadlock - T1 locks m1→m2, T2 locks m2→m1
+
+**Key Concept:** Lock ordering deadlock
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 std::mutex m1, m2;
@@ -1254,6 +1280,19 @@ void safe_thread2() {
     std::cout << "Thread 2\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Thread 1" and "Thread 2" (order varies)
+
+**Explanation:** std::lock prevents deadlock regardless of argument order
+
+**Key Concept:** std::lock deadlock prevention
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1275,6 +1314,19 @@ int main() {
     std::cout << value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Possible output: 100 (race allows both threads to pass check)
+
+**Explanation:** Check-then-act race (TOCTOU) - check outside lock
+
+**Key Concept:** TOCTOU race
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1299,6 +1351,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Possible deadlock
+
+**Explanation:** ABBA deadlock with accounts - lock order depends on arguments
+
+**Key Concept:** Pointer-based deadlock
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::mutex mtx;
@@ -1316,6 +1381,19 @@ void add_item(int value) {
     data.push_back(value);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Potential crash or wrong value
+
+**Explanation:** get_or_default has race - data.size() can change
+
+**Key Concept:** TOCTOU / unsynchronized read
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1351,6 +1429,19 @@ void polite2() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Possible livelock
+
+**Explanation:** Both threads continuously back off for each other
+
+**Key Concept:** Livelock
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::once_flag flag;
@@ -1372,6 +1463,19 @@ int main() {
     t1.join(); t2.join(); t3.join();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "100" printed 3 times
+
+**Explanation:** call_once ensures initialize runs exactly once
+
+**Key Concept:** One-time initialization
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1404,6 +1508,19 @@ void timeout_thread2() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "T1 timeout" and "T2 timeout" (or one succeeds)
+
+**Explanation:** Timeout-based deadlock detection
+
+**Key Concept:** Timeout recovery
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 std::shared_mutex smtx;
@@ -1428,6 +1545,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Multiple readers or single writer executes (order varies)
+
+**Explanation:** shared_mutex allows concurrent reads
+
+**Key Concept:** Readers-writer lock
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::mutex mtx;
@@ -1445,6 +1575,19 @@ void lazy_init() {
     std::cout << resource << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "100" from all threads (correct double-checked locking)
+
+**Explanation:** Proper double-checked locking pattern
+
+**Key Concept:** Lazy initialization
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1465,6 +1608,19 @@ void reader() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** May print "Inconsistent"
+
+**Explanation:** Reader sees partial write without synchronization
+
+**Key Concept:** Read-write race
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 std::atomic<int> flag{0};
@@ -1484,6 +1640,19 @@ void thread2() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Both threads might print (race on check-then-act)
+
+**Explanation:** Atomic doesn't make check-then-act atomic
+
+**Key Concept:** Atomic check-then-act race
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::mutex mtx;
@@ -1502,6 +1671,19 @@ int main() {
     std::cout << counter << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 1 (lost update)
+
+**Explanation:** Read outside lock, write inside - classic race
+
+**Key Concept:** Read-modify-write race
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1523,6 +1705,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Initialized" once
+
+**Explanation:** C++11 guarantees thread-safe static local init
+
+**Key Concept:** Meyers' Singleton
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::mutex m1, m2, m3;
@@ -1535,6 +1730,19 @@ void thread_func() {
     std::cout << "Locked all\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Deadlock
+
+**Explanation:** Mutexes already locked, try to lock again without adopt_lock
+
+**Key Concept:** Missing adopt_lock
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1551,6 +1759,19 @@ void reader() {
     std::cout << data << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** May print 0 or 42 (memory reordering)
+
+**Explanation:** No memory ordering on atomic store/load
+
+**Key Concept:** Memory reordering race
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1571,6 +1792,19 @@ void update(int key) {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** current not declared in outer scope
+
+**Key Concept:** Scoping error + race
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1593,6 +1827,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Inner" then "Outer"
+
+**Explanation:** Recursive mutex allows same thread to relock
+
+**Key Concept:** Recursive locking
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::mutex m1, m2;
@@ -1610,7 +1857,19 @@ void thread2() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Thread 1" and "Thread 2" (serialized, no deadlock)
+
+**Explanation:** Same lock order prevents deadlock
+
+**Key Concept:** Consistent lock ordering
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

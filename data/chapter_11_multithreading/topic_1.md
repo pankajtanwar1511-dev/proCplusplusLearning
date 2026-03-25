@@ -1102,6 +1102,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Program calls std::terminate() and aborts
+
+**Explanation:** Thread object destroyed without join/detach
+
+**Key Concept:** Thread lifecycle
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 void increment(int x) {
@@ -1115,6 +1128,19 @@ int main() {
     std::cout << value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 10
+
+**Explanation:** Parameter passed by value, not reference
+
+**Key Concept:** Argument passing
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1130,6 +1156,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 100
+
+**Explanation:** std::ref passes by reference, modification preserved
+
+**Key Concept:** std::ref usage
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 std::thread t([]{ std::cout << "Hello\n"; });
@@ -1137,17 +1176,56 @@ t.join();
 t.join();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Second join() on already-joined thread
+
+**Key Concept:** joinable state
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::thread t1([]{ });
 std::thread t2 = t1;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** std::thread is not copyable
+
+**Key Concept:** Move-only type
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::thread t;
 std::cout << std::boolalpha << t.joinable() << "\n";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: false
+
+**Explanation:** Default-constructed thread is not joinable
+
+**Key Concept:** Default construction
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1163,6 +1241,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Main exits" (may or may not see "Task complete")
+
+**Explanation:** Detached thread execution depends on timing
+
+**Key Concept:** Detached lifetime
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 int main() {
@@ -1175,6 +1266,19 @@ int main() {
     std::cout << "Main: " << x << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Thread: 10" then "Main: 5"
+
+**Explanation:** Lambda captures by value; mutable modifies the copy
+
+**Key Concept:** Lambda capture
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1190,6 +1294,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Processing"
+
+**Explanation:** Member function called with copied Worker object
+
+**Key Concept:** Member function threading
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 std::thread t([]{ throw std::runtime_error("Error"); });
@@ -1197,12 +1314,38 @@ t.join();
 std::cout << "Completed\n";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Program calls std::terminate()
+
+**Explanation:** Uncaught exception in thread
+
+**Key Concept:** Exception handling
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::thread t1([]{ std::cout << "T1\n"; });
 std::thread t2 = std::move(t1);
 t1.join();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** t1 is empty after move, cannot join
+
+**Key Concept:** Move semantics
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1214,6 +1357,19 @@ int main() {
     // How to get the return value?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Cannot retrieve return value with std::thread
+
+**Explanation:** std::thread discards return values
+
+**Key Concept:** Return value handling
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1232,6 +1388,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (likely crash or garbage output)
+
+**Explanation:** Detached thread accesses destroyed stack variable
+
+**Key Concept:** Detached + dangling ref
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::vector<std::thread> threads;
@@ -1243,6 +1412,19 @@ for (auto& t : threads) {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** std::thread is move-only, cannot use push_back with temporary
+
+**Key Concept:** Container usage
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::thread t;
@@ -1252,6 +1434,19 @@ if (t.joinable()) {
     std::cout << "Not joinable\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Not joinable"
+
+**Explanation:** Default-constructed thread is not joinable
+
+**Key Concept:** Default state
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1265,6 +1460,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Hello"
+
+**Explanation:** String literal converted to std::string
+
+**Key Concept:** Argument conversion
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 int main() {
@@ -1272,6 +1480,19 @@ int main() {
     std::cout << "Cores: " << n << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: Number of CPU cores (implementation-defined)
+
+**Explanation:** Queries hardware concurrency
+
+**Key Concept:** Hardware info
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1283,6 +1504,19 @@ if (t.joinable()) {
     std::cout << "Not joinable\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Not joinable"
+
+**Explanation:** Detached thread is no longer joinable
+
+**Key Concept:** Detach effect
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1300,6 +1534,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 6
+
+**Explanation:** Vector passed by value (copied), sum by reference
+
+**Key Concept:** Mixed argument types
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::thread t1([]{ std::cout << "A\n"; });
@@ -1308,7 +1555,19 @@ std::cout << std::boolalpha << t1.joinable() << " " << t2.joinable() << "\n";
 t2.join();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "false true" then "A"
+
+**Explanation:** t1 empty after move, t2 owns thread
+
+**Key Concept:** Move ownership
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

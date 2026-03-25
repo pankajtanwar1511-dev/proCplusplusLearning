@@ -1403,7 +1403,7 @@ Continuing with final 2 examples to complete Break 1...
 
 ---
 
-### Example 5: EPOLLONESHOT with Thread Pool
+#### Example 5: EPOLLONESHOT with Thread Pool
 
 **Why:** EPOLLONESHOT prevents multiple threads from processing the same FD simultaneously. Critical for thread-safe multi-threaded servers.
 
@@ -1617,7 +1617,7 @@ T4   | done             | Can now receive fd5 events
 
 ---
 
-### Example 6: Production-Grade epoll Server
+#### Example 6: Production-Grade epoll Server
 
 **Why:** Real-world servers need connection limits, graceful shutdown, metrics, and error handling. This example shows production patterns.
 
@@ -2002,9 +2002,8 @@ This production server demonstrates all patterns needed for high-performance, re
 
 ---
 
-## INTERVIEW_QA
-
-### Q1: What is epoll() and how does it differ from select() and poll()?
+### INTERVIEW_QA: Comprehensive Questions and Answers
+#### Q1: What is epoll() and how does it differ from select() and poll()?
 
 **Answer:**
 
@@ -2036,7 +2035,7 @@ epoll() is a Linux-specific I/O event notification mechanism introduced in kerne
 
 ---
 
-### Q2: Explain level-triggered vs edge-triggered modes in epoll. When would you use each?
+#### Q2: Explain level-triggered vs edge-triggered modes in epoll. When would you use each?
 
 **Answer:**
 
@@ -2111,7 +2110,7 @@ int n = recv(fd, buf, 1024, 0);  // ❌ Only reads 1024 bytes
 
 ---
 
-### Q3: What is EPOLLONESHOT and why is it critical for multi-threaded servers?
+#### Q3: What is EPOLLONESHOT and why is it critical for multi-threaded servers?
 
 **Answer:**
 
@@ -2179,7 +2178,7 @@ void worker(int epfd, int fd) {
 
 ---
 
-### Q4: Explain the internal data structures of epoll. How does it achieve O(1) performance?
+#### Q4: Explain the internal data structures of epoll. How does it achieve O(1) performance?
 
 **Answer:**
 
@@ -2262,7 +2261,7 @@ But when `num_active << n`, it behaves like O(1) in practice.
 
 ---
 
-### Q5: What happens if you close() a file descriptor without calling epoll_ctl(DEL) first?
+#### Q5: What happens if you close() a file descriptor without calling epoll_ctl(DEL) first?
 
 **Answer:**
 
@@ -2341,7 +2340,7 @@ epoll_wait(epfd, ...);  // ✅ Still works, but events point to fd1 (now invalid
 
 ---
 
-### Q6: How do you handle partial sends with epoll? Explain the EPOLLOUT pattern.
+#### Q6: How do you handle partial sends with epoll? Explain the EPOLLOUT pattern.
 
 **Answer:**
 
@@ -2447,7 +2446,7 @@ epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
 
 ---
 
-### Q7: What is the thundering herd problem with epoll, and how does EPOLLEXCLUSIVE solve it?
+#### Q7: What is the thundering herd problem with epoll, and how does EPOLLEXCLUSIVE solve it?
 
 **Answer:**
 
@@ -2556,7 +2555,7 @@ listen(listen_fd, 128);
 
 ---
 
-### Q8: How do you implement timeout handling with epoll (e.g., idle connection timeouts)?
+#### Q8: How do you implement timeout handling with epoll (e.g., idle connection timeouts)?
 
 **Answer:**
 
@@ -2745,7 +2744,7 @@ while (true) {
 
 ---
 
-### Q9: Can you use epoll with regular files? Why or why not?
+#### Q9: Can you use epoll with regular files? Why or why not?
 
 **Answer:**
 
@@ -2857,7 +2856,7 @@ while (true) {
 
 ---
 
-### Q10: What is the maxevents parameter in epoll_wait()? How do you choose the right value?
+#### Q10: What is the maxevents parameter in epoll_wait()? How do you choose the right value?
 
 **Answer:**
 
@@ -3003,7 +3002,7 @@ maxevents=1024: 455,000 events/sec (1 syscall, but 10x memory)
 ---
 
 
-### Q11: How does epoll handle EPOLLRDHUP, and why is it useful for detecting half-closed connections?
+#### Q11: How does epoll handle EPOLLRDHUP, and why is it useful for detecting half-closed connections?
 
 **Answer:**
 
@@ -3159,7 +3158,7 @@ EPOLLRDHUP fires → "Client closed prematurely" ✅
 
 ---
 
-### Q12: Explain how to safely transfer an epoll FD between threads or processes.
+#### Q12: Explain how to safely transfer an epoll FD between threads or processes.
 
 **Answer:**
 
@@ -3357,7 +3356,7 @@ for (int i = 0; i < nready; i++) {
 
 ---
 
-### Q13: What happens when a monitored FD is closed while epoll_wait() is blocked?
+#### Q13: What happens when a monitored FD is closed while epoll_wait() is blocked?
 
 **Answer:**
 
@@ -3522,7 +3521,7 @@ epoll_wait(epfd, ...);  // Still returns events! (but for invalid fd1)
 
 ---
 
-### Q14: Compare epoll() to alternatives like kqueue (BSD), IOCP (Windows), and io_uring (Linux).
+#### Q14: Compare epoll() to alternatives like kqueue (BSD), IOCP (Windows), and io_uring (Linux).
 
 **Answer:**
 
@@ -3757,7 +3756,7 @@ But epoll is still:
 
 ---
 
-### Q15: How do you debug epoll applications? What tools and techniques are available?
+#### Q15: How do you debug epoll applications? What tools and techniques are available?
 
 **Answer:**
 
@@ -4067,7 +4066,7 @@ assert(events[0].data.fd == 5);
 
 ---
 
-### Q16: Explain the relationship between epoll, non-blocking sockets, and edge-triggered mode.
+#### Q16: Explain the relationship between epoll, non-blocking sockets, and edge-triggered mode.
 
 **Answer:**
 
@@ -4288,7 +4287,7 @@ while (true) {
 
 ---
 
-### Q17: What are the security implications of epoll? How do you prevent epoll-based DoS attacks?
+#### Q17: What are the security implications of epoll? How do you prevent epoll-based DoS attacks?
 
 **Answer:**
 
@@ -4703,7 +4702,7 @@ listen(fd, 128);  // Not 4096
 
 ---
 
-### Q18: How do you measure and optimize epoll performance? What metrics matter?
+#### Q18: How do you measure and optimize epoll performance? What metrics matter?
 
 **Answer:**
 
@@ -5059,7 +5058,7 @@ sar -u 1       # CPU usage
 
 ---
 
-### Q19: Can multiple threads/processes call epoll_wait() on the same epoll FD simultaneously? What happens?
+#### Q19: Can multiple threads/processes call epoll_wait() on the same epoll FD simultaneously? What happens?
 
 **Answer:**
 
@@ -5308,7 +5307,7 @@ public:
 
 ---
 
-### Q20: What are the differences between epoll_create() and epoll_create1()? Why should you use epoll_create1()?
+#### Q20: What are the differences between epoll_create() and epoll_create1()? Why should you use epoll_create1()?
 
 **Answer:**
 
@@ -5514,9 +5513,8 @@ if (epfd < 0) {
 
 ---
 
-## PRACTICE_TASKS
-
-### Task 1: Basic Echo Server with epoll
+### PRACTICE_TASKS: Output Prediction and Code Analysis
+#### Q1
 
 **Difficulty:** ⭐⭐☆☆☆
 
@@ -5556,7 +5554,7 @@ Client FD 5 disconnected
 
 ---
 
-### Task 2: Edge-Triggered File Download Server
+#### Q2
 
 **Difficulty:** ⭐⭐⭐☆☆
 
@@ -5598,7 +5596,7 @@ This is the file content.
 
 ---
 
-### Task 3: Chat Server with EPOLLONESHOT
+#### Q3
 
 **Difficulty:** ⭐⭐⭐⭐☆
 
@@ -5643,7 +5641,7 @@ Nick set to: Bob
 
 ---
 
-### Task 4: HTTP Server with Timeouts
+#### Q4
 
 **Difficulty:** ⭐⭐⭐⭐☆
 
@@ -5688,7 +5686,7 @@ $ curl -v http://localhost:8000/index.html
 
 ---
 
-### Task 5: Rate-Limited Echo Server
+#### Q5
 
 **Difficulty:** ⭐⭐⭐⭐⭐
 
@@ -5750,7 +5748,7 @@ Done.
 
 ---
 
-### Task 6: Zero-Copy File Proxy
+#### Q6
 
 **Difficulty:** ⭐⭐⭐⭐⭐
 
@@ -5791,7 +5789,7 @@ $ echo "GET largefile.bin" | nc localhost 8080 > output.bin
 
 ---
 
-### Task 7: epoll + io_uring Hybrid Server (Advanced)
+#### Q7
 
 **Difficulty:** ⭐⭐⭐⭐⭐
 
@@ -5833,9 +5831,8 @@ Requests per second: 12500
 
 ---
 
-## QUICK_REFERENCE
-
-### API Summary
+### QUICK_REFERENCE: Key Takeaways and Comparison Tables
+#### API Summary
 
 ```cpp
 // Create epoll instance
@@ -5865,7 +5862,7 @@ union epoll_data {
 };
 ```
 
-### Event Flags
+#### Event Flags
 
 | Flag | Meaning |
 |------|---------|
@@ -5879,7 +5876,7 @@ union epoll_data {
 | **EPOLLONESHOT** | One-shot mode (auto-disable after event) |
 | **EPOLLEXCLUSIVE** | Wake only one waiter (Linux 4.5+) |
 
-### Common Patterns
+#### Common Patterns
 
 **1. Basic Setup**
 
@@ -6021,7 +6018,7 @@ for (auto it = last_activity.begin(); it != last_activity.end(); ) {
 }
 ```
 
-### Performance Tips
+#### Performance Tips
 
 1. **Use edge-triggered mode** for high-throughput servers (>1000 connections)
 2. **Set maxevents between 128-512** for balanced performance
@@ -6031,7 +6028,7 @@ for (auto it = last_activity.begin(); it != last_activity.end(); ) {
 6. **Batch similar operations** for better cache locality
 7. **Consider io_uring** for mixed file/socket I/O (Linux 5.1+)
 
-### Debugging Commands
+#### Debugging Commands
 
 ```bash
 # Check epoll contents
@@ -6048,7 +6045,7 @@ perf record -g -p <pid>
 perf report
 ```
 
-### Common Mistakes
+#### Common Mistakes
 
 | Mistake | Consequence | Fix |
 |---------|-------------|-----|
@@ -6059,7 +6056,7 @@ perf report
 | maxevents=1 | Too many syscalls | Use 128-512 |
 | Wrong errno check | Silent failures | Check EAGAIN/EWOULDBLOCK |
 
-### Comparison with Alternatives
+#### Comparison with Alternatives
 
 | Feature | epoll | select() | poll() | io_uring |
 |---------|-------|----------|--------|----------|

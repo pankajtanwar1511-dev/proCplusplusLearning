@@ -1266,6 +1266,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: < 2000 (value varies, typically 1000-1999)
+
+**Explanation:** Race condition - concurrent increments without synchronization
+
+**Key Concept:** Data race
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::mutex mtx;
@@ -1276,6 +1289,19 @@ void func() {
     mtx.lock();  // Same thread, same mutex
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Deadlock
+
+**Explanation:** Same thread tries to lock non-recursive mutex twice
+
+**Key Concept:** Self-deadlock
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1296,6 +1322,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Program terminates (std::terminate called)
+
+**Explanation:** Uncaught exception in thread (not caught in main)
+
+**Key Concept:** Thread exception
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 std::mutex mtx;
@@ -1307,6 +1346,19 @@ void work() {
     lock.unlock();  // Unlock twice
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (or exception)
+
+**Explanation:** Unlocking already-unlocked mutex
+
+**Key Concept:** Double unlock
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1325,6 +1377,19 @@ void thread_B() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Likely deadlock
+
+**Explanation:** Lock ordering creates circular wait
+
+**Key Concept:** Lock ordering deadlock
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::mutex m1, m2;
@@ -1335,6 +1400,19 @@ void safe_lock() {
     std::lock_guard<std::mutex> lg2(m2);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Deadlock
+
+**Explanation:** try to lock already-locked mutexes without adopt_lock
+
+**Key Concept:** Missing adopt_lock
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1356,6 +1434,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Inner"
+
+**Explanation:** Recursive mutex allows same thread to relock
+
+**Key Concept:** Recursive locking
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::mutex mtx;
@@ -1365,6 +1456,19 @@ std::cout << std::boolalpha << lock.owns_lock() << "\n";
 lock.lock();
 std::cout << lock.owns_lock() << "\n";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "false" then "true"
+
+**Explanation:** defer_lock doesn't lock initially, manual lock acquires it
+
+**Key Concept:** Deferred locking
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1377,6 +1481,19 @@ if (tmtx.try_lock_for(std::chrono::milliseconds(100))) {
     std::cout << "Timeout\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Locked" (if mutex available)
+
+**Explanation:** Timeout-based locking succeeds immediately when uncontended
+
+**Key Concept:** Timed locking
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1400,6 +1517,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output includes "Reading" (2x) and "Writing" (order varies)
+
+**Explanation:** Multiple readers or single writer
+
+**Key Concept:** Shared mutex
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::mutex mtx;
@@ -1409,6 +1539,19 @@ void process() {
     std::lock_guard<std::mutex> lock2(mtx);  // Same mutex
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Deadlock
+
+**Explanation:** Non-recursive mutex locked twice by same thread
+
+**Key Concept:** Self-deadlock
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1431,6 +1574,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "1 2 3" (order may vary)
+
+**Explanation:** Thread-safe container modifications
+
+**Key Concept:** Container protection
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 std::mutex mtx;
@@ -1442,6 +1598,19 @@ void task() {
     mtx.unlock();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Deadlock on subsequent calls
+
+**Explanation:** Early return without unlock
+
+**Key Concept:** Missing unlock
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1459,6 +1628,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Init" (once only)
+
+**Explanation:** call_once ensures function runs exactly once
+
+**Key Concept:** One-time initialization
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::mutex m1, m2;
@@ -1468,6 +1650,19 @@ std::lock_guard<std::mutex> lg1(m1, std::adopt_lock);
 std::lock_guard<std::mutex> lg2(m2, std::adopt_lock);
 std::cout << "Locked both\n";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Locked both"
+
+**Explanation:** Correct use of std::lock with adopt_lock
+
+**Key Concept:** Multi-mutex locking
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1482,11 +1677,37 @@ void func() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Work" then "Locked again"
+
+**Explanation:** unique_lock supports manual lock/unlock
+
+**Key Concept:** Flexible locking
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 std::mutex mtx1;
 std::mutex mtx2 = std::move(mtx1);  // Try to move mutex
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Mutex is not movable
+
+**Key Concept:** Non-movable type
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1504,6 +1725,19 @@ int main() {
     t.join();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "3 2 1"
+
+**Explanation:** Recursive mutex allows nested locking
+
+**Key Concept:** Recursive locking
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1527,6 +1761,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Program terminates
+
+**Explanation:** Uncaught exception in thread
+
+**Key Concept:** Exception in thread
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::timed_mutex tmtx;
@@ -1536,7 +1783,19 @@ std::cout << std::boolalpha << locked << "\n";
 if (locked) tmtx.unlock();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "true"
+
+**Explanation:** Zero timeout try-lock succeeds if uncontended
+
+**Key Concept:** Try-lock with timeout
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

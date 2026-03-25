@@ -1241,6 +1241,19 @@ std::cout << "After get: " << val << "\n";
 // When does the lambda execute?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Lambda executes during fut.get()
+
+**Explanation:** Deferred execution runs synchronously when get() or wait() is called
+
+**Key Concept:** launch::deferred
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::promise<int> prom;
@@ -1252,6 +1265,19 @@ int b = fut.get();
 
 // What happens at the second get()?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Throws std::future_error
+
+**Explanation:** Second get() throws future_error with no_state because future is single-use
+
+**Key Concept:** single-use future
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1266,6 +1292,19 @@ std::cout << "Done\n";
 
 // When does "Done" print?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** "Done" prints after 2 seconds
+
+**Explanation:** Future destructor from async blocks until task completes
+
+**Key Concept:** blocking destructor
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1283,6 +1322,19 @@ t.join();
 // Is this code correct? What is val?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Correct, val = 42
+
+**Explanation:** Promise properly moved into thread, set_value called, future receives value
+
+**Key Concept:** promise move semantics
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 auto fut = std::async(std::launch::async, []{
@@ -1298,6 +1350,19 @@ int val = fut.get();
 // When is the exception thrown?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Exception not thrown during sleep
+
+**Explanation:** Exception stored in shared state, rethrown on fut.get() call
+
+**Key Concept:** exception propagation
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::future<int> fut;
@@ -1311,6 +1376,19 @@ std::cout << fut.valid() << "\n";
 
 // What are the three outputs?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0, 1, 0
+
+**Explanation:** Default-constructed invalid (0), after async valid (1), after get() invalid (0)
+
+**Key Concept:** future validity
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1330,6 +1408,19 @@ int val = fut.get();
 // Is this code safe? What could go wrong?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Unsafe: race condition
+
+**Explanation:** Detached thread may not complete before main exits; also lambda capture by reference dangerous
+
+**Key Concept:** detached thread hazard
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 auto fut = std::async(std::launch::async, []{ return 42; });
@@ -1344,6 +1435,19 @@ int val = fut.get();
 
 // Can we still call get() after wait_for()?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, future remains valid
+
+**Explanation:** wait_for() does not consume future; get() can still be called afterward
+
+**Key Concept:** non-destructive wait
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1362,6 +1466,19 @@ t.join();
 // What is the order of output?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** "Task done", "Main done"
+
+**Explanation:** Promise set_value() unblocks fut.get(), ensuring task output before main output
+
+**Key Concept:** synchronization order
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 std::packaged_task<int()> task([]{ return 42; });
@@ -1374,6 +1491,19 @@ int val = fut.get();
 // What happens? Will this block forever?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Blocks forever
+
+**Explanation:** Packaged_task not executed; get() waits indefinitely for value that never arrives
+
+**Key Concept:** task execution requirement
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::promise<int> prom;
@@ -1384,6 +1514,19 @@ prom.set_value(20);
 
 // What happens at the second set_value?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Throws std::future_error
+
+**Explanation:** Second set_value() throws promise_already_satisfied
+
+**Key Concept:** single-set promise
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1400,6 +1543,19 @@ int b = sf.get();
 // Can we call get() twice on shared_future?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, both succeed
+
+**Explanation:** shared_future allows multiple get() calls; both return 42
+
+**Key Concept:** shared_future semantics
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 auto fut1 = std::async(std::launch::async, []{ return 1; });
@@ -1409,6 +1565,19 @@ std::cout << fut1.valid() << " " << fut2.valid() << "\n";
 
 // What is the output?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 1
+
+**Explanation:** fut1 invalid after move (0), fut2 valid with ownership (1)
+
+**Key Concept:** move semantics
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1423,12 +1592,38 @@ int val = fut.get();
 // Does moving the promise affect the future?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No effect, val = 42
+
+**Explanation:** Moving promise does not invalidate future; shared state remains accessible
+
+**Key Concept:** shared state stability
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 auto fut = std::async([]{ return 42; });  // Default policy
 
 // Is this guaranteed to run in a separate thread?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No guarantee
+
+**Explanation:** Default policy allows implementation to choose; may be deferred
+
+**Key Concept:** launch policy ambiguity
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1446,6 +1641,19 @@ try {
 // What exception is thrown?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** future_error: broken_promise
+
+**Explanation:** Promise destroyed without setting value triggers broken_promise exception
+
+**Key Concept:** broken promise
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 std::future<int> create_future() {
@@ -1459,6 +1667,19 @@ std::cout << "After get: " << val << "\n";
 
 // When does the task execute?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** On fut.get() call
+
+**Explanation:** Deferred task executes synchronously when get() invoked
+
+**Key Concept:** lazy evaluation
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1475,6 +1696,19 @@ try {
 // What is the output?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** "Caught: Error"
+
+**Explanation:** Exception set via set_exception() and rethrown on get()
+
+**Key Concept:** exception propagation
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 std::vector<std::future<int>> futures;
@@ -1489,6 +1723,19 @@ for (auto& fut : futures) {
 
 // What is the output pattern?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 2 4 6 8 (order may vary)
+
+**Explanation:** Five async tasks run in parallel, results retrieved in loop order
+
+**Key Concept:** parallel execution
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1506,7 +1753,19 @@ int val = fut.get();
 // What happens in the thread?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Thread throws future_error
+
+**Explanation:** Second set_value() throws promise_already_satisfied; program likely terminates
+
+**Key Concept:** promise single-use error
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

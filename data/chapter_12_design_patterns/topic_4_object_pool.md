@@ -2,8 +2,7 @@
 
 ---
 
-## THEORY_SECTION
-
+### THEORY_SECTION: Core Concepts and Foundations
 #### 1. Object Pool Pattern Overview
 
 **Definition:** Pre-allocates and manages a collection of reusable objects, lending them to clients instead of creating/destroying on demand.
@@ -231,9 +230,8 @@ public:
 
 ---
 
-## EDGE_CASES
-
-### 1. Double-Free Detection
+### EDGE_CASES: Tricky Scenarios and Deep Internals
+#### Edge Case 1: Double-Free Detection
 
 **Problem**: Deallocating the same pointer twice corrupts the free list, leading to double allocations and undefined behavior.
 
@@ -296,7 +294,7 @@ public:
 
 ---
 
-### 2. Thread-Safety Without Proper Synchronization
+#### Edge Case 2: Thread-Safety Without Proper Synchronization
 
 **Problem**: Multiple threads accessing the pool concurrently without synchronization causes data races on the free list.
 
@@ -371,7 +369,7 @@ public:
 
 ---
 
-### 3. Chunk Expansion Index Tracking
+#### Edge Case 3: Chunk Expansion Index Tracking
 
 **Problem**: When pools expand dynamically with multiple chunks, index calculations must account for chunk boundaries.
 
@@ -443,7 +441,7 @@ private:
 
 ---
 
-### 4. Object Destruction and Placement New
+#### Edge Case 4: Object Destruction and Placement New
 
 **Problem**: For non-trivial types, failing to call destructors before returning objects to the pool causes resource leaks.
 
@@ -512,7 +510,7 @@ public:
 
 ---
 
-### 5. Alignment Requirements
+#### Edge Case 5: Alignment Requirements
 
 **Problem**: Types with strict alignment (SIMD, atomics) require properly aligned memory that may not be guaranteed by `new char[]`.
 
@@ -578,9 +576,8 @@ public:
 
 ---
 
-## CODE_EXAMPLES
-
-### Example 1: Fixed-Size Object Pool (Easy)
+### CODE_EXAMPLES: Practical Demonstrations
+#### Example 1: Fixed-Size Object Pool (Easy)
 
 ```cpp
 #include <iostream>
@@ -682,7 +679,7 @@ int main() {
 
 ---
 
-### Example 2: Index-Based Memory Pool (Mid)
+#### Example 2: Index-Based Memory Pool (Mid)
 
 ```cpp
 #include <iostream>
@@ -812,7 +809,7 @@ int main() {
 
 ---
 
-### Example 3: Thread-Safe Object Pool (Advanced)
+#### Example 3: Thread-Safe Object Pool (Advanced)
 
 ```cpp
 #include <iostream>
@@ -921,7 +918,7 @@ int main() {
 
 ---
 
-### Example 4: Expandable Chunk-Based Pool (Advanced)
+#### Example 4: Expandable Chunk-Based Pool (Advanced)
 
 ```cpp
 #include <iostream>
@@ -1046,7 +1043,7 @@ int main() {
 
 ---
 
-### Example 5: Aligned Memory Pool for SIMD (Advanced)
+#### Example 5: Aligned Memory Pool for SIMD (Advanced)
 
 ```cpp
 #include <iostream>
@@ -1166,8 +1163,7 @@ int main() {
 
 ---
 
-## INTERVIEW_QA
-
+### INTERVIEW_QA: Comprehensive Questions and Answers
 #### Q1: What is an object pool and when should you use one instead of `new`/`delete`?
 **Difficulty:** #beginner
 **Category:** #conceptual
@@ -2652,9 +2648,8 @@ void consumer(LockFreePoolSPSC<Message, 1024>& pool) {
 
 ---
 
-## PRACTICE_TASKS
-
-### Q1
+### PRACTICE_TASKS: Output Prediction and Code Analysis
+#### Q1
 Identify the bug in this object pool:
 ```cpp
 template <typename T, size_t N>
@@ -2671,7 +2666,7 @@ public:
 };
 ```
 
-### Q2
+#### Q2
 What's wrong with this thread-safe pool?
 ```cpp
 class ThreadSafePool {
@@ -2693,7 +2688,7 @@ public:
 };
 ```
 
-### Q3
+#### Q3
 Fix the double-free vulnerability:
 ```cpp
 void deallocate(T* ptr) {
@@ -2706,7 +2701,7 @@ pool.deallocate(obj);
 pool.deallocate(obj);  // Corrupts pool!
 ```
 
-### Q4
+#### Q4
 Complete the index-based allocation:
 ```cpp
 template <typename T, size_t N>
@@ -2722,7 +2717,7 @@ public:
 };
 ```
 
-### Q5
+#### Q5
 Why does this pool leak memory?
 ```cpp
 struct Resource {
@@ -2739,7 +2734,7 @@ class Pool {
 };
 ```
 
-### Q6
+#### Q6
 Implement chunk boundary checking:
 ```cpp
 class ExpandablePool {
@@ -2752,7 +2747,7 @@ class ExpandablePool {
 };
 ```
 
-### Q7
+#### Q7
 Add alignment validation:
 ```cpp
 struct alignas(32) SIMDData {
@@ -2766,7 +2761,7 @@ class Pool {
 };
 ```
 
-### Q8
+#### Q8
 What's the issue with this pool destructor?
 ```cpp
 class Pool {
@@ -2779,7 +2774,7 @@ public:
 };
 ```
 
-### Q9
+#### Q9
 Fix the race condition:
 ```cpp
 class Pool {
@@ -2795,7 +2790,7 @@ class Pool {
 };
 ```
 
-### Q10
+#### Q10
 Implement proper placement new lifecycle:
 ```cpp
 class Pool {
@@ -2812,7 +2807,7 @@ class Pool {
 };
 ```
 
-### Q11
+#### Q11
 Calculate the correct global index:
 ```cpp
 class ChunkedPool {
@@ -2825,7 +2820,7 @@ class ChunkedPool {
 };
 ```
 
-### Q12
+#### Q12
 Why doesn't this pool reuse memory?
 ```cpp
 class Pool {
@@ -2842,7 +2837,7 @@ class Pool {
 };
 ```
 
-### Q13
+#### Q13
 Fix the false sharing issue:
 ```cpp
 struct Counter {
@@ -2853,7 +2848,7 @@ struct Counter {
 // Performance degrades significantly - why?
 ```
 
-### Q14
+#### Q14
 Implement cache line alignment:
 ```cpp
 template <typename T>
@@ -2862,7 +2857,7 @@ struct AlignedWrapper {
 };
 ```
 
-### Q15
+#### Q15
 Add statistics tracking:
 ```cpp
 class MonitoredPool {
@@ -2871,7 +2866,7 @@ class MonitoredPool {
 };
 ```
 
-### Q16
+#### Q16
 Fix the alignment bug:
 ```cpp
 class Pool {
@@ -2883,7 +2878,7 @@ class Pool {
 };
 ```
 
-### Q17
+#### Q17
 Implement exhaustion handling:
 ```cpp
 class Pool {
@@ -2898,7 +2893,7 @@ class Pool {
 };
 ```
 
-### Q18
+#### Q18
 Detect out-of-pool pointers:
 ```cpp
 void deallocate(T* ptr) {
@@ -2906,7 +2901,7 @@ void deallocate(T* ptr) {
 }
 ```
 
-### Q19
+#### Q19
 Implement RAII pool handle:
 ```cpp
 template <typename T>
@@ -2915,7 +2910,7 @@ class PoolHandle {
 };
 ```
 
-### Q20
+#### Q20
 Fix the memory leak on pool destruction:
 ```cpp
 class Pool {
@@ -2933,9 +2928,8 @@ class Pool {
 
 ---
 
-## QUICK_REFERENCE
-
-### Answer Key
+### QUICK_REFERENCE: Key Takeaways and Comparison Tables
+#### Answer Key
 
 | Q# | Issue/Answer | Explanation | Key Concept |
 |----|--------------|-------------|-------------|
@@ -2962,7 +2956,7 @@ class Pool {
 
 ---
 
-### Object Pool Design Patterns
+#### Object Pool Design Patterns
 
 #### 1. Fixed-Size Pool
 ```cpp
@@ -3015,7 +3009,7 @@ class LockFreePoolSPSC {
 
 ---
 
-### Performance Comparison
+#### Performance Comparison
 
 | Pool Type | Alloc Time | Thread-Safe | Growth | Memory Overhead |
 |-----------|------------|-------------|--------|-----------------|
@@ -3028,7 +3022,7 @@ class LockFreePoolSPSC {
 
 ---
 
-### Common Use Cases
+#### Common Use Cases
 
 | Application | Pool Type | Key Requirements |
 |-------------|-----------|------------------|
@@ -3040,7 +3034,7 @@ class LockFreePoolSPSC {
 
 ---
 
-### Autonomous Vehicle Applications
+#### Autonomous Vehicle Applications
 
 | Component | Pool Configuration | Rationale |
 |-----------|-------------------|-----------|
@@ -3051,7 +3045,7 @@ class LockFreePoolSPSC {
 
 ---
 
-### Memory Layout Strategies
+#### Memory Layout Strategies
 
 **Contiguous Array**:
 ```
@@ -3072,7 +3066,7 @@ Chunk 2: [Obj200...Obj299]
 
 ---
 
-### Debug vs Release Build
+#### Debug vs Release Build
 
 **Debug** (paranoid validation):
 - Usage tracking (`bool used[]`)
@@ -3089,7 +3083,7 @@ Chunk 2: [Obj200...Obj299]
 
 ---
 
-### Testing Strategies
+#### Testing Strategies
 
 ```cpp
 // 1. Exhaustion test

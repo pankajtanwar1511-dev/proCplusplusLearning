@@ -1963,6 +1963,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `A(42)`<br>`test(A)`
+
+**Explanation:** Implicit conversion from int to A via conversion constructor
+
+**Key Concept:** #conversion_constructor
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <iostream>
@@ -1975,6 +1988,19 @@ int main() {
     func(s);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `int`
+
+**Explanation:** short promotes to int, which is preferred over standard conversion to double
+
+**Key Concept:** #promotion
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1992,6 +2018,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Line with `b = 300` fails to compile<br>Prints: `100 200`
+
+**Explanation:** `b` is `const int&`, cannot be modified; `a` is mutable copy
+
+**Key Concept:** #auto_keyword #const_correctness
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 #include <iostream>
@@ -2004,6 +2043,19 @@ int main() {
     std::cout << sizeof(x) << " " << sizeof(y) << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `8 12` (typical 64-bit)
+
+**Explanation:** `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes)
+
+**Key Concept:** #array_decay
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2026,6 +2078,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** First assignment fails, second succeeds<br>Prints: `200`
+
+**Explanation:** `getVal()` returns by value, `getRef()` returns reference due to parentheses
+
+**Key Concept:** #decltype_auto
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 #include <iostream>
@@ -2046,6 +2111,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** First call fails, second succeeds
+
+**Explanation:** explicit constructor prevents implicit conversion; direct construction works
+
+**Key Concept:** #explicit_keyword
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 #include <iostream>
@@ -2062,6 +2140,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `int: 65`<br>`double: 2.5`
+
+**Explanation:** char promotes to int; float promotes to double
+
+**Key Concept:** #promotion
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 #include <iostream>
@@ -2076,6 +2167,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `3`<br>`1 2 3`
+
+**Explanation:** auto deduces `std::initializer_list<int>` which has size() method
+
+**Key Concept:** #initializer_list
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <iostream>
@@ -2088,6 +2192,19 @@ int main() {
     std::cout << a << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Line with `int b{pi}` fails
+
+**Explanation:** Brace-initialization prevents narrowing conversions (double to int)
+
+**Key Concept:** #narrowing_conversion
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2109,6 +2226,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `Derived(1.5)`
+
+**Explanation:** Base→double (user-defined) then double→Derived (user-defined) is allowed
+
+**Key Concept:** #conversion_chain
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 #include <iostream>
@@ -2122,6 +2252,19 @@ int main() {
     b = 30;  // Will this compile?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Both assignments fail
+
+**Explanation:** `a` is `const int`, `b` is `const int&`; both are immutable
+
+**Key Concept:** #decltype
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2138,6 +2281,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `int`<br>`long`<br>`double`
+
+**Explanation:** Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion)
+
+**Key Concept:** #overload_resolution
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 #include <iostream>
@@ -2153,6 +2309,19 @@ int main() {
     std::cout << x << " " << r2 << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `50 200`
+
+**Explanation:** `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent)
+
+**Key Concept:** #forwarding_reference
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -2176,6 +2345,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Only first assignment succeeds<br>Prints: `111`
+
+**Explanation:** `v1` is copy (mutable), `v2` and `v3` are const references
+
+**Key Concept:** #auto_keyword #const_correctness
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 #include <iostream>
@@ -2193,6 +2375,19 @@ int main() {
     display("World");
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `String(Hello)`<br>`String(World)`
+
+**Explanation:** Implicit conversion from `const char*` to String via conversion constructor
+
+**Key Concept:** #conversion_constructor
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -2213,6 +2408,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `50m`
+
+**Explanation:** char (50) promotes to int, then int→Meters via conversion constructor
+
+**Key Concept:** #promotion #conversion_chain
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 #include <iostream>
@@ -2225,6 +2433,19 @@ int main() {
     std::cout << static_cast<int>(c1) << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Line with `char c2{large}` fails<br>Prints: `44` (or impl-def)
+
+**Explanation:** Brace-init prevents narrowing; value wraps/truncates based on char range
+
+**Key Concept:** #narrowing_conversion
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -2242,6 +2463,19 @@ int main() {
     process(r2);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `lvalue`<br>`lvalue`
+
+**Explanation:** Both r1 and r2 are lvalues (named variables), regardless of what they bind to
+
+**Key Concept:** #value_category
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2261,6 +2495,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation fails
+
+**Explanation:** Ambiguous: both operator int() and operator double() are equally valid
+
+**Key Concept:** #conversion_operator #ambiguity
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 #include <iostream>
@@ -2273,6 +2520,20 @@ int main() {
     std::cout << x << " " << *p << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior<br>Typical: `50 100` or `100 100`
+
+**Explanation:** Modifying truly const object via const_cast is UB; compiler may optimize
+
+**Key Concept:** #const_cast #undefined_behavior
+
+</details>
+
+---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

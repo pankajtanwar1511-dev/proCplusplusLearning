@@ -1,6 +1,5 @@
-# TOPIC: Modern Language Safety Features in C++11
 
-## THEORY_SECTION: Evolution of Safe C++ Programming
+### THEORY_SECTION: Evolution of Safe C++ Programming
 
 #### 1. Range-Based For Loops - Iterator Management and Iteration Safety
 
@@ -642,9 +641,9 @@ enum class Status : uint8_t {
 
 ---
 
-## EDGE_CASES: Tricky Scenarios and Safety Considerations
+### EDGE_CASES: Tricky Scenarios and Safety Considerations
 
-### Edge Case 1: Range-Based For Loop with Temporary Containers
+#### Edge Case 1: Range-Based For Loop with Temporary Containers
 
 Using range-based for loops with temporary objects that are destroyed at the end of the full expression creates dangling references.
 
@@ -663,7 +662,7 @@ for (const auto& x : vec) {
 
 The temporary container returned by `get_vector()` is destroyed after the range-based for loop initialization, leaving all references dangling. This is a subtle lifetime issue that can cause crashes or data corruption. Always ensure the container outlives the loop when using references.
 
-### Edge Case 2: Range-Based For Loop Modifying Container Size
+#### Edge Case 2: Range-Based For Loop Modifying Container Size
 
 Modifying a container's size during iteration invalidates iterators and causes undefined behavior.
 
@@ -687,7 +686,7 @@ for (size_t i = 0; i < vec.size(); ++i) {
 
 Range-based for loops cache the end iterator, so adding elements doesn't extend the iteration. However, operations that invalidate iterators (like reallocation in `vector`) cause undefined behavior. Use index-based iteration when modifying container structure.
 
-### Edge Case 3: nullptr with Function Overloading
+#### Edge Case 3: nullptr with Function Overloading
 
 The `nullptr` keyword resolves ambiguity in overload resolution that `NULL` or `0` cannot.
 
@@ -702,7 +701,7 @@ process(nullptr);  // ✅ Calls pointer version (nullptr converts to pointer)
 
 This demonstrates why `nullptr` was necessary. `NULL` being defined as `0` causes it to preferentially match integer overloads, which is rarely the intended behavior when passing null pointers. Using `nullptr` makes intent explicit and eliminates this ambiguity.
 
-### Edge Case 4: nullptr is Not an Integer
+#### Edge Case 4: nullptr is Not an Integer
 
 Unlike `NULL` and `0`, `nullptr` cannot implicitly convert to integer types, preventing logic errors.
 
@@ -717,7 +716,7 @@ void* ptr = nullptr;  // ✅ OK: converts to any pointer type
 
 This type safety is intentional. If you're assigning or comparing with integers, you should be using `0`, not a null pointer literal. This compile-time enforcement prevents a category of logic bugs where pointer nullity is confused with numeric zero.
 
-### Edge Case 5: enum class and Bitwise Operations
+#### Edge Case 5: enum class and Bitwise Operations
 
 Strongly typed enums don't support bitwise operations by default, requiring explicit casts or operator overloads.
 
@@ -747,7 +746,7 @@ Flags operator|(Flags lhs, Flags rhs) {
 
 While this verbosity might seem like a disadvantage, it forces explicit handling of bit flags, making the code's intent clear. For true bit flags, consider using `std::bitset` or defining the necessary operators.
 
-### Edge Case 6: enum class Underlying Type
+#### Edge Case 6: enum class Underlying Type
 
 Specifying the underlying type is important for ABI stability, serialization, and controlling memory usage.
 
@@ -769,7 +768,7 @@ static_assert(sizeof(LargeValues) == 8, "LargeValues should be 8 bytes");
 
 Explicitly specifying the underlying type ensures consistent size across platforms, which is critical for binary protocols, file formats, and memory-constrained embedded systems. Without specification, the compiler chooses a type large enough to hold all values.
 
-### Edge Case 7: Range-Based For with Different Container Types
+#### Edge Case 7: Range-Based For with Different Container Types
 
 Different containers have different reference semantics and proxy types that affect range-based for loops.
 
@@ -797,9 +796,9 @@ for (auto&& x : vecBool) {
 
 ---
 
-## CODE_EXAMPLES: Practical Demonstrations
+### CODE_EXAMPLES: Practical Demonstrations
 
-### Example 1: Basic Range-Based For Loop Patterns
+#### Example 1: Basic Range-Based For Loop Patterns
 
 ```cpp
 std::vector<int> numbers{1, 2, 3, 4, 5};
@@ -823,7 +822,7 @@ for (auto num : numbers) {
 
 The choice between `auto`, `auto&`, and `const auto&` determines whether elements are copied, modifiable, or read-only. Use `const auto&` by default for read-only access to avoid unnecessary copies, especially with large objects. Use `auto&` when modifying elements in-place, and plain `auto` only when you need mutable local copies.
 
-### Example 2: Range-Based For with Different Container Types
+#### Example 2: Range-Based For with Different Container Types
 
 ```cpp
 // Works with C-style arrays
@@ -852,7 +851,7 @@ for (int x : {100, 200, 300}) {
 
 Range-based for loops work with any type providing `begin()` and `end()` functions (or for which `std::begin()` and `std::end()` are defined). This includes all standard containers, C-style arrays, and user-defined types implementing the required interface.
 
-### Example 3: nullptr in Function Overloading
+#### Example 3: nullptr in Function Overloading
 
 ```cpp
 void handle(int value) {
@@ -880,7 +879,7 @@ int main() {
 
 The `nullptr` keyword eliminates the historical ambiguity where `NULL` would match integer overloads instead of pointer overloads. However, when multiple pointer-type overloads exist, `nullptr` can still be ambiguous since it converts to any pointer type.
 
-### Example 4: Type-Safe nullptr_t Type
+#### Example 4: Type-Safe nullptr_t Type
 
 ```cpp
 void accept_nullptr(std::nullptr_t) {
@@ -907,7 +906,7 @@ int main() {
 
 The `std::nullptr_t` type can be used to create functions that specifically accept only null pointers, providing even stronger type safety. This is useful for APIs that have special handling for null cases and want to prevent accidental integer arguments.
 
-### Example 5: Basic enum class Usage
+#### Example 5: Basic enum class Usage
 
 ```cpp
 enum class Color {
@@ -934,7 +933,7 @@ TrafficLight t = TrafficLight::Red;  // ✅ Distinct type
 
 Strongly typed enums eliminate three major sources of errors: name pollution in the enclosing scope, implicit conversions to integers, and accidental comparisons between unrelated enum types. These compile-time checks prevent logic errors without any runtime cost.
 
-### Example 6: enum class with Explicit Underlying Type
+#### Example 6: enum class with Explicit Underlying Type
 
 ```cpp
 enum class Status : uint8_t {
@@ -963,7 +962,7 @@ static_assert(sizeof(ErrorCode) == sizeof(int), "ErrorCode should match int");
 
 Specifying the underlying type provides control over memory layout, enables negative values when needed, and ensures consistent behavior across different compilers and platforms. This is essential for binary protocols, serialization, and embedded systems with strict memory constraints.
 
-### Example 7: Converting Between enum class and Integers
+#### Example 7: Converting Between enum class and Integers
 
 ```cpp
 enum class Level : int {
@@ -988,7 +987,7 @@ Level dangerousLevel = static_cast<Level>(invalidInput);  // No error, but inval
 
 The lack of implicit conversion is intentional and forces explicit casts, making dangerous conversions visible in code. However, `static_cast` doesn't validate that the integer value corresponds to a valid enumerator, so additional validation is needed when converting user input or external data.
 
-### Example 8: Range-Based For with User-Defined Types
+#### Example 8: Range-Based For with User-Defined Types
 
 ```cpp
 class IntRange {
@@ -1489,7 +1488,7 @@ Final Sensor Status:
 ✅ Compile-time prevention of meaningless comparisons
 ```
 
-### Real-World Applications in Autonomous Vehicles:
+#### Real-World Applications in Autonomous Vehicles:
 
 **1. enum class for Sensor States:**
 - **Type safety**: Cannot accidentally compare `SensorStatus` with `SensorPriority`
@@ -1524,7 +1523,7 @@ Final Sensor Status:
 
 ---
 
-## INTERVIEW_QA: Core Concepts and Safety Principles
+### INTERVIEW_QA: Core Concepts and Safety Principles
 
 #### Q1: What are the three main safety improvements that enum class provides over traditional enums?
 **Difficulty:** #beginner
@@ -2045,9 +2044,7 @@ While `enum class` is generally preferred for type safety, traditional enums rem
 
 ---
 
-## PRACTICE_TASKS: Safety and Correctness Challenges
-
-### PRACTICE_TASKS: Behavior Prediction and Error Detection
+### PRACTICE_TASKS: Safety and Correctness Challenges
 
 #### Q1
 ```cpp
@@ -2060,7 +2057,6 @@ for (auto x : vec) {
 }
 // What is printed?
 ```
-
 #### Q2
 ```cpp
 void func(int x) { std::cout << "int\n"; }
@@ -2071,7 +2067,6 @@ func(NULL);
 func(nullptr);
 // What is printed for each call?
 ```
-
 #### Q3
 ```cpp
 enum class Status { OK = 0, Error = 1 };
@@ -2081,7 +2076,6 @@ if (s == 0) {
 }
 // Does this compile? If not, why?
 ```
-
 #### Q4
 ```cpp
 std::vector<int> get_vec() { return {1, 2, 3}; }
@@ -2091,7 +2085,6 @@ for (const auto& x : get_vec()) {
 }
 // Is this safe? What's the behavior?
 ```
-
 #### Q5
 ```cpp
 enum class Color { Red, Green, Blue };
@@ -2105,7 +2098,6 @@ if (c == s) {
 }
 // Does this compile?
 ```
-
 #### Q6
 ```cpp
 int* ptr = nullptr;
@@ -2114,14 +2106,12 @@ if (ptr == NULL) {
 }
 // Does this compile and what does it print?
 ```
-
 #### Q7
 ```cpp
 enum class Flags : uint8_t { Read = 1, Write = 2, Execute = 4 };
 Flags combined = Flags::Read | Flags::Write;
 // Does this compile?
 ```
-
 #### Q8
 ```cpp
 std::map<int, std::string> map{{1, "one"}, {2, "two"}};
@@ -2130,7 +2120,6 @@ for (auto pair : map) {
 }
 // Does map contain "modified" values after the loop?
 ```
-
 #### Q9
 ```cpp
 for (int x : {10, 20, 30, 40, 50}) {
@@ -2138,7 +2127,6 @@ for (int x : {10, 20, 30, 40, 50}) {
 }
 // Is this valid C++11 code?
 ```
-
 #### Q10
 ```cpp
 enum class Status : uint8_t { OK = 0, Error = 255 };
@@ -2146,7 +2134,6 @@ int status_code = static_cast<int>(Status::Error);
 std::cout << status_code;
 // What is printed?
 ```
-
 #### Q11
 ```cpp
 std::vector<bool> vec{true, false, true};
@@ -2155,7 +2142,6 @@ for (auto& x : vec) {
 }
 // What happens? Is there an issue?
 ```
-
 #### Q12
 ```cpp
 void accept(std::nullptr_t) { std::cout << "nullptr_t\n"; }
@@ -2165,14 +2151,12 @@ accept(nullptr);
 accept(NULL);
 // What is printed for each call (if they compile)?
 ```
-
 #### Q13
 ```cpp
 enum class Color : int { Red = 1, Green = 2, Blue = 3 };
 sizeof(Color);
 // What is the size in bytes?
 ```
-
 #### Q14
 ```cpp
 std::vector<std::string> vec{"hello", "world"};
@@ -2182,7 +2166,6 @@ for (auto s : vec) {
 std::cout << vec[0];
 // What is printed?
 ```
-
 #### Q15
 ```cpp
 int arr[5] = {1, 2, 3, 4, 5};
@@ -2192,7 +2175,6 @@ for (auto& x : arr) {
 std::cout << arr[0];
 // What is printed?
 ```
-
 #### Q16
 ```cpp
 void* generic_ptr = nullptr;
@@ -2203,7 +2185,6 @@ if (generic_ptr == char_ptr) {
 }
 // Does this compile?
 ```
-
 #### Q17
 ```cpp
 enum class Status { Running, Stopped };
@@ -2214,7 +2195,6 @@ switch (Status::Running) {
 }
 // Does this compile?
 ```
-
 #### Q18
 ```cpp
 std::vector<int> vec{1, 2, 3};
@@ -2223,14 +2203,12 @@ for (const auto& x : vec) {
 }
 // What happens?
 ```
-
 #### Q19
 ```cpp
 enum class Level : uint8_t { Low = 1, Medium = 50, High = 100 };
 Level level = static_cast<Level>(75);
 // Is this valid? What does level represent?
 ```
-
 #### Q20
 ```cpp
 std::map<int, int> map{{1, 10}, {2, 20}};
@@ -2241,10 +2219,9 @@ for (auto [key, val] : map) {
 ```
 
 ---
+### QUICK_REFERENCE: Answer Key and Safety Guidelines
 
-## QUICK_REFERENCE: Answer Key and Safety Guidelines
-
-### Answer Key for Practice Questions
+#### Answer Key for Practice Questions
 
 | Q# | Answer | Explanation | Key Concept |
 |----|--------|-------------|-------------|
@@ -2269,7 +2246,7 @@ for (auto [key, val] : map) {
 | 19 | Valid but dangerous | Cast succeeds but 75 is not a valid enumerator; use is undefined | #enum_class #invalid_cast |
 | 20 | No, compile error | Structured bindings `[key, val]` are C++17 feature, not C++11 | #structured_bindings #c++17 |
 
-### Range-Based For Loop Best Practices
+#### Range-Based For Loop Best Practices
 
 | Scenario | Recommendation | Rationale |
 |----------|----------------|-----------|
@@ -2280,7 +2257,7 @@ for (auto [key, val] : map) {
 | vector\<bool\> iteration | `for (auto&& x : container)` | Universal reference handles proxy types |
 | Temporary containers | Store in variable first | Avoid dangling references |
 
-### nullptr vs NULL vs 0
+#### nullptr vs NULL vs 0
 
 | Feature | nullptr | NULL | 0 |
 |---------|---------|------|---|
@@ -2291,7 +2268,7 @@ for (auto [key, val] : map) {
 | Type safety | High | Low | Low |
 | Recommended | ✅ Always | ❌ Legacy only | ❌ Never for pointers |
 
-### enum class vs Traditional enum
+#### enum class vs Traditional enum
 
 | Feature | enum class | Traditional enum |
 |---------|-----------|------------------|
@@ -2304,7 +2281,7 @@ for (auto [key, val] : map) {
 | Forward declaration | Requires underlying type | Requires underlying type |
 | Use case | General purpose, type safety critical | Array indexing, C interop, flags |
 
-### Common Pitfalls and Solutions
+#### Common Pitfalls and Solutions
 
 | Pitfall | Problem | Solution |
 |---------|---------|----------|
@@ -2317,7 +2294,7 @@ for (auto [key, val] : map) {
 | Implicit enum conversion | Accidental arithmetic/comparison | Use `enum class` to require explicit casts |
 | Missing underlying type | Portability and forward declaration issues | Always specify underlying type for `enum class` |
 
-### Interview Talking Points
+#### Interview Talking Points
 
 **Range-Based For Loops:**
 - "Eliminates iterator management and off-by-one errors"

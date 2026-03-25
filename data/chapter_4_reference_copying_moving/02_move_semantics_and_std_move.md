@@ -1793,6 +1793,19 @@ std::string s2 = std::move(s1);
 std::cout << s1.length();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 0 (likely)
+
+**Explanation:** String moved, `s1` in moved-from state (typically empty)
+
+**Key Concept:** #moved_from_state
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 class A {
@@ -1807,11 +1820,37 @@ A a1;
 A a2 = std::move(a1);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Move constructor doesn't nullify `other.ptr`, causing double-delete
+
+**Key Concept:** #move_constructor_bug
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 const std::vector<int> cv = {1, 2, 3};
 std::vector<int> v = std::move(cv);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Calls copy constructor
+
+**Explanation:** `const vector&&` cannot bind to move constructor expecting `vector&&`
+
+**Key Concept:** #const_move_fails
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1820,11 +1859,37 @@ int y = std::move(x);
 std::cout << x << " " << y;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 10 10
+
+**Explanation:** Moving primitive types is identical to copying—both retain value
+
+**Key Concept:** #primitive_move
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::unique_ptr<int> p1 = std::make_unique<int>(42);
 std::unique_ptr<int> p2 = p1;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `unique_ptr` copy constructor is deleted—must use `std::move`
+
+**Key Concept:** #move_only_type
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1833,6 +1898,19 @@ std::vector<int> getVector() {
     return std::move(v);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles but suboptimal
+
+**Explanation:** `std::move` in return prevents RVO, forcing move instead of elision
+
+**Key Concept:** #rvo_pessimization
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1846,6 +1924,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Returning reference to local variable—`s` destroyed when function exits
+
+**Key Concept:** #dangling_reference
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 void process(std::string s) { }
@@ -1855,12 +1946,38 @@ process(std::move(str));
 std::cout << str.length();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 0 (likely)
+
+**Explanation:** String moved into function parameter, `str` is now in moved-from state
+
+**Key Concept:** #move_to_parameter
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 std::vector<std::string> vec = {"a", "b", "c"};
 std::string s = std::move(vec[1]);
 std::cout << vec.size() << " " << vec[1].length();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 3 0
+
+**Explanation:** Element moved but not removed; `vec[1]` is empty string, size unchanged
+
+**Key Concept:** #container_element_move
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1879,12 +1996,38 @@ Buffer b(100);
 b = std::move(b);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Self-move without check: deletes own data before attempting to use it
+
+**Key Concept:** #self_move_bug
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::string s1 = "hello";
 std::string&& rref = std::move(s1);
 std::cout << s1;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: hello
+
+**Explanation:** `std::move` alone doesn't modify—just casts; `s1` unchanged until used
+
+**Key Concept:** #std_move_is_cast
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1898,6 +2041,19 @@ Data d2 = std::move(d1);
 std::cout << d1.name;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: test (probably)
+
+**Explanation:** Move constructor uses copy for `name` member—should use `std::move(other.name)`
+
+**Key Concept:** #member_move_bug
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 std::vector<int> v1 = {1, 2, 3};
@@ -1906,6 +2062,19 @@ v2 = std::move(v1);
 v1.push_back(4);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles and runs
+
+**Explanation:** After move, `v1` is valid and can be reused; `push_back` works fine
+
+**Key Concept:** #moved_from_reuse
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 void func(std::vector<int>&& v) {
@@ -1913,12 +2082,38 @@ void func(std::vector<int>&& v) {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Copies vector
+
+**Explanation:** `v` is lvalue inside function (has name), so copies to `local`
+
+**Key Concept:** #named_rvalue_ref
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::string s1 = "hello";
 std::string s2 = std::move(s1);
 std::string s3 = std::move(s1);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles, both likely empty
+
+**Explanation:** Second move from already-moved-from object is legal but gives empty
+
+**Key Concept:** #multiple_moves
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1928,6 +2123,19 @@ int y = std::move(rref);
 std::cout << x;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 42
+
+**Explanation:** Moving int is same as copying; both `x` and `y` have value 42
+
+**Key Concept:** #primitive_unchanged
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 std::shared_ptr<int> p1 = std::make_shared<int>(42);
@@ -1936,12 +2144,38 @@ if (p1) std::cout << "p1 valid";
 else std::cout << "p1 null";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: p1 null
+
+**Explanation:** `shared_ptr` move transfers ownership, leaving `p1` as nullptr
+
+**Key Concept:** #shared_ptr_move
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 std::vector<std::unique_ptr<int>> vec;
 vec.push_back(std::make_unique<int>(10));
 std::unique_ptr<int> p = vec[0];
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Cannot copy `unique_ptr`—must use `std::move(vec[0])`
+
+**Key Concept:** #unique_ptr_no_copy
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1952,6 +2186,19 @@ std::string create() {
 
 std::string result = create();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles, efficient
+
+**Explanation:** RVO likely applies, constructing directly in `result` with no copies/moves
+
+**Key Concept:** #rvo_optimization
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1965,7 +2212,19 @@ const A a1;
 A a2 = std::move(a1);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: copy
+
+**Explanation:** `const A` cannot be moved (const prevents modification); copy constructor used
+
+**Key Concept:** #const_no_move
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Move Semantics Tables
 

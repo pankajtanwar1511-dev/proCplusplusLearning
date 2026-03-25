@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import {
   BookOpen,
   Code,
@@ -51,6 +52,10 @@ const TopicDetail = () => {
   const [quizHistory, setQuizHistory] = useState([]);
   const [copiedCode, setCopiedCode] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
+  const [showAllAnswers, setShowAllAnswers] = useState(false);
+  const practiceContentRef = React.useRef(null);
+  const theoryContentRef = React.useRef(null);
+  const edgeCasesContentRef = React.useRef(null);
 
   const loadTopic = React.useCallback(async () => {
     try {
@@ -121,6 +126,157 @@ const TopicDetail = () => {
     setCopiedCode(index);
     setTimeout(() => setCopiedCode(null), 2000);
   };
+
+  // Simple C++ syntax highlighter
+  const highlightCppCode = React.useCallback((code) => {
+    if (!code || typeof code !== 'string') return code;
+
+    // CRITICAL: HTML-escape first to prevent <iostream> being interpreted as HTML tag
+    const escapeHtml = (str) => {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+
+    // C++ keywords
+    const keywords = /\b(int|double|float|char|bool|void|class|struct|public|private|protected|virtual|const|static|return|if|else|for|while|do|switch|case|break|continue|new|delete|this|nullptr|true|false|auto|using|namespace|std|include|define|ifdef|endif|typedef|typename|template|inline|friend|operator|explicit|mutable|volatile|extern|register|goto|sizeof|throw|try|catch|constexpr|decltype|noexcept|override|final|enum|union|unsigned|signed|short|long|wchar_t)\b/g;
+
+    // Strings
+    const strings = /(["'])(?:(?=(\\?))\2.)*?\1/g;
+
+    // Single line comments
+    const singleLineComments = /(\/\/.*?)$/gm;
+
+    // Multi-line comments
+    const multiLineComments = /(\/\*[\s\S]*?\*\/)/g;
+
+    // Numbers
+    const numbers = /\b(\d+\.?\d*[fFuUlL]?)\b/g;
+
+    // Store matched strings and comments to avoid double-processing
+    const savedMatches = [];
+    let processedCode = escapeHtml(code);
+
+    // Protect strings
+    processedCode = processedCode.replace(strings, (match) => {
+      const idx = savedMatches.length;
+      savedMatches.push(`<span class="string">${match}</span>`);
+      return `§§STRING${idx}§§`;
+    });
+
+    // Protect multi-line comments
+    processedCode = processedCode.replace(multiLineComments, (match) => {
+      const idx = savedMatches.length;
+      savedMatches.push(`<span class="comment">${match}</span>`);
+      return `§§COMMENT${idx}§§`;
+    });
+
+    // Protect single-line comments
+    processedCode = processedCode.replace(singleLineComments, (match) => {
+      const idx = savedMatches.length;
+      savedMatches.push(`<span class="comment">${match}</span>`);
+      return `§§COMMENT${idx}§§`;
+    });
+
+    // Highlight keywords
+    processedCode = processedCode.replace(keywords, '<span class="keyword">$&</span>');
+
+    // Highlight numbers
+    processedCode = processedCode.replace(numbers, '<span class="number">$1</span>');
+
+    // Restore saved strings and comments
+    savedMatches.forEach((item, idx) => {
+      processedCode = processedCode.replace(`§§STRING${idx}§§`, item);
+      processedCode = processedCode.replace(`§§COMMENT${idx}§§`, item);
+    });
+
+    return processedCode;
+  }, []);
+
+  const toggleAllAnswers = () => {
+    if (practiceContentRef.current) {
+      const allDetails = practiceContentRef.current.querySelectorAll('details');
+      const newState = !showAllAnswers;
+
+      allDetails.forEach(details => {
+        details.open = newState;
+      });
+
+      setShowAllAnswers(newState);
+    }
+  };
+
+  // Enhance markdown-rendered code blocks with copy buttons and syntax highlighting
+  const enhanceCodeBlocks = React.useCallback((containerRef) => {
+    if (!containerRef.current) return;
+
+    const codeBlocks = containerRef.current.querySelectorAll('pre > code');
+
+    codeBlocks.forEach((codeElement, index) => {
+      const preElement = codeElement.parentElement;
+
+      // Skip if already enhanced
+      if (preElement.parentElement?.classList.contains('code-block-wrapper')) return;
+
+      const code = codeElement.textContent;
+      const codeId = `markdown-code-${index}`;
+
+      // Apply syntax highlighting
+      codeElement.innerHTML = highlightCppCode(code);
+
+      // Create wrapper
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrapper';
+
+      // Create copy button
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-button';
+      copyButton.setAttribute('data-code-id', codeId);
+      copyButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy</span>
+      `;
+
+      copyButton.onclick = () => {
+        navigator.clipboard.writeText(code);
+        copyButton.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Copied!</span>
+        `;
+        setTimeout(() => {
+          copyButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy</span>
+          `;
+        }, 2000);
+      };
+
+      // Replace pre with wrapper
+      preElement.parentElement.insertBefore(wrapper, preElement);
+      wrapper.appendChild(copyButton);
+      wrapper.appendChild(preElement);
+    });
+  }, [highlightCppCode]);
+
+  // Enhance code blocks when theory or edge cases content loads
+  useEffect(() => {
+    if (activeTab === 'theory' && theory) {
+      setTimeout(() => enhanceCodeBlocks(theoryContentRef), 100);
+    } else if (activeTab === 'edge-cases') {
+      setTimeout(() => enhanceCodeBlocks(edgeCasesContentRef), 100);
+    }
+  }, [activeTab, theory, enhanceCodeBlocks]);
 
   const tabs = [
     { id: 'theory', label: 'Theory', icon: BookOpen },
@@ -212,12 +368,12 @@ const TopicDetail = () => {
       <div className="tab-content">
         {/* Theory Tab */}
         {activeTab === 'theory' && (
-          <div className="theory-content">
+          <div className="theory-content" ref={theoryContentRef}>
             {theory ? (
               <>
                 <div className="content-card">
                   <div className="markdown-content">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                       {typeof theory === 'string' ? theory : (theory.content || '')}
                     </ReactMarkdown>
                   </div>
@@ -280,9 +436,7 @@ const TopicDetail = () => {
                       )}
                     </button>
                     <pre>
-                      <code className="language-cpp">
-                        {example.code}
-                      </code>
+                      <code className="language-cpp" dangerouslySetInnerHTML={{ __html: highlightCppCode(example.code) }} />
                     </pre>
                   </div>
 
@@ -387,7 +541,7 @@ const TopicDetail = () => {
 
         {/* Edge Cases Tab */}
         {activeTab === 'edge-cases' && (
-          <div className="edge-cases-content">
+          <div className="edge-cases-content" ref={edgeCasesContentRef}>
             {topic.edge_cases && topic.edge_cases.length > 0 ? (
               topic.edge_cases.map((edgeCase, index) => (
                 <div key={index} className="example-card">
@@ -400,7 +554,7 @@ const TopicDetail = () => {
 
                   {edgeCase.explanation && (
                     <div className="example-explanation">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                         {typeof edgeCase.explanation === 'string' ? edgeCase.explanation : ''}
                       </ReactMarkdown>
                     </div>
@@ -425,7 +579,7 @@ const TopicDetail = () => {
                         )}
                       </button>
                       <pre>
-                        <code className="language-cpp">{code}</code>
+                        <code className="language-cpp" dangerouslySetInnerHTML={{ __html: highlightCppCode(code) }} />
                       </pre>
                     </div>
                   ))}
@@ -442,57 +596,129 @@ const TopicDetail = () => {
 
         {/* Practice Tasks Tab */}
         {activeTab === 'practice' && (
-          <div className="practice-content">
+          <div className="practice-content" ref={practiceContentRef}>
             {topic.practice_tasks && topic.practice_tasks.length > 0 ? (
-              topic.practice_tasks.map((task, index) => (
-                <div key={index} className="example-card">
-                  <div className="example-header">
-                    <h3>
-                      <Terminal size={20} style={{ display: 'inline', marginRight: '8px' }} />
-                      {task.title || `Practice Task ${index + 1}`}
-                    </h3>
-                  </div>
-
-                  {task.description && (
-                    <div className="example-explanation">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {typeof task.description === 'string' ? task.description : ''}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-
-                  {task.code && (
-                    <div className="code-block-wrapper">
-                      <button
-                        className="copy-button"
-                        onClick={() => copyToClipboard(task.code, `practice-${index}`)}
-                      >
-                        {copiedCode === `practice-${index}` ? (
-                          <>
-                            <Check size={16} />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={16} />
-                            Copy
-                          </>
-                        )}
-                      </button>
-                      <pre>
-                        <code className="language-cpp">{task.code}</code>
-                      </pre>
-                    </div>
-                  )}
-
-                  {task.expected_output && (
-                    <div className="example-output">
-                      <h4>Expected Output:</h4>
-                      <pre className="output-box">{task.expected_output}</pre>
-                    </div>
-                  )}
+              <>
+                <div className="practice-header-actions">
+                  <button
+                    className="btn btn-outline"
+                    onClick={toggleAllAnswers}
+                  >
+                    {showAllAnswers ? (
+                      <>
+                        <CheckCircle size={18} />
+                        Hide All Answers
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={18} />
+                        Show All Answers
+                      </>
+                    )}
+                  </button>
                 </div>
-              ))
+                {topic.practice_tasks.map((task, index) => {
+                  // Extract answer from Quick Reference if available
+                  const extractAnswer = (qNum) => {
+                    if (!topic.quick_reference || !topic.quick_reference.content) return null;
+                    const content = topic.quick_reference.content;
+
+                    // Look for answer key table
+                    const answerKeyMatch = content.match(/#### Answer Key[^|]*(\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[\s\S]*?)(?=####|$)/i);
+                    if (!answerKeyMatch) return null;
+
+                    // Find the row for this question number
+                    const rows = answerKeyMatch[1].split('\n').filter(row => row.trim().startsWith('|'));
+                    for (const row of rows) {
+                      const cells = row.split('|').map(c => c.trim()).filter(c => c && c !== '---' && c !== ':---' && c !== ':---:');
+                      if (cells.length >= 3 && cells[0] === String(qNum)) {
+                        return {
+                          answer: cells[1],
+                          explanation: cells[2],
+                          concept: cells[3] || ''
+                        };
+                      }
+                    }
+                    return null;
+                  };
+
+                  const answerInfo = extractAnswer(task.question_number || index + 1);
+
+                  return (
+                    <div key={index} className="example-card">
+                      <div className="example-header">
+                        <h3>
+                          <Terminal size={20} style={{ display: 'inline', marginRight: '8px' }} />
+                          {task.title || `Practice Task ${index + 1}`}
+                        </h3>
+                      </div>
+
+                      {task.code && (
+                        <div className="code-block-wrapper">
+                          <button
+                            className="copy-button"
+                            onClick={() => copyToClipboard(task.code, `practice-${index}`)}
+                          >
+                            {copiedCode === `practice-${index}` ? (
+                              <>
+                                <Check size={16} />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={16} />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <pre>
+                            <code className="language-cpp" dangerouslySetInnerHTML={{ __html: highlightCppCode(task.code) }} />
+                          </pre>
+                        </div>
+                      )}
+
+                      {task.expected_output && (
+                        <div className="example-output">
+                          <h4>Expected Output:</h4>
+                          <pre className="output-box">{task.expected_output}</pre>
+                        </div>
+                      )}
+
+                      {task.description && task.description.trim() &&
+                       !task.description.trim().match(/^```(cpp|c\+\+)?$/i) && (
+                        <div className="example-explanation">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                            {typeof task.description === 'string' ? task.description : ''}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+
+                      {/* Answer Section - Collapsible */}
+                      {answerInfo && (
+                        <details className="practice-answer-section">
+                          <summary className="practice-answer-toggle">
+                            <CheckCircle size={16} />
+                            Show Answer
+                          </summary>
+                          <div className="practice-answer-content">
+                            <div className="answer-row">
+                              <strong>Answer:</strong> <span>{answerInfo.answer}</span>
+                            </div>
+                            <div className="answer-row">
+                              <strong>Explanation:</strong> <span>{answerInfo.explanation}</span>
+                            </div>
+                            {answerInfo.concept && (
+                              <div className="answer-row">
+                                <strong>Key Concept:</strong> <span className="concept-tag">{answerInfo.concept}</span>
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
             ) : (
               <div className="empty-state">
                 <Terminal size={48} className="empty-state-icon" />
@@ -508,7 +734,7 @@ const TopicDetail = () => {
             {topic.quick_reference && topic.quick_reference.content ? (
               <div className="content-card">
                 <div className="markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                     {typeof topic.quick_reference.content === 'string' ? topic.quick_reference.content : ''}
                   </ReactMarkdown>
                 </div>

@@ -1,9 +1,10 @@
-## TOPIC: ROS2 Control Framework
-
+# Chapter 6: Advanced Production Systems
+## Topic 6.3: ROS2 Control Framework
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. What is ros2_control?
 
 **ros2_control** is ROS2's **hardware abstraction framework** for real-time robot control.

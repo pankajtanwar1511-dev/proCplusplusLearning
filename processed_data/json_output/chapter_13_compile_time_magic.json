@@ -33,74 +33,62 @@
       },
       "edge_cases": [
         {
+          "case_number": 1,
           "title": "constexpr Runtime Deferral in C++11 vs C++14+",
-          "explanation": "The behavior of `constexpr` functions with runtime arguments changed dramatically between C++11 and C++14.\n\n```cpp\nconstexpr int multiply(int x, int y) {\n    return x * y;\n}\n\nint main() {\n    int runtime_val = 5;\n\n    // Scenario 1: Runtime call\n    int result = multiply(runtime_val, 3);\n\n    // C++11: ❌ Compile error (constexpr functions cannot be called\n    //           with runtime values in non-constexpr context)\n    // C++14+: ✅ Compiles and runs at runtime\n\n    // Scenario 2: Compile-time call\n    constexpr int compile_result = multiply(10, 20);\n    // ✅ Works in all standards (evaluated at compile time)\n}\n```\n\n**Why the difference?**\n\nIn C++11, `constexpr` functions were intended *only* for compile-time contexts. The language specification required that `constexpr` functions be usable as constant expressions, but didn't allow them to be regular functions. C++14 relaxed this, making `constexpr` mean \"can be evaluated at compile time *if possible*\".\n\n**Real-world implication** (autonomous driving):\n```cpp\n// C++14+ allows flexible compile-time/runtime switching\nconstexpr float deg_to_rad(float degrees) {\n    return degrees * 3.14159f / 180.0f;\n}\n\n// Compile-time: steering angle limits baked into binary\nconstexpr float MAX_STEERING_RAD = deg_to_rad(30.0f);\n\n// Runtime: dynamic angle conversion\nfloat current_angle_deg = get_steering_angle();\nfloat current_angle_rad = deg_to_rad(current_angle_deg);  // Runtime call\n```\n\n**Key takeaway**: In C++14+, `constexpr` functions are dual-purpose (compile-time or runtime), but in C++11 they're compile-time only.\n\n---",
-          "code_examples": [
-            "constexpr int multiply(int x, int y) {\n    return x * y;\n}\n\nint main() {\n    int runtime_val = 5;\n\n    // Scenario 1: Runtime call\n    int result = multiply(runtime_val, 3);\n\n    // C++11: ❌ Compile error (constexpr functions cannot be called\n    //           with runtime values in non-constexpr context)\n    // C++14+: ✅ Compiles and runs at runtime\n\n    // Scenario 2: Compile-time call\n    constexpr int compile_result = multiply(10, 20);\n    // ✅ Works in all standards (evaluated at compile time)\n}",
-            "// C++14+ allows flexible compile-time/runtime switching\nconstexpr float deg_to_rad(float degrees) {\n    return degrees * 3.14159f / 180.0f;\n}\n\n// Compile-time: steering angle limits baked into binary\nconstexpr float MAX_STEERING_RAD = deg_to_rad(30.0f);\n\n// Runtime: dynamic angle conversion\nfloat current_angle_deg = get_steering_angle();\nfloat current_angle_rad = deg_to_rad(current_angle_deg);  // Runtime call"
-          ]
+          "explanation": "The behavior of `constexpr` functions with runtime arguments changed dramatically between C++11 and C++14.\n\n```cpp\nconstexpr int multiply(int x, int y) {\n    return x * y;\n}\n\nint main() {\n    int runtime_val = 5;\n\n    // Scenario 1: Runtime call\n    int result = multiply(runtime_val, 3);\n\n    // C++11: ❌ Compile error (constexpr functions cannot be called\n    //           with runtime values in non-constexpr context)\n    // C++14+: ✅ Compiles and runs at runtime\n\n    // Scenario 2: Compile-time call\n    constexpr int compile_result = multiply(10, 20);\n    // ✅ Works in all standards (evaluated at compile time)\n}\n```\n\n**Why the difference?**\n\nIn C++11, `constexpr` functions were intended *only* for compile-time contexts. The language specification required that `constexpr` functions be usable as constant expressions, but didn't allow them to be regular functions. C++14 relaxed this, making `constexpr` mean \"can be evaluated at compile time *if possible*\".\n\n**Real-world implication** (autonomous driving):\n```cpp\n// C++14+ allows flexible compile-time/runtime switching\nconstexpr float deg_to_rad(float degrees) {\n    return degrees * 3.14159f / 180.0f;\n}\n\n// Compile-time: steering angle limits baked into binary\nconstexpr float MAX_STEERING_RAD = deg_to_rad(30.0f);\n\n// Runtime: dynamic angle conversion\nfloat current_angle_deg = get_steering_angle();\nfloat current_angle_rad = deg_to_rad(current_angle_deg);  // Runtime call\n```\n\n**Key takeaway**: In C++14+, `constexpr` functions are dual-purpose (compile-time or runtime), but in C++11 they're compile-time only.\n\n---"
         },
         {
+          "case_number": 2,
           "title": "constexpr with Loops and Mutable Variables (C++11 Restrictions)",
-          "explanation": "C++11 `constexpr` functions have severe restrictions that make many intuitive implementations invalid.\n\n```cpp\n// ❌ C++11: Compile error (loops not allowed)\n// ✅ C++14+: Valid\nconstexpr int sum_range(int n) {\n    int total = 0;  // ❌ C++11: mutable local variable\n    for (int i = 1; i <= n; ++i) {  // ❌ C++11: loop\n        total += i;\n    }\n    return total;\n}\n\n// ✅ C++11: Valid (single return, ternary operator)\nconstexpr int sum_range_c11(int n) {\n    return n <= 0 ? 0 : n + sum_range_c11(n - 1);\n}\n\nint main() {\n    constexpr int result = sum_range(10);  // Requires C++14+\n    constexpr int result_c11 = sum_range_c11(10);  // Works in C++11\n}\n```\n\n**Why C++11 is so restrictive?**\n\nThe original design philosophy was that `constexpr` functions should be \"pure\" expressions without side effects. This made compiler implementation simpler but severely limited expressiveness. C++14 recognized this was too restrictive for practical use.\n\n**Workaround for C++11** (recursive approach):\n```cpp\n// C++11-compatible recursive sum\nconstexpr int sum_recursive(int n) {\n    return (n <= 1) ? n : n + sum_recursive(n - 1);\n}\n\n// But watch out for template instantiation depth limits!\nconstexpr int huge_sum = sum_recursive(10000);  // May hit recursion limit\n```\n\n**Key takeaway**: C++11 `constexpr` functions must be expressed as single-expression recursions; C++14+ allows imperative-style loops.\n\n---",
-          "code_examples": [
-            "// ❌ C++11: Compile error (loops not allowed)\n// ✅ C++14+: Valid\nconstexpr int sum_range(int n) {\n    int total = 0;  // ❌ C++11: mutable local variable\n    for (int i = 1; i <= n; ++i) {  // ❌ C++11: loop\n        total += i;\n    }\n    return total;\n}\n\n// ✅ C++11: Valid (single return, ternary operator)\nconstexpr int sum_range_c11(int n) {\n    return n <= 0 ? 0 : n + sum_range_c11(n - 1);\n}\n\nint main() {\n    constexpr int result = sum_range(10);  // Requires C++14+\n    constexpr int result_c11 = sum_range_c11(10);  // Works in C++11\n}",
-            "// C++11-compatible recursive sum\nconstexpr int sum_recursive(int n) {\n    return (n <= 1) ? n : n + sum_recursive(n - 1);\n}\n\n// But watch out for template instantiation depth limits!\nconstexpr int huge_sum = sum_recursive(10000);  // May hit recursion limit"
-          ]
+          "explanation": "C++11 `constexpr` functions have severe restrictions that make many intuitive implementations invalid.\n\n```cpp\n// ❌ C++11: Compile error (loops not allowed)\n// ✅ C++14+: Valid\nconstexpr int sum_range(int n) {\n    int total = 0;  // ❌ C++11: mutable local variable\n    for (int i = 1; i <= n; ++i) {  // ❌ C++11: loop\n        total += i;\n    }\n    return total;\n}\n\n// ✅ C++11: Valid (single return, ternary operator)\nconstexpr int sum_range_c11(int n) {\n    return n <= 0 ? 0 : n + sum_range_c11(n - 1);\n}\n\nint main() {\n    constexpr int result = sum_range(10);  // Requires C++14+\n    constexpr int result_c11 = sum_range_c11(10);  // Works in C++11\n}\n```\n\n**Why C++11 is so restrictive?**\n\nThe original design philosophy was that `constexpr` functions should be \"pure\" expressions without side effects. This made compiler implementation simpler but severely limited expressiveness. C++14 recognized this was too restrictive for practical use.\n\n**Workaround for C++11** (recursive approach):\n```cpp\n// C++11-compatible recursive sum\nconstexpr int sum_recursive(int n) {\n    return (n <= 1) ? n : n + sum_recursive(n - 1);\n}\n\n// But watch out for template instantiation depth limits!\nconstexpr int huge_sum = sum_recursive(10000);  // May hit recursion limit\n```\n\n**Key takeaway**: C++11 `constexpr` functions must be expressed as single-expression recursions; C++14+ allows imperative-style loops.\n\n---"
         },
         {
+          "case_number": 3,
           "title": "if constexpr vs Regular if in Templates",
-          "explanation": "`if constexpr` (C++17) performs **compile-time branch elimination**, which is fundamentally different from runtime `if`.\n\n```cpp\n#include <type_traits>\n#include <iostream>\n\ntemplate<typename T>\nvoid process(T value) {\n    // Version 1: Regular if (runtime check)\n    if (std::is_integral<T>::value) {\n        // ❌ PROBLEM: This branch is instantiated even for non-integral types\n        // If this code is invalid for T=float, compilation fails!\n        value++;  // Would fail for std::string\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\ntemplate<typename T>\nvoid process_constexpr(T value) {\n    // Version 2: if constexpr (compile-time elimination)\n    if constexpr (std::is_integral<T>::value) {\n        // ✅ This branch is ONLY instantiated for integral types\n        value++;\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        // ✅ This branch is ONLY instantiated for non-integral types\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\nint main() {\n    process_constexpr(42);           // ✅ \"Integral: 43\"\n    process_constexpr(3.14);         // ✅ \"Non-integral\"\n    process_constexpr(std::string(\"test\"));  // ✅ \"Non-integral\"\n\n    // process(std::string(\"test\"));  // ❌ Would fail: can't ++ a string\n}\n```\n\n**Why this matters:**\n\nWithout `if constexpr`, **both branches** of the `if` must be syntactically valid for the instantiated type, even though only one runs. With `if constexpr`, the discarded branch is **never instantiated**, so it can contain code that wouldn't compile for that type.\n\n**Real-world scenario** (sensor data processing):\n```cpp\ntemplate<typename SensorData>\nvoid calibrate(SensorData& data) {\n    if constexpr (std::is_same_v<SensorData, LidarPoint>) {\n        // LiDAR-specific calibration (angle correction, intensity scaling)\n        data.angle += angle_offset;\n        data.intensity *= intensity_gain;\n    } else if constexpr (std::is_same_v<SensorData, RadarReturn>) {\n        // Radar-specific calibration (doppler correction)\n        data.doppler_shift += doppler_offset;\n    } else {\n        // Generic calibration\n        data.timestamp = adjust_timestamp(data.timestamp);\n    }\n}\n```\n\n**Key takeaway**: Use `if constexpr` for type-dependent code paths in templates; regular `if` checks at runtime and instantiates all branches.\n\n---",
-          "code_examples": [
-            "#include <type_traits>\n#include <iostream>\n\ntemplate<typename T>\nvoid process(T value) {\n    // Version 1: Regular if (runtime check)\n    if (std::is_integral<T>::value) {\n        // ❌ PROBLEM: This branch is instantiated even for non-integral types\n        // If this code is invalid for T=float, compilation fails!\n        value++;  // Would fail for std::string\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\ntemplate<typename T>\nvoid process_constexpr(T value) {\n    // Version 2: if constexpr (compile-time elimination)\n    if constexpr (std::is_integral<T>::value) {\n        // ✅ This branch is ONLY instantiated for integral types\n        value++;\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        // ✅ This branch is ONLY instantiated for non-integral types\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\nint main() {\n    process_constexpr(42);           // ✅ \"Integral: 43\"\n    process_constexpr(3.14);         // ✅ \"Non-integral\"\n    process_constexpr(std::string(\"test\"));  // ✅ \"Non-integral\"\n\n    // process(std::string(\"test\"));  // ❌ Would fail: can't ++ a string\n}",
-            "template<typename SensorData>\nvoid calibrate(SensorData& data) {\n    if constexpr (std::is_same_v<SensorData, LidarPoint>) {\n        // LiDAR-specific calibration (angle correction, intensity scaling)\n        data.angle += angle_offset;\n        data.intensity *= intensity_gain;\n    } else if constexpr (std::is_same_v<SensorData, RadarReturn>) {\n        // Radar-specific calibration (doppler correction)\n        data.doppler_shift += doppler_offset;\n    } else {\n        // Generic calibration\n        data.timestamp = adjust_timestamp(data.timestamp);\n    }\n}"
-          ]
+          "explanation": "`if constexpr` (C++17) performs **compile-time branch elimination**, which is fundamentally different from runtime `if`.\n\n```cpp\n#include <type_traits>\n#include <iostream>\n\ntemplate<typename T>\nvoid process(T value) {\n    // Version 1: Regular if (runtime check)\n    if (std::is_integral<T>::value) {\n        // ❌ PROBLEM: This branch is instantiated even for non-integral types\n        // If this code is invalid for T=float, compilation fails!\n        value++;  // Would fail for std::string\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\ntemplate<typename T>\nvoid process_constexpr(T value) {\n    // Version 2: if constexpr (compile-time elimination)\n    if constexpr (std::is_integral<T>::value) {\n        // ✅ This branch is ONLY instantiated for integral types\n        value++;\n        std::cout << \"Integral: \" << value << \"\\n\";\n    } else {\n        // ✅ This branch is ONLY instantiated for non-integral types\n        std::cout << \"Non-integral\\n\";\n    }\n}\n\nint main() {\n    process_constexpr(42);           // ✅ \"Integral: 43\"\n    process_constexpr(3.14);         // ✅ \"Non-integral\"\n    process_constexpr(std::string(\"test\"));  // ✅ \"Non-integral\"\n\n    // process(std::string(\"test\"));  // ❌ Would fail: can't ++ a string\n}\n```\n\n**Why this matters:**\n\nWithout `if constexpr`, **both branches** of the `if` must be syntactically valid for the instantiated type, even though only one runs. With `if constexpr`, the discarded branch is **never instantiated**, so it can contain code that wouldn't compile for that type.\n\n**Real-world scenario** (sensor data processing):\n```cpp\ntemplate<typename SensorData>\nvoid calibrate(SensorData& data) {\n    if constexpr (std::is_same_v<SensorData, LidarPoint>) {\n        // LiDAR-specific calibration (angle correction, intensity scaling)\n        data.angle += angle_offset;\n        data.intensity *= intensity_gain;\n    } else if constexpr (std::is_same_v<SensorData, RadarReturn>) {\n        // Radar-specific calibration (doppler correction)\n        data.doppler_shift += doppler_offset;\n    } else {\n        // Generic calibration\n        data.timestamp = adjust_timestamp(data.timestamp);\n    }\n}\n```\n\n**Key takeaway**: Use `if constexpr` for type-dependent code paths in templates; regular `if` checks at runtime and instantiates all branches.\n\n---"
         },
         {
+          "case_number": 4,
           "title": "Template Instantiation Depth Limits",
-          "explanation": "Recursive template metaprogramming can hit compiler-imposed depth limits, causing compilation to fail.\n\n```cpp\n// Compile-time factorial using template recursion\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N - 1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f5 = Factorial<5>::value;      // ✅ 120\n    constexpr int f10 = Factorial<10>::value;    // ✅ 3628800\n\n    // ❌ Most compilers fail: exceeds default depth limit (~512-1024)\n    // constexpr int f2000 = Factorial<2000>::value;\n    // Error: template instantiation depth exceeds maximum of 1024\n}\n```\n\n**Why this happens:**\n\nTemplate metaprogramming works by recursive template instantiation. The compiler must generate `Factorial<N>`, which requires `Factorial<N-1>`, which requires `Factorial<N-2>`, and so on. This creates a chain of 2000 instantiations, exceeding compiler limits.\n\n**Solutions:**\n\n1. **Increase compiler limit**:\n   ```bash\n   g++ -ftemplate-depth=5000 program.cpp\n   clang++ -ftemplate-depth=5000 program.cpp\n   ```\n\n2. **Use constexpr functions instead** (C++14+):\n   ```cpp\n   // ✅ No instantiation depth limit (regular recursion at compile time)\n   constexpr int factorial_constexpr(int n) {\n       return (n <= 1) ? 1 : n * factorial_constexpr(n - 1);\n   }\n\n   constexpr int f2000 = factorial_constexpr(2000);  // ✅ Works (huge number)\n   ```\n\n**Why constexpr doesn't hit the limit:**\n\n`constexpr` functions use regular function call recursion (evaluated at compile time), not template instantiation. The recursion limit is typically much higher (stack depth limit), not a hard-coded compiler constant.\n\n**Real-world consideration**:\n```cpp\n// Computing polynomial coefficients at compile time\ntemplate<int Degree>\nstruct PolynomialCoefficients {\n    // Recursive computation...\n    // If Degree = 1000, template instantiation may fail\n};\n\n// ✅ Better: Use constexpr function\nconstexpr std::array<double, N> compute_coefficients() {\n    // Iterative or recursive computation\n}\n```\n\n**Key takeaway**: For deep recursion (>100 levels), prefer `constexpr` functions over template metaprogramming to avoid instantiation depth limits.\n\n---",
-          "code_examples": [
-            "// Compile-time factorial using template recursion\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N - 1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f5 = Factorial<5>::value;      // ✅ 120\n    constexpr int f10 = Factorial<10>::value;    // ✅ 3628800\n\n    // ❌ Most compilers fail: exceeds default depth limit (~512-1024)\n    // constexpr int f2000 = Factorial<2000>::value;\n    // Error: template instantiation depth exceeds maximum of 1024\n}",
-            "2. **Use constexpr functions instead** (C++14+):",
-            "**Why constexpr doesn't hit the limit:**\n\n`constexpr` functions use regular function call recursion (evaluated at compile time), not template instantiation. The recursion limit is typically much higher (stack depth limit), not a hard-coded compiler constant.\n\n**Real-world consideration**:"
-          ]
+          "explanation": "Recursive template metaprogramming can hit compiler-imposed depth limits, causing compilation to fail.\n\n```cpp\n// Compile-time factorial using template recursion\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N - 1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f5 = Factorial<5>::value;      // ✅ 120\n    constexpr int f10 = Factorial<10>::value;    // ✅ 3628800\n\n    // ❌ Most compilers fail: exceeds default depth limit (~512-1024)\n    // constexpr int f2000 = Factorial<2000>::value;\n    // Error: template instantiation depth exceeds maximum of 1024\n}\n```\n\n**Why this happens:**\n\nTemplate metaprogramming works by recursive template instantiation. The compiler must generate `Factorial<N>`, which requires `Factorial<N-1>`, which requires `Factorial<N-2>`, and so on. This creates a chain of 2000 instantiations, exceeding compiler limits.\n\n**Solutions:**\n\n1. **Increase compiler limit**:\n   ```bash\n   g++ -ftemplate-depth=5000 program.cpp\n   clang++ -ftemplate-depth=5000 program.cpp\n   ```\n\n2. **Use constexpr functions instead** (C++14+):\n   ```cpp\n   // ✅ No instantiation depth limit (regular recursion at compile time)\n   constexpr int factorial_constexpr(int n) {\n       return (n <= 1) ? 1 : n * factorial_constexpr(n - 1);\n   }\n\n   constexpr int f2000 = factorial_constexpr(2000);  // ✅ Works (huge number)\n   ```\n\n**Why constexpr doesn't hit the limit:**\n\n`constexpr` functions use regular function call recursion (evaluated at compile time), not template instantiation. The recursion limit is typically much higher (stack depth limit), not a hard-coded compiler constant.\n\n**Real-world consideration**:\n```cpp\n// Computing polynomial coefficients at compile time\ntemplate<int Degree>\nstruct PolynomialCoefficients {\n    // Recursive computation...\n    // If Degree = 1000, template instantiation may fail\n};\n\n// ✅ Better: Use constexpr function\nconstexpr std::array<double, N> compute_coefficients() {\n    // Iterative or recursive computation\n}\n```\n\n**Key takeaway**: For deep recursion (>100 levels), prefer `constexpr` functions over template metaprogramming to avoid instantiation depth limits.\n\n---"
         },
         {
+          "case_number": 5,
           "title": "consteval Forces Compile-Time Evaluation (C++20)",
-          "explanation": "`consteval` (immediate functions) **must** produce a constant expression and cannot be called with runtime values.\n\n```cpp\n// consteval: MUST be compile-time evaluated\nconsteval int square(int x) {\n    return x * x;\n}\n\n// constexpr: CAN be compile-time evaluated\nconstexpr int cube(int x) {\n    return x * x * x;\n}\n\nint main() {\n    // ✅ Compile-time: both work\n    constexpr int sq = square(5);   // 25\n    constexpr int cb = cube(5);     // 125\n\n    // Runtime value\n    int runtime_val = 10;\n\n    // ❌ Compile error: consteval cannot accept runtime argument\n    // int result = square(runtime_val);\n\n    // ✅ constexpr can accept runtime argument (evaluated at runtime)\n    int result = cube(runtime_val);  // Runs at runtime\n\n    // ✅ Workaround: force compile-time evaluation\n    constexpr int val = 10;\n    int result2 = square(val);  // OK: val is constexpr\n}\n```\n\n**Use cases for consteval:**\n\n1. **Configuration validation** that should never happen at runtime:\n   ```cpp\n   consteval bool validate_sensor_config(int sensor_count, int sample_rate) {\n       if (sensor_count < 1 || sensor_count > 16) return false;\n       if (sample_rate < 100 || sample_rate > 10000) return false;\n       return true;\n   }\n\n   // ✅ Validated at compile time\n   static_assert(validate_sensor_config(8, 1000), \"Invalid sensor config\");\n\n   // ❌ Cannot validate runtime values\n   // int count = get_sensor_count();\n   // validate_sensor_config(count, 1000);  // Compile error\n   ```\n\n2. **Embedded systems** where runtime computation is forbidden:\n   ```cpp\n   consteval size_t compute_buffer_size(size_t sensors, size_t samples) {\n       return sensors * samples * sizeof(float);\n   }\n\n   // Buffer size computed at compile time (no runtime overhead)\n   alignas(64) char buffer[compute_buffer_size(8, 1024)];\n   ```\n\n**Key takeaway**: Use `consteval` when you want to guarantee compile-time evaluation and prevent accidental runtime usage.\n\n---",
-          "code_examples": [
-            "// consteval: MUST be compile-time evaluated\nconsteval int square(int x) {\n    return x * x;\n}\n\n// constexpr: CAN be compile-time evaluated\nconstexpr int cube(int x) {\n    return x * x * x;\n}\n\nint main() {\n    // ✅ Compile-time: both work\n    constexpr int sq = square(5);   // 25\n    constexpr int cb = cube(5);     // 125\n\n    // Runtime value\n    int runtime_val = 10;\n\n    // ❌ Compile error: consteval cannot accept runtime argument\n    // int result = square(runtime_val);\n\n    // ✅ constexpr can accept runtime argument (evaluated at runtime)\n    int result = cube(runtime_val);  // Runs at runtime\n\n    // ✅ Workaround: force compile-time evaluation\n    constexpr int val = 10;\n    int result2 = square(val);  // OK: val is constexpr\n}",
-            "consteval bool validate_sensor_config(int sensor_count, int sample_rate) {\n       if (sensor_count < 1 || sensor_count > 16) return false;\n       if (sample_rate < 100 || sample_rate > 10000) return false;\n       return true;\n   }\n\n   // ✅ Validated at compile time\n   static_assert(validate_sensor_config(8, 1000), \"Invalid sensor config\");\n\n   // ❌ Cannot validate runtime values\n   // int count = get_sensor_count();\n   // validate_sensor_config(count, 1000);  // Compile error",
-            "consteval size_t compute_buffer_size(size_t sensors, size_t samples) {\n       return sensors * samples * sizeof(float);\n   }\n\n   // Buffer size computed at compile time (no runtime overhead)\n   alignas(64) char buffer[compute_buffer_size(8, 1024)];"
-          ]
+          "explanation": "`consteval` (immediate functions) **must** produce a constant expression and cannot be called with runtime values.\n\n```cpp\n// consteval: MUST be compile-time evaluated\nconsteval int square(int x) {\n    return x * x;\n}\n\n// constexpr: CAN be compile-time evaluated\nconstexpr int cube(int x) {\n    return x * x * x;\n}\n\nint main() {\n    // ✅ Compile-time: both work\n    constexpr int sq = square(5);   // 25\n    constexpr int cb = cube(5);     // 125\n\n    // Runtime value\n    int runtime_val = 10;\n\n    // ❌ Compile error: consteval cannot accept runtime argument\n    // int result = square(runtime_val);\n\n    // ✅ constexpr can accept runtime argument (evaluated at runtime)\n    int result = cube(runtime_val);  // Runs at runtime\n\n    // ✅ Workaround: force compile-time evaluation\n    constexpr int val = 10;\n    int result2 = square(val);  // OK: val is constexpr\n}\n```\n\n**Use cases for consteval:**\n\n1. **Configuration validation** that should never happen at runtime:\n   ```cpp\n   consteval bool validate_sensor_config(int sensor_count, int sample_rate) {\n       if (sensor_count < 1 || sensor_count > 16) return false;\n       if (sample_rate < 100 || sample_rate > 10000) return false;\n       return true;\n   }\n\n   // ✅ Validated at compile time\n   static_assert(validate_sensor_config(8, 1000), \"Invalid sensor config\");\n\n   // ❌ Cannot validate runtime values\n   // int count = get_sensor_count();\n   // validate_sensor_config(count, 1000);  // Compile error\n   ```\n\n2. **Embedded systems** where runtime computation is forbidden:\n   ```cpp\n   consteval size_t compute_buffer_size(size_t sensors, size_t samples) {\n       return sensors * samples * sizeof(float);\n   }\n\n   // Buffer size computed at compile time (no runtime overhead)\n   alignas(64) char buffer[compute_buffer_size(8, 1024)];\n   ```\n\n**Key takeaway**: Use `consteval` when you want to guarantee compile-time evaluation and prevent accidental runtime usage.\n\n---"
         }
       ],
       "code_examples": [
         {
+          "example_number": 1,
           "title": "Basic constexpr Function (Easy Level)",
           "explanation": "This basic example demonstrates:\n- **constexpr functions** that work in both compile-time and runtime contexts\n- **constexpr variables** as named constants\n- **static_assert** for compile-time validation\n- **Recursive constexpr** functions (single-expression recursion for C++11 compatibility)\n\nThe factorial function is evaluated at compile time when `fact5` is initialized (because it's `constexpr`), but evaluated at runtime for `fact7` (because `n` is not a constant expression).\n\n---",
           "code": "#include <iostream>\n\n// Simple constexpr function (works in C++11+)\nconstexpr int factorial(int n) {\n    return (n <= 1) ? 1 : n * factorial(n - 1);\n}\n\n// constexpr variable\nconstexpr int MAX_CONNECTIONS = 10;\n\n// constexpr with static_assert\nconstexpr int compute_buffer_size(int elements) {\n    return elements * sizeof(int);\n}\n\nint main() {\n    // Compile-time evaluation\n    constexpr int fact5 = factorial(5);\n    std::cout << \"5! = \" << fact5 << \"\\n\";  // 120\n\n    // Can also use at runtime (C++14+, but this simple version works in C++11)\n    int n = 7;\n    int fact7 = factorial(n);  // Evaluated at runtime\n    std::cout << \"7! = \" << fact7 << \"\\n\";  // 5040\n\n    // Compile-time buffer size calculation\n    constexpr int buffer_size = compute_buffer_size(100);\n    char buffer[buffer_size];  // Array size must be compile-time constant\n\n    // Compile-time assertion\n    static_assert(factorial(3) == 6, \"Factorial calculation wrong\");\n    static_assert(MAX_CONNECTIONS > 0, \"Must have at least 1 connection\");\n\n    return 0;\n}",
           "additional_code": []
         },
         {
+          "example_number": 2,
           "title": "constexpr with Loops and Branches (C++14 Features)",
           "explanation": "This C++14 example shows:\n- **Loops in constexpr functions** (not allowed in C++11)\n- **Mutable local variables** in constexpr functions\n- **Multiple return statements** and complex control flow\n- **Real-world use case**: Compile-time CRC32 hashing for efficient string comparisons\n\nThe CRC32 example is particularly powerful: string hashes are computed at compile time, allowing switch-case on strings (which normally isn't possible in C++).\n\n---",
           "code": "#include <iostream>\n\n// C++14: constexpr with loops and mutable variables\nconstexpr int sum_range(int n) {\n    int total = 0;\n    for (int i = 1; i <= n; ++i) {\n        total += i;\n    }\n    return total;\n}\n\n// C++14: constexpr with multiple return statements and conditionals\nconstexpr int abs_value(int x) {\n    if (x < 0) return -x;\n    return x;\n}\n\n// C++14: constexpr with complex control flow\nconstexpr int fibonacci(int n) {\n    if (n <= 1) return n;\n\n    int a = 0, b = 1;\n    for (int i = 2; i <= n; ++i) {\n        int temp = a + b;\n        a = b;\n        b = temp;\n    }\n    return b;\n}\n\n// Real-world: Compile-time CRC table generation\nconstexpr unsigned int crc32_byte(unsigned int crc, unsigned char byte) {\n    crc ^= byte;\n    for (int i = 0; i < 8; ++i) {\n        crc = (crc >> 1) ^ (0xEDB88320 & -(crc & 1));\n    }\n    return crc;\n}\n\nconstexpr unsigned int crc32_string(const char* str, size_t len) {\n    unsigned int crc = 0xFFFFFFFF;\n    for (size_t i = 0; i < len; ++i) {\n        crc = crc32_byte(crc, str[i]);\n    }\n    return ~crc;\n}\n\nint main() {\n    // Compile-time evaluation\n    constexpr int sum = sum_range(100);          // Sum 1-100 = 5050\n    constexpr int fib10 = fibonacci(10);         // 55\n    constexpr int abs_neg = abs_value(-42);      // 42\n\n    std::cout << \"Sum 1-100: \" << sum << \"\\n\";\n    std::cout << \"Fib(10): \" << fib10 << \"\\n\";\n    std::cout << \"abs(-42): \" << abs_neg << \"\\n\";\n\n    // Compile-time string hashing for switch-case on strings\n    constexpr unsigned int sensor_type = crc32_string(\"LIDAR\", 5);\n\n    // Can use compile-time hash in switch\n    unsigned int incoming_sensor = get_sensor_type_hash();\n    switch (incoming_sensor) {\n        case crc32_string(\"LIDAR\", 5):\n            process_lidar();\n            break;\n        case crc32_string(\"RADAR\", 5):\n            process_radar();\n            break;\n        case crc32_string(\"CAMERA\", 6):\n            process_camera();\n            break;\n    }\n\n    return 0;\n}",
           "additional_code": []
         },
         {
+          "example_number": 3,
           "title": "static_assert with type_traits (Type Checking)",
           "explanation": "This example demonstrates:\n- **static_assert with type_traits** for compile-time type validation\n- **Template constraints** enforced at compile time\n- **Dimension checking** for matrix multiplication (impossible dimension mismatches caught at compile time)\n- **Real-world safety**: In autonomous vehicles, matrix dimension errors can cause catastrophic failures; catching them at compile time is critical\n\n---",
           "code": "#include <type_traits>\n#include <iostream>\n\n// Template function with compile-time type checking\ntemplate<typename T>\nvoid process_numeric(T value) {\n    // ✅ Ensure T is arithmetic (int, float, double, etc.)\n    static_assert(std::is_arithmetic<T>::value,\n                  \"T must be an arithmetic type\");\n\n    std::cout << \"Processing: \" << value * 2 << \"\\n\";\n}\n\n// Template class with size constraints\ntemplate<typename T, size_t Size>\nclass FixedArray {\n    static_assert(Size > 0, \"Array size must be greater than 0\");\n    static_assert(Size <= 1024, \"Array size too large (max 1024)\");\n    static_assert(std::is_trivially_copyable<T>::value,\n                  \"T must be trivially copyable for memcpy optimization\");\n\n    T data[Size];\n\npublic:\n    constexpr size_t size() const { return Size; }\n    T& operator[](size_t idx) { return data[idx]; }\n};\n\n// Autonomous vehicle: Compile-time matrix dimension validation\ntemplate<size_t Rows, size_t Cols>\nclass Matrix {\n    static_assert(Rows > 0 && Cols > 0, \"Matrix dimensions must be positive\");\n\n    float data[Rows][Cols];\n\npublic:\n    static constexpr size_t rows() { return Rows; }\n    static constexpr size_t cols() { return Cols; }\n\n    // Only allow multiplication if dimensions match\n    template<size_t OtherCols>\n    Matrix<Rows, OtherCols> multiply(const Matrix<Cols, OtherCols>& other) const {\n        // Inner dimensions must match (this->Cols == other->Rows)\n        // This is guaranteed by the template parameter Cols\n        Matrix<Rows, OtherCols> result{};\n        for (size_t i = 0; i < Rows; ++i) {\n            for (size_t j = 0; j < OtherCols; ++j) {\n                for (size_t k = 0; k < Cols; ++k) {\n                    result.data[i][j] += data[i][k] * other.data[k][j];\n                }\n            }\n        }\n        return result;\n    }\n};\n\nint main() {\n    // ✅ Valid: int is arithmetic\n    process_numeric(42);\n\n    // ❌ Compile error: std::string is not arithmetic\n    // process_numeric(std::string(\"hello\"));\n\n    // ✅ Valid: size within limits\n    FixedArray<int, 100> arr;\n\n    // ❌ Compile error: size is 0\n    // FixedArray<int, 0> invalid_arr;\n\n    // ✅ Valid matrix operations (dimensions checked at compile time)\n    Matrix<3, 4> projection;   // 3x4 projection matrix\n    Matrix<4, 4> transform;    // 4x4 transformation matrix\n\n    // ✅ Valid: 3x4 * 4x4 = 3x4\n    auto result = projection.multiply(transform);\n\n    // ❌ Compile error: dimension mismatch (3x4 * 3x4 invalid)\n    // auto invalid = projection.multiply(projection);\n\n    return 0;\n}",
           "additional_code": []
         },
         {
+          "example_number": 4,
           "title": "if constexpr for Type-Dependent Code (C++17)",
           "explanation": "This example shows:\n- **if constexpr for type-dependent code paths** (branches not taken are never instantiated)\n- **Multiple type checks** with `is_same_v`, `is_arithmetic_v`, `is_pointer_v`\n- **Real-world sensor processing** with type-specific algorithms\n- **Compile-time branch elimination** for zero runtime overhead\n\nThe key advantage: Each instantiation only contains the code path for that specific type. `serialize<int>` doesn't contain string handling code, and `serialize<std::string>` doesn't contain arithmetic handling code.\n\n---",
           "code": "#include <iostream>\n#include <type_traits>\n#include <string>\n#include <vector>\n\n// Generic serialization with type-dependent logic\ntemplate<typename T>\nvoid serialize(const T& value) {\n    if constexpr (std::is_arithmetic_v<T>) {\n        // Arithmetic types: write binary\n        std::cout << \"Binary serialize: \" << value << \"\\n\";\n    } else if constexpr (std::is_same_v<T, std::string>) {\n        // Strings: write length + data\n        std::cout << \"String serialize: \" << value.size() << \" bytes\\n\";\n    } else if constexpr (std::is_pointer_v<T>) {\n        // Pointers: serialize pointed-to value\n        std::cout << \"Pointer serialize: \" << *value << \"\\n\";\n    } else {\n        // Unknown types: static assertion failure\n        static_assert(std::is_arithmetic_v<T>, \"Unsupported type for serialization\");\n    }\n}\n\n// Autonomous vehicle: Type-specific sensor data processing\ntemplate<typename SensorData>\nclass SensorProcessor {\npublic:\n    void process(const SensorData& data) {\n        if constexpr (std::is_same_v<SensorData, LidarPoint>) {\n            // LiDAR-specific processing\n            process_lidar(data);\n        } else if constexpr (std::is_same_v<SensorData, RadarReturn>) {\n            // Radar-specific processing\n            process_radar(data);\n        } else if constexpr (std::is_same_v<SensorData, CameraFrame>) {\n            // Camera-specific processing\n            process_camera(data);\n        } else {\n            static_assert(always_false<SensorData>::value,\n                          \"Unknown sensor type\");\n        }\n    }\n\nprivate:\n    template<typename T>\n    struct always_false : std::false_type {};\n\n    void process_lidar(const LidarPoint& point) {\n        // Distance filtering, ground removal, clustering\n        if (point.distance < 100.0f && point.z > -2.0f) {\n            // Valid point for obstacle detection\n        }\n    }\n\n    void process_radar(const RadarReturn& ret) {\n        // Doppler velocity extraction, range-rate filtering\n        if (ret.doppler_velocity > 0.0f) {\n            // Approaching object\n        }\n    }\n\n    void process_camera(const CameraFrame& frame) {\n        // Object detection, lane marking extraction\n    }\n};\n\n// Template function that adapts behavior based on container type\ntemplate<typename Container>\nvoid print_container(const Container& c) {\n    if constexpr (std::is_same_v<Container, std::string>) {\n        // Special handling for strings\n        std::cout << \"String: \\\"\" << c << \"\\\"\\n\";\n    } else {\n        // Generic container iteration\n        std::cout << \"Container: [\";\n        bool first = true;\n        for (const auto& elem : c) {\n            if (!first) std::cout << \", \";\n            std::cout << elem;\n            first = false;\n        }\n        std::cout << \"]\\n\";\n    }\n}\n\nint main() {\n    // Arithmetic serialization\n    serialize(42);\n    serialize(3.14);\n\n    // String serialization\n    serialize(std::string(\"hello\"));\n\n    // Pointer serialization\n    int value = 100;\n    serialize(&value);\n\n    // Container printing with type adaptation\n    print_container(std::vector<int>{1, 2, 3, 4, 5});\n    print_container(std::string(\"hello world\"));\n\n    return 0;\n}",
           "additional_code": []
         },
         {
+          "example_number": 5,
           "title": "Template Metaprogramming (Advanced)",
           "explanation": "This advanced example demonstrates:\n- **Template recursion** for compile-time computation\n- **Template specialization** for base cases\n- **Type lists** and metaprogramming abstractions\n- **Variadic templates** with fold expressions (C++17)\n- **Compile-time lookup tables** for runtime efficiency\n\nTemplate metaprogramming is Turing-complete: you can compute anything at compile time that you could compute at runtime, but with zero runtime overhead.\n\n---",
           "code": "#include <iostream>\n\n// Classic: Compile-time factorial using template recursion\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N - 1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\n// Compile-time power calculation\ntemplate<int Base, int Exponent>\nstruct Power {\n    static constexpr int value = Base * Power<Base, Exponent - 1>::value;\n};\n\ntemplate<int Base>\nstruct Power<Base, 0> {\n    static constexpr int value = 1;\n};\n\n// Compile-time Fibonacci\ntemplate<int N>\nstruct Fibonacci {\n    static constexpr int value = Fibonacci<N - 1>::value + Fibonacci<N - 2>::value;\n};\n\ntemplate<>\nstruct Fibonacci<0> {\n    static constexpr int value = 0;\n};\n\ntemplate<>\nstruct Fibonacci<1> {\n    static constexpr int value = 1;\n};\n\n// Type list (metaprogramming foundation)\ntemplate<typename... Types>\nstruct TypeList {};\n\n// Length of type list\ntemplate<typename List>\nstruct Length;\n\ntemplate<typename... Types>\nstruct Length<TypeList<Types...>> {\n    static constexpr size_t value = sizeof...(Types);\n};\n\n// Get type at index\ntemplate<size_t Index, typename List>\nstruct TypeAt;\n\ntemplate<size_t Index, typename Head, typename... Tail>\nstruct TypeAt<Index, TypeList<Head, Tail...>> {\n    using type = typename TypeAt<Index - 1, TypeList<Tail...>>::type;\n};\n\ntemplate<typename Head, typename... Tail>\nstruct TypeAt<0, TypeList<Head, Tail...>> {\n    using type = Head;\n};\n\n// Check if type exists in list\ntemplate<typename T, typename List>\nstruct Contains;\n\ntemplate<typename T, typename... Types>\nstruct Contains<T, TypeList<Types...>> {\n    static constexpr bool value = (std::is_same_v<T, Types> || ...);\n};\n\n// Real-world: Compile-time lookup table generation\ntemplate<size_t Size>\nstruct SineLookupTable {\n    static constexpr double PI = 3.14159265358979323846;\n\n    double data[Size];\n\n    constexpr SineLookupTable() : data{} {\n        for (size_t i = 0; i < Size; ++i) {\n            data[i] = compute_sin(2.0 * PI * i / Size);\n        }\n    }\n\nprivate:\n    // Taylor series approximation for sine (compile-time)\n    static constexpr double compute_sin(double x) {\n        double result = x;\n        double term = x;\n        for (int n = 1; n < 10; ++n) {\n            term *= -x * x / ((2 * n) * (2 * n + 1));\n            result += term;\n        }\n        return result;\n    }\n};\n\nint main() {\n    // Template metaprogramming results\n    constexpr int fact5 = Factorial<5>::value;\n    constexpr int pow2_10 = Power<2, 10>::value;\n    constexpr int fib10 = Fibonacci<10>::value;\n\n    std::cout << \"5! = \" << fact5 << \"\\n\";        // 120\n    std::cout << \"2^10 = \" << pow2_10 << \"\\n\";    // 1024\n    std::cout << \"Fib(10) = \" << fib10 << \"\\n\";   // 55\n\n    // Type list operations\n    using SensorTypes = TypeList<LidarPoint, RadarReturn, CameraFrame>;\n    constexpr size_t num_sensors = Length<SensorTypes>::value;\n    std::cout << \"Number of sensor types: \" << num_sensors << \"\\n\";  // 3\n\n    // Check if type exists\n    constexpr bool has_lidar = Contains<LidarPoint, SensorTypes>::value;\n    constexpr bool has_gps = Contains<GpsCoordinate, SensorTypes>::value;\n    std::cout << \"Has LiDAR: \" << has_lidar << \"\\n\";  // true\n    std::cout << \"Has GPS: \" << has_gps << \"\\n\";      // false\n\n    // Compile-time sine table (256 entries computed at compile time)\n    constexpr SineLookupTable<256> sine_table;\n    std::cout << \"sin(π/2) ≈ \" << sine_table.data[64] << \"\\n\";  // ~1.0\n\n    return 0;\n}",
@@ -109,6 +97,7 @@
       ],
       "interview_qa": [
         {
+          "question_number": 1,
           "question": "What is the difference between constexpr and const?",
           "difficulty": [
             "beginner"
@@ -131,6 +120,7 @@
           "key_takeaway": "Use `constexpr` when you need compile-time constants; use `const` for runtime immutability."
         },
         {
+          "question_number": 2,
           "question": "Can a constexpr function call a non-constexpr function?",
           "difficulty": [
             "intermediate"
@@ -152,6 +142,7 @@
           "key_takeaway": "`constexpr` is a permission, not a mandate (except for `consteval`); calling non-constexpr functions forces runtime evaluation."
         },
         {
+          "question_number": 3,
           "question": "What happens if a static_assert condition fails?",
           "difficulty": [
             "beginner"
@@ -173,6 +164,7 @@
           "key_takeaway": "Use `static_assert` to enforce compile-time invariants; failed assertions prevent compilation."
         },
         {
+          "question_number": 4,
           "question": "How does template instantiation depth limit affect template metaprogramming?",
           "difficulty": [
             "advanced"
@@ -194,6 +186,7 @@
           "key_takeaway": "For deep recursion (>100 levels), prefer `constexpr` functions over template metaprogramming to avoid hitting instantiation depth limits."
         },
         {
+          "question_number": 5,
           "question": "What is the difference between if constexpr and a regular if statement in templates?",
           "difficulty": [
             "intermediate"
@@ -215,6 +208,7 @@
           "key_takeaway": "Use `if constexpr` for type-dependent logic in templates to avoid instantiating invalid code paths."
         },
         {
+          "question_number": 6,
           "question": "What is the purpose of consteval and how does it differ from constexpr?",
           "difficulty": [
             "intermediate"
@@ -237,6 +231,7 @@
           "key_takeaway": "`consteval` guarantees compile-time evaluation; `constexpr` allows but doesn't require it."
         },
         {
+          "question_number": 7,
           "question": "Can constexpr functions have side effects?",
           "difficulty": [
             "intermediate"
@@ -258,6 +253,7 @@
           "key_takeaway": "`constexpr` functions must be pure for compile-time evaluation; side effects force runtime evaluation."
         },
         {
+          "question_number": 8,
           "question": "What are type traits and how are they used?",
           "difficulty": [
             "beginner"
@@ -279,6 +275,7 @@
           "key_takeaway": "Type traits provide compile-time type introspection for conditional compilation and validation."
         },
         {
+          "question_number": 9,
           "question": "How do you write a custom type trait?",
           "difficulty": [
             "advanced"
@@ -300,6 +297,7 @@
           "key_takeaway": "Custom type traits use template specialization with `std::true_type`/`std::false_type` to classify types at compile time."
         },
         {
+          "question_number": 10,
           "question": "What is the difference between std::is_same and typeid?",
           "difficulty": [
             "intermediate"
@@ -321,6 +319,7 @@
           "key_takeaway": "`std::is_same` is compile-time (zero cost), `typeid` is runtime (RTTI overhead)."
         },
         {
+          "question_number": 11,
           "question": "Why might a constexpr function fail to evaluate at compile time?",
           "difficulty": [
             "intermediate"
@@ -342,6 +341,7 @@
           "key_takeaway": "`constexpr` functions evaluate at compile time only when all inputs and operations allow it; otherwise they run at runtime."
         },
         {
+          "question_number": 12,
           "question": "What is the purpose of std::integral_constant?",
           "difficulty": [
             "advanced"
@@ -363,6 +363,7 @@
           "key_takeaway": "`std::integral_constant` turns compile-time values into types, enabling value-based template metaprogramming."
         },
         {
+          "question_number": 13,
           "question": "Can you use constexpr with constructors? What does it enable?",
           "difficulty": [
             "intermediate"
@@ -384,6 +385,7 @@
           "key_takeaway": "`constexpr` constructors enable compile-time object creation, making classes usable in constant expressions."
         },
         {
+          "question_number": 14,
           "question": "What is SFINAE and how does it relate to type traits?",
           "difficulty": [
             "advanced"
@@ -406,6 +408,7 @@
           "key_takeaway": "SFINAE + type traits enable compile-time function selection based on type properties."
         },
         {
+          "question_number": 15,
           "question": "How do you prevent template instantiation depth issues?",
           "difficulty": [
             "advanced"
@@ -427,6 +430,7 @@
           "key_takeaway": "Prefer `constexpr` functions over template recursion for deep computations to avoid instantiation depth limits."
         },
         {
+          "question_number": 16,
           "question": "What is constinit and when would you use it?",
           "difficulty": [
             "intermediate"
@@ -449,6 +453,7 @@
           "key_takeaway": "Use `constinit` for static/thread_local variables to guarantee compile-time initialization and avoid order fiascos."
         },
         {
+          "question_number": 17,
           "question": "How does template argument deduction work with constexpr?",
           "difficulty": [
             "advanced"
@@ -471,6 +476,7 @@
           "key_takeaway": "Use `constexpr auto` to preserve compile-time evaluation in deduced variables; `auto` template parameters enable value-based templates."
         },
         {
+          "question_number": 18,
           "question": "What are the limitations of C++11 constexpr functions?",
           "difficulty": [
             "beginner"
@@ -492,6 +498,7 @@
           "key_takeaway": "C++11 `constexpr` functions are limited to single-expression recursions; C++14+ allows loops and local variables."
         },
         {
+          "question_number": 19,
           "question": "How do you debug constexpr functions that fail at compile time?",
           "difficulty": [
             "intermediate"
@@ -513,6 +520,7 @@
           "key_takeaway": "Debug `constexpr` functions by testing at runtime first, using `static_assert` for validation, and breaking into smaller functions."
         },
         {
+          "question_number": 20,
           "question": "What is the performance impact of using constexpr?",
           "difficulty": [
             "intermediate"
@@ -538,161 +546,201 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "What happens when you compile this code?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int add(int a, int b) {\n    return a + b;\n}\n\nint main() {\n    int x = 10;\n    constexpr int y = add(5, x);\n    std::cout << y;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error\n\n**Explanation:** `x` is not a constant expression (runtime variable); `constexpr int y` requires compile-time initialization\n\n**Key Concept:** constexpr requirements\n\n</details>\n\n---",
           "code": "constexpr int add(int a, int b) {\n    return a + b;\n}\n\nint main() {\n    int x = 10;\n    constexpr int y = add(5, x);\n    std::cout << y;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "Will this compile in C++11? In C++14?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    constexpr int f5 = factorial(5);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** C++11: No<br>C++14: Yes\n\n**Explanation:** C++11 forbids loops and mutable variables in constexpr; C++14 allows them\n\n**Key Concept:** constexpr evolution\n\n</details>\n\n---",
           "code": "constexpr int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    constexpr int f5 = factorial(5);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "What is the output?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid process(T value) {\n    if constexpr (std::is_integral_v<T>) {\n        std::cout << value + 1 << \"\\n\";\n    } else {\n        std::cout << value << \"\\n\";\n    }\n}\n\nint main() {\n    process(42);\n    process(std::string(\"hello\"));\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 43<br>hello\n\n**Explanation:** `if constexpr` branches based on type: integral types print `value+1`, others print `value`\n\n**Key Concept:** if constexpr\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid process(T value) {\n    if constexpr (std::is_integral_v<T>) {\n        std::cout << value + 1 << \"\\n\";\n    } else {\n        std::cout << value << \"\\n\";\n    }\n}\n\nint main() {\n    process(42);\n    process(std::string(\"hello\"));\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "Will this compile on a typical 64-bit system?",
+          "description": "```cpp",
+          "full_content": "```cpp\nstatic_assert(sizeof(int) == 8, \"int must be 8 bytes\");\n\nint main() {\n    return 0;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** No (typically)\n\n**Explanation:** Most 64-bit systems have `sizeof(int) == 4`, so static_assert fails; compilation error\n\n**Key Concept:** static_assert\n\n</details>\n\n---",
           "code": "static_assert(sizeof(int) == 8, \"int must be 8 bytes\");\n\nint main() {\n    return 0;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "What happens at compile time?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int divide(int a, int b) {\n    return b != 0 ? a / b : 0;\n}\n\nint main() {\n    constexpr int result = divide(10, 0);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Evaluates to 0\n\n**Explanation:** Division by zero in constexpr is defined behavior (returns 0 with ternary guard); compiles and `result = 0`\n\n**Key Concept:** constexpr safety\n\n</details>\n\n---",
           "code": "constexpr int divide(int a, int b) {\n    return b != 0 ? a / b : 0;\n}\n\nint main() {\n    constexpr int result = divide(10, 0);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "What is the output?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<int N>\nstruct Fib {\n    static constexpr int value = Fib<N-1>::value + Fib<N-2>::value;\n};\n\ntemplate<> struct Fib<0> { static constexpr int value = 0; };\ntemplate<> struct Fib<1> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Fib<5>::value;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 5\n\n**Explanation:** Fib<5> = 3+2 = 5 (Fibonacci sequence: 0,1,1,2,3,5...)\n\n**Key Concept:** Template metaprogramming\n\n</details>\n\n---",
           "code": "template<int N>\nstruct Fib {\n    static constexpr int value = Fib<N-1>::value + Fib<N-2>::value;\n};\n\ntemplate<> struct Fib<0> { static constexpr int value = 0; };\ntemplate<> struct Fib<1> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Fib<5>::value;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "What is printed?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int foo(int x) {\n    return x * 2;\n}\n\nint main() {\n    int arr[foo(5)];\n    std::cout << sizeof(arr) / sizeof(int);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10\n\n**Explanation:** Array size is `foo(5) = 10` elements; `sizeof(arr)/sizeof(int) = 40/4 = 10`\n\n**Key Concept:** constexpr in array size\n\n</details>\n\n---",
           "code": "constexpr int foo(int x) {\n    return x * 2;\n}\n\nint main() {\n    int arr[foo(5)];\n    std::cout << sizeof(arr) / sizeof(int);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "Will this compile?",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <type_traits>\n\nstatic_assert(std::is_same_v<int, const int>, \"Types match\");\n\nint main() {}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** No\n\n**Explanation:** `std::is_same` checks exact types; `int` ≠ `const int` (cv-qualifiers differ)\n\n**Key Concept:** Type comparison\n\n</details>\n\n---",
           "code": "#include <type_traits>\n\nstatic_assert(std::is_same_v<int, const int>, \"Types match\");\n\nint main() {}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "What happens?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconsteval int square(int x) {\n    return x * x;\n}\n\nint main() {\n    int runtime_val = 5;\n    int result = square(runtime_val);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error\n\n**Explanation:** `consteval` requires compile-time constant argument; `runtime_val` is not constant\n\n**Key Concept:** consteval restriction\n\n</details>\n\n---",
           "code": "consteval int square(int x) {\n    return x * x;\n}\n\nint main() {\n    int runtime_val = 5;\n    int result = square(runtime_val);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "Does this code compile successfully?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int max_value(int a, int b) {\n    return (a > b) ? a : b;\n}\n\nint main() {\n    constexpr int x = 10;\n    constexpr int y = 20;\n    constexpr int max_val = max_value(x, y);\n    static_assert(max_val == 20);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Yes\n\n**Explanation:** All values are compile-time constants; `max_value(10, 20) = 20`; static_assert passes\n\n**Key Concept:** constexpr validation\n\n</details>\n\n---",
           "code": "constexpr int max_value(int a, int b) {\n    return (a > b) ? a : b;\n}\n\nint main() {\n    constexpr int x = 10;\n    constexpr int y = 20;\n    constexpr int max_val = max_value(x, y);\n    static_assert(max_val == 20);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "What is the output?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nvoid print(T value) {\n    if (std::is_integral_v<T>) {\n        std::cout << \"Integer\\n\";\n    } else {\n        std::cout << \"Not integer\\n\";\n    }\n}\n\nint main() {\n    print(42);\n    print(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Integer<br>Not integer\n\n**Explanation:** Regular `if` (not `if constexpr`) evaluates at runtime; checks type and prints accordingly\n\n**Key Concept:** Runtime vs compile-time\n\n</details>\n\n---",
           "code": "template<typename T>\nvoid print(T value) {\n    if (std::is_integral_v<T>) {\n        std::cout << \"Integer\\n\";\n    } else {\n        std::cout << \"Not integer\\n\";\n    }\n}\n\nint main() {\n    print(42);\n    print(3.14);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "What happens at compile time?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int compute(int n) {\n    if (n < 0) throw std::invalid_argument(\"negative\");\n    return n * 2;\n}\n\nint main() {\n    constexpr int result = compute(-5);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error\n\n**Explanation:** Throwing exception in constexpr function requires runtime context; compile-time evaluation can't throw\n\n**Key Concept:** Exception limitations\n\n</details>\n\n---",
           "code": "constexpr int compute(int n) {\n    if (n < 0) throw std::invalid_argument(\"negative\");\n    return n * 2;\n}\n\nint main() {\n    constexpr int result = compute(-5);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "What happens if you uncomment the second line?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<size_t N>\nstruct Array {\n    int data[N];\n    static_assert(N > 0, \"Size must be positive\");\n};\n\nint main() {\n    Array<5> arr1;\n    // Array<0> arr2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error\n\n**Explanation:** `static_assert(0 > 0)` fails; compilation stops with \"Size must be positive\" message\n\n**Key Concept:** static_assert enforcement\n\n</details>\n\n---",
           "code": "template<size_t N>\nstruct Array {\n    int data[N];\n    static_assert(N > 0, \"Size must be positive\");\n};\n\nint main() {\n    Array<5> arr1;\n    // Array<0> arr2;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "What is the output?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr bool is_even(int x) {\n    return x % 2 == 0;\n}\n\nint main() {\n    if constexpr (is_even(10)) {\n        std::cout << \"Even\\n\";\n    } else {\n        std::cout << \"Odd\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Even\n\n**Explanation:** `if constexpr (is_even(10))` evaluates to `if constexpr (true)` at compile time; only Even branch compiled\n\n**Key Concept:** Compile-time branching\n\n</details>\n\n---",
           "code": "constexpr bool is_even(int x) {\n    return x % 2 == 0;\n}\n\nint main() {\n    if constexpr (is_even(10)) {\n        std::cout << \"Even\\n\";\n    } else {\n        std::cout << \"Odd\\n\";\n    }\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "What happens during compilation?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<int N>\nstruct Countdown {\n    static constexpr int value = Countdown<N-1>::value + 1;\n};\n\ntemplate<>\nstruct Countdown<0> {\n    static constexpr int value = 0;\n};\n\nint main() {\n    std::cout << Countdown<10000>::value;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error (likely)\n\n**Explanation:** Template instantiation depth (10000 levels) exceeds default compiler limit (~512-1024); \"depth exceeded\" error\n\n**Key Concept:** Instantiation depth limit\n\n</details>\n\n---",
           "code": "template<int N>\nstruct Countdown {\n    static constexpr int value = Countdown<N-1>::value + 1;\n};\n\ntemplate<>\nstruct Countdown<0> {\n    static constexpr int value = 0;\n};\n\nint main() {\n    std::cout << Countdown<10000>::value;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "What is printed?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int global = 100;\n\nconstexpr int get_value() {\n    return global;\n}\n\nint main() {\n    constexpr int val = get_value();\n    std::cout << val;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100\n\n**Explanation:** `global` is constexpr (compile-time constant); `get_value()` returns it at compile time; prints 100\n\n**Key Concept:** constexpr variables\n\n</details>\n\n---",
           "code": "constexpr int global = 100;\n\nconstexpr int get_value() {\n    return global;\n}\n\nint main() {\n    constexpr int val = get_value();\n    std::cout << val;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "What happens if you uncomment the second line?",
+          "description": "```cpp",
+          "full_content": "```cpp\ntemplate<typename T>\nclass Container {\n    static_assert(std::is_trivially_copyable_v<T>,\n                  \"T must be trivially copyable\");\n    T data;\n};\n\nint main() {\n    Container<int> c1;\n    // Container<std::string> c2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compile error\n\n**Explanation:** `std::string` is not trivially copyable; static_assert fails with error message\n\n**Key Concept:** Type trait validation\n\n</details>\n\n---",
           "code": "template<typename T>\nclass Container {\n    static_assert(std::is_trivially_copyable_v<T>,\n                  \"T must be trivially copyable\");\n    T data;\n};\n\nint main() {\n    Container<int> c1;\n    // Container<std::string> c2;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "What is the output and what does this compute?",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstexpr int mystery(int n) {\n    return n <= 1 ? 1 : mystery(n-1) + mystery(n-2);\n}\n\nint main() {\n    constexpr int val = mystery(10);\n    std::cout << val;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 89\n\n**Explanation:** Computes Fibonacci sequence via recursion; `mystery(10) = Fib(11) = 89`\n\n**Key Concept:** constexpr recursion\n\n</details>\n\n---",
           "code": "constexpr int mystery(int n) {\n    return n <= 1 ? 1 : mystery(n-1) + mystery(n-2);\n}\n\nint main() {\n    constexpr int val = mystery(10);\n    std::cout << val;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "What is the output?",
+          "description": "```cpp",
+          "full_content": "```cpp\n#include <type_traits>\n\ntemplate<typename T>\nvoid process(T value) {\n    if constexpr (std::is_pointer_v<T>) {\n        std::cout << \"Pointer: \" << *value << \"\\n\";\n    } else {\n        std::cout << \"Value: \" << value << \"\\n\";\n    }\n}\n\nint main() {\n    int x = 42;\n    process(x);\n    process(&x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Value: 42<br>Pointer: 42\n\n**Explanation:** `if constexpr` selects branch at compile time based on pointer-ness; first call prints value, second dereferences pointer\n\n**Key Concept:** Type-dependent logic\n\n</details>\n\n---",
           "code": "#include <type_traits>\n\ntemplate<typename T>\nvoid process(T value) {\n    if constexpr (std::is_pointer_v<T>) {\n        std::cout << \"Pointer: \" << *value << \"\\n\";\n    } else {\n        std::cout << \"Value: \" << value << \"\\n\";\n    }\n}\n\nint main() {\n    int x = 42;\n    process(x);\n    process(&x);\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "Does this compile and if so, what is printed?\n\n---",
+          "description": "```cpp",
+          "full_content": "```cpp\nconstinit int counter = 0;\n\nint main() {\n    counter++;\n    std::cout << counter;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Yes, prints 1\n\n**Explanation:** `constinit` ensures compile-time init but allows runtime mutation; `counter++` runs at runtime, prints 1\n\n**Key Concept:** constinit mutability\n\n</details>\n\n---",
           "code": "constinit int counter = 0;\n\nint main() {\n    counter++;\n    std::cout << counter;\n}",
           "expected_output": "",
+          "solution": "",
           "additional_code": []
         }
       ],

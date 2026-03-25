@@ -1987,6 +1987,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 10`
+
+**Explanation:** p1 becomes nullptr after move, p2 owns the int
+
+**Key Concept:** #unique_ptr #move_semantics
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <memory>
@@ -2004,6 +2017,19 @@ int main() {
     n2->next = n1;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No output
+
+**Explanation:** Circular reference: both nodes leak, destructors never called
+
+**Key Concept:** #shared_ptr #circular_reference #memory_leak
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2024,6 +2050,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2 0 1`
+
+**Explanation:** Two shared_ptrs, weak_ptr doesn't count; after reset, object destroyed
+
+**Key Concept:** #shared_ptr #weak_ptr #reference_counting
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 #include <memory>
@@ -2040,6 +2079,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `42 1`
+
+**Explanation:** Ownership transferred to function, ptr becomes null
+
+**Key Concept:** #unique_ptr #move_semantics #ownership_transfer
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 #include <memory>
@@ -2051,6 +2103,19 @@ int main() {
     std::cout << arr[0] << arr[1] << arr[2];
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1103`
+
+**Explanation:** Array specialization allows operator[], arr[1] modified to 10
+
+**Key Concept:** #unique_ptr #arrays #operator_overload
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2066,6 +2131,19 @@ int main() {
     std::cout << *p1 << " " << *p2;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `20 10`
+
+**Explanation:** swap() exchanges the internal pointers
+
+**Key Concept:** #shared_ptr #swap
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -2086,6 +2164,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Empty`
+
+**Explanation:** p1.reset() destroys object, w.lock() returns empty shared_ptr
+
+**Key Concept:** #weak_ptr #lock #expired
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 #include <memory>
@@ -2105,6 +2196,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `CMDE`
+
+**Explanation:** Constructor (C), then middle code (M), destructor (D) at scope exit, then end (E)
+
+**Key Concept:** #raii #destructor #scope
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <memory>
@@ -2123,6 +2227,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 2`
+
+**Explanation:** Three shared_ptrs initially, p2.reset() decrements to 2
+
+**Key Concept:** #shared_ptr #reference_counting #reset
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 #include <memory>
@@ -2138,6 +2255,19 @@ int main() {
     std::cout << (ptr != nullptr);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 1`
+
+**Explanation:** Default constructed unique_ptr is null, then assigned
+
+**Key Concept:** #unique_ptr #nullptr #bool_conversion
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -2159,6 +2289,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `100 1`
+
+**Explanation:** raw pointer becomes dangling after reset, accessing it is UB (not shown)
+
+**Key Concept:** #shared_ptr #get #dangling_pointer
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 #include <memory>
@@ -2179,6 +2322,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** Aliasing constructor: x_ptr shares ownership of Data, points to x member
+
+**Key Concept:** #shared_ptr #aliasing_constructor
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 #include <memory>
@@ -2195,6 +2351,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `99`
+
+**Explanation:** Pass by reference allows modification, reset changes pointer
+
+**Key Concept:** #unique_ptr #reset #reference_parameter
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 #include <memory>
@@ -2208,6 +2377,19 @@ int main() {
     std::cout << p1.use_count() << " " << w1.use_count();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 1`
+
+**Explanation:** use_count() for weak_ptr returns strong ref count, not weak count
+
+**Key Concept:** #shared_ptr #weak_ptr #use_count
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2224,6 +2406,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `77`
+
+**Explanation:** Returning unique_ptr by value uses move semantics, ownership transferred
+
+**Key Concept:** #unique_ptr #return_value #move_semantics
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 #include <memory>
@@ -2236,6 +2431,19 @@ int main() {
     std::cout << p1.use_count() << " " << p2.use_count();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 1`
+
+**Explanation:** DANGER: Two independent control blocks, will cause double-free
+
+**Key Concept:** #shared_ptr #control_block #undefined_behavior
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2256,6 +2464,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5DelEnd`
+
+**Explanation:** Custom deleter prints "Del" before destruction, then "End"
+
+**Key Concept:** #unique_ptr #custom_deleter #lambda
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 #include <memory>
@@ -2273,6 +2494,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Transferred`
+
+**Explanation:** Move leaves p1 null, p2 becomes valid
+
+**Key Concept:** #unique_ptr #move_semantics #bool_conversion
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 #include <memory>
@@ -2287,6 +2521,19 @@ int main() {
     std::cout << *sp1 << " " << *sp2 << " " << sp1.use_count();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `30 20 1`
+
+**Explanation:** sp1 gets new object (count 1), sp2 still holds original (count 1)
+
+**Key Concept:** #shared_ptr #reset #reference_counting
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -2303,7 +2550,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 100`
+
+**Explanation:** release() gives up ownership, returns raw pointer, caller must delete
+
+**Key Concept:** #unique_ptr #release #manual_deletion
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

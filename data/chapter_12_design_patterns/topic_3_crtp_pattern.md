@@ -2,8 +2,7 @@
 
 ---
 
-## THEORY_SECTION
-
+### THEORY_SECTION: Core Concepts and Foundations
 #### 1. CRTP Pattern Overview
 
 **Definition:** Curiously Recurring Template Pattern - a class inherits from a template base instantiated with the derived class itself.
@@ -240,9 +239,8 @@ Simple static polymorphism? ──YES──> CRTP
 
 ---
 
-## EDGE_CASES
-
-### 1. Name Hiding in Template Base Classes
+### EDGE_CASES: Tricky Scenarios and Deep Internals
+#### Edge Case 1: Name Hiding in Template Base Classes
 
 **Problem**: Unqualified member access in derived classes doesn't find members of dependent template base classes due to two-phase lookup.
 
@@ -296,7 +294,7 @@ public:
 
 ---
 
-### 2. Infinite Recursion Without Implementation Override
+#### Edge Case 2: Infinite Recursion Without Implementation Override
 
 **Problem**: Forgetting to implement required methods in derived class causes infinite recursion or compilation failure.
 
@@ -335,7 +333,7 @@ public:
 
 ---
 
-### 3. Multiple CRTP Inheritance Ambiguity
+#### Edge Case 3: Multiple CRTP Inheritance Ambiguity
 
 **Problem**: Inheriting from multiple CRTP bases can cause ambiguous `this` pointer casts.
 
@@ -399,7 +397,7 @@ public:
 
 ---
 
-### 4. Incomplete Type Issues with sizeof()
+#### Edge Case 4: Incomplete Type Issues with sizeof()
 
 **Problem**: The derived class is incomplete when the base class template is instantiated, causing issues with `sizeof` and other type traits.
 
@@ -439,7 +437,7 @@ obj.printSize();  // ✅ Works - Derived is complete now
 
 ---
 
-### 5. Slicing with Value Semantics
+#### Edge Case 5: Slicing with Value Semantics
 
 **Problem**: Assigning/copying through base class reference causes slicing since CRTP uses static dispatch.
 
@@ -488,9 +486,8 @@ processGeneric(d2);  // ✅ Works
 
 ---
 
-## CODE_EXAMPLES
-
-### Example 1: Basic CRTP - Static Polymorphism (Easy)
+### CODE_EXAMPLES: Practical Demonstrations
+#### Example 1: Basic CRTP - Static Polymorphism (Easy)
 
 ```cpp
 #include <iostream>
@@ -561,7 +558,7 @@ int main() {
 
 ---
 
-### Example 2: Shape Hierarchy with CRTP (Mid)
+#### Example 2: Shape Hierarchy with CRTP (Mid)
 
 ```cpp
 #include <iostream>
@@ -677,7 +674,7 @@ int main() {
 
 ---
 
-### Example 3: Logging Policy with CRTP (Advanced)
+#### Example 3: Logging Policy with CRTP (Advanced)
 
 ```cpp
 #include <iostream>
@@ -771,7 +768,7 @@ int main() {
 
 ---
 
-### Example 4: Caching Policy with CRTP (Advanced)
+#### Example 4: Caching Policy with CRTP (Advanced)
 
 ```cpp
 #include <iostream>
@@ -863,7 +860,7 @@ int main() {
 
 ---
 
-### Example 5: Multiple Policy Composition (Advanced)
+#### Example 5: Multiple Policy Composition (Advanced)
 
 ```cpp
 #include <iostream>
@@ -1005,7 +1002,7 @@ int main() {
 
 ---
 
-### Example 6: Autonomous Vehicle Sensor Fusion with CRTP (Real-World)
+#### Example 6: Autonomous Vehicle Sensor Fusion with CRTP (Real-World)
 
 ```cpp
 #include <iostream>
@@ -1149,8 +1146,7 @@ int main() {
 
 ---
 
-## INTERVIEW_QA
-
+### INTERVIEW_QA: Comprehensive Questions and Answers
 #### Q1: What is CRTP and how does it differ from traditional virtual inheritance?
 **Difficulty:** #beginner
 **Category:** #conceptual
@@ -2755,9 +2751,8 @@ int main() {
 
 ---
 
-## PRACTICE_TASKS
-
-### Q1
+### PRACTICE_TASKS: Output Prediction and Code Analysis
+#### Q1
 Identify the issue with this CRTP implementation:
 ```cpp
 template <typename T>
@@ -2776,7 +2771,7 @@ public:
 };
 ```
 
-### Q2
+#### Q2
 Fix the two-phase lookup error:
 ```cpp
 template <typename T>
@@ -2794,7 +2789,7 @@ public:
 };
 ```
 
-### Q3
+#### Q3
 Complete this Shape hierarchy using CRTP:
 ```cpp
 template <typename T>
@@ -2813,7 +2808,7 @@ public:
 };
 ```
 
-### Q4
+#### Q4
 What's wrong with this multiple CRTP inheritance?
 ```cpp
 template <typename T>
@@ -2836,7 +2831,7 @@ public:
 };
 ```
 
-### Q5
+#### Q5
 Implement a caching policy using CRTP:
 ```cpp
 template <typename T>
@@ -2853,7 +2848,7 @@ public:
 };
 ```
 
-### Q6
+#### Q6
 Add compile-time interface enforcement:
 ```cpp
 template <typename T>
@@ -2866,7 +2861,7 @@ public:
 };
 ```
 
-### Q7
+#### Q7
 Why won't this compile and how do you fix it?
 ```cpp
 template <typename T>
@@ -2879,14 +2874,14 @@ class Derived : public Base<Derived> {
 };
 ```
 
-### Q8
+#### Q8
 Create a policy composition with logging and metrics:
 ```cpp
 // Implement Logger<T> and Metricsable<T>
 // then compose them in SmartClass
 ```
 
-### Q9
+#### Q9
 Detect and fix the CRTP template parameter error:
 ```cpp
 class MyClass : public Base<SomeOtherClass> {  // Wrong!
@@ -2894,7 +2889,7 @@ class MyClass : public Base<SomeOtherClass> {  // Wrong!
 };
 ```
 
-### Q10
+#### Q10
 Implement a CRTP-based iterator:
 ```cpp
 template <typename Derived, typename Value>
@@ -2907,7 +2902,7 @@ class MyIterator : public IteratorBase<MyIterator, int> {
 };
 ```
 
-### Q11
+#### Q11
 Why is CRTP unsuitable here? What should you use instead?
 ```cpp
 template <typename T>
@@ -2922,7 +2917,7 @@ public:
 std::vector<???> animals;  // Problem!
 ```
 
-### Q12
+#### Q12
 Add Empty Base Optimization awareness:
 ```cpp
 // Measure sizeof() with and without EBO
@@ -2933,7 +2928,7 @@ class WithPolicies
 };
 ```
 
-### Q13
+#### Q13
 Implement sensor fusion using CRTP:
 ```cpp
 template <typename T>
@@ -2946,7 +2941,7 @@ class LidarFusion : public SensorFusion<LidarFusion> {
 };
 ```
 
-### Q14
+#### Q14
 Fix the infinite recursion:
 ```cpp
 template <typename T>
@@ -2959,7 +2954,7 @@ public:
 };
 ```
 
-### Q15
+#### Q15
 Use `std::enable_shared_from_this` pattern:
 ```cpp
 class MyClass : public std::enable_shared_from_this<MyClass> {
@@ -2970,7 +2965,7 @@ public:
 };
 ```
 
-### Q16
+#### Q16
 Partially specialize CRTP for arithmetic types:
 ```cpp
 template <typename T, typename Enable = void>
@@ -2981,7 +2976,7 @@ class Serializer {
 // Add specialization for arithmetic types
 ```
 
-### Q17
+#### Q17
 Create a mixin that tracks constructor/destructor calls:
 ```cpp
 template <typename T>
@@ -2994,7 +2989,7 @@ class MyClass : public LifetimeTracker<MyClass> {
 };
 ```
 
-### Q18
+#### Q18
 Implement a CRTP base that prevents copying:
 ```cpp
 template <typename T>
@@ -3007,7 +3002,7 @@ class Resource : public NonCopyable<Resource> {
 };
 ```
 
-### Q19
+#### Q19
 Debug this CRTP error message:
 ```cpp
 template <typename T>
@@ -3024,7 +3019,7 @@ class Derived : public Base<Derived> {
 };
 ```
 
-### Q20
+#### Q20
 Design a real-time control loop using CRTP:
 ```cpp
 template <typename T>
@@ -3039,9 +3034,8 @@ class PIDController : public Controller<PIDController> {
 
 ---
 
-## QUICK_REFERENCE
-
-### Answer Key
+### QUICK_REFERENCE: Key Takeaways and Comparison Tables
+#### Answer Key
 
 | Q# | Issue/Task | Solution/Answer |
 |----|-----------|-----------------|
@@ -3068,7 +3062,7 @@ class PIDController : public Controller<PIDController> {
 
 ---
 
-### CRTP Design Patterns Quick Reference
+#### CRTP Design Patterns Quick Reference
 
 #### 1. Basic Static Polymorphism
 ```cpp
@@ -3138,7 +3132,7 @@ class MyClass
 
 ---
 
-### Performance Comparison Table
+#### Performance Comparison Table
 
 | Feature | CRTP | Virtual Functions | Templates |
 |---------|------|-------------------|-----------|
@@ -3152,7 +3146,7 @@ class MyClass
 
 ---
 
-### When to Use CRTP
+#### When to Use CRTP
 
 ✅ **Use CRTP When**:
 - Performance is critical (sensor processing, control loops)
@@ -3172,7 +3166,7 @@ class MyClass
 
 ---
 
-### Common Pitfalls Checklist
+#### Common Pitfalls Checklist
 
 - [ ] **Name hiding**: Use `this->` for template-dependent names
 - [ ] **Infinite recursion**: Base and derived methods must have different names
@@ -3185,7 +3179,7 @@ class MyClass
 
 ---
 
-### Autonomous Vehicle Use Cases
+#### Autonomous Vehicle Use Cases
 
 | Component | CRTP Application | Benefits |
 |-----------|------------------|----------|
@@ -3198,7 +3192,7 @@ class MyClass
 
 ---
 
-### Compile-Time Interface Enforcement
+#### Compile-Time Interface Enforcement
 
 ```cpp
 template <typename T>
@@ -3222,7 +3216,7 @@ public:
 
 ---
 
-### Testing Strategies
+#### Testing Strategies
 
 ```cpp
 // 1. Test basic CRTP dispatch

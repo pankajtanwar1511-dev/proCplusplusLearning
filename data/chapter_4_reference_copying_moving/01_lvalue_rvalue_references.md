@@ -1446,6 +1446,19 @@ int& ref = x;
 int&& rref = ref;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `ref` is an lvalue, cannot bind rvalue reference to lvalue without `std::move`
+
+**Key Concept:** #named_rvalue_lvalue
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 void func(int&& x) { }
@@ -1456,21 +1469,73 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `a` is lvalue, `func` expects rvalue reference; need `std::move(a)`
+
+**Key Concept:** #reference_binding
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 int&& rref = 42;
 int* ptr = &rref;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles and runs
+
+**Explanation:** `rref` is a named variable (lvalue), can take its address even though type is `int&&`
+
+**Key Concept:** #lvalue_with_rvalue_type
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 const int& ref = 10 + 20;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles and runs
+
+**Explanation:** `const T&` can bind to rvalues; temporary lifetime extended to `ref`
+
+**Key Concept:** #const_ref_binding
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 int& lref = 5 * 2;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Non-const lvalue reference cannot bind to rvalue (expression result)
+
+**Key Concept:** #non_const_ref_rvalue
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1478,6 +1543,19 @@ int x = 10;
 int&& rref = std::move(x);
 int&& rref2 = rref;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `rref` is lvalue (has name), cannot bind another rvalue ref without casting
+
+**Key Concept:** #named_rvalue_lvalue
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1491,6 +1569,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "rvalue"
+
+**Explanation:** `get()` returns `int&&` (xvalue/rvalue), calls rvalue overload
+
+**Key Concept:** #return_rvalue_ref
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 int&& rref = 100;
@@ -1498,6 +1589,19 @@ int& lref = rref;
 lref = 200;
 std::cout << rref;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 200
+
+**Explanation:** `lref` and `rref` refer to same object; modifying through either changes both
+
+**Key Concept:** #reference_aliasing
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1509,11 +1613,37 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Calls `take(int&&)`
+
+**Explanation:** Exact match preferred; rvalue binds to `int&&` over `const int&`
+
+**Key Concept:** #overload_resolution
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 int x = 5;
 int&& rref = x++;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles and runs
+
+**Explanation:** Post-increment returns rvalue (copy of old value), can bind to rvalue ref
+
+**Key Concept:** #postincrement_rvalue
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -1525,11 +1655,37 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Returning reference to local variable; `a` destroyed when function exits
+
+**Key Concept:** #dangling_reference
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 const int cx = 10;
 int&& rref = std::move(cx);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `std::move(cx)` gives `const int&&`, cannot bind to non-const `int&&`
+
+**Key Concept:** #const_rvalue_ref
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1538,6 +1694,19 @@ decltype(a) b = 10;      // Type of b?
 decltype((a)) c = a;     // Type of c?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `b` is `int`;<br>`c` is `int&`
+
+**Explanation:** `decltype(a)` gives type; `decltype((a))` gives lvalue reference for variables
+
+**Key Concept:** #decltype_parentheses
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 int x = 10;
@@ -1545,6 +1714,19 @@ int& ref = (x = 20);
 ref = 30;
 std::cout << x;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 30
+
+**Explanation:** Assignment returns lvalue ref to `x`; `ref` aliases `x`; all changes affect `x`
+
+**Key Concept:** #assignment_lvalue
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1555,6 +1737,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `5 + 5` is rvalue, cannot bind non-const lvalue reference to rvalue
+
+**Key Concept:** #temporary_binding
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 int&& rref1 = 42;
@@ -1562,6 +1757,19 @@ int&& rref2 = std::move(rref1);
 rref2 = 100;
 std::cout << rref1;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: 100
+
+**Explanation:** Both `rref1` and `rref2` are lvalues referring to same object after move
+
+**Key Concept:** #rvalue_ref_aliasing
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1574,10 +1782,36 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "const&"
+
+**Explanation:** `x` is lvalue, binds to `const int&` (no non-const lvalue ref overload)
+
+**Key Concept:** #lvalue_const_binding
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 std::string&& rref = "hello";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles and runs
+
+**Explanation:** String literal converted to temporary `std::string`, lifetime extended
+
+**Key Concept:** #temporary_lifetime
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1588,6 +1822,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `getValue()` returns prvalue (temporary), cannot bind to non-const lvalue ref
+
+**Key Concept:** #temporary_no_lvalue_ref
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 int x = 10;
@@ -1595,7 +1842,19 @@ auto&& a = x;           // Type of a?
 auto&& b = 20;          // Type of b?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `a` is `int&`;<br>`b` is `int&&`
+
+**Explanation:** `auto&&` is forwarding reference: lvalue→lvalue ref, rvalue→rvalue ref
+
+**Key Concept:** #forwarding_reference
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 

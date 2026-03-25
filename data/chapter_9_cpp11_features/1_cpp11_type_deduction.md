@@ -1,6 +1,5 @@
-# TOPIC: Type Deduction in C++11
 
-## THEORY_SECTION: Core Concepts of Type Inference
+### THEORY_SECTION: Core Concepts of Type Inference
 
 #### 1. auto Type Deduction - Template Argument Deduction Rules and Qualifier Stripping
 
@@ -586,9 +585,9 @@ void process_readings_correct(const std::vector<SensorReading>& data) {
 
 ---
 
-## EDGE_CASES: Tricky Scenarios and Deep Internals
+### EDGE_CASES: Tricky Scenarios and Deep Internals
 
-### Edge Case 1: auto Strips Top-Level const
+#### Edge Case 1: auto Strips Top-Level const
 
 One of the most common sources of bugs with `auto` is its behavior with const qualifiers. The `auto` keyword removes **top-level const** but preserves **low-level const** (const in pointed-to types).
 
@@ -603,7 +602,7 @@ auto c = ptr;      // ✅ const int* (low-level const preserved)
 
 This behavior follows template argument deduction rules. When you pass a `const int` by value to a template, the const is stripped because the function receives a copy. To preserve const with `auto`, you must explicitly write `const auto`.
 
-### Edge Case 2: auto with References
+#### Edge Case 2: auto with References
 
 References are also stripped by default with `auto`, requiring explicit use of `auto&` or `auto&&` to preserve reference semantics.
 
@@ -620,7 +619,7 @@ b = 30;  // Modifies original x
 
 This distinction is critical when working with range-based for loops. Using `auto` creates copies of each element, while `auto&` provides references allowing in-place modification.
 
-### Edge Case 3: auto with Braced Initializers
+#### Edge Case 3: auto with Braced Initializers
 
 Prior to C++17, `auto` with braced initializers always deduced to `std::initializer_list`, which caused surprising behavior.
 
@@ -632,7 +631,7 @@ auto y = {1};        // ✅ std::initializer_list<int> in C++11/14
 
 This special case exists because brace-initialization was designed to work seamlessly with containers. Always be explicit when using braced initializers with `auto` to avoid confusion.
 
-### Edge Case 4: decltype with Parentheses
+#### Edge Case 4: decltype with Parentheses
 
 Adding parentheses around a variable name in `decltype` changes the result from the declared type to an lvalue reference type.
 
@@ -644,7 +643,7 @@ decltype((x)) b = x;  // ✅ int& (lvalue expression)
 
 This occurs because `(x)` is treated as an lvalue expression rather than just the name `x`. This distinction is crucial in template metaprogramming and perfect forwarding scenarios.
 
-### Edge Case 5: Universal References with auto&&
+#### Edge Case 5: Universal References with auto&&
 
 The `auto&&` syntax creates a **universal reference** (also called forwarding reference) that can bind to both lvalues and rvalues, with reference collapsing rules applying.
 
@@ -659,7 +658,7 @@ auto&& c = 5;        // ✅ int&& (rvalue → rvalue reference)
 
 Reference collapsing rules: `& + &` → `&`, `& + &&` → `&`, `&& + &` → `&`, `&& + &&` → `&&`. This feature is essential for perfect forwarding in generic code.
 
-### Edge Case 6: decltype with Function Calls
+#### Edge Case 6: decltype with Function Calls
 
 When used with function calls, `decltype` returns the function's return type, including reference qualifiers.
 
@@ -674,7 +673,7 @@ decltype(func2()) b;      // ✅ int (function returns by value)
 
 This is particularly useful in generic programming when the return type depends on complex expressions or template parameters.
 
-### Edge Case 7: decltype(auto) Pattern (C++14 Preview)
+#### Edge Case 7: decltype(auto) Pattern (C++14 Preview)
 
 While `decltype(auto)` is a C++14 feature, understanding the pattern helps clarify the relationship between `auto` and `decltype`. This pattern uses `decltype` deduction rules instead of template argument deduction rules.
 
@@ -693,9 +692,9 @@ This trailing return type syntax allows the return type to be deduced based on t
 
 ---
 
-## CODE_EXAMPLES: Practical Demonstrations
+### CODE_EXAMPLES: Practical Demonstrations
 
-### Example 1: Basic auto Usage with Various Types
+#### Example 1: Basic auto Usage with Various Types
 
 ```cpp
 auto x = 5;           // ✅ int
@@ -709,7 +708,7 @@ auto it = vec.begin();  // ✅ std::vector<int>::iterator
 
 The `auto` keyword significantly reduces verbosity, especially with complex types like iterators. The compiler deduces the exact type based on the initializer, maintaining full type safety without runtime overhead.
 
-### Example 2: Preserving const and References
+#### Example 2: Preserving const and References
 
 ```cpp
 const int x = 42;
@@ -724,7 +723,7 @@ d = 20;               // Modifies y
 
 This example demonstrates how to explicitly preserve const and reference qualifiers. Without these qualifiers, `auto` creates mutable copies by default, which may not be the intended behavior.
 
-### Example 3: decltype for Exact Type Preservation
+#### Example 3: decltype for Exact Type Preservation
 
 ```cpp
 int x = 10;
@@ -738,7 +737,7 @@ decltype(cref) c = x;    // ✅ const int& (preserves const reference)
 
 Unlike `auto`, `decltype` preserves the exact declared type, including all qualifiers. This is essential when you need precise type matching in template code or when working with references.
 
-### Example 4: Range-Based For Loops with Type Deduction
+#### Example 4: Range-Based For Loops with Type Deduction
 
 ```cpp
 std::vector<int> vec{1, 2, 3, 4, 5};
@@ -761,7 +760,7 @@ for (const auto& x : vec) {
 
 Choosing the right type deduction in range-based loops is critical for performance. Using plain `auto` creates unnecessary copies, while `const auto&` provides efficient read-only access without copying.
 
-### Example 5: Universal References with auto&&
+#### Example 5: Universal References with auto&&
 
 ```cpp
 template<typename T>
@@ -781,7 +780,7 @@ auto&& d = std::move(x); // ✅ int&& (binds to rvalue)
 
 Universal references with `auto&&` enable perfect forwarding patterns, allowing a single variable to bind to any value category. This is essential for writing efficient generic code that avoids unnecessary copies.
 
-### Example 6: decltype with Expressions
+#### Example 6: decltype with Expressions
 
 ```cpp
 int x = 0, y = 1;
@@ -793,7 +792,7 @@ decltype(x + y) c = 2;   // ✅ int (result of addition)
 
 The parentheses around `x` in `decltype((x))` change it from an identifier to an lvalue expression, resulting in a reference type. This subtle difference is frequently tested in interviews.
 
-### Example 7: Trailing Return Type with auto
+#### Example 7: Trailing Return Type with auto
 
 ```cpp
 template<typename T, typename U>
@@ -808,7 +807,7 @@ auto result3 = multiply(2, 3.5);    // ✅ double
 
 Trailing return types allow return type deduction based on function parameters, enabling truly generic functions that work with any types supporting the required operations.
 
-### Example 8: Complex Iterator Types
+#### Example 8: Complex Iterator Types
 
 ```cpp
 std::map<std::string, std::vector<int>> data;
@@ -1261,7 +1260,7 @@ This example demonstrates how C++11 type deduction dramatically improves code ma
 
 ---
 
-## INTERVIEW_QA: Core Concepts and Advanced Understanding
+### INTERVIEW_QA: Core Concepts and Advanced Understanding
 
 #### Q1: What is the fundamental difference between auto and decltype in type deduction?
 **Difficulty:** #beginner
@@ -1788,9 +1787,7 @@ Member function pointers in C++ are complex, and cv-qualifiers (const/volatile) 
 
 ---
 
-## PRACTICE_TASKS: Type Deduction Challenges
-
-### PRACTICE_TASKS: Output Prediction and Type Deduction
+### PRACTICE_TASKS: Type Deduction Challenges
 
 #### Q1
 ```cpp
@@ -1799,7 +1796,6 @@ auto a = x;
 a = 20;
 std::cout << a << " " << x;
 ```
-
 #### Q2
 ```cpp
 int arr[5] = {1, 2, 3, 4, 5};
@@ -1807,7 +1803,6 @@ auto p = arr;
 auto& r = arr;
 std::cout << sizeof(p) << " " << sizeof(r);
 ```
-
 #### Q3
 ```cpp
 int x = 5;
@@ -1816,13 +1811,11 @@ auto&& b = 10;
 a = 15;
 std::cout << x << " " << a << " " << typeid(a).name() << " " << typeid(b).name();
 ```
-
 #### Q4
 ```cpp
 auto lambda = [](int x) { return x * 2; };
 std::cout << lambda(5) << " " << sizeof(lambda);
 ```
-
 #### Q5
 ```cpp
 int x = 0;
@@ -1832,14 +1825,12 @@ a = 10;
 b = 20;
 std::cout << x << " " << a << " " << b;
 ```
-
 #### Q6
 ```cpp
 std::vector<int> vec{1, 2, 3};
 for (auto x : vec) { x *= 2; }
 for (auto x : vec) { std::cout << x << " "; }
 ```
-
 #### Q7
 ```cpp
 const int* ptr = new int(42);
@@ -1849,13 +1840,11 @@ decltype(ptr) b = ptr;
 // Can we write: *b = 50; ?
 delete ptr;
 ```
-
 #### Q8
 ```cpp
 auto x = {1, 2, 3};
 std::cout << x.size() << " " << typeid(x).name();
 ```
-
 #### Q9
 ```cpp
 int func1() { return 5; }
@@ -1866,7 +1855,6 @@ decltype(func2()) b = func2();
 b = 10;
 std::cout << func2();
 ```
-
 #### Q10
 ```cpp
 template<typename T>
@@ -1878,7 +1866,6 @@ auto result1 = process(5);
 auto result2 = process(3.5);
 std::cout << typeid(result1).name() << " " << typeid(result2).name();
 ```
-
 #### Q11
 ```cpp
 const int x = 100;
@@ -1887,14 +1874,12 @@ auto& a = x;
 const auto& b = x;
 // Can we write: b = 200; ?
 ```
-
 #### Q12
 ```cpp
 int x = 10;
 auto lambda = [=]() mutable { x = 20; return x; };
 std::cout << lambda() << " " << x;
 ```
-
 #### Q13
 ```cpp
 std::vector<bool> vec{true, false, true};
@@ -1902,7 +1887,6 @@ auto x = vec[0];
 x = false;
 std::cout << vec[0];  // What is printed?
 ```
-
 #### Q14
 ```cpp
 int a = 5, b = 10;
@@ -1911,20 +1895,17 @@ decltype((a)) ref = a;
 ref = 20;
 std::cout << a << " " << sum;
 ```
-
 #### Q15
 ```cpp
 auto add = [](auto x, auto y) { return x + y; };  // C++14 feature
 // Is this valid in C++11?
 ```
-
 #### Q16
 ```cpp
 std::string str = "hello";
 auto a = std::move(str);
 std::cout << str.length() << " " << a.length();
 ```
-
 #### Q17
 ```cpp
 int* ptr = new int(10);
@@ -1935,7 +1916,6 @@ ptr = nullptr;
 // Is 'a' now nullptr?
 // Is 'b' now nullptr?
 ```
-
 #### Q18
 ```cpp
 const int x = 5;
@@ -1943,7 +1923,6 @@ auto&& a = x;
 auto&& b = 10;
 std::cout << typeid(a).name() << " " << typeid(b).name();
 ```
-
 #### Q19
 ```cpp
 auto make_lambda() {
@@ -1953,7 +1932,6 @@ auto make_lambda() {
 auto l = make_lambda();
 std::cout << l();  // Safe or undefined behavior?
 ```
-
 #### Q20
 ```cpp
 std::map<int, std::string> m = {{1, "one"}, {2, "two"}};
@@ -1964,10 +1942,9 @@ for (auto [key, value] : m) {  // C++17 feature
 ```
 
 ---
+### QUICK_REFERENCE: Answer Key and Summary Tables
 
-## QUICK_REFERENCE: Answer Key and Summary Tables
-
-### Answer Key for Practice Questions
+#### Answer Key for Practice Questions
 
 | Q# | Answer | Explanation | Key Concept |
 |----|--------|-------------|-------------|
@@ -1992,7 +1969,7 @@ for (auto [key, value] : m) {  // C++17 feature
 | 19 | Undefined behavior | Lambda captures local variable by reference. x destroyed when function returns | #lambda #dangling_reference |
 | 20 | No, compile error | Structured bindings `[key, value]` are C++17. C++11 requires `auto& pair` with `.first`/`.second` | #structured_bindings #c++17 |
 
-### Type Deduction Quick Reference
+#### Type Deduction Quick Reference
 
 | Syntax | Deduced Type | Use Case | Notes |
 |--------|--------------|----------|-------|
@@ -2005,7 +1982,7 @@ for (auto [key, value] : m) {  // C++17 feature
 | `decltype((x))` | lvalue reference | Expression evaluation | Parentheses create lvalue expr |
 | `decltype(expr)` | Type of expression | Result type queries | Value category matters |
 
-### Common Pitfalls
+#### Common Pitfalls
 
 | Pitfall | Problem | Solution |
 |---------|---------|----------|
@@ -2018,7 +1995,7 @@ for (auto [key, value] : m) {  // C++17 feature
 | Lambda capture | Dangling references | Capture by value `[=]` or ensure lifetime |
 | Braced init | Unexpected `initializer_list` | Prefer direct initialization or explicit types |
 
-### Interview Cheat Sheet
+#### Interview Cheat Sheet
 
 **What to say about auto:**
 - "Reduces verbosity while maintaining type safety"

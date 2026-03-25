@@ -2009,7 +2009,19 @@ v.reserve(10);
 v[5] = 42;
 std::cout << v[5];
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (likely crashes)
+
+**Explanation:** `reserve()` allocates capacity but doesn't construct elements; accessing `v[5]` is out of bounds (size=0)
+
+**Key Concept:** reserve vs resize
+
+</details>
+
+---
 
 #### Q2
 ```cpp
@@ -2020,7 +2032,19 @@ v.push_back(4);
 v.push_back(5);
 std::cout << *it;
 ```
-Is this code safe? What does it print?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Safe, prints 1
+
+**Explanation:** `reserve(5)` ensures capacity ≥5, so no reallocation during push_back; iterator remains valid
+
+**Key Concept:** Iterator invalidation
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2030,7 +2054,19 @@ for (int i = 0; i < 8; ++i) {
 }
 std::cout << v.capacity();
 ```
-What is the expected capacity?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 8
+
+**Explanation:** Capacity doubles: 0→1→2→4→8 (8th element fits in capacity 8)
+
+**Key Concept:** Doubling strategy
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -2039,7 +2075,19 @@ Vector<int> v2 = v1;
 v2[0] = 99;
 std::cout << v1[0];
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1
+
+**Explanation:** Copy constructor creates deep copy; modifying `v2` doesn't affect `v1`
+
+**Key Concept:** Deep copy semantics
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2047,7 +2095,19 @@ Vector<int> v1 = {1, 2, 3};
 Vector<int> v2 = std::move(v1);
 std::cout << v1.size();
 ```
-What is the output and is this safe?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 (safe)
+
+**Explanation:** Move constructor leaves `v1` in valid moved-from state (size=0, data=nullptr); accessing size is safe
+
+**Key Concept:** Moved-from state
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2055,7 +2115,19 @@ Vector<int> v;
 v.resize(5);
 std::cout << v[3];
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 (default value)
+
+**Explanation:** `resize(5)` default-constructs 5 ints (initialized to 0)
+
+**Key Concept:** resize default construction
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -2063,7 +2135,19 @@ Vector<int> v = {1, 2, 3};
 v.resize(10);
 std::cout << v.size() << ", " << v.capacity();
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10, ≥10
+
+**Explanation:** `resize(10)` sets size to 10; capacity is at least 10 (may be larger)
+
+**Key Concept:** resize capacity behavior
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2072,7 +2156,19 @@ v.pop_back();
 v.pop_back();
 std::cout << v.capacity();
 ```
-What is the capacity after two pop_back calls?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 4 (unchanged)
+
+**Explanation:** `pop_back()` decreases size but doesn't reduce capacity
+
+**Key Concept:** Capacity unchanged by pop
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -2081,7 +2177,19 @@ v.reserve(100);
 v.resize(50);
 std::cout << v.size() << ", " << v.capacity();
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 50, 100
+
+**Explanation:** `reserve(100)` sets capacity, then `resize(50)` sets size; capacity remains 100
+
+**Key Concept:** reserve then resize
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2091,7 +2199,19 @@ v.push_back("world");
 v.clear();
 std::cout << v.capacity();
 ```
-What is the capacity after clear()?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** ≥2 (unchanged)
+
+**Explanation:** `clear()` sets size to 0 but doesn't reduce capacity; capacity remains allocated
+
+**Key Concept:** clear vs shrink
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -2100,7 +2220,19 @@ Vector<int>& ref = v;
 ref.push_back(4);
 std::cout << v.size();
 ```
-What is the size?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 4
+
+**Explanation:** `ref` is a reference to `v`; modifying via reference modifies original
+
+**Key Concept:** Reference semantics
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2110,7 +2242,19 @@ v2 = v1;
 v2 = v1;  // Assign again
 std::cout << v2.size();
 ```
-Is this safe (self-assignment)? What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Safe, prints 3
+
+**Explanation:** Copy assignment checks `this != &other` to prevent self-assignment issues
+
+**Key Concept:** Self-assignment check
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2124,7 +2268,19 @@ Vector<NonCopyable> v;
 NonCopyable obj;
 v.push_back(obj);
 ```
-Will this compile?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No
+
+**Explanation:** `push_back(obj)` requires copy constructor (lvalue); `NonCopyable` deleted copy constructor
+
+**Key Concept:** Copy vs move
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -2133,7 +2289,19 @@ auto it = v.begin();
 v.reserve(100);
 std::cout << *it;
 ```
-Is this safe?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, prints 1
+
+**Explanation:** `reserve(100)` with capacity 3→100 reallocates, but since 100 > current capacity, elements move; iterator points to old memory → UB if not careful, but many implementations handle this; **actually UB**
+
+**Key Concept:** Iterator invalidation
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2145,7 +2313,19 @@ Vector<int> createVector() {
 Vector<int> result = createVector();
 std::cout << result.size();
 ```
-What optimization is applied here?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** RVO/NRVO (Return Value Optimization)
+
+**Explanation:** Compiler elides copy/move, constructing `result` directly in caller's stack frame
+
+**Key Concept:** RVO/NRVO
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -2153,7 +2333,19 @@ Vector<int> v;
 v.resize(5, 10);
 std::cout << v[0] << ", " << v[4];
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10, 10
+
+**Explanation:** `resize(5, 10)` creates 5 elements, each initialized to 10
+
+**Key Concept:** resize with default value
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2161,7 +2353,19 @@ Vector<int> v = {1, 2, 3, 4, 5};
 v.shrink_to_fit();
 std::cout << v.capacity();
 ```
-What is the capacity?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 5
+
+**Explanation:** `shrink_to_fit()` reduces capacity to match size (5 elements)
+
+**Key Concept:** shrink_to_fit
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -2173,7 +2377,19 @@ try {
 }
 std::cout << v.size();
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Allocation failed0
+
+**Explanation:** `reserve(SIZE_MAX)` throws `std::bad_alloc`; exception caught; size remains 0
+
+**Key Concept:** Exception handling
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2183,7 +2399,19 @@ for (auto& elem : v) {
 }
 std::cout << v[1];
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 4
+
+**Explanation:** Range-for allows modification via reference; `v[1]=2` becomes `2*2=4`
+
+**Key Concept:** Range-for with references
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -2192,9 +2420,20 @@ Vector<int> v2 = {4, 5};
 std::swap(v1, v2);
 std::cout << v1.size() << ", " << v2.size();
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 2, 3
+
+**Explanation:** `std::swap` exchanges contents; `v1` gets `{4,5}` (size 2), `v2` gets `{1,2,3}` (size 3)
+
+**Key Concept:** std::swap semantics
+
+</details>
 
 ---
+
 
 ### QUICK_REFERENCE: Summary Tables and Answer Keys
 

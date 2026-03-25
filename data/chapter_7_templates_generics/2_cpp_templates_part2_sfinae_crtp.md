@@ -2320,6 +2320,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `integral`<br>Compilation error
+
+**Explanation:** First call matches integral SFINAE; second fails (no float overload)
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 template<typename T>
@@ -2333,6 +2346,19 @@ int main() {
     std::cout << decltype(hasSize<int>(0))::value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`<br>`0`
+
+**Explanation:** `std::vector` has `.size()` method; `int` doesn't
+
+**Key Concept:** #expression_sfinae
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2355,6 +2381,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `D::impl`
+
+**Explanation:** CRTP static dispatch calls derived implementation
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 template<typename T>
@@ -2371,6 +2410,19 @@ int main() {
     func(x);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `pointer`<br>`non-pointer`
+
+**Explanation:** SFINAE selects correct overload based on pointer trait
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2391,6 +2443,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** Each `Widget` instance increments static counter in base
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 template<typename T>
@@ -2408,6 +2473,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `integral`<br>`other`
+
+**Explanation:** Tag dispatch selects overload via `true_type`/`false_type`
+
+**Key Concept:** #tag_dispatch
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 template<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>
@@ -2419,6 +2497,19 @@ int main() {
     func(42);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `class`<br>Compilation error
+
+**Explanation:** SFINAE only enables for class types; `int` fails
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2441,6 +2532,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Data`
+
+**Explanation:** CRTP mixin calls derived `toString()` via static cast
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 template<typename T>
@@ -2456,6 +2560,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `42`
+
+**Explanation:** `decltype` deduces return type from `func()` method
+
+**Key Concept:** #decltype
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 template<typename T>
@@ -2468,6 +2585,19 @@ int main() {
     func(true);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error
+
+**Explanation:** Combined SFINAE conditions; `bool` fails both conditions
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -2487,6 +2617,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Missing `impl()` method in derived class
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 template<typename T>
@@ -2503,6 +2646,19 @@ int main() {
     std::cout << decltype(test<int>(0))::value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`<br>`0`
+
+**Explanation:** Expression SFINAE detects nested `value_type`
+
+**Key Concept:** #expression_sfinae
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2534,6 +2690,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `DB created`<br>`1`
+
+**Explanation:** Singleton pattern via CRTP; both references point to same instance
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 template<typename T, 
@@ -2549,6 +2718,19 @@ int main() {
     func(3.14);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `int version`<br>`float version`
+
+**Explanation:** Template parameter SFINAE with different default types
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2572,6 +2754,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `LOG: test`<br>`Extra`
+
+**Explanation:** CRTP mixin calls derived `extraLog()` method
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 template<typename T>
@@ -2583,6 +2778,19 @@ int main() {
     func('c');
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `large type`<br>Compilation error
+
+**Explanation:** `long` is 8 bytes; `char` is 1 byte (fails SFINAE)
+
+**Key Concept:** #sfinae
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2603,6 +2811,19 @@ int main() {
     std::cout << std::is_const<decltype(result)>::value << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`
+
+**Explanation:** `RemoveConst` strips const qualifier; result is non-const
+
+**Key Concept:** #type_traits
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -2627,6 +2848,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Before`<br>`Executing`<br>`After`
+
+**Explanation:** CRTP Template Method pattern with static dispatch
+
+**Key Concept:** #crtp
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 template<typename T>
@@ -2640,6 +2874,19 @@ int main() {
     process(3.14);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `42`<br>Compilation error
+
+**Explanation:** `static_assert` enforces integral constraint; double fails
+
+**Key Concept:** #static_assert
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -2655,7 +2902,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `15`<br>`6`<br>`Hello World`
+
+**Explanation:** `decltype(a + b)` deduces result type of addition
+
+**Key Concept:** #decltype
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Technique Comparison
 

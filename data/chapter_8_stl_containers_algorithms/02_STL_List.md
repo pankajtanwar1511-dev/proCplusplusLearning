@@ -1298,6 +1298,19 @@ lst.push_back(6);
 std::cout << lst.front() << " " << lst.back();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 6`
+
+**Explanation:** push_front adds 0 at beginning, push_back adds 6 at end. front() and back() access these.
+
+**Key Concept:** #push_front #push_back
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::list<int> lst = {1, 2, 3, 4, 5};
@@ -1306,12 +1319,38 @@ lst.pop_back();
 std::cout << lst.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** pop_front removes first, pop_back removes last. 5 elements - 2 = 3.
+
+**Key Concept:** #pop_operations #size
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 std::list<int> lst = {1, 2, 3, 2, 4, 2};
 lst.remove(2);
 std::cout << lst.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** remove(2) removes all occurrences of 2. Three 2s removed, 3 elements remain.
+
+**Key Concept:** #remove #element_removal
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1320,12 +1359,38 @@ lst.sort();
 for (int x : lst) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 3 4 5`
+
+**Explanation:** sort() arranges elements in ascending order using list's member function.
+
+**Key Concept:** #sort #ordering
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::list<int> lst = {1, 2, 3, 4, 5};
 lst.reverse();
 std::cout << lst.front() << " " << lst.back();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 1`
+
+**Explanation:** reverse() reverses order. Original first (1) becomes last, original last (5) becomes first.
+
+**Key Concept:** #reverse #bidirectional
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1335,12 +1400,38 @@ a.splice(a.end(), b);
 std::cout << a.size() << " " << b.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `6 0`
+
+**Explanation:** splice moves all elements from b to end of a. a has 6 elements, b is empty.
+
+**Key Concept:** #splice #ownership_transfer
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 std::list<int> lst = {1, 1, 2, 2, 3, 3};
 lst.unique();
 std::cout << lst.size();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** unique() removes consecutive duplicates. Each pair becomes single element.
+
+**Key Concept:** #unique #duplicates
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1350,6 +1441,19 @@ lst.erase(it);
 std::cout << lst.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4`
+
+**Explanation:** erase at position 2 (element 3) removes one element. 5 - 1 = 4.
+
+**Key Concept:** #erase #iterator_based
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 std::list<int> lst = {1, 2, 3};
@@ -1357,12 +1461,38 @@ lst.resize(5);
 std::cout << lst.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** resize(5) grows from 3 to 5 elements by adding 2 default-initialized elements.
+
+**Key Concept:** #resize #growth
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 std::list<int> lst = {1, 2, 3, 4, 5};
 lst.clear();
 std::cout << lst.size() << " " << lst.empty();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 1`
+
+**Explanation:** clear() removes all elements. size becomes 0, empty returns true (1).
+
+**Key Concept:** #clear #empty
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -1372,12 +1502,38 @@ a.merge(b);
 std::cout << a.size() << " " << b.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `6 0`
+
+**Explanation:** merge combines sorted lists. All of b's elements move to a.
+
+**Key Concept:** #merge #sorted_combine
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 std::list<int> lst = {1, 2, 3};
 lst.insert(std::next(lst.begin()), 99);
 for (int x : lst) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 99 2 3`
+
+**Explanation:** insert before position 1 (after first element) adds 99.
+
+**Key Concept:** #insert #positioning
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1387,6 +1543,19 @@ lst.push_back(6);
 std::cout << *it;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`
+
+**Explanation:** Iterator remains valid through push_back due to list's iterator stability.
+
+**Key Concept:** #iterator_stability #push_back
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::list<int> lst = {1, 2, 3};
@@ -1395,6 +1564,19 @@ lst.emplace_back(4);
 std::cout << lst.front() << " " << lst.back();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 4`
+
+**Explanation:** emplace_front constructs 0 at front, emplace_back constructs 4 at back.
+
+**Key Concept:** #emplace #in_place_construction
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::list<int> lst = {1, 2, 3, 4, 5};
@@ -1402,12 +1584,38 @@ lst.remove_if([](int x) { return x % 2 == 0; });
 std::cout << lst.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** remove_if with predicate removes even numbers (2, 4). Odd numbers remain.
+
+**Key Concept:** #remove_if #predicate
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::list<int> lst = {1, 2, 3, 4, 5};
 lst.resize(3);
 std::cout << lst.size() << " " << lst.back();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 3`
+
+**Explanation:** resize(3) shrinks to 3 elements. Last element is now 3.
+
+**Key Concept:** #resize #shrinking
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1418,6 +1626,19 @@ a.splice(a.end(), b, it);
 std::cout << a.size() << " " << b.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4 1`
+
+**Explanation:** splice single element (4) from b to end of a. a has 4 elements, b has 1.
+
+**Key Concept:** #splice #single_element
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 const std::list<int> lst = {1, 2, 3};
@@ -1425,6 +1646,19 @@ auto it = lst.begin();
 ++it;
 std::cout << *it;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2`
+
+**Explanation:** const list allows iteration and reading. Iterator increments to second element.
+
+**Key Concept:** #const_iterator #read_only
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1434,6 +1668,19 @@ lst.unique();
 std::cout << lst.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** sort orders elements, then unique removes consecutive duplicates (the two 1s).
+
+**Key Concept:** #sort #unique #combination
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::list<int> lst1 = {1, 2, 3};
@@ -1441,7 +1688,19 @@ std::list<int> lst2 = std::move(lst1);
 std::cout << lst1.size() << " " << lst2.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 3`
+
+**Explanation:** Move constructor transfers ownership. lst1 becomes empty, lst2 has 3 elements.
+
+**Key Concept:** #move_semantics #ownership
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

@@ -1,9 +1,10 @@
-## TOPIC: Launch File Best Practices
-
+# Chapter 4: Real-World Development Practices
+## Topic 2: Launch File Best Practices
 
 ---
 
-## THEORY_SECTION
+## Theory
+
 ### 1. Launch System Architecture
 
 ROS2 uses a Python-based launch system that provides programmatic control over starting nodes, setting parameters, and managing system lifecycle.
@@ -550,7 +551,8 @@ robot2_group = GroupAction(
 
 ---
 
-## EDGE_CASES
+## Edge Cases
+
 ### Edge Case 1: Launch Argument Type Coercion
 
 **Scenario:**
@@ -1151,7 +1153,8 @@ ros2 param get /my_node max_speed
 
 ---
 
-## CODE_EXAMPLES
+## Code Examples
+
 ### Example 1: Production-Ready Multi-Robot Launch System
 
 A comprehensive launch setup for deploying multiple robots with proper configuration management.
@@ -2261,7 +2264,8 @@ def generate_launch_description():
 
 ---
 
-## PRACTICE_TASKS
+## Practice Tasks
+
 ### Practice Task 1: Build a Modular Multi-Environment Launch System
 
 **Objective:** Create a production-ready launch system that supports multiple environments (simulation, hardware, hybrid) with proper configuration management.
@@ -2431,7 +2435,8 @@ detector_node = Node(package='detection', executable='detector_node')
 
 ---
 
-## QUICK_REFERENCE
+## Quick Reference
+
 ### Essential Launch File Patterns
 
 **Basic Node:**

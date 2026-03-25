@@ -2,9 +2,8 @@
 
 ---
 
-## THEORY_SECTION
-
-### What is a Functor?
+### THEORY_SECTION: Core Concepts and Foundations
+#### What is a Functor?
 
 A **functor** (function object) is a class or struct that overloads the **`operator()`**, making instances of the class callable like functions. Unlike regular functions, functors can maintain **internal state** between calls, making them powerful tools for stateful computations, callbacks, and algorithm customization.
 
@@ -24,7 +23,7 @@ Multiplier times3(3);
 int result = times3(10);  // result = 30
 ```
 
-### Why Functors Matter in Autonomous Driving
+#### Why Functors Matter in Autonomous Driving
 
 In autonomous vehicle systems, functors are extensively used for:
 
@@ -40,7 +39,7 @@ In autonomous vehicle systems, functors are extensively used for:
 - **Type Safety**: Strong typing at compile-time
 - **Flexibility**: Can be passed to STL algorithms (`std::sort`, `std::transform`, etc.)
 
-### Functor vs Function Pointer vs Lambda
+#### Functor vs Function Pointer vs Lambda
 
 | Feature | Functor | Function Pointer | Lambda |
 |---------|---------|------------------|--------|
@@ -59,9 +58,8 @@ In autonomous vehicle systems, functors are extensively used for:
 
 ---
 
-## EDGE_CASES
-
-### 1. Thread-Safety with Shared State
+### EDGE_CASES: Tricky Scenarios and Deep Internals
+#### Edge Case 1: Thread-Safety with Shared State
 
 **Problem**: Multiple threads accessing the same functor instance can cause data races.
 
@@ -106,7 +104,7 @@ public:
 
 ---
 
-### 2. Const-Correctness in Operator()
+#### Edge Case 2: Const-Correctness in Operator()
 
 **Problem**: Forgetting `const` on `operator()` can prevent usage with const functors or STL algorithms.
 
@@ -145,7 +143,7 @@ int result = add5(10);  // ✅ Works!
 
 ---
 
-### 3. Copy Semantics and STL Algorithm Behavior
+#### Edge Case 3: Copy Semantics and STL Algorithm Behavior
 
 **Problem**: STL algorithms may copy functors, leading to unexpected state loss.
 
@@ -181,7 +179,7 @@ std::cout << "Total calls: " << result.getCalls();  // ✅ Prints 4
 
 ---
 
-### 4. Memoization Cache Invalidation
+#### Edge Case 4: Memoization Cache Invalidation
 
 **Problem**: Cached results may become stale if dependencies change.
 
@@ -238,7 +236,7 @@ public:
 
 ---
 
-### 5. Double Lookup in Hash-Based Memoization
+#### Edge Case 5: Double Lookup in Hash-Based Memoization
 
 **Problem**: Using `.count()` followed by `[]` performs two hash lookups.
 
@@ -280,9 +278,8 @@ int operator()(int x) const {
 
 ---
 
-## CODE_EXAMPLES
-
-### Example 1: Basic Stateful Functor (Easy)
+### CODE_EXAMPLES: Practical Demonstrations
+#### Example 1: Basic Stateful Functor (Easy)
 
 ```cpp
 #include <iostream>
@@ -341,7 +338,7 @@ int main() {
 
 ---
 
-### Example 2: Memoizing Functor (Mid)
+#### Example 2: Memoizing Functor (Mid)
 
 ```cpp
 #include <iostream>
@@ -436,7 +433,7 @@ int main() {
 
 ---
 
-### Example 3: Thread-Safe Functor (Advanced)
+#### Example 3: Thread-Safe Functor (Advanced)
 
 ```cpp
 #include <iostream>
@@ -535,7 +532,7 @@ int main() {
 
 ---
 
-### Example 4: Functor with Generic Programming (Advanced)
+#### Example 4: Functor with Generic Programming (Advanced)
 
 ```cpp
 #include <iostream>
@@ -622,7 +619,7 @@ int main() {
 
 ---
 
-### Example 5: Autonomous Vehicle Sensor Filter (Real-World)
+#### Example 5: Autonomous Vehicle Sensor Filter (Real-World)
 
 ```cpp
 #include <iostream>
@@ -724,7 +721,7 @@ int main() {
 
 ---
 
-### Example 6: Functor Composition (Advanced)
+#### Example 6: Functor Composition (Advanced)
 
 ```cpp
 #include <iostream>
@@ -822,8 +819,7 @@ int main() {
 
 ---
 
-## INTERVIEW_QA
-
+### INTERVIEW_QA: Comprehensive Questions and Answers
 #### Q1: What is a functor in C++ and how does it differ from a regular function?
 **Difficulty:** #beginner
 **Category:** #conceptual
@@ -2163,9 +2159,8 @@ int main() {
 
 ---
 
-## PRACTICE_TASKS
-
-### Q1
+### PRACTICE_TASKS: Output Prediction and Code Analysis
+#### Q1
 Analyze the following functor and identify the issue:
 ```cpp
 class Counter {
@@ -2177,7 +2172,7 @@ public:
 };
 ```
 
-### Q2
+#### Q2
 What will be the output of this code? Explain why.
 ```cpp
 class Multiplier {
@@ -2193,7 +2188,7 @@ std::for_each(vec.begin(), vec.end(), m);
 std::cout << m(5);
 ```
 
-### Q3
+#### Q3
 Fix the following thread-unsafe functor:
 ```cpp
 class Cache {
@@ -2208,7 +2203,7 @@ public:
 };
 ```
 
-### Q4
+#### Q4
 Optimize this memoization functor to avoid double hash lookup:
 ```cpp
 int operator()(int x) const {
@@ -2221,7 +2216,7 @@ int operator()(int x) const {
 }
 ```
 
-### Q5
+#### Q5
 Complete this generic accumulator functor that works with any type supporting `operator+`:
 ```cpp
 template <typename T>
@@ -2237,7 +2232,7 @@ public:
 };
 ```
 
-### Q6
+#### Q6
 What's wrong with this comparison functor? How would you fix it?
 ```cpp
 class GreaterThan {
@@ -2248,7 +2243,7 @@ public:
 };
 ```
 
-### Q7
+#### Q7
 Implement move semantics for this resource-owning functor:
 ```cpp
 class FileProcessor {
@@ -2260,7 +2255,7 @@ public:
 };
 ```
 
-### Q8
+#### Q8
 Why doesn't this code compile? Fix it.
 ```cpp
 class Transformer {
@@ -2273,7 +2268,7 @@ public:
 };
 ```
 
-### Q9
+#### Q9
 Convert this function pointer usage to a functor:
 ```cpp
 bool isEven(int x) { return x % 2 == 0; }
@@ -2281,7 +2276,7 @@ std::vector<int> vec = {1, 2, 3, 4, 5};
 vec.erase(std::remove_if(vec.begin(), vec.end(), isEven), vec.end());
 ```
 
-### Q10
+#### Q10
 Identify and fix the issue with cache invalidation in this functor:
 ```cpp
 class ScalingFunction {
@@ -2304,7 +2299,7 @@ public:
 };
 ```
 
-### Q11
+#### Q11
 Complete this variadic functor that counts how many times it's been called with different argument counts:
 ```cpp
 class CallTracker {
@@ -2321,7 +2316,7 @@ public:
 };
 ```
 
-### Q12
+#### Q12
 Why might this functor be slower than expected? Optimize it.
 ```cpp
 class StringConcatenator {
@@ -2334,7 +2329,7 @@ public:
 };
 ```
 
-### Q13
+#### Q13
 Implement a functor composition helper that chains two functors:
 ```cpp
 template <typename F, typename G>
@@ -2348,7 +2343,7 @@ ComposedFunctor<F, G> compose(F f, G g) {
 }
 ```
 
-### Q14
+#### Q14
 Fix the copy semantics issue in this code:
 ```cpp
 class Aggregator {
@@ -2366,7 +2361,7 @@ std::for_each(data.begin(), data.end(), agg);
 std::cout << "Average: " << agg.average();  // Prints wrong result!
 ```
 
-### Q15
+#### Q15
 Implement a thread-safe logging functor with lock-free counters:
 ```cpp
 class ThreadSafeLogger {
@@ -2378,7 +2373,7 @@ public:
 };
 ```
 
-### Q16
+#### Q16
 What's the difference in behavior between these two functors?
 ```cpp
 class A {
@@ -2397,7 +2392,7 @@ int r1 = a(5);  // Works
 // int r2 = b(5);  // Error - explain why
 ```
 
-### Q17
+#### Q17
 Implement a sensor filter functor for autonomous vehicles that maintains a moving window:
 ```cpp
 class SensorFilter {
@@ -2409,7 +2404,7 @@ public:
 };
 ```
 
-### Q18
+#### Q18
 Fix this lambda-to-functor conversion to preserve state correctly:
 ```cpp
 // Lambda version
@@ -2422,7 +2417,7 @@ class Multiplier {
 };
 ```
 
-### Q19
+#### Q19
 Implement a functor that can be used with `std::priority_queue` to sort by absolute distance from a target:
 ```cpp
 class DistanceComparator {
@@ -2432,7 +2427,7 @@ class DistanceComparator {
 std::priority_queue<int, std::vector<int>, DistanceComparator> pq(/* your constructor args */);
 ```
 
-### Q20
+#### Q20
 Analyze this performance issue and propose an optimization:
 ```cpp
 class ExpensiveFilter {
@@ -2454,9 +2449,8 @@ std::copy_if(data.begin(), data.end(), std::back_inserter(filtered), filter);
 
 ---
 
-## QUICK_REFERENCE
-
-### Answer Key
+### QUICK_REFERENCE: Key Takeaways and Comparison Tables
+#### Answer Key
 
 | Q# | Issue/Task | Solution/Answer |
 |----|-----------|-----------------|
@@ -2483,7 +2477,7 @@ std::copy_if(data.begin(), data.end(), std::back_inserter(filtered), filter);
 
 ---
 
-### Functor Design Patterns Quick Reference
+#### Functor Design Patterns Quick Reference
 
 #### 1. Basic Stateful Functor
 ```cpp
@@ -2582,7 +2576,7 @@ public:
 
 ---
 
-### Performance Guidelines
+#### Performance Guidelines
 
 | Pattern | Performance | When to Use |
 |---------|-------------|-------------|
@@ -2594,7 +2588,7 @@ public:
 
 ---
 
-### Common Pitfalls Checklist
+#### Common Pitfalls Checklist
 
 - [ ] **Const-correctness**: Mark `operator()` as `const` when appropriate
 - [ ] **Mutable members**: Use `mutable` for caches/counters in const methods
@@ -2608,7 +2602,7 @@ public:
 
 ---
 
-### Autonomous Vehicle Use Cases
+#### Autonomous Vehicle Use Cases
 
 | Component | Functor Application | Key Requirements |
 |-----------|---------------------|------------------|
@@ -2621,7 +2615,7 @@ public:
 
 ---
 
-### When to Choose Functor Over Alternatives
+#### When to Choose Functor Over Alternatives
 
 **Functor vs Lambda**:
 - ✅ Functor: Complex state, reusable across files, named type
@@ -2641,7 +2635,7 @@ public:
 
 ---
 
-### Testing Strategies
+#### Testing Strategies
 
 ```cpp
 // 1. Test state preservation

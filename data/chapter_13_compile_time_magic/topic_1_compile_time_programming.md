@@ -1685,7 +1685,19 @@ int main() {
     std::cout << y;
 }
 ```
-What happens when you compile this code?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** `x` is not a constant expression (runtime variable); `constexpr int y` requires compile-time initialization
+
+**Key Concept:** constexpr requirements
+
+</details>
+
+---
 
 #### Q2
 ```cpp
@@ -1701,7 +1713,19 @@ int main() {
     constexpr int f5 = factorial(5);
 }
 ```
-Will this compile in C++11? In C++14?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** C++11: No<br>C++14: Yes
+
+**Explanation:** C++11 forbids loops and mutable variables in constexpr; C++14 allows them
+
+**Key Concept:** constexpr evolution
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1719,7 +1743,19 @@ int main() {
     process(std::string("hello"));
 }
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 43<br>hello
+
+**Explanation:** `if constexpr` branches based on type: integral types print `value+1`, others print `value`
+
+**Key Concept:** if constexpr
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1729,7 +1765,19 @@ int main() {
     return 0;
 }
 ```
-Will this compile on a typical 64-bit system?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No (typically)
+
+**Explanation:** Most 64-bit systems have `sizeof(int) == 4`, so static_assert fails; compilation error
+
+**Key Concept:** static_assert
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1741,7 +1789,19 @@ int main() {
     constexpr int result = divide(10, 0);
 }
 ```
-What happens at compile time?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Evaluates to 0
+
+**Explanation:** Division by zero in constexpr is defined behavior (returns 0 with ternary guard); compiles and `result = 0`
+
+**Key Concept:** constexpr safety
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1757,7 +1817,19 @@ int main() {
     std::cout << Fib<5>::value;
 }
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 5
+
+**Explanation:** Fib<5> = 3+2 = 5 (Fibonacci sequence: 0,1,1,2,3,5...)
+
+**Key Concept:** Template metaprogramming
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1770,7 +1842,19 @@ int main() {
     std::cout << sizeof(arr) / sizeof(int);
 }
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 10
+
+**Explanation:** Array size is `foo(5) = 10` elements; `sizeof(arr)/sizeof(int) = 40/4 = 10`
+
+**Key Concept:** constexpr in array size
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1780,7 +1864,19 @@ static_assert(std::is_same_v<int, const int>, "Types match");
 
 int main() {}
 ```
-Will this compile?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No
+
+**Explanation:** `std::is_same` checks exact types; `int` ≠ `const int` (cv-qualifiers differ)
+
+**Key Concept:** Type comparison
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1793,7 +1889,19 @@ int main() {
     int result = square(runtime_val);
 }
 ```
-What happens?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** `consteval` requires compile-time constant argument; `runtime_val` is not constant
+
+**Key Concept:** consteval restriction
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1808,7 +1916,19 @@ int main() {
     static_assert(max_val == 20);
 }
 ```
-Does this code compile successfully?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes
+
+**Explanation:** All values are compile-time constants; `max_value(10, 20) = 20`; static_assert passes
+
+**Key Concept:** constexpr validation
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -1826,7 +1946,19 @@ int main() {
     print(3.14);
 }
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Integer<br>Not integer
+
+**Explanation:** Regular `if` (not `if constexpr`) evaluates at runtime; checks type and prints accordingly
+
+**Key Concept:** Runtime vs compile-time
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1839,7 +1971,19 @@ int main() {
     constexpr int result = compute(-5);
 }
 ```
-What happens at compile time?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** Throwing exception in constexpr function requires runtime context; compile-time evaluation can't throw
+
+**Key Concept:** Exception limitations
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1854,7 +1998,19 @@ int main() {
     // Array<0> arr2;
 }
 ```
-What happens if you uncomment the second line?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** `static_assert(0 > 0)` fails; compilation stops with "Size must be positive" message
+
+**Key Concept:** static_assert enforcement
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1870,7 +2026,19 @@ int main() {
     }
 }
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Even
+
+**Explanation:** `if constexpr (is_even(10))` evaluates to `if constexpr (true)` at compile time; only Even branch compiled
+
+**Key Concept:** Compile-time branching
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1888,7 +2056,19 @@ int main() {
     std::cout << Countdown<10000>::value;
 }
 ```
-What happens during compilation?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error (likely)
+
+**Explanation:** Template instantiation depth (10000 levels) exceeds default compiler limit (~512-1024); "depth exceeded" error
+
+**Key Concept:** Instantiation depth limit
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1903,7 +2083,19 @@ int main() {
     std::cout << val;
 }
 ```
-What is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 100
+
+**Explanation:** `global` is constexpr (compile-time constant); `get_value()` returns it at compile time; prints 100
+
+**Key Concept:** constexpr variables
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1919,7 +2111,19 @@ int main() {
     // Container<std::string> c2;
 }
 ```
-What happens if you uncomment the second line?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compile error
+
+**Explanation:** `std::string` is not trivially copyable; static_assert fails with error message
+
+**Key Concept:** Type trait validation
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1932,7 +2136,19 @@ int main() {
     std::cout << val;
 }
 ```
-What is the output and what does this compute?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 89
+
+**Explanation:** Computes Fibonacci sequence via recursion; `mystery(10) = Fib(11) = 89`
+
+**Key Concept:** constexpr recursion
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1953,7 +2169,19 @@ int main() {
     process(&x);
 }
 ```
-What is the output?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Value: 42<br>Pointer: 42
+
+**Explanation:** `if constexpr` selects branch at compile time based on pointer-ness; first call prints value, second dereferences pointer
+
+**Key Concept:** Type-dependent logic
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1964,9 +2192,20 @@ int main() {
     std::cout << counter;
 }
 ```
-Does this compile and if so, what is printed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, prints 1
+
+**Explanation:** `constinit` ensures compile-time init but allows runtime mutation; `counter++` runs at runtime, prints 1
+
+**Key Concept:** constinit mutability
+
+</details>
 
 ---
+
 
 ### QUICK_REFERENCE: Summary Tables and Answer Keys
 

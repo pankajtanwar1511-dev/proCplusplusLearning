@@ -1457,6 +1457,19 @@ dq.push_front(5);
 std::cout << dq.front() << " " << dq.back();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 10`
+
+**Explanation:** push_front adds 5 at front, push_back adds 10 at back. front() returns 5, back() returns 10.
+
+**Key Concept:** #push_operations #double_ended
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::deque<int> dq = {1, 2, 3, 4, 5};
@@ -1465,12 +1478,38 @@ dq.pop_back();
 std::cout << dq.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** pop_front removes first, pop_back removes last. 5 - 2 = 3 elements remain.
+
+**Key Concept:** #pop_operations #size
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 std::deque<int> dq = {1, 2, 3};
 dq.insert(dq.begin() + 1, 99);
 for (int x : dq) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 99 2 3`
+
+**Explanation:** insert at position 1 (before second element) adds 99, shifting others right.
+
+**Key Concept:** #insert #middle_insertion
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1479,11 +1518,37 @@ std::sort(dq.begin(), dq.end());
 for (int x : dq) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 3 4 5`
+
+**Explanation:** std::sort works with deque's random access iterators, sorting in ascending order.
+
+**Key Concept:** #sort #random_access
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::deque<int> dq = {1, 2, 3, 4, 5};
 std::cout << dq[0] << " " << dq[4];
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 5`
+
+**Explanation:** operator[] provides O(1) random access. dq[0] is first element, dq[4] is fifth.
+
+**Key Concept:** #random_access #operator_bracket
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1492,12 +1557,38 @@ fl.push_front(0);
 std::cout << fl.front();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`
+
+**Explanation:** push_front adds 0 to front. front() returns the first element.
+
+**Key Concept:** #push_front #forward_list
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 std::forward_list<int> fl = {1, 2, 3};
 fl.insert_after(fl.before_begin(), 0);
 std::cout << fl.front();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`
+
+**Explanation:** insert_after with before_begin() inserts at front. front() returns 0.
+
+**Key Concept:** #insert_after #before_begin
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1506,12 +1597,38 @@ fl.remove(2);
 // How many elements remain?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** remove(2) removes all occurrences of 2. Three 2s removed, 3 elements remain: {1, 3, 4}.
+
+**Key Concept:** #remove #element_removal
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 std::forward_list<int> fl = {5, 3, 1, 4, 2};
 fl.sort();
 // What is the first element after sorting?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`
+
+**Explanation:** sort() arranges in ascending order. First element after sorting is 1.
+
+**Key Concept:** #sort #ordering
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1520,6 +1637,19 @@ fl.reverse();
 std::cout << fl.front();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** reverse() reverses order. Original last element (5) becomes first.
+
+**Key Concept:** #reverse #pointer_manipulation
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::deque<int> dq = {1, 2, 3};
@@ -1527,12 +1657,38 @@ dq.resize(5);
 std::cout << dq.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** resize(5) grows from 3 to 5 elements by adding 2 default-initialized elements.
+
+**Key Concept:** #resize #growth
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 std::deque<int> dq = {1, 2, 3, 4, 5};
 dq.clear();
 std::cout << dq.size() << " " << dq.empty();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 1`
+
+**Explanation:** clear() removes all elements. size becomes 0, empty returns true (1).
+
+**Key Concept:** #clear #empty
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -1542,6 +1698,19 @@ a.splice_after(a.before_begin(), b);
 // What does 'a' contain? What is b's state?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `{4, 5, 6, 1, 2, 3}, b is empty`
+
+**Explanation:** splice_after at before_begin moves all of b to front of a.
+
+**Key Concept:** #splice_after #ownership_transfer
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::deque<int> dq = {1, 2, 3};
@@ -1550,12 +1719,38 @@ dq.push_back(4);
 std::cout << *it;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`
+
+**Explanation:** Deque's push_back usually preserves iterators unless map reallocation occurs.
+
+**Key Concept:** #iterator_stability #push_back
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::forward_list<int> fl = {1, 2, 3};
 fl.emplace_front(0);
 std::cout << fl.front();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`
+
+**Explanation:** emplace_front constructs 0 in-place at front. front() returns 0.
+
+**Key Concept:** #emplace_front #in_place
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1564,12 +1759,38 @@ dq.erase(dq.begin() + 2);
 std::cout << dq.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4`
+
+**Explanation:** erase at position 2 (element 3) removes one element. 5 - 1 = 4.
+
+**Key Concept:** #erase #removal
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 std::forward_list<int> fl = {1, 1, 2, 2, 3};
 fl.unique();
 // How many elements remain?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** unique() removes consecutive duplicates: {1, 2, 3}. Three elements remain.
+
+**Key Concept:** #unique #duplicates
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1578,12 +1799,38 @@ std::deque<int> dq2 = std::move(dq1);
 std::cout << dq1.size() << " " << dq2.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 3`
+
+**Explanation:** Move constructor transfers ownership. dq1 becomes empty, dq2 has 3 elements.
+
+**Key Concept:** #move_semantics #ownership
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 std::forward_list<int> fl = {1, 2, 3, 4, 5};
 fl.remove_if([](int x) { return x % 2 == 0; });
 // What elements remain?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `{1, 3, 5}`
+
+**Explanation:** remove_if removes even numbers (2, 4). Odd numbers remain.
+
+**Key Concept:** #remove_if #predicate
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1593,7 +1840,19 @@ dq.push_back(40);
 std::cout << dq.front() << " " << dq.back();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 40`
+
+**Explanation:** push_front(5) adds to front, push_back(40) adds to back. front is 5, back is 40.
+
+**Key Concept:** #double_ended #push_operations
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

@@ -24,6 +24,11 @@ wheels/
 MANIFEST
 *.log
 
+# App runtime files
+*.pid
+app/*.log
+app/.*.pid
+
 # Node
 node_modules/
 npm-debug.log*

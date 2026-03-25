@@ -1,9 +1,10 @@
-## TOPIC: Computer Vision & Image Processing with ROS2
-
+# Chapter 5: Robotics Applications
+## Topic 5.2: Computer Vision & Image Processing with ROS2
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. Image Transport in ROS2
 
 **Image Messages in ROS2:**

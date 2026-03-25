@@ -1,9 +1,10 @@
-## TOPIC: Debugging & Introspection Tools
-
+# Chapter 3: Advanced ROS2 Features
+## Topic 5: Debugging & Introspection Tools
 
 ---
 
-## THEORY_SECTION
+## Theory
+
 ### 1. ROS2 CLI Introspection Tools
 
 ROS2 provides a comprehensive command-line interface for runtime introspection and debugging. These tools allow you to inspect the state of your ROS2 system without modifying code.
@@ -949,7 +950,8 @@ ros2 interface list | grep MyMessage
 
 ---
 
-## EDGE_CASES
+## Edge Cases
+
 ### Edge Case 1: Silent Node Failure (Node Alive but Not Functioning)
 
 **Scenario:**
@@ -1456,7 +1458,8 @@ ros2 topic info /camera/image_raw --verbose
 
 ---
 
-## CODE_EXAMPLES
+## Code Examples
+
 ### Example 1: System Health Monitor Node
 
 A diagnostic node that monitors the health of the ROS2 system and publishes status reports.
@@ -2736,7 +2739,8 @@ void my_function() {
 
 ---
 
-## PRACTICE_TASKS
+## Practice Tasks
+
 ### Practice Task 1: Implement a System Health Dashboard
 
 **Objective:** Create a comprehensive monitoring system that tracks node health, topic activity, and system resources.
@@ -2961,7 +2965,8 @@ ros2 run my_package network_diagnostics
 
 ---
 
-## QUICK_REFERENCE
+## Quick Reference
+
 ### Essential Debugging Commands
 
 ```bash

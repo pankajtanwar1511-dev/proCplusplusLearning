@@ -1482,6 +1482,19 @@ void notifier() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** May work or spurious wakeup may cause issues
+
+**Explanation:** No predicate - vulnerable to spurious wakeups
+
+**Key Concept:** Spurious wakeup
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::mutex mtx;
@@ -1499,6 +1512,19 @@ void consumer() {
     std::cout << "Ready\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race condition possible but predicate likely saves it
+
+**Explanation:** ready modified without lock - race, but predicate checks before waiting
+
+**Key Concept:** Race on condition
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1521,6 +1547,19 @@ void waiter() {
     std::cout << "Done\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Done"
+
+**Explanation:** Predicate checked before waiting - early notification OK
+
+**Key Concept:** Predicate prevents lost wakeup
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1546,6 +1585,19 @@ void consumer() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "0 1 2 3 4" (order guaranteed within consumer)
+
+**Explanation:** notify_all wastes CPU but works
+
+**Key Concept:** Thundering herd
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::mutex mtx;
@@ -1561,6 +1613,19 @@ void worker() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Timeout" (no notifier)
+
+**Explanation:** wait_for times out after 100ms
+
+**Key Concept:** Timeout
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1582,6 +1647,19 @@ void notifier() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Waiter blocks forever
+
+**Explanation:** Notification before predicate true - lost wakeup
+
+**Key Concept:** Lost wakeup
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1611,6 +1689,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Only one thread prints (0, 1, or 2), others wait forever
+
+**Explanation:** notify_one wakes only one thread
+
+**Key Concept:** notify_one limitation
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::mutex mtx;
@@ -1621,6 +1712,19 @@ void waiter() {
     cv.wait(lock, []{ return true; });
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** wait() requires unique_lock, not lock_guard
+
+**Key Concept:** Lock type requirement
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1642,6 +1746,19 @@ void consumer() {
     std::cout << q.front() << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "42"
+
+**Explanation:** Notify inside lock is correct, just potentially less efficient
+
+**Key Concept:** Notify inside lock
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1669,6 +1786,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Working"
+
+**Explanation:** Predicate checked first despite late wait - works
+
+**Key Concept:** Late wait OK with predicate
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::mutex mtx;
@@ -1692,6 +1822,19 @@ void setter() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Got 10"
+
+**Explanation:** Spurious wakeups handled by predicate rechecking
+
+**Key Concept:** Multiple notifications
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 std::mutex m1;
@@ -1703,6 +1846,19 @@ void thread1() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Blocks forever
+
+**Explanation:** Predicate always false - infinite wait
+
+**Key Concept:** Infinite wait
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 std::mutex mtx;
@@ -1713,6 +1869,19 @@ void worker() {
     cv.wait(smtx, []{ return true; });
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** shared_lock should use shared_mutex, not passed directly
+
+**Key Concept:** condition_variable_any usage
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1745,6 +1914,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** All three consumers print "done"
+
+**Explanation:** notify_all wakes all waiters
+
+**Key Concept:** notify_all broadcast
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::mutex mtx;
@@ -1759,6 +1941,19 @@ void waiter() {
     std::cout << (flag ? "Flag set" : "Timeout") << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Timeout" (if flag not set within 1 second)
+
+**Explanation:** wait_until with time point
+
+**Key Concept:** Absolute timeout
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1787,6 +1982,19 @@ void consumer() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints "0 1 2" then blocks forever
+
+**Explanation:** Producer finishes, consumer waits infinitely
+
+**Key Concept:** Missing shutdown mechanism
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 std::mutex mtx;
@@ -1808,6 +2016,19 @@ void waiter() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "Counter is 5" (or higher)
+
+**Explanation:** Predicate rechecked each notification
+
+**Key Concept:** Predicate handles races
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 std::mutex mtx;
@@ -1819,6 +2040,19 @@ void waiter() {
     std::cout << std::boolalpha << result << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: "false"
+
+**Explanation:** Zero timeout with false predicate - instant return
+
+**Key Concept:** Zero timeout
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1837,6 +2071,19 @@ void consumer() {
     cv.wait(lock, []{ return ready; });
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior (different mutexes)
+
+**Explanation:** Consumer waits with wrong mutex - violates cv contract
+
+**Key Concept:** Mutex mismatch
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1859,7 +2106,19 @@ void coordinator() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Worker blocks forever
+
+**Explanation:** Coordinator forgot notify - waiter never woken
+
+**Key Concept:** Missing notification
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

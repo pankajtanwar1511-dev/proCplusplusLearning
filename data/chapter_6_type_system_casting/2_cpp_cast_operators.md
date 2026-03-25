@@ -2311,6 +2311,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `20 20`
+
+**Explanation:** Both casts succeed; b actually points to Derived object
+
+**Key Concept:** #static_cast #dynamic_cast
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <iostream>
@@ -2323,6 +2336,19 @@ int main() {
     std::cout << x << " " << *p << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior<br>Typical: `100 200` or `200 200`
+
+**Explanation:** Modifying truly const object is UB; compiler may optimize
+
+**Key Concept:** #const_cast #undefined_behavior
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2343,6 +2369,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `0 1`
+
+**Explanation:** static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr)
+
+**Key Concept:** #static_cast #dynamic_cast
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 #include <iostream>
@@ -2359,6 +2398,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `1`
+
+**Explanation:** Both methods read same bits; memcpy avoids strict aliasing issues
+
+**Key Concept:** #memcpy #reinterpret_cast
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 #include <iostream>
@@ -2374,6 +2426,19 @@ int main() {
     std::cout << i1 << " " << i2 << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `3 3`
+
+**Explanation:** Both are implicit narrowing (first) and explicit (second); same result
+
+**Key Concept:** #implicit_conversion #static_cast
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2392,6 +2457,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `2`<br>`0`
+
+**Explanation:** B subobject at different offset due to multiple inheritance
+
+**Key Concept:** #multiple_inheritance #pointer_adjustment
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 #include <iostream>
@@ -2403,6 +2481,19 @@ int main() {
     std::cout << c << " " << static_cast<int>(c) << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `A 65`
+
+**Explanation:** 65 is ASCII 'A'; conversion preserves value
+
+**Key Concept:** #numeric_conversion #static_cast
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2424,6 +2515,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `Cast failed`
+
+**Explanation:** Reference dynamic_cast throws std::bad_cast on failure
+
+**Key Concept:** #dynamic_cast #exception
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 #include <iostream>
@@ -2437,6 +2541,19 @@ int main() {
     legacyFunc(const_cast<char*>(message));  // Safe?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `Hello`
+
+**Explanation:** Safe only if legacyFunc doesn't modify (we assume it doesn't)
+
+**Key Concept:** #const_cast #legacy_api
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2455,6 +2572,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Commented line fails to compile
+
+**Explanation:** dynamic_cast requires polymorphic type (virtual function)
+
+**Key Concept:** #dynamic_cast #polymorphic
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 #include <iostream>
@@ -2469,6 +2599,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `1000`
+
+**Explanation:** Safe pointer→integer→pointer round-trip with uintptr_t
+
+**Key Concept:** #reinterpret_cast #pointer_to_integer
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 #include <iostream>
@@ -2482,6 +2625,19 @@ int main() {
     std::cout << (c1 == nullptr) << " " << (c2 == nullptr) << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `1 1`
+
+**Explanation:** Both produce nullptr; casting nullptr always yields nullptr
+
+**Key Concept:** #nullptr #static_cast
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2505,6 +2661,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `Cross-cast succeeded`
+
+**Explanation:** dynamic_cast can cross-cast within multiple inheritance hierarchy
+
+**Key Concept:** #cross_cast #dynamic_cast
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 #include <iostream>
@@ -2516,6 +2685,19 @@ int main() {
     std::cout << overflow << "\n";  // What's the output?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Value exceeds int range; result is implementation-defined
+
+**Key Concept:** #narrowing_conversion #overflow
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2535,6 +2717,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `999`
+
+**Explanation:** Safe because x wasn't originally const
+
+**Key Concept:** #const_cast #const_correctness
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 #include <iostream>
@@ -2553,6 +2748,19 @@ int main() {
     delete b2;
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `1 0`
+
+**Explanation:** First is actually Derived (succeeds), second is Base only (fails)
+
+**Key Concept:** #dynamic_cast #runtime_check
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2577,6 +2785,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `10 20`
+
+**Explanation:** Safe downcast; a actually points to B object
+
+**Key Concept:** #static_cast #downcasting
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 #include <iostream>
@@ -2588,6 +2809,19 @@ int main() {
     std::cout << i << "\n";
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `-3`
+
+**Explanation:** Truncates toward zero: -3.99 becomes -3
+
+**Key Concept:** #static_cast #truncation
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2606,6 +2840,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints: `100`
+
+**Explanation:** Safe: mutable_int wasn't originally const
+
+**Key Concept:** #const_cast #mutable_object
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 #include <iostream>
@@ -2619,6 +2866,20 @@ int main() {
     std::cout << d << "\n";  // What happens?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** memcpy copies int bytes into double; interpreting as double is UB
+
+**Key Concept:** #type_punning #undefined_behavior
+
+</details>
+
+---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

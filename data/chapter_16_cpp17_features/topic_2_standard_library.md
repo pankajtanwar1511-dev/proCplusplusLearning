@@ -1392,8 +1392,6 @@ optional stores value inline (stack or member), no heap. No ownership issues (no
 
 ### PRACTICE_TASKS: Output Prediction and Analysis Questions
 
-*(Due to length constraints, I'll provide 10 practice questions for this topic rather than 20)*
-
 #### Q1
 ```cpp
 #include <optional>
@@ -1405,6 +1403,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** optional is empty, value_or returns default value 42
+
+**Key Concept:** #optional #value_or
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 #include <variant>
@@ -1414,6 +1425,19 @@ int main() {
     std::cout << std::get<1>(v);
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 3.14
+
+**Explanation:** get<1> accesses second type (double) by index
+
+**Key Concept:** #variant #index_access
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1426,6 +1450,19 @@ int main() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** any_cast with pointer returns valid pointer, dereferences to 42
+
+**Key Concept:** #any #any_cast
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1441,6 +1478,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** empty
+
+**Explanation:** Default-constructed optional has no value
+
+**Key Concept:** #optional #has_value
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 #include <variant>
@@ -1453,6 +1503,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** hello
+
+**Explanation:** holds_alternative checks type, get retrieves string
+
+**Key Concept:** #variant #holds_alternative
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 #include <optional>
@@ -1464,6 +1527,19 @@ int main() {
     }
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** has value: 0
+
+**Explanation:** Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value
+
+**Key Concept:** #optional #bool
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1479,6 +1555,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** error
+
+**Explanation:** any holds double, casting to int throws bad_any_cast
+
+**Key Concept:** #any #exception
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 #include <variant>
@@ -1488,6 +1577,19 @@ int main() {
     std::cout << v.index();
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0
+
+**Explanation:** Variant holds int (first type), index is 0
+
+**Key Concept:** #variant #index
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1499,6 +1601,19 @@ int main() {
     std::cout << (opt1.value() + opt2.value_or(5));
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 15
+
+**Explanation:** opt1 has 10, opt2 empty uses default 5, sum is 15
+
+**Key Concept:** #optional #value_or
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1512,7 +1627,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 42
+
+**Explanation:** visit applies lambda to double value 42.0, prints without decimal
+
+**Key Concept:** #variant #visit
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

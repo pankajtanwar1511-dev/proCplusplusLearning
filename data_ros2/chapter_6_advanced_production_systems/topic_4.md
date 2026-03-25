@@ -1,9 +1,10 @@
-## TOPIC: Behavior Trees (BehaviorTree.CPP)
-
+# Chapter 6: Advanced Production Systems
+## Topic 6.4: Behavior Trees (BehaviorTree.CPP)
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. What are Behavior Trees?
 
 **Behavior Trees (BTs)** are a **hierarchical task planning framework** for modeling complex decision-making and control logic in robotics and AI.

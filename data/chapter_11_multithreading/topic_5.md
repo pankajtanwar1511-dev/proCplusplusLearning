@@ -1287,6 +1287,19 @@ void thread2() {
 // What is guaranteed about the output?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Thread2 may or may not print "Saw 1"
+
+**Explanation:** Relaxed ordering provides no inter-thread visibility guarantees; thread2 might never observe the write
+
+**Key Concept:** memory_order_relaxed
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::atomic<bool> ready(false);
@@ -1305,6 +1318,19 @@ void reader() {
 // Will the assertion always pass? Why or why not?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** No, assertion may fail
+
+**Explanation:** Relaxed stores/loads do not synchronize; reader may see ready=true but data=0 due to reordering
+
+**Key Concept:** memory ordering violation
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 std::atomic<int> counter(10);
@@ -1316,6 +1342,19 @@ void increment() {
 
 // If called by 100 threads once each, what is counter's final value?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Likely around 11-20, not 110
+
+**Explanation:** CAS without loop only succeeds for one thread; others fail and do not retry
+
+**Key Concept:** compare_exchange usage
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1333,6 +1372,19 @@ void thread2() {
 // Is this correct for synchronization? Explain.
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, correct
+
+**Explanation:** Release-acquire pair synchronizes; when acquire sees true, all prior operations (including earlier stores) are visible
+
+**Key Concept:** acquire-release semantics
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 std::atomic_flag flag = ATOMIC_FLAG_INIT;
@@ -1348,6 +1400,19 @@ void thread2() {
 
 // What are the possible outputs?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 0 or 1 depending on timing
+
+**Explanation:** If thread1 runs first, was_set=0; if thread2 clears then thread1 runs, was_set=0; if thread1 then thread2, was_set=0 initially
+
+**Key Concept:** atomic_flag behavior
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -1365,6 +1430,19 @@ void thread2() {
 
 // Will the assertion ever fail? Why or why not?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Never fails
+
+**Explanation:** Seq-cst provides total order; if thread2 sees y=1, it must see x=1 due to program order in thread1
+
+**Key Concept:** sequential consistency
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1385,6 +1463,19 @@ void thread2() {
 // Is this code safe? What could go wrong?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Unsafe: data lifetime issue
+
+**Explanation:** If data goes out of scope, p becomes dangling pointer; also no memory ordering guarantees without explicit orderings
+
+**Key Concept:** pointer atomics
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::atomic<int> counter(0);
@@ -1399,6 +1490,19 @@ void worker() {
 // Why is the loop necessary?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** CAS may fail spuriously or due to contention
+
+**Explanation:** Another thread may modify counter between load and CAS; weak CAS requires loop for spurious failures
+
+**Key Concept:** compare_exchange_weak
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 volatile int counter = 0;
@@ -1409,6 +1513,19 @@ void increment() {
 
 // What is the problem with this code?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race condition, not atomic
+
+**Explanation:** volatile provides no atomicity; ++counter decomposes into read-modify-write which is not atomic
+
+**Key Concept:** volatile misconception
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1436,6 +1553,19 @@ void thread4() {
 // Can z be 0, 1, or 2 at the end? Explain.
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** z can be 0, 1, or 2
+
+**Explanation:** Relaxed ordering allows total reordering; thread3/4 may see different orders of x/y becoming true
+
+**Key Concept:** relaxed ordering
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::atomic<int> val(100);
@@ -1445,6 +1575,19 @@ std::cout << "Old: " << old << ", New: " << val.load() << "\n";
 
 // What is the output?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Old: 100, New: 200
+
+**Explanation:** exchange returns previous value (100) and sets new value (200) atomically
+
+**Key Concept:** atomic exchange
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1461,6 +1604,19 @@ void thread2() {
 // After both threads complete, what is x's value? Is it deterministic?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** x = 15, deterministic
+
+**Explanation:** Both additions are atomic; order does not matter for final sum, though interleaving varies
+
+**Key Concept:** fetch_add atomicity
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 struct Node {
@@ -1476,6 +1632,19 @@ void push(int val) {
     head.store(new_node);  // ❌ What's wrong with this?
 }
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race condition: no CAS
+
+**Explanation:** Multiple threads can overwrite head simultaneously; must use compare_exchange_weak in loop
+
+**Key Concept:** lock-free push pattern
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1495,6 +1664,19 @@ void thread2() {
 // What can go wrong here?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race on ready
+
+**Explanation:** ready is non-atomic bool; thread2's read is not synchronized with thread1's write; must use atomic<bool>
+
+**Key Concept:** mixed atomic/non-atomic
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 std::atomic<int> val(0);
@@ -1510,12 +1692,38 @@ void thread2() {
 // What memory ordering is used by default?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** memory_order_seq_cst
+
+**Explanation:** Default for all atomic operations when no ordering specified
+
+**Key Concept:** default memory ordering
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::atomic<std::string> str("hello");  // Compile error or not?
 
 // Can you make an atomic of a large type? What happens?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compiles but likely not lock-free
+
+**Explanation:** Large types use internal mutex; is_lock_free() would return false; defeats purpose
+
+**Key Concept:** lock-free guarantees
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1537,6 +1745,19 @@ void thread3() {
 // What values can thread3 print?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** 1 or 2
+
+**Explanation:** Thread3 sees either thread1's or thread2's write; both use release-acquire so both are valid
+
+**Key Concept:** concurrent stores
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 std::atomic<int> flag(0);
@@ -1557,6 +1778,19 @@ void reader() {
 // Is this synchronization correct?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, correct
+
+**Explanation:** Fences provide necessary ordering despite relaxed flag operations; release fence ensures data visible, acquire fence ensures data read after flag
+
+**Key Concept:** memory fences
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 std::atomic<int> x(10);
@@ -1567,6 +1801,19 @@ std::cout << "a: " << a << ", b: " << b << ", x: " << x.load() << "\n";
 
 // What is the output?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** a: 11, b: 11, x: 12
+
+**Explanation:** Pre-increment returns new value (11), post-increment returns old value (11), both increment x
+
+**Key Concept:** atomic increment variants
+
+</details>
+
+---
 
 #### Q20
 ```cpp
@@ -1579,7 +1826,19 @@ PaddedAtomic counters[4];
 // Why use alignas(64)? What problem does this solve?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prevents false sharing
+
+**Explanation:** 64-byte alignment ensures each atomic is on separate cache line, avoiding cache line bouncing between cores
+
+**Key Concept:** false sharing mitigation
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

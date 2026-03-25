@@ -1287,12 +1287,38 @@ v.reserve(10);
 std::cout << " " << v.capacity() << " " << v.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 0 10 0`
+
+**Explanation:** Initially size and capacity are 0. reserve(10) sets capacity to 10 but size remains 0.
+
+**Key Concept:** #reserve #capacity
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::vector<int> v = {1, 2, 3, 4, 5};
 v.erase(v.begin() + 2);
 for (int x : v) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 4 5`
+
+**Explanation:** erase at index 2 removes element 3. Elements after are shifted left.
+
+**Key Concept:** #erase #element_removal
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -1302,12 +1328,38 @@ v1[0] = 10;
 std::cout << v2[0];
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1`
+
+**Explanation:** v2 is a copy of v1. Modifying v1 doesn't affect v2 (deep copy).
+
+**Key Concept:** #copy_semantics #independence
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 std::vector<int> v(5, 10);
 std::cout << v.size() << " ";
 for (int x : v) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 10 10 10 10 10`
+
+**Explanation:** Parentheses create 5 elements, each with value 10.
+
+**Key Concept:** #constructor #fill_initialization
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -1316,12 +1368,38 @@ std::cout << v.size() << " ";
 for (int x : v) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `2 5 10`
+
+**Explanation:** Braces create initializer list with 2 elements: 5 and 10.
+
+**Key Concept:** #initializer_list #brace_initialization
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::vector<int> v = {1, 2, 3};
 v.insert(v.begin() + 1, 99);
 for (int x : v) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 99 2 3`
+
+**Explanation:** insert before position 1 (second element), shifting others right.
+
+**Key Concept:** #insert #element_insertion
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -1330,6 +1408,19 @@ v.erase(std::remove(v.begin(), v.end(), 3), v.end());
 std::cout << v.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `4`
+
+**Explanation:** remove-erase idiom removes all 3s. Size becomes 4.
+
+**Key Concept:** #erase_remove_idiom #size
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::vector<int> v = {1, 2, 3};
@@ -1337,12 +1428,38 @@ v.resize(5);
 std::cout << v[4];
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0`
+
+**Explanation:** resize(5) adds 2 default-initialized elements (0 for int).
+
+**Key Concept:** #resize #default_initialization
+
+</details>
+
+---
+
 #### Q9
 ```cpp
 std::vector<int> v = {1, 2, 3, 4, 5};
 v.resize(3);
 std::cout << v.size() << " " << v.capacity();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 [original capacity ≥ 5]`
+
+**Explanation:** resize(3) reduces size to 3 but capacity unchanged.
+
+**Key Concept:** #resize #capacity_preservation
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -1352,12 +1469,38 @@ v[5] = 100;
 std::cout << v[0] << " " << v[5];
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 100`
+
+**Explanation:** resize(10) creates 10 default-initialized (0) elements. v[5]=100 then modifies.
+
+**Key Concept:** #resize #element_access
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 std::vector<int> v = {1, 2, 3};
 v.clear();
 std::cout << v.size() << " " << v.capacity();
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 3`
+
+**Explanation:** clear() destroys all elements (size=0) but capacity remains unchanged.
+
+**Key Concept:** #clear #capacity_preservation
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1369,6 +1512,19 @@ v.push_back(5);
 std::cout << "Iterator still valid? ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `No, undefined behavior`
+
+**Explanation:** Reallocation invalidates all iterators. Using it is UB.
+
+**Key Concept:** #iterator_invalidation #reallocation
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 std::vector<int> v1 = {1, 2, 3};
@@ -1376,12 +1532,38 @@ std::vector<int> v2 = std::move(v1);
 std::cout << v1.size() << " " << v2.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `0 3`
+
+**Explanation:** Move leaves v1 empty (or in valid-but-unspecified state), v2 has 3 elements.
+
+**Key Concept:** #move_semantics #ownership_transfer
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::vector<int> v = {3, 1, 4, 1, 5};
 std::sort(v.begin(), v.end());
 for (int x : v) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 1 3 4 5`
+
+**Explanation:** std::sort sorts in ascending order.
+
+**Key Concept:** #sorting #std_sort
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -1391,12 +1573,38 @@ v.push_back(5);
 std::cout << v.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5`
+
+**Explanation:** Both emplace_back and push_back add one element each. Total: 5.
+
+**Key Concept:** #emplace_back #push_back
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::vector<int> v = {1, 2, 3, 4, 5};
 std::reverse(v.begin(), v.end());
 for (int x : v) std::cout << x << " ";
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `5 4 3 2 1`
+
+**Explanation:** std::reverse reverses elements in-place.
+
+**Key Concept:** #reverse #algorithms
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -1405,12 +1613,38 @@ auto it = std::unique(v.begin(), v.end());
 std::cout << (it - v.begin());
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3`
+
+**Explanation:** unique moves first occurrence of consecutive duplicates to front. Returns iterator 3 positions from begin.
+
+**Key Concept:** #unique #duplicate_removal
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 const std::vector<int> v = {1, 2, 3};
 auto it = v.begin();
 *it = 10;  // Will this compile?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `No, compile error`
+
+**Explanation:** const vector returns const_iterator. Cannot modify through it.
+
+**Key Concept:** #const_correctness #const_iterator
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -1420,6 +1654,19 @@ std::cout << v.size() << " ";
 for (int x : v) std::cout << x << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `3 100 100 100`
+
+**Explanation:** assign replaces all elements with 3 copies of 100.
+
+**Key Concept:** #assign #replacement
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::vector<int> v = {5, 2, 8, 1, 9};
@@ -1427,7 +1674,19 @@ std::partial_sort(v.begin(), v.begin() + 3, v.end());
 for (int i = 0; i < 3; ++i) std::cout << v[i] << " ";
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `1 2 5`
+
+**Explanation:** partial_sort sorts first 3 elements only. Rest unordered.
+
+**Key Concept:** #partial_sort #optimization
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

@@ -160,11 +160,17 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border-radius: var(--radius);
   overflow: hidden;
+  display: table !important;
 }
 
 .markdown-content table thead {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: var(--white);
+  display: table-header-group !important;
+}
+
+.markdown-content table tbody {
+  display: table-row-group !important;
 }
 
 .markdown-content table th {
@@ -172,9 +178,13 @@
   text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--primary-dark);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--white) !important;
+  display: table-cell !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .markdown-content table td {
@@ -211,6 +221,15 @@
   font-weight: 500;
 }
 
+/* Code in table headers - make visible on dark background */
+.markdown-content table thead code,
+.markdown-content table th code {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--white) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
 /* Table wrapper for mobile scrolling */
 .markdown-content {
   overflow-x: auto;
@@ -245,7 +264,9 @@
 }
 
 /* Examples Content */
-.examples-content {
+.examples-content,
+.edge-cases-content,
+.practice-content {
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -589,4 +610,315 @@
     padding: 0.375rem 0.625rem;
     font-size: 0.7rem;
   }
+}
+
+/* Practice Task Answer Styling */
+/* Practice Header Actions - Toggle All Answers */
+.practice-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  background-color: var(--light);
+  border-radius: var(--radius);
+  border: 1px solid var(--light-dark);
+}
+
+.practice-header-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.practice-header-actions .btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+}
+
+.practice-header-actions .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.practice-header-actions .btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.practice-content details,
+.markdown-content details {
+  margin: 1.5rem 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.practice-content summary,
+.markdown-content summary {
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--white);
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.practice-content summary::-webkit-details-marker,
+.markdown-content summary::-webkit-details-marker {
+  display: none;
+}
+
+.practice-content summary::before,
+.markdown-content summary::before {
+  content: '▶';
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.practice-content details[open] summary::before,
+.markdown-content details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.practice-content summary:hover,
+.markdown-content summary:hover {
+  background: linear-gradient(135deg, var(--primary-dark), #4f46e5);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.practice-content summary:active,
+.markdown-content summary:active {
+  transform: translateY(0);
+}
+
+/* Answer Content Area - Wrap all content in single card */
+.practice-content details[open],
+.markdown-content details[open] {
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  border: 2px solid #dbeafe;
+  border-radius: var(--radius);
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.practice-content details[open] summary,
+.markdown-content details[open] summary {
+  border-bottom: 2px solid #dbeafe;
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin-bottom: 0;
+}
+
+.practice-content details > *:not(summary),
+.markdown-content details > *:not(summary) {
+  padding: 1.5rem;
+  margin: 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+.practice-content details > *:not(summary):first-of-type,
+.markdown-content details > *:not(summary):first-of-type {
+  padding-top: 1.5rem;
+}
+
+.practice-content details > *:not(summary):last-child,
+.markdown-content details > *:not(summary):last-child {
+  padding-bottom: 1.5rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Answer content specific styling */
+.practice-content details p strong,
+.markdown-content details p strong {
+  color: var(--dark);
+  font-size: 1.05rem;
+}
+
+.practice-content details code,
+.markdown-content details code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary-dark);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.practice-content details pre,
+.markdown-content details pre {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  margin: 1rem 0;
+}
+
+.practice-content details pre code,
+.markdown-content details pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .practice-content summary,
+  .markdown-content summary {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .practice-content details > *:not(summary),
+  .markdown-content details > *:not(summary) {
+    padding: 1rem;
+  }
+}
+
+/* Practice Answer Content Specific */
+.practice-answer-section {
+  margin-top: 1.5rem;
+  border: 2px solid #e0e7ff;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.practice-answer-toggle {
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+  color: white !important;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.practice-answer-toggle:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+}
+
+.practice-answer-content {
+  background-color: #f8fbff;
+  padding: 1.5rem;
+  border-top: 2px solid #e0e7ff;
+}
+
+.answer-row {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--primary);
+}
+
+.answer-row:last-child {
+  margin-bottom: 0;
+}
+
+.answer-row strong {
+  color: var(--primary-dark);
+  font-size: 0.95rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.answer-row span {
+  color: var(--dark-light);
+  line-height: 1.6;
+}
+
+.concept-tag {
+  display: inline-block;
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* C++ Syntax Highlighting for Code Blocks */
+/* Apply to all code blocks in content-card, example-card, practice-content, markdown-content */
+.content-card pre code,
+.example-card pre code,
+.practice-content pre code,
+.markdown-content pre code,
+.code-block-wrapper pre code {
+  display: block;
+  white-space: pre;
+  color: #1e293b;
+}
+
+/* C++ Comments - Green/Gray color */
+.content-card pre code .comment,
+.example-card pre code .comment,
+.practice-content pre code .comment,
+.markdown-content pre code .comment {
+  color: #059669;
+  font-style: italic;
+}
+
+/* Keywords - Blue/Purple */
+.content-card pre code .keyword,
+.example-card pre code .keyword,
+.practice-content pre code .keyword,
+.markdown-content pre code .keyword {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* Strings - Orange/Red */
+.content-card pre code .string,
+.example-card pre code .string,
+.practice-content pre code .string,
+.markdown-content pre code .string {
+  color: #dc2626;
+}
+
+/* Numbers - Cyan */
+.content-card pre code .number,
+.example-card pre code .number,
+.practice-content pre code .number,
+.markdown-content pre code .number {
+  color: #0891b2;
+}
+
+/* Function names - Yellow/Gold */
+.content-card pre code .function,
+.example-card pre code .function,
+.practice-content pre code .function,
+.markdown-content pre code .function {
+  color: #ca8a04;
+  font-weight: 500;
 }

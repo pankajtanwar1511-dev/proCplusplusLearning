@@ -2112,7 +2112,19 @@ void test() {
     Resource r2;
 }
 ```
-What is the output and in what order are destructors called?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: `Acquired` `Acquired` `Released` `Released`
+
+**Explanation:** Destructors called in reverse construction order (r2 then r1)
+
+**Key Concept:** #destruction_order
+
+</details>
+
+---
 
 #### Q2
 ```cpp
@@ -2131,7 +2143,19 @@ int main() {
     return 0;
 }
 ```
-What is the complete output showing all object lifetimes?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Logger created` `Main started` `Logger created` `Main ending` `Logger destroyed` `Logger destroyed`
+
+**Explanation:** Global constructed before main, destroyed after main; local follows normal scope
+
+**Key Concept:** #static_lifetime
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2159,7 +2183,19 @@ void test() {
     }
 }
 ```
-What is the output? Is the file closed?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: `Exception: Failed`
+
+**Explanation:** File never opened so destructor never called; no "File closed" message
+
+**Key Concept:** #constructor_exception
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -2176,7 +2212,19 @@ void test() {
     Resource r;
 }
 ```
-What happens when this code runs?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Program calls `std::terminate()` and crashes
+
+**Explanation:** Throwing from destructor invokes terminate; never do this
+
+**Key Concept:** #destructor_exception
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2192,7 +2240,19 @@ void test() {
     Counter c2 = c1;  // Copy
 }
 ```
-What problem occurs and why?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Double delete / undefined behavior
+
+**Explanation:** Default copy constructor copies pointer; both objects try to delete same memory
+
+**Key Concept:** #shallow_copy_problem
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -2217,7 +2277,19 @@ void test() {
     Resource r = createResource();
 }
 ```
-How many times are the constructor and destructor called?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Constructor called once, destructor called once
+
+**Explanation:** C++17 RVO eliminates move; single object constructed in caller's stack frame
+
+**Key Concept:** #rvo #move_semantics
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -2251,7 +2323,19 @@ int main() {
     return 0;
 }
 ```
-What is the complete output? Is the mutex properly unlocked?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Locked` `In critical section` `Unlocked` `Caught`
+
+**Explanation:** Mutex properly unlocked during stack unwinding via RAII lock destructor
+
+**Key Concept:** #exception_safe_locking
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -2288,7 +2372,19 @@ void test() {
     }
 }
 ```
-What is the output? Which destructors are called?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `R1 acquired` `R2 acquired` `R2 released` `R1 released` `Exception caught`
+
+**Explanation:** Members fully constructed before constructor body throws; their destructors called; Container destructor NOT called
+
+**Key Concept:** #partial_construction
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -2314,7 +2410,19 @@ void test() {
     // Use file
 }
 ```
-What resource problem exists in this code?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Memory leak - file never closed
+
+**Explanation:** Using `new` with RAII bypasses automatic cleanup; must manually delete, risking leaks
+
+**Key Concept:** #new_with_raii
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -2343,7 +2451,19 @@ void test2() {
     t.commit();
 }
 ```
-What is the output for test1() and test2() separately?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** test1: `BEGIN` `COMMIT` `COMMITTED`<br>test2: `BEGIN` `ROLLBACK`
+
+**Explanation:** Explicit commit changes flag; exception prevents commit reaching, triggers rollback
+
+**Key Concept:** #commit_rollback
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -2363,7 +2483,19 @@ void processFile(const char* filename) {
     fclose(file);
 }
 ```
-What is the resource management problem? How many leak scenarios exist?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** File leaks on all three early returns
+
+**Explanation:** Manual resource management fails with multiple exit points; needs RAII
+
+**Key Concept:** #multiple_exits
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -2383,7 +2515,19 @@ void test() {
     Derived d;
 }
 ```
-What is the output showing construction and destruction order?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Base()` `Derived()` `~Derived()` `~Base()`
+
+**Explanation:** Base constructed first, destroyed last; derived constructed last, destroyed first
+
+**Key Concept:** #inheritance_order
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2408,7 +2552,19 @@ void test() {
     }
 }
 ```
-What is the output? Is there a memory leak?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Output: `Acquired` `Caught` - Yes, memory leak
+
+**Explanation:** Destructor not called because constructor threw; allocated memory leaks
+
+**Key Concept:** #constructor_throw_leak
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -2421,7 +2577,19 @@ void test() {
     std::cout << *ptr << "\n";
 }
 ```
-How many allocations and deallocations occur? Where does deallocation happen?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** One allocation, one deallocation at end of test()
+
+**Explanation:** `unique_ptr` destructor deallocates when it goes out of scope
+
+**Key Concept:** #unique_ptr_lifetime
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2441,7 +2609,20 @@ int main() {
     return 0;
 }
 ```
-What is the output showing scope-based destruction?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** `Block 1` `Cleanup` `Outside block`
+
+**Explanation:** Destructor called when Logger goes out of inner block scope
+
+**Key Concept:** #scope_based_destruction
+
+</details>
+
+---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

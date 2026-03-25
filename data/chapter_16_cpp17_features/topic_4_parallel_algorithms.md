@@ -1003,7 +1003,7 @@ int sum = std::reduce(std::execution::par, data.begin(), data.end(), 0);
 
 ### PRACTICE_TASKS: Code Analysis and Prediction
 
-#### Task 1
+#### Q1
 ```cpp
 std::vector<int> data = {1, 2, 3, 4, 5};
 int product = std::reduce(std::execution::par, data.begin(), data.end(),
@@ -1012,7 +1012,7 @@ std::cout << product;
 // What is printed?
 ```
 
-#### Task 2
+#### Q2
 ```cpp
 std::vector<int> data(100);
 int sum = 0;
@@ -1021,14 +1021,14 @@ std::for_each(std::execution::par, data.begin(), data.end(),
 // Is this safe? What is the problem?
 ```
 
-#### Task 3
+#### Q3
 ```cpp
 std::vector<int> data(10);  // Small dataset
 std::sort(std::execution::par, data.begin(), data.end());
 // Is parallel sort beneficial here? Why or why not?
 ```
 
-#### Task 4
+#### Q4
 ```cpp
 std::mutex mtx;
 std::vector<int> data(1000);
@@ -1040,7 +1040,7 @@ std::for_each(std::execution::par_unseq, data.begin(), data.end(),
 // What is wrong with this code?
 ```
 
-#### Task 5
+#### Q5
 ```cpp
 std::vector<double> v = {1e10, 1.0, -1e10};
 double sum1 = std::accumulate(v.begin(), v.end(), 0.0);

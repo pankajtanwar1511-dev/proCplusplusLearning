@@ -2178,11 +2178,37 @@ v.reserve(100);
 std::cout << *it;
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** May print garbage or crash (UB)
+
+**Explanation:** `reserve` may reallocate, invalidating `it`
+
+**Key Concept:** #iterator_invalidation
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 std::list<int> lst = {5, 3, 1, 4, 2};
 std::sort(lst.begin(), lst.end());
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `std::sort` requires random access iterators, list has bidirectional
+
+**Key Concept:** #iterator_categories
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -2191,12 +2217,38 @@ auto new_end = std::remove(v.begin(), v.end(), 3);
 std::cout << v.size();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 5
+
+**Explanation:** `remove` doesn't change container size, only reorders elements
+
+**Key Concept:** #remove_erase_idiom
+
+</details>
+
+---
+
 #### Q4
 ```cpp
 int x = 10;
 auto f = [x]() mutable { x++; return x; };
 std::cout << f() << " " << x;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints "11 10"
+
+**Explanation:** `mutable` allows modifying captured copy, original `x` unchanged
+
+**Key Concept:** #mutable_lambda
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -2205,6 +2257,19 @@ std::transform(v.begin(), v.end(), std::back_inserter(v),
                [](int x) { return x * 2; });
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Appending while iterating invalidates iterators
+
+**Key Concept:** #iterator_invalidation
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 std::vector<int> v = {10, 20, 30, 40};
@@ -2212,6 +2277,19 @@ auto rit = std::find(v.rbegin(), v.rend(), 30);
 auto it = rit.base();
 std::cout << *it;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 40
+
+**Explanation:** Reverse iterator's `base()` points one position after
+
+**Key Concept:** #reverse_iterator
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -2227,11 +2305,37 @@ std::list<int, MyAlloc<int>> lst;
 lst.push_back(42);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** Allocator missing `rebind` template required by `std::list`
+
+**Key Concept:** #allocator_rebind
+
+</details>
+
+---
+
 #### Q8
 ```cpp
 std::vector<int> v = {3, 1, 4, 1, 5, 9, 2, 6};
 auto dist = std::distance(v.begin(), v.end());
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 8
+
+**Explanation:** `distance` is O(1) for random access iterators (vector)
+
+**Key Concept:** #iterator_complexity
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -2243,6 +2347,19 @@ for (auto it = v.begin(); it != v.end(); ++it) {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Erasing invalidates iterator, then incrementing causes UB
+
+**Key Concept:** #iterator_invalidation
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 std::unordered_map<std::string, int> m = {{"a", 1}, {"b", 2}};
@@ -2251,6 +2368,19 @@ std::for_each(m.begin(), m.end(), [](auto& pair) {
 });
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Modifying keys in hash map breaks internal structure
+
+**Key Concept:** #undefined_behavior
+
+</details>
+
+---
+
 #### Q11
 ```cpp
 auto ptr = std::make_unique<int>(42);
@@ -2258,11 +2388,37 @@ auto lambda = [ptr = std::move(ptr)]() { return *ptr; };
 std::cout << lambda();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 42
+
+**Explanation:** C++14 init-capture moves `unique_ptr` into lambda
+
+**Key Concept:** #move_capture
+
+</details>
+
+---
+
 #### Q12
 ```cpp
 std::vector<int> v = {5, 2, 8, 1, 9};
 bool found = std::binary_search(v.begin(), v.end(), 8);
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints false (or true if lucky)
+
+**Explanation:** `binary_search` requires sorted input; `v` is unsorted
+
+**Key Concept:** #algorithm_preconditions
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -2272,11 +2428,37 @@ std::copy_if(v.begin(), v.end(), result.begin(),
              [](int x) { return x % 2 == 0; });
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior or empty
+
+**Explanation:** Writing to unallocated space; should use `back_inserter`
+
+**Key Concept:** #output_iterator
+
+</details>
+
+---
+
 #### Q14
 ```cpp
 std::vector<std::string> v = {"hello", " ", "world"};
 std::string result = std::accumulate(v.begin(), v.end(), std::string(""));
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Compilation error
+
+**Explanation:** `accumulate` with string requires specifying initial value type
+
+**Key Concept:** #accumulate_type
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -2286,6 +2468,19 @@ v[5] = 100;
 std::cout << v[5];
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** `reserve` doesn't construct elements; accessing uninitialized memory
+
+**Key Concept:** #reserve_vs_resize
+
+</details>
+
+---
+
 #### Q16
 ```cpp
 std::deque<int> d = {1, 2, 3};
@@ -2293,6 +2488,19 @@ auto it = d.begin();
 d.push_front(0);
 std::cout << *it;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** May be invalid
+
+**Explanation:** `push_front` on deque may invalidate iterators
+
+**Key Concept:** #iterator_invalidation
+
+</details>
+
+---
 
 #### Q17
 ```cpp
@@ -2303,6 +2511,19 @@ auto it = a.begin();
 a.splice(it, b);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Moves `b` contents before second element of `a`
+
+**Explanation:** `splice` moves elements in O(1), `b` becomes empty
+
+**Key Concept:** #splice_semantics
+
+</details>
+
+---
+
 #### Q18
 ```cpp
 std::vector<int> v = {3, 1, 4, 1, 5, 9};
@@ -2310,6 +2531,19 @@ auto mid = v.begin() + v.size() / 2;
 std::nth_element(v.begin(), mid, v.end());
 std::cout << *mid;
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 4 (or nearby value)
+
+**Explanation:** `nth_element` partially sorts, placing nth element correctly
+
+**Key Concept:** #nth_element
+
+</details>
+
+---
 
 #### Q19
 ```cpp
@@ -2321,6 +2555,19 @@ auto counter = makeCounter();
 std::cout << counter();
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior
+
+**Explanation:** Capturing local by reference; `count` destroyed before lambda use
+
+**Key Concept:** #dangling_reference
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 std::vector<int> v = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
@@ -2328,7 +2575,19 @@ auto [first, last] = std::equal_range(v.begin(), v.end(), 3);
 std::cout << std::distance(first, last);
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Prints 3
+
+**Explanation:** `equal_range` returns range of elements equal to 3
+
+**Key Concept:** #binary_search_variants
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

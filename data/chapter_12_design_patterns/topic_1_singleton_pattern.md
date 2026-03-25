@@ -1365,6 +1365,19 @@ Manager* Manager::instance = nullptr;
 // What can go wrong?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race condition: multiple threads may create multiple instances
+
+**Explanation:** Without synchronization, multiple threads can pass the null check simultaneously and each create an instance
+
+**Key Concept:** #race_condition #thread_safety
+
+</details>
+
+---
+
 #### Q2
 ```cpp
 class Service {
@@ -1381,6 +1394,19 @@ public:
 // What happens if Logger is destroyed before Service?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Undefined behavior: accessing destroyed Singleton
+
+**Explanation:** If Logger is destroyed first, accessing it from Service destructor causes use-after-destruction undefined behavior
+
+**Key Concept:** #destruction_order #undefined_behavior
+
+</details>
+
+---
+
 #### Q3
 ```cpp
 class Config {
@@ -1396,6 +1422,19 @@ public:
 
 // Is this implementation efficient? What's the performance impact?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Inefficient: mutex locked on every access
+
+**Explanation:** While thread-safe, this locks mutex every time getInstance() is called, even after initialization. Meyers Singleton is faster.
+
+**Key Concept:** #performance #synchronization_overhead
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -1414,6 +1453,19 @@ class Config : public Singleton<Config> {};
 // How many static instances exist in this program?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Two instances: one for Logger, one for Config
+
+**Explanation:** Each template instantiation Singleton\<T\> has its own static instance. Logger and Config are separate types.
+
+**Key Concept:** #templates #static_members
+
+</details>
+
+---
+
 #### Q5
 ```cpp
 class Database {
@@ -1429,6 +1481,19 @@ public:
 // What design flaw exists in this Singleton?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Copy constructor not deleted, violates Singleton
+
+**Explanation:** Default copy constructor allows copying: `Database db2 = Database::getInstance();` creates second instance
+
+**Key Concept:** #copy_semantics #design_flaw
+
+</details>
+
+---
+
 #### Q6
 ```cpp
 class Service {
@@ -1443,6 +1508,19 @@ public:
 // Is this thread-safe? Why or why not?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Not thread-safe: double-checked locking without atomics
+
+**Explanation:** Multiple threads can see null and create multiple shared_ptr instances. Needs mutex or atomic operations.
+
+**Key Concept:** #thread_safety #shared_ptr
+
+</details>
+
+---
+
 #### Q7
 ```cpp
 class Manager {
@@ -1456,6 +1534,19 @@ public:
 
 // What happens if getInstance() is called during static destruction?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Potential access to destroyed memory
+
+**Explanation:** Phoenix pattern: instance never deleted, remains accessible. Regular Meyers Singleton might be destroyed.
+
+**Key Concept:** #static_destruction #lifetime
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -1473,6 +1564,19 @@ public:
 
 // What are the advantages of std::call_once over Meyers Singleton?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** std::call_once allows complex initialization with parameters; Meyers is simpler
+
+**Explanation:** call_once useful when initialization needs runtime parameters or complex error handling; Meyers simpler for basic cases
+
+**Key Concept:** #initialization #call_once
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -1495,6 +1599,19 @@ public:
 // What if readFromFile() throws an exception?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Exception during initialization; retried on next call
+
+**Explanation:** C++11 guarantees if static local construction throws, initialization guard resets and retries on next access
+
+**Key Concept:** #exception_safety #initialization
+
+</details>
+
+---
+
 #### Q10
 ```cpp
 class Service {
@@ -1510,6 +1627,19 @@ Service Service::instance;
 
 // What's the problem with this approach compared to Meyers Singleton?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Static member initialized at program start, not lazy
+
+**Explanation:** Static member instance created during static initialization phase, whether used or not. Wastes resources if never accessed.
+
+**Key Concept:** #static_initialization #lazy_init
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -1528,6 +1658,19 @@ public:
 
 // Is this lock-free Singleton implementation correct?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Not correct: potential double initialization
+
+**Explanation:** Race condition between load and store. Multiple threads can load null, create instances, and overwrite each other. Needs compare_exchange.
+
+**Key Concept:** #atomics #lock_free
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -1553,6 +1696,19 @@ private:
 // Another static object logs during its destruction - is this safe?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Not safe: file might be closed when another static destructor tries to log
+
+**Explanation:** Destruction order between statics is reverse of initialization order. If other objects log during destruction, file might already be closed.
+
+**Key Concept:** #destruction_order #raii
+
+</details>
+
+---
+
 #### Q13
 ```cpp
 // File1.cpp
@@ -1571,6 +1727,19 @@ void libraryFunction() {
 
 // How many Service instances exist in this scenario?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Potentially two instances: one per DLL unless symbol exported
+
+**Explanation:** Each DLL gets its own copy of static locals unless explicitly shared via symbol export (__declspec(dllexport))
+
+**Key Concept:** #dll_boundaries #symbol_visibility
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -1594,6 +1763,19 @@ int main() {
 }
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, Meyers Singleton retries on exception
+
+**Explanation:** If constructor throws, static initialization guard resets, allowing retry on next getInstance() call
+
+**Key Concept:** #exception_handling #retry_logic
+
+</details>
+
+---
+
 #### Q15
 ```cpp
 class Manager;
@@ -1610,6 +1792,19 @@ Manager& mgr = getManager();  // Global initialization
 
 // What problem can occur here?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Static initialization order fiasco
+
+**Explanation:** Order of static initialization across files undefined. If getManager() hasn't run yet, mgr references uninitialized instance.
+
+**Key Concept:** #initialization_order #undefined_order
+
+</details>
+
+---
 
 #### Q16
 ```cpp
@@ -1634,6 +1829,19 @@ public:
 // How does this design improve testability?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Allows injecting mock implementations for testing
+
+**Explanation:** setTestInstance() allows replacing real implementation with test double, enabling unit testing without Singleton coupling
+
+**Key Concept:** #testability #dependency_injection
+
+</details>
+
+---
+
 #### Q17
 ```cpp
 class Config {
@@ -1650,6 +1858,19 @@ public:
 
 // Multiple threads call reload() - what synchronization is needed?
 ```
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** reload() needs mutex protection for internal state
+
+**Explanation:** getInstance() returns reference to static (thread-safe), but reload() modifies member data concurrently. Needs member mutex.
+
+**Key Concept:** #thread_safety #data_races
+
+</details>
+
+---
 
 #### Q18
 ```cpp
@@ -1672,6 +1893,19 @@ public:
 // What are the implications of this design for startup time?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Lazy initialization defers 100 resource allocations until first use
+
+**Explanation:** Resources only allocated when getInstance() first called, not at program startup. Reduces startup time if rarely used.
+
+**Key Concept:** #lazy_initialization #startup_time
+
+</details>
+
+---
+
 #### Q19
 ```cpp
 class Singleton {
@@ -1693,6 +1927,19 @@ public:
 // Can someone still create multiple instances of MyClass?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, if they explicitly call the private constructor
+
+**Explanation:** Protected constructor still allows derived class and friends to construct. Need private constructor for true Singleton enforcement.
+
+**Key Concept:** #access_control #inheritance
+
+</details>
+
+---
+
 #### Q20
 ```cpp
 class Logger {
@@ -1711,7 +1958,19 @@ public:
 // Is this sufficient to prevent copying and moving?
 ```
 
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Yes, sufficient if constructor is private
+
+**Explanation:** Deleting copy/move prevents accidental duplication. Private constructor (or protected in inheritance) prevents direct instantiation.
+
+**Key Concept:** #rule_of_five #copy_prevention
+
+</details>
+
 ---
+
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 

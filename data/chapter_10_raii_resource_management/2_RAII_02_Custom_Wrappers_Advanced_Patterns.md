@@ -3034,7 +3034,19 @@ void test() {
     Resource r = createResource();
 }
 ```
-How many times are constructor and destructor called? Does this code have any problems?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Constructor once, destructor once (C++17 RVO)
+
+**Explanation:** RVO elides move/copy; single object constructed in place
+
+**Key Concept:** #rvo #move_semantics
+
+</details>
+
+---
 
 #### Q2
 ```cpp
@@ -3050,7 +3062,19 @@ void test() {
     Widget w2 = w1;
 }
 ```
-What happens when this code runs? What is the problem?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Double-delete, crash/UB
+
+**Explanation:** Default copy constructor copies pointer; both delete same memory
+
+**Key Concept:** #shallow_copy #double_free
+
+</details>
+
+---
 
 #### Q3
 ```cpp
@@ -3071,7 +3095,19 @@ void test() {
     FileHandle f3 = std::move(f2);
 }
 ```
-How many files are opened? How many are closed properly? Identify any issues.
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** One file opened, one closed, potential crash on f3
+
+**Explanation:** f2's move leaves f1.file dangling pointer; f3 destructor calls fclose(nullptr)
+
+**Key Concept:** #move_nullptr_bug
+
+</details>
+
+---
 
 #### Q4
 ```cpp
@@ -3098,7 +3134,19 @@ void test() {
     r = std::move(r);  // Self-move
 }
 ```
-What happens with self-move-assignment? Is there a bug?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Self-move bug: deletes data before transferring
+
+**Explanation:** Without self-check, deletes data then assigns already-deleted pointer
+
+**Key Concept:** #self_move_assignment
+
+</details>
+
+---
 
 #### Q5
 ```cpp
@@ -3121,7 +3169,19 @@ void test() {
     delete ptr;
 }
 ```
-What problem exists? What resources are leaked?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Non-virtual destructor leaks derivedData
+
+**Explanation:** Only ~Base() called; ~Derived() never runs; derivedData leaked
+
+**Key Concept:** #virtual_destructor
+
+</details>
+
+---
 
 #### Q6
 ```cpp
@@ -3148,7 +3208,19 @@ void test2() {
     Transaction t;
 }
 ```
-What is the output for test1() and test2()?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** test1: `BEGIN` `COMMIT` `COMMIT` `ROLLBACK`<br>test2: `BEGIN` `ROLLBACK`
+
+**Explanation:** Commit called twice prints twice; test2 never commits so rolls back
+
+**Key Concept:** #transaction_pattern
+
+</details>
+
+---
 
 #### Q7
 ```cpp
@@ -3169,7 +3241,19 @@ void test() {
     Resource r = createResource();
 }
 ```
-What is the complete output? Does copy or move happen?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** C++17: `Acquired` `Released`<br>Pre-C++17: `Acquired` `Moved` `Released`
+
+**Explanation:** C++17 guaranteed RVO eliminates move; older standards may move
+
+**Key Concept:** #rvo #copy_elision
+
+</details>
+
+---
 
 #### Q8
 ```cpp
@@ -3196,7 +3280,19 @@ void test() {
     r.use();
 }
 ```
-Is this implementation correct? What about thread safety?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Not thread-safe; multiple threads can init simultaneously
+
+**Explanation:** No mutex protection on init() check; race condition on allocation
+
+**Key Concept:** #lazy_init #thread_safety
+
+</details>
+
+---
 
 #### Q9
 ```cpp
@@ -3217,7 +3313,19 @@ void test() {
     auto lock = getLock();
 }
 ```
-What problem exists with returning ScopedLock by value?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** ScopedLock requires move constructor but is non-movable
+
+**Explanation:** Returning by value tries to move; deleted move constructor causes error
+
+**Key Concept:** #non_movable_return
+
+</details>
+
+---
 
 #### Q10
 ```cpp
@@ -3237,7 +3345,19 @@ std::vector<Resource> createResources() {
     return vec;
 }
 ```
-Why does this code fail to compile?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** vector requires movable or copyable elements
+
+**Explanation:** Both copy and move deleted; vector can't store or resize elements
+
+**Key Concept:** #vector_requirements
+
+</details>
+
+---
 
 #### Q11
 ```cpp
@@ -3260,7 +3380,19 @@ void test() {
     Widget w(100);
 }
 ```
-What is the resource safety problem in the constructor?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** rawPtr leaks if second allocation throws
+
+**Explanation:** buffer is RAII-wrapped (safe); rawPtr allocated after might leak
+
+**Key Concept:** #constructor_exception_safety
+
+</details>
+
+---
 
 #### Q12
 ```cpp
@@ -3278,7 +3410,19 @@ public:
     }
 };
 ```
-What initialization order problem exists?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Initialization order mismatch: r1 initialized first despite list order
+
+**Explanation:** Members init in declaration order (r1, r2) not initializer list order
+
+**Key Concept:** #initialization_order
+
+</details>
+
+---
 
 #### Q13
 ```cpp
@@ -3303,7 +3447,19 @@ void test() {
     FileWrapper w2(stdin);
 }
 ```
-What is wrong with this conditional ownership implementation?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Always closes file even when it doesn't own (stdin)
+
+**Explanation:** Destructor doesn't check owns flag before fclose; closes stdin
+
+**Key Concept:** #conditional_ownership_bug
+
+</details>
+
+---
 
 #### Q14
 ```cpp
@@ -3332,7 +3488,19 @@ void test() {
     t2.join();
 }
 ```
-What thread safety issues exist?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** Race condition: both threads might allocate
+
+**Explanation:** No synchronization on ptr check/initialization; double allocation possible
+
+**Key Concept:** #lazy_thread_safety
+
+</details>
+
+---
 
 #### Q15
 ```cpp
@@ -3356,7 +3524,20 @@ void test() {
     delete ptr;
 }
 ```
-What resources are leaked and why?
+
+<details>
+<summary><b>Show Answer</b></summary>
+
+**Answer:** moreData leaked (20 ints)
+
+**Explanation:** Non-virtual ~Base means ~Derived never called through base pointer
+
+**Key Concept:** #virtual_destructor_leak
+
+</details>
+
+---
+
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 

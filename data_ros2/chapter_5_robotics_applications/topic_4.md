@@ -1,9 +1,10 @@
-## TOPIC: Simulation with Gazebo
-
+# Chapter 5: Robotics Applications
+## Topic 5.4: Simulation with Gazebo
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. Why Simulation?
 
 **Benefits:**

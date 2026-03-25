@@ -1,9 +1,10 @@
-## TOPIC: Multi-Robot Systems & Coordination
-
+# Chapter 6: Advanced Production Systems
+## Topic 6.5: Multi-Robot Systems & Coordination
 
 ---
 
-## THEORY_SECTION
+## THEORY
+
 ### 1. Why Multi-Robot Systems?
 
 **Multi-robot systems** involve multiple robots working together to accomplish tasks.
