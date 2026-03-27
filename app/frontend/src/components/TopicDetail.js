@@ -36,12 +36,35 @@ const TopicDetail = () => {
   const { id, catalog } = useParams();
   const navigate = useNavigate();
 
+  // Read section from URL query parameter (e.g., ?section=practice)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSection = urlParams.get('section') || 'theory';
+
   // Determine back link based on whether we're in a catalog context
-  const backLink = catalog ? `/catalog/${catalog}/topics` : '/topics';
-  const quizLink = catalog ? `/catalog/${catalog}/quiz/${id}` : `/quiz/${id}`;
+  // Add chapter parameter to preserve scroll position
+  const getBackLink = () => {
+    // Extract chapter number from topic id (e.g., "cpp_10_2" -> chapter 10)
+    const parts = id?.split('_') || [];
+    const chapterNum = parts.length >= 2 ? parts[1] : null;
+
+    if (catalog) {
+      return chapterNum
+        ? `/catalog/${catalog}/topics?chapter=${chapterNum}`
+        : `/catalog/${catalog}/topics`;
+    }
+    return chapterNum
+      ? `/topics?chapter=${chapterNum}`
+      : '/topics';
+  };
+
+  const backLink = getBackLink();
+  // Include current section in quiz link so we can return to same section after quiz
+  const quizLink = catalog
+    ? `/catalog/${catalog}/quiz/${id}?from=${activeTab}`
+    : `/quiz/${id}?from=${activeTab}`;
 
   const [topic, setTopic] = useState(null);
-  const [activeTab, setActiveTab] = useState('theory');
+  const [activeTab, setActiveTab] = useState(urlSection); // Initialize from URL
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -278,6 +301,15 @@ const TopicDetail = () => {
     }
   }, [activeTab, theory, enhanceCodeBlocks]);
 
+  // Update URL when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Update URL query parameter to preserve tab on refresh
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('section', tabId);
+    window.history.pushState({}, '', newUrl);
+  };
+
   const tabs = [
     { id: 'theory', label: 'Theory', icon: BookOpen },
     { id: 'edge-cases', label: 'Edge Cases', icon: AlertTriangle },
@@ -356,7 +388,7 @@ const TopicDetail = () => {
           <button
             key={tab.id}
             className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
           >
             <tab.icon size={18} />
             {tab.label}

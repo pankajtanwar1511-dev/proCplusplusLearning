@@ -21,8 +21,15 @@ const Quiz = () => {
   const { topicId, catalog } = useParams();
   const navigate = useNavigate();
 
+  // Read 'from' parameter to preserve section context when returning to topic
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromSection = urlParams.get('from') || 'theory';
+
   // Determine navigation links based on catalog context
-  const topicLink = catalog ? `/catalog/${catalog}/topic/${topicId}` : `/topics/${topicId}`;
+  // Include section parameter so user returns to the section they were on before quiz
+  const topicLink = catalog
+    ? `/catalog/${catalog}/topic/${topicId}?section=${fromSection}`
+    : `/topics/${topicId}?section=${fromSection}`;
   const dashboardLink = catalog ? `/catalog/${catalog}/dashboard` : '/dashboard';
 
   // Quiz state

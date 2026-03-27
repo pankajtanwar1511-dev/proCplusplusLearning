@@ -21,6 +21,10 @@ const TopicsList = () => {
   // Extract catalog from URL - either from /catalog/:catalog/* or default to 'all'
   const urlCatalog = catalogParam || 'all';
 
+  // Get chapter number from URL query parameter for auto-scroll
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetChapter = urlParams.get('chapter');
+
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,6 +46,24 @@ const TopicsList = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlCatalog]);
+
+  // Scroll to target chapter after topics load
+  useEffect(() => {
+    if (!loading && targetChapter && topics.length > 0) {
+      // Wait for DOM to render
+      setTimeout(() => {
+        const chapterElement = document.getElementById(`chapter-${targetChapter}`);
+        if (chapterElement) {
+          chapterElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Highlight the chapter briefly
+          chapterElement.style.outline = '3px solid var(--primary)';
+          setTimeout(() => {
+            chapterElement.style.outline = '';
+          }, 2000);
+        }
+      }, 100);
+    }
+  }, [loading, targetChapter, topics.length]);
 
   const loadTopics = async () => {
     try {
@@ -298,7 +320,11 @@ const TopicsList = () => {
       {groupedChapters.length > 0 ? (
         <div className="chapters-list">
           {groupedChapters.map((chapter) => (
-            <div key={`${chapter.catalog}_${chapter.chapterNum}`} className="chapter-group">
+            <div
+              key={`${chapter.catalog}_${chapter.chapterNum}`}
+              id={`chapter-${chapter.chapterNum}`}
+              className="chapter-group"
+            >
               <div className="chapter-header">
                 <h2>
                   {/* Only show catalog badge in "All Topics" mode */}
