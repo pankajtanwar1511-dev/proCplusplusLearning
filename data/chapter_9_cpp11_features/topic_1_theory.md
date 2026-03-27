@@ -1261,31 +1261,6 @@ This example demonstrates how C++11 type deduction dramatically improves code ma
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `20 10` | `auto` strips const, creating mutable copy. Original x unchanged | #auto #const |
-| 2 | `8 20` (on 64-bit) or `4 20` | `auto` decays array to pointer (8 bytes), `auto&` preserves array size (5*4=20 bytes) | #auto #array_decay |
-| 3 | `15 15 i i` (may vary) | `auto&&` deduces `int&` for lvalue, `int&&` for rvalue. `a` modifies original x | #universal_reference |
-| 4 | `10 1` (typically) | Lambda returns 10 (5*2). Size is 1 byte for stateless lambda | #lambda #auto |
-| 5 | `20 10 20` | `decltype(x)` is int, `decltype((x))` is int&. b is reference to x | #decltype #reference |
-| 6 | `1 2 3` | First loop modifies copies only. Original vector unchanged | #range_based_for #auto |
-| 7 | No, No | Both `a` and `b` are `const int*`, cannot modify pointed-to value | #pointer #const |
-| 8 | `3 St16initializer_listIiE` | `auto` with braces deduces to `initializer_list<int>` with size 3 | #initializer_list |
-| 9 | `10` | `decltype(func2())` is `int&`, binds to static variable. Modifying b changes shared state | #decltype #reference |
-| 10 | `i d` | `result1` is int (5*2=10), `result2` is double (3.5*2=7.0). Type names vary by compiler | #trailing_return_type |
-| 11 | No, No | `a` is `const int&`, `b` is `const int&`. Both are read-only references | #const_reference |
-| 12 | `20 10` | Lambda captures x by value. `mutable` allows modifying copy, not original | #lambda #mutable |
-| 13 | `true` (typically) | `auto x` is proxy type `vector<bool>::reference`, not bool. Modification may not affect vector | #proxy_type #vector_bool |
-| 14 | `20 15` | `decltype(a+b)` is int, `decltype((a))` is int&. ref modifies a | #decltype #expression |
-| 15 | No, compile error | Generic lambdas with `auto` parameters are C++14. C++11 requires explicit types | #lambda #c++14 |
-| 16 | `0 5` (unspecified) | `std::move` transfers ownership. str is in valid but unspecified state (often empty) | #move_semantics |
-| 17 | No, Yes | `a` is copy of pointer value, `b` is reference to pointer. Only b sees update | #pointer #reference |
-| 18 | `i i` (may vary) | `auto&&` deduces `const int&` for const lvalue x, `int&&` for rvalue 10 | #universal_reference #const |
-| 19 | Undefined behavior | Lambda captures local variable by reference. x destroyed when function returns | #lambda #dangling_reference |
-| 20 | No, compile error | Structured bindings `[key, value]` are C++17. C++11 requires `auto& pair` with `.first`/`.second` | #structured_bindings #c++17 |
-
 #### Type Deduction Quick Reference
 
 | Syntax | Deduced Type | Use Case | Notes |

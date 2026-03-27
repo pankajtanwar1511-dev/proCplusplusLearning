@@ -1083,31 +1083,6 @@ The `unique_ptr` member demonstrates that trajectories with exclusive-ownership 
 
 ### QUICK_REFERENCE: Answer Key and Move Semantics Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Output: 0 (likely) | String moved, `s1` in moved-from state (typically empty) | #moved_from_state |
-| 2 | Undefined behavior | Move constructor doesn't nullify `other.ptr`, causing double-delete | #move_constructor_bug |
-| 3 | Calls copy constructor | `const vector&&` cannot bind to move constructor expecting `vector&&` | #const_move_fails |
-| 4 | Output: 10 10 | Moving primitive types is identical to copying—both retain value | #primitive_move |
-| 5 | Compilation error | `unique_ptr` copy constructor is deleted—must use `std::move` | #move_only_type |
-| 6 | Compiles but suboptimal | `std::move` in return prevents RVO, forcing move instead of elision | #rvo_pessimization |
-| 7 | Undefined behavior | Returning reference to local variable—`s` destroyed when function exits | #dangling_reference |
-| 8 | Output: 0 (likely) | String moved into function parameter, `str` is now in moved-from state | #move_to_parameter |
-| 9 | Output: 3 0 | Element moved but not removed; `vec[1]` is empty string, size unchanged | #container_element_move |
-| 10 | Undefined behavior | Self-move without check: deletes own data before attempting to use it | #self_move_bug |
-| 11 | Output: hello | `std::move` alone doesn't modify—just casts; `s1` unchanged until used | #std_move_is_cast |
-| 12 | Output: test (probably) | Move constructor uses copy for `name` member—should use `std::move(other.name)` | #member_move_bug |
-| 13 | Compiles and runs | After move, `v1` is valid and can be reused; `push_back` works fine | #moved_from_reuse |
-| 14 | Copies vector | `v` is lvalue inside function (has name), so copies to `local` | #named_rvalue_ref |
-| 15 | Compiles, both likely empty | Second move from already-moved-from object is legal but gives empty | #multiple_moves |
-| 16 | Output: 42 | Moving int is same as copying; both `x` and `y` have value 42 | #primitive_unchanged |
-| 17 | Output: p1 null | `shared_ptr` move transfers ownership, leaving `p1` as nullptr | #shared_ptr_move |
-| 18 | Compilation error | Cannot copy `unique_ptr`—must use `std::move(vec[0])` | #unique_ptr_no_copy |
-| 19 | Compiles, efficient | RVO likely applies, constructing directly in `result` with no copies/moves | #rvo_optimization |
-| 20 | Output: copy | `const A` cannot be moved (const prevents modification); copy constructor used | #const_no_move |
-
 #### Move vs Copy Comparison
 
 | Aspect | Copy | Move |

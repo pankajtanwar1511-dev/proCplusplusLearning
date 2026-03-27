@@ -798,31 +798,6 @@ This example demonstrates all three core OOP principles in an autonomous vehicle
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Base<br>Derived | Direct call to Base object calls Base version; virtual dispatch through pointer calls Derived version | #virtual_functions #polymorphism |
-| 2 | A<br>B<br>~A | Destructor is not virtual so only ~A() is called, causing resource leak (UB) | #virtual_destructors #undefined_behavior |
-| 3 | B | Private virtual function is overridden and called through public interface via vtable | #private #virtual_functions |
-| 4 | A | Object slicing: passing by value copies only Base part, losing polymorphism | #object_slicing |
-| 5 | Derived non-const | Not an override (const mismatch), defines new function; calls Derived version | #const_correctness #function_hiding |
-| 6 | B | Not override—different signature (overload); foo(int) hides foo() | #function_hiding #overload |
-| 7 | A | Virtual call in constructor calls Base version (vptr not yet pointing to Derived) | #constructors #virtual_functions |
-| 8 | Derived: 10 | Virtual dispatch calls Derived::display, but default arg comes from static type (Base*) | #default_arguments #virtual_functions |
-| 9 | C | Virtual dispatch works through multi-level inheritance | #polymorphism #inheritance |
-| 10 | A<br>B<br>C | Constructors called base-to-derived order | #constructors #inheritance |
-| 11 | ~Derived<br>~Base | Virtual destructor ensures proper cleanup chain | #virtual_destructors |
-| 12 | Derived::double | func(double) hides Base::func(int); 10 converted to double | #function_hiding #type_conversion |
-| 13 | A::foo implementation<br>B::foo<br>~A | Pure virtual can have implementation; destructor not virtual causes issue but compiles | #pure_virtual #virtual_destructors |
-| 14 | (No output, compiles) | Private virtual override is legal but never called externally | #private #virtual_functions |
-| 15 | A | Object slicing: copying B into A loses vtable, calls A::show | #object_slicing |
-| 16 | A<br>A | Virtual calls in ctor/dtor call current class version, not overrides | #constructors #destructors #virtual_functions |
-| 17 | B: 20<br>B: 10 | bptr uses Derived's default (20); aptr uses Base's default (10) despite same function | #default_arguments #virtual_functions |
-| 18 | Compilation Error | Protected copy constructor prevents slicing—cannot pass Derived by value as Base | #object_slicing #copy_constructor |
-| 19 | A<br>B<br>C<br>~C<br>~B<br>~A | Constructor order: base→derived; Destructor order: derived→base | #constructors #destructors #inheritance |
-| 20 | Base | Non-virtual function uses static binding based on pointer type | #static_binding #polymorphism |
-
 #### Encapsulation vs Inheritance vs Polymorphism
 
 | Concept | Purpose | Implementation | Key Feature |

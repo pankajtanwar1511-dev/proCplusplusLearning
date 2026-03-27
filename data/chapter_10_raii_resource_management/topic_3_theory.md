@@ -1042,31 +1042,6 @@ int main() {
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `1 10` | p1 becomes nullptr after move, p2 owns the int | #unique_ptr #move_semantics |
-| 2 | No output | Circular reference: both nodes leak, destructors never called | #shared_ptr #circular_reference #memory_leak |
-| 3 | `2 0 1` | Two shared_ptrs, weak_ptr doesn't count; after reset, object destroyed | #shared_ptr #weak_ptr #reference_counting |
-| 4 | `42 1` | Ownership transferred to function, ptr becomes null | #unique_ptr #move_semantics #ownership_transfer |
-| 5 | `1103` | Array specialization allows operator[], arr[1] modified to 10 | #unique_ptr #arrays #operator_overload |
-| 6 | `20 10` | swap() exchanges the internal pointers | #shared_ptr #swap |
-| 7 | `Empty` | p1.reset() destroys object, w.lock() returns empty shared_ptr | #weak_ptr #lock #expired |
-| 8 | `CMDE` | Constructor (C), then middle code (M), destructor (D) at scope exit, then end (E) | #raii #destructor #scope |
-| 9 | `3 2` | Three shared_ptrs initially, p2.reset() decrements to 2 | #shared_ptr #reference_counting #reset |
-| 10 | `1 1` | Default constructed unique_ptr is null, then assigned | #unique_ptr #nullptr #bool_conversion |
-| 11 | `100 1` | raw pointer becomes dangling after reset, accessing it is UB (not shown) | #shared_ptr #get #dangling_pointer |
-| 12 | `5` | Aliasing constructor: x_ptr shares ownership of Data, points to x member | #shared_ptr #aliasing_constructor |
-| 13 | `99` | Pass by reference allows modification, reset changes pointer | #unique_ptr #reset #reference_parameter |
-| 14 | `1 1` | use_count() for weak_ptr returns strong ref count, not weak count | #shared_ptr #weak_ptr #use_count |
-| 15 | `77` | Returning unique_ptr by value uses move semantics, ownership transferred | #unique_ptr #return_value #move_semantics |
-| 16 | `1 1` | DANGER: Two independent control blocks, will cause double-free | #shared_ptr #control_block #undefined_behavior |
-| 17 | `5DelEnd` | Custom deleter prints "Del" before destruction, then "End" | #unique_ptr #custom_deleter #lambda |
-| 18 | `Transferred` | Move leaves p1 null, p2 becomes valid | #unique_ptr #move_semantics #bool_conversion |
-| 19 | `30 20 1` | sp1 gets new object (count 1), sp2 still holds original (count 1) | #shared_ptr #reset #reference_counting |
-| 20 | `1 100` | release() gives up ownership, returns raw pointer, caller must delete | #unique_ptr #release #manual_deletion |
-
 #### Smart Pointer Comparison Table
 
 | Feature | unique_ptr | shared_ptr | weak_ptr |

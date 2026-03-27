@@ -643,23 +643,6 @@ This example demonstrates:
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compilation error | `c.x = 200;` fails because `x` is private in class `C` by default | #default_access |
-| 2 | Prints "1 2" then compilation error | `show()` works but `d.pub` fails because private inheritance makes `pub` inaccessible outside | #private_inheritance |
-| 3 | Cannot compile | `B::func()` tries to override private `A::func()` but lacks access to override private virtuals | #virtual_functions #private |
-| 4 | Prints "Base" | Struct inherits publicly by default so `show()` is accessible in `Derived` | #struct #inheritance |
-| 5 | Prints 12 (typically) | Size includes all members (x, y, z) regardless of access specifier—three ints = 12 bytes on most systems | #sizeof #memory_layout |
-| 6 | Compilation error | `reveal()` modifies secret but main cannot print `b.secret` as it's private | #friend #access_specifiers |
-| 7 | Prints "10" twice | Both derived classes can access `val` internally; inheritance mode only affects external access | #protected_inheritance |
-| 8 | Prints "1 4" (typically) | Empty base optimization allows `Empty` to occupy 0 bytes in `Derived`; standalone `Empty` is 1 byte | #empty_base_optimization |
-| 9 | Prints "6 6" | Member functions can access private members of other instances of the same class | #this_pointer #access_specifiers |
-| 10 | Prints "Base" | Using-declaration makes privately inherited `func()` public in `Derived` | #using_declaration #access_modification |
-| 11 | Prints 1 (true) | Access specifiers don't affect size or layout—both have identical memory structure | #memory_layout |
-| 12 | Compilation error | `setX()` tries to access private `x` from base class which is inaccessible in derived class | #private #inheritance |
-
 #### Struct vs Class Comparison
 
 | Feature | struct | class |

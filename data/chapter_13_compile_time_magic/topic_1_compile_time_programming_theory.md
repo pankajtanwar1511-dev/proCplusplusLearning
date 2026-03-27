@@ -966,31 +966,6 @@ Template metaprogramming is Turing-complete: you can compute anything at compile
 
 ### QUICK_REFERENCE: Summary Tables and Answer Keys
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compile error | `x` is not a constant expression (runtime variable); `constexpr int y` requires compile-time initialization | constexpr requirements |
-| 2 | C++11: No<br>C++14: Yes | C++11 forbids loops and mutable variables in constexpr; C++14 allows them | constexpr evolution |
-| 3 | 43<br>hello | `if constexpr` branches based on type: integral types print `value+1`, others print `value` | if constexpr |
-| 4 | No (typically) | Most 64-bit systems have `sizeof(int) == 4`, so static_assert fails; compilation error | static_assert |
-| 5 | Evaluates to 0 | Division by zero in constexpr is defined behavior (returns 0 with ternary guard); compiles and `result = 0` | constexpr safety |
-| 6 | 5 | Fib<5> = 3+2 = 5 (Fibonacci sequence: 0,1,1,2,3,5...) | Template metaprogramming |
-| 7 | 10 | Array size is `foo(5) = 10` elements; `sizeof(arr)/sizeof(int) = 40/4 = 10` | constexpr in array size |
-| 8 | No | `std::is_same` checks exact types; `int` ≠ `const int` (cv-qualifiers differ) | Type comparison |
-| 9 | Compile error | `consteval` requires compile-time constant argument; `runtime_val` is not constant | consteval restriction |
-| 10 | Yes | All values are compile-time constants; `max_value(10, 20) = 20`; static_assert passes | constexpr validation |
-| 11 | Integer<br>Not integer | Regular `if` (not `if constexpr`) evaluates at runtime; checks type and prints accordingly | Runtime vs compile-time |
-| 12 | Compile error | Throwing exception in constexpr function requires runtime context; compile-time evaluation can't throw | Exception limitations |
-| 13 | Compile error | `static_assert(0 > 0)` fails; compilation stops with "Size must be positive" message | static_assert enforcement |
-| 14 | Even | `if constexpr (is_even(10))` evaluates to `if constexpr (true)` at compile time; only Even branch compiled | Compile-time branching |
-| 15 | Compile error (likely) | Template instantiation depth (10000 levels) exceeds default compiler limit (~512-1024); "depth exceeded" error | Instantiation depth limit |
-| 16 | 100 | `global` is constexpr (compile-time constant); `get_value()` returns it at compile time; prints 100 | constexpr variables |
-| 17 | Compile error | `std::string` is not trivially copyable; static_assert fails with error message | Type trait validation |
-| 18 | 89 | Computes Fibonacci sequence via recursion; `mystery(10) = Fib(11) = 89` | constexpr recursion |
-| 19 | Value: 42<br>Pointer: 42 | `if constexpr` selects branch at compile time based on pointer-ness; first call prints value, second dereferences pointer | Type-dependent logic |
-| 20 | Yes, prints 1 | `constinit` ensures compile-time init but allows runtime mutation; `counter++` runs at runtime, prints 1 | constinit mutability |
-
 ---
 
 #### constexpr Evolution Timeline

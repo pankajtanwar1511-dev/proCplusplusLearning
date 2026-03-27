@@ -1154,31 +1154,6 @@ This real-world example demonstrates:
 
 ### QUICK_REFERENCE: Summary Tables and Answer Keys
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Undefined behavior (likely crashes) | `reserve()` allocates capacity but doesn't construct elements; accessing `v[5]` is out of bounds (size=0) | reserve vs resize |
-| 2 | Safe, prints 1 | `reserve(5)` ensures capacity ≥5, so no reallocation during push_back; iterator remains valid | Iterator invalidation |
-| 3 | 8 | Capacity doubles: 0→1→2→4→8 (8th element fits in capacity 8) | Doubling strategy |
-| 4 | 1 | Copy constructor creates deep copy; modifying `v2` doesn't affect `v1` | Deep copy semantics |
-| 5 | 0 (safe) | Move constructor leaves `v1` in valid moved-from state (size=0, data=nullptr); accessing size is safe | Moved-from state |
-| 6 | 0 (default value) | `resize(5)` default-constructs 5 ints (initialized to 0) | resize default construction |
-| 7 | 10, ≥10 | `resize(10)` sets size to 10; capacity is at least 10 (may be larger) | resize capacity behavior |
-| 8 | 4 (unchanged) | `pop_back()` decreases size but doesn't reduce capacity | Capacity unchanged by pop |
-| 9 | 50, 100 | `reserve(100)` sets capacity, then `resize(50)` sets size; capacity remains 100 | reserve then resize |
-| 10 | ≥2 (unchanged) | `clear()` sets size to 0 but doesn't reduce capacity; capacity remains allocated | clear vs shrink |
-| 11 | 4 | `ref` is a reference to `v`; modifying via reference modifies original | Reference semantics |
-| 12 | Safe, prints 3 | Copy assignment checks `this != &other` to prevent self-assignment issues | Self-assignment check |
-| 13 | No | `push_back(obj)` requires copy constructor (lvalue); `NonCopyable` deleted copy constructor | Copy vs move |
-| 14 | Yes, prints 1 | `reserve(100)` with capacity 3→100 reallocates, but since 100 > current capacity, elements move; iterator points to old memory → UB if not careful, but many implementations handle this; **actually UB** | Iterator invalidation |
-| 15 | RVO/NRVO (Return Value Optimization) | Compiler elides copy/move, constructing `result` directly in caller's stack frame | RVO/NRVO |
-| 16 | 10, 10 | `resize(5, 10)` creates 5 elements, each initialized to 10 | resize with default value |
-| 17 | 5 | `shrink_to_fit()` reduces capacity to match size (5 elements) | shrink_to_fit |
-| 18 | Allocation failed0 | `reserve(SIZE_MAX)` throws `std::bad_alloc`; exception caught; size remains 0 | Exception handling |
-| 19 | 4 | Range-for allows modification via reference; `v[1]=2` becomes `2*2=4` | Range-for with references |
-| 20 | 2, 3 | `std::swap` exchanges contents; `v1` gets `{4,5}` (size 2), `v2` gets `{1,2,3}` (size 3) | std::swap semantics |
-
 **Note on Q14**: Calling `reserve()` when `new_cap > capacity` **does invalidate iterators** because reallocation occurs. The answer should be "Undefined behavior" for safety. The iterator `it` points to the old buffer (freed after reallocation).
 
 ---

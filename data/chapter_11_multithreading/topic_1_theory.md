@@ -542,31 +542,6 @@ Each thread has a unique ID of type `std::thread::id`, useful for debugging, log
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Program calls std::terminate() and aborts | Thread object destroyed without join/detach | Thread lifecycle |
-| 2 | Output: 10 | Parameter passed by value, not reference | Argument passing |
-| 3 | Output: 100 | std::ref passes by reference, modification preserved | std::ref usage |
-| 4 | Undefined behavior | Second join() on already-joined thread | joinable state |
-| 5 | Compilation error | std::thread is not copyable | Move-only type |
-| 6 | Output: false | Default-constructed thread is not joinable | Default construction |
-| 7 | Output: "Main exits" (may or may not see "Task complete") | Detached thread execution depends on timing | Detached lifetime |
-| 8 | Output: "Thread: 10" then "Main: 5" | Lambda captures by value; mutable modifies the copy | Lambda capture |
-| 9 | Output: "Processing" | Member function called with copied Worker object | Member function threading |
-| 10 | Program calls std::terminate() | Uncaught exception in thread | Exception handling |
-| 11 | Undefined behavior | t1 is empty after move, cannot join | Move semantics |
-| 12 | Cannot retrieve return value with std::thread | std::thread discards return values | Return value handling |
-| 13 | Undefined behavior (likely crash or garbage output) | Detached thread accesses destroyed stack variable | Detached + dangling ref |
-| 14 | Compilation error | std::thread is move-only, cannot use push_back with temporary | Container usage |
-| 15 | Output: "Not joinable" | Default-constructed thread is not joinable | Default state |
-| 16 | Output: "Hello" | String literal converted to std::string | Argument conversion |
-| 17 | Output: Number of CPU cores (implementation-defined) | Queries hardware concurrency | Hardware info |
-| 18 | Output: "Not joinable" | Detached thread is no longer joinable | Detach effect |
-| 19 | Output: 6 | Vector passed by value (copied), sum by reference | Mixed argument types |
-| 20 | Output: "false true" then "A" | t1 empty after move, t2 owns thread | Move ownership |
-
 #### Thread Lifecycle Management
 
 | State | Description | Operations Allowed |

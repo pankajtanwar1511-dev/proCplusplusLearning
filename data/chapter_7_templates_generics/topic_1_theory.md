@@ -1314,31 +1314,6 @@ This example demonstrates how templates provide the foundation for zero-overhead
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `0`<br>`0` | `T()` performs value-initialization, giving 0 for numeric types | #value_initialization |
-| 2 | `non-template`<br>`template` | Non-template exact match preferred over template for `int` | #overload_resolution |
-| 3 | `generic`<br>`same` | Partial specialization `Pair<T, T>` matches when both types are identical | #partial_specialization |
-| 4 | Compilation error | Default template argument must be rightmost; `U` has no default after `T` | #default_arguments |
-| 5 | `ok` | Lazy instantiation: `invalid()` never called, so its error never triggered | #lazy_instantiation |
-| 6 | `0 1 1` | Primary template for `int`, partial specialization matches `int*` and `int**` | #partial_specialization |
-| 7 | `32` | Template recursion: 2^5 = 32 computed at compile time | #template_metaprogramming |
-| 8 | `3 5` | Non-type parameter `N` creates different types with different sizes | #non_type_parameters |
-| 9 | `value`<br>`pointer` | Overload resolution: pointer version selected for `&x` | #function_overloading |
-| 10 | `int`<br>`const int` | Both specializations are distinct; each matches its exact type | #full_specialization |
-| 11 | `15`<br>`15` | First deduces `T=int`, second forces `T=double` with conversion | #type_deduction |
-| 12 | `4`<br>`4`<br>`8` | `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call | #default_arguments |
-| 13 | `Base`<br>`Base<int>` | Full specialization for `int` provides different implementation | #full_specialization |
-| 14 | `24` | 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion | #template_metaprogramming |
-| 15 | `A`<br>`B`<br>`C` | Most specific match selected: primary → partial → full specialization | #specialization_priority |
-| 16 | `2`<br>`1` | Lvalue prefers reference overload; rvalue matches value parameter | #reference_binding |
-| 17 | `10 20` | Partial specialization strips `const` qualifier from type | #type_traits |
-| 18 | `42` | SFINAE-like pattern: only `true` case defines `type` member | #enable_if_pattern |
-| 19 | `1`<br>`4`<br>`8` | `sizeof` operator returns size of type in bytes (platform-dependent) | #sizeof_operator |
-| 20 | `5` | Non-type parameter used as `constexpr` to size array at compile time | #compile_time_constants |
-
 #### Template Specialization Priority
 
 | Specialization Type | Priority | Pattern Example | Use Case |

@@ -1313,31 +1313,6 @@ LidarSensor(lidar_convertible): Destroyed
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compilation error | unique_ptr copy constructor is deleted. Cannot copy p1 to p2. Must use std::move for ownership transfer. | #unique_ptr #deleted_copy |
-| 2 | Prints "p1 is null" then 100 | std::move transfers ownership from p1 to p2. p1 becomes nullptr. p2 now owns the int containing 100. | #unique_ptr #move_semantics |
-| 3 | Prints "2 2" | Both sp1 and sp2 share ownership of the same object. use_count() returns the total reference count, which is 2 for both. | #shared_ptr #reference_counting |
-| 4 | Memory leak, ~Node never printed | Circular reference: a->next points to b, b->next points to a. Reference counts never reach zero. Neither destructor runs. | #circular_reference #memory_leak |
-| 5 | Prints "1" then "1" (true) | Weak_ptr doesn't increment strong count. When shared destroyed, weak.expired() returns true (1). First line shows shared's use_count is 1. | #weak_ptr #expired |
-| 6 | Double delete, crash | Two independent shared_ptrs created from same raw pointer. Each has separate control block. Both will delete the object → double delete. | #shared_ptr #double_delete |
-| 7 | Double delete, undefined behavior | Manually deleting through get() doesn't release ownership. When arr destroyed, it calls delete[] again on already-freed memory. | #unique_ptr #get #double_delete |
-| 8 | Undefined behavior, dangling pointer | p.reset() deletes the managed int. raw now points to freed memory. Dereferencing causes use-after-free UB. | #dangling_pointer #use_after_free |
-| 9 | Only prints "~Base" - resource leak | Base destructor not virtual. Polymorphic deletion only calls ~Base(), not ~Derived(). Derived resources leak. Need virtual ~Base(). | #virtual_destructor #polymorphism |
-| 10 | Prints "1" (true) | Move assignment transfers ownership from p1 to p2. p1 becomes nullptr. Comparison with nullptr returns true. | #unique_ptr #move_assignment |
-| 11 | Prints "Null" | sp is default-constructed (nullptr). weak_ptr observing nullptr. lock() returns empty shared_ptr, condition is false. | #weak_ptr #lock |
-| 12 | Prints "1" (true) | sp1.reset() destroys the managed object. weak_ptr detects this and expired() returns true. | #weak_ptr #expired |
-| 13 | Prints "1" (true) then completes | release() returns raw pointer and makes p null. Ownership transferred to caller. Must manually delete raw. p == nullptr is true. | #unique_ptr #release |
-| 14 | Prints "1" | sp1.reset() decrements count to 1. sp2 still holds reference. sp2.use_count() returns 1. | #shared_ptr #reset |
-| 15 | Compilation error | make_unique doesn't support array syntax. Should use: unique_ptr<int[]>(new int[5]) or unique_ptr<int[]> arr(new int[5]). | #make_unique #arrays |
-| 16 | Prints "Custom delete" when p destroyed | Custom deleter invoked when unique_ptr destroyed. Lambda prints message then deletes pointer. Deleter type is part of unique_ptr's type. | #custom_deleter #unique_ptr |
-| 17 | Compilation error | Cannot assign unique_ptr to shared_ptr variable. Need conversion: shared_ptr<int> sp = std::move(p1), or create new variable. | #type_mismatch #smart_pointers |
-| 18 | Prints "42" | Aliasing constructor: dataPtr shares widget's control block but points to data member. Even after widget.reset(), dataPtr keeps Widget alive. | #aliasing_constructor #shared_ptr |
-| 19 | Prints "1 1" (true) | unique_ptr converts to shared_ptr via move. sp has use_count 1. p becomes nullptr. Successful ownership transfer. | #unique_to_shared #move_conversion |
-| 20 | Prints "0 0" | When sp.reset(), strong count becomes 0, object deleted. Weak_ptrs remain but use_count() (strong count) is 0 for both. | #weak_ptr #use_count |
-
 #### Smart Pointer Type Comparison
 
 | Feature | unique_ptr | shared_ptr | weak_ptr |

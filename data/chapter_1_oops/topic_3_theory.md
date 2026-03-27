@@ -935,31 +935,6 @@ This example demonstrates pure virtual functions and abstract base classes in au
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compilation Error | B doesn't override pure virtual foo(), so B is abstract and cannot be instantiated | #abstract_class #pure_virtual |
-| 2 | Undefined Behavior or Crash | Calling pure virtual f() from A's constructor before vptr is set to B's vtable causes UB | #constructors #undefined_behavior |
-| 3 | Compiles but Linker Error | Pure virtual destructor declared but not defined causes linker error if instantiation attempted | #pure_virtual #destructors |
-| 4 | C::f | C overrides the pure virtual, making it concrete; intermediate B can remain abstract | #inheritance #override |
-| 5 | B::foo<br>B::~B | Virtual destructor ensures proper cleanup; foo() called polymorphically | #virtual_destructors #polymorphism |
-| 6 | A::g | Non-virtual g() called on base pointer uses static binding, calls A's version | #static_binding |
-| 7 | B::~B<br>A::~A | Pure virtual destructor with body enables proper destruction chain | #pure_virtual #destructors |
-| 8 | Compilation Error | final prevents further overriding; C's attempt to override causes error | #final #override |
-| 9 | A::foo body<br>B::foo | Pure virtual can have body; B explicitly calls it then adds own logic | #pure_virtual #function_body |
-| 10 | Compilation Error | Private foo() in B cannot be called from main; access violation | #access_specifiers #override |
-| 11 | B::f | C inherits B's override of f(); C is concrete because f() is overridden in hierarchy | #inheritance #override |
-| 12 | Compilation Error | f(int) doesn't override f(); B is still abstract and cannot be instantiated | #function_hiding #pure_virtual |
-| 13 | A()<br>B()<br>~B()<br>~A() | Construction order: base to derived; destruction order: derived to base | #constructors #destructors |
-| 14 | C | Multi-level inheritance with virtual dispatch correctly calls C's override | #polymorphism #inheritance |
-| 15 | B::impl | Private pure virtual overridden in B, called through public interface (Template Method) | #template_method #pure_virtual |
-| 16 | B::foo<br>A::bar | foo() overridden in B; bar() not overridden, uses A's implementation | #polymorphism #virtual_functions |
-| 17 | ~Derived<br>~Base | Virtual destructor ensures derived destructor called before base | #virtual_destructors |
-| 18 | Compilation Error | Cannot instantiate abstract class A directly | #abstract_class #instantiation |
-| 19 | op1<br>op2 | Both pure virtuals overridden in Impl; polymorphic calls work correctly | #interface #polymorphism |
-| 20 | A()<br>B() | Explicit call to A() in initializer list is redundant but legal; base constructed then derived | #constructors #initialization |
-
 #### Pure Virtual vs Regular Virtual
 
 | Feature | Pure Virtual | Regular Virtual |

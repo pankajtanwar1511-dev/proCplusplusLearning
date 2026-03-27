@@ -684,31 +684,6 @@ In safety-critical automotive systems, undefined behavior is unacceptable. Use s
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | A::foo<br>1 | Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo. | #object_slicing #virtual_functions |
-| 2 | 12 | Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment. | #padding #alignment |
-| 3 | Undefined behavior (likely crash or garbage) | `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB. | #dangling_reference #lifetime |
-| 4 | Compilation error | Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error. | #const_correctness #const_member_function |
-| 5 | 5 (but double delete crash at end) | Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash. | #shallow_copy #double_delete |
-| 6 | 24-32 (platform dependent) | Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes. | #virtual_inheritance #memory_layout |
-| 7 | Base | During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members. | #constructor #virtual_functions #vptr |
-| 8 | 8 | Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes. | #padding #memory_optimization |
-| 9 | 42 | Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function. | #lifetime_extension #const_reference |
-| 10 | 100 | `mutable` allows modifying `cache` in const function. Prints 100. | #mutable #const_correctness |
-| 11 | Undefined behavior (likely segfault) | Dereferencing null pointer is UB, typically causes segmentation fault crash. | #null_pointer #undefined_behavior |
-| 12 | 0 | Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior. | #unsigned_overflow #wrapping |
-| 13 | OK | Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs. | #virtual_destructor #polymorphism |
-| 14 | 24 | Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes. | #alignment #padding |
-| 15 | 10 | `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely. | #unique_ptr #move_semantics |
-| 16 | VBase A B C | Virtual base VBase is constructed once by most derived class C, then A, then B, then C. | #virtual_inheritance #constructor_order |
-| 17 | 1 16 | `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas). | #alignas #alignment |
-| 18 | Compilation error | `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const. | #const_pointer #const_correctness |
-| 19 | Compilation error (ambiguous) | Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve. | #diamond_problem #ambiguity |
-| 20 | test best | `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`. | #deep_copy #std_string |
-
 #### Memory Layout Comparison Table
 
 | Scenario | Size (typical) | Contains | Notes |

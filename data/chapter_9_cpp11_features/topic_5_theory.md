@@ -1267,7 +1267,6 @@ Max speed: 120 km/h
 Calibration: 1.05
 Sensor readings created safely with uniform initialization
 
-
 PART 2: initializer_list for Sensor Collections
 
 Initialized with 4 sensor readings
@@ -1287,13 +1286,11 @@ After adding readings (6 sensors):
 
 Distance readings: 10.5m 20.3m 15.7m 30.2m 25.8m
 
-
 PART 3: Variadic Templates for Sensor Analysis
 
 Maximum distance reading: 42.1m
 Sensor IDs: lidar_front camera_rear radar_left lidar_rear
 Sensor configuration supports: 8 sensors
-
 
 PART 4: constexpr Compile-Time Validation
 
@@ -1303,12 +1300,10 @@ Max total sensors: 18
 Buffer size (compile-time): 1800 samples
 LiDAR array size (compile-time): 4
 
-
 PART 5: vector Initialization - Braces vs Parentheses
 
 v1{10, 20}: 2 elements [10 20 ]
 v2(10, 20): 10 elements, each = 20
-
 
 PART 6: Aggregate Initialization
 
@@ -1349,31 +1344,6 @@ Angle: 0 degrees
 ---
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
-
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `3 (compile error)` | Traditional init allows narrowing (x=3); brace init prevents it (compile error for y) | #narrowing #type_safety |
-| 2 | `int,int` then `list` | Parentheses use (int,int) constructor; braces prefer initializer_list | #initializer_list #overload |
-| 3 | `10 2` | v1(10, 5) creates 10 elements each=5; v2{10, 5} creates 2-element list [10,5] | #vector #initialization |
-| 4 | `120` | factorial(5)=120 computed at compile-time; array size is 120 ints | #constexpr #compile_time |
-| 5 | `5` | sizeof...(args) returns number of arguments in parameter pack | #variadic_template #sizeof |
-| 6 | **Undefined Behavior** | Returning initializer_list creates dangling reference to destroyed array | #initializer_list #lifetime |
-| 7 | `3` | auto with brace-init deduces std::initializer_list<int> | #auto #initializer_list |
-| 8 | `10,0 0,0` | p1{10} initializes x=10, y=0 (remaining zero-init); p2{} zero-initializes all | #aggregate #zero_init |
-| 9 | **Compile Error** | x is not constexpr, so add(x, 10) cannot be used in constexpr context | #constexpr #compile_time |
-| 10 | `1` | Returns first argument (1) from parameter pack | #variadic_template #first |
-| 11 | **Compile Error** | 300 exceeds char range, brace-init prevents narrowing | #narrowing #char |
-| 12 | `default` then `default` then `list` | w1: default; w2{}: empty braces→default; w3{{}}: explicit empty list | #initializer_list #empty_braces |
-| 13 | **Compile Error** | constexpr variables are implicitly const, cannot be modified | #constexpr #const |
-| 14 | `1 2 3 4` | Dummy array trick expands pack, printing each element | #variadic_template #pack_expansion |
-| 15 | `0` (then compile error) | v1{} creates empty vector; v2() is function declaration (most vexing parse) | #most_vexing_parse #initialization |
-| 16 | **Compile Error** | C++11 constexpr cannot have local variables | #constexpr #cpp11_restriction |
-| 17 | `3 3` | Both list and list2 are views over same underlying array | #initializer_list #view |
-| 18 | `1 2 3 empty` | Recursive calls print 1, 2, 3, then empty base case | #variadic_template #recursion |
-| 19 | `10 0` | Partial aggregate init: x=10 specified, y=0 zero-initialized | #aggregate #partial_init |
-| 20 | `42` | getValue() evaluated at compile-time, array has 42 elements | #constexpr #array_size |
 
 #### Initialization Syntax Comparison
 

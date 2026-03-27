@@ -1456,31 +1456,6 @@ This example comprehensively demonstrates how all four C++ cast operators are us
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Prints: `20 20` | Both casts succeed; b actually points to Derived object | #static_cast #dynamic_cast |
-| 2 | Undefined behavior<br>Typical: `100 200` or `200 200` | Modifying truly const object is UB; compiler may optimize | #const_cast #undefined_behavior |
-| 3 | Prints: `0 1` | static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr) | #static_cast #dynamic_cast |
-| 4 | Prints: `1` | Both methods read same bits; memcpy avoids strict aliasing issues | #memcpy #reinterpret_cast |
-| 5 | Prints: `3 3` | Both are implicit narrowing (first) and explicit (second); same result | #implicit_conversion #static_cast |
-| 6 | Prints: `2`<br>`0` | B subobject at different offset due to multiple inheritance | #multiple_inheritance #pointer_adjustment |
-| 7 | Prints: `A 65` | 65 is ASCII 'A'; conversion preserves value | #numeric_conversion #static_cast |
-| 8 | Prints: `Cast failed` | Reference dynamic_cast throws std::bad_cast on failure | #dynamic_cast #exception |
-| 9 | Prints: `Hello` | Safe only if legacyFunc doesn't modify (we assume it doesn't) | #const_cast #legacy_api |
-| 10 | Commented line fails to compile | dynamic_cast requires polymorphic type (virtual function) | #dynamic_cast #polymorphic |
-| 11 | Prints: `1000` | Safe pointer→integer→pointer round-trip with uintptr_t | #reinterpret_cast #pointer_to_integer |
-| 12 | Prints: `1 1` | Both produce nullptr; casting nullptr always yields nullptr | #nullptr #static_cast |
-| 13 | Prints: `Cross-cast succeeded` | dynamic_cast can cross-cast within multiple inheritance hierarchy | #cross_cast #dynamic_cast |
-| 14 | Undefined behavior | Value exceeds int range; result is implementation-defined | #narrowing_conversion #overflow |
-| 15 | Prints: `999` | Safe because x wasn't originally const | #const_cast #const_correctness |
-| 16 | Prints: `1 0` | First is actually Derived (succeeds), second is Base only (fails) | #dynamic_cast #runtime_check |
-| 17 | Prints: `10 20` | Safe downcast; a actually points to B object | #static_cast #downcasting |
-| 18 | Prints: `-3` | Truncates toward zero: -3.99 becomes -3 | #static_cast #truncation |
-| 19 | Prints: `100` | Safe: mutable_int wasn't originally const | #const_cast #mutable_object |
-| 20 | Undefined behavior | memcpy copies int bytes into double; interpreting as double is UB | #type_punning #undefined_behavior |
-
 #### Cast Operator Comparison
 
 | Cast Type | Use Case | Compile-Time | Runtime Cost | Safety Level | Can Cast Away Const? |

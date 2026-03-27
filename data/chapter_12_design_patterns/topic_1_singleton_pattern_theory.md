@@ -772,31 +772,6 @@ Meyers Singleton has minimal performance overhead after first initialization. Th
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Race condition: multiple threads may create multiple instances | Without synchronization, multiple threads can pass the null check simultaneously and each create an instance | #race_condition #thread_safety |
-| 2 | Undefined behavior: accessing destroyed Singleton | If Logger is destroyed first, accessing it from Service destructor causes use-after-destruction undefined behavior | #destruction_order #undefined_behavior |
-| 3 | Inefficient: mutex locked on every access | While thread-safe, this locks mutex every time getInstance() is called, even after initialization. Meyers Singleton is faster. | #performance #synchronization_overhead |
-| 4 | Two instances: one for Logger, one for Config | Each template instantiation Singleton\<T\> has its own static instance. Logger and Config are separate types. | #templates #static_members |
-| 5 | Copy constructor not deleted, violates Singleton | Default copy constructor allows copying: `Database db2 = Database::getInstance();` creates second instance | #copy_semantics #design_flaw |
-| 6 | Not thread-safe: double-checked locking without atomics | Multiple threads can see null and create multiple shared_ptr instances. Needs mutex or atomic operations. | #thread_safety #shared_ptr |
-| 7 | Potential access to destroyed memory | Phoenix pattern: instance never deleted, remains accessible. Regular Meyers Singleton might be destroyed. | #static_destruction #lifetime |
-| 8 | std::call_once allows complex initialization with parameters; Meyers is simpler | call_once useful when initialization needs runtime parameters or complex error handling; Meyers simpler for basic cases | #initialization #call_once |
-| 9 | Exception during initialization; retried on next call | C++11 guarantees if static local construction throws, initialization guard resets and retries on next access | #exception_safety #initialization |
-| 10 | Static member initialized at program start, not lazy | Static member instance created during static initialization phase, whether used or not. Wastes resources if never accessed. | #static_initialization #lazy_init |
-| 11 | Not correct: potential double initialization | Race condition between load and store. Multiple threads can load null, create instances, and overwrite each other. Needs compare_exchange. | #atomics #lock_free |
-| 12 | Not safe: file might be closed when another static destructor tries to log | Destruction order between statics is reverse of initialization order. If other objects log during destruction, file might already be closed. | #destruction_order #raii |
-| 13 | Potentially two instances: one per DLL unless symbol exported | Each DLL gets its own copy of static locals unless explicitly shared via symbol export (__declspec(dllexport)) | #dll_boundaries #symbol_visibility |
-| 14 | Yes, Meyers Singleton retries on exception | If constructor throws, static initialization guard resets, allowing retry on next getInstance() call | #exception_handling #retry_logic |
-| 15 | Static initialization order fiasco | Order of static initialization across files undefined. If getManager() hasn't run yet, mgr references uninitialized instance. | #initialization_order #undefined_order |
-| 16 | Allows injecting mock implementations for testing | setTestInstance() allows replacing real implementation with test double, enabling unit testing without Singleton coupling | #testability #dependency_injection |
-| 17 | reload() needs mutex protection for internal state | getInstance() returns reference to static (thread-safe), but reload() modifies member data concurrently. Needs member mutex. | #thread_safety #data_races |
-| 18 | Lazy initialization defers 100 resource allocations until first use | Resources only allocated when getInstance() first called, not at program startup. Reduces startup time if rarely used. | #lazy_initialization #startup_time |
-| 19 | Yes, if they explicitly call the private constructor | Protected constructor still allows derived class and friends to construct. Need private constructor for true Singleton enforcement. | #access_control #inheritance |
-| 20 | Yes, sufficient if constructor is private | Deleting copy/move prevents accidental duplication. Private constructor (or protected in inheritance) prevents direct instantiation. | #rule_of_five #copy_prevention |
-
 #### Singleton Implementation Comparison
 
 | Implementation | Thread-Safe | Lazy Init | Testable | Performance | Complexity |

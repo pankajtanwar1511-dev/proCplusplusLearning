@@ -1532,26 +1532,6 @@ This pattern is fundamental to writing robust, exception-safe sensor management 
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Output: `Acquired` `Acquired` `Released` `Released` | Destructors called in reverse construction order (r2 then r1) | #destruction_order |
-| 2 | `Logger created` `Main started` `Logger created` `Main ending` `Logger destroyed` `Logger destroyed` | Global constructed before main, destroyed after main; local follows normal scope | #static_lifetime |
-| 3 | Output: `Exception: Failed` | File never opened so destructor never called; no "File closed" message | #constructor_exception |
-| 4 | Program calls `std::terminate()` and crashes | Throwing from destructor invokes terminate; never do this | #destructor_exception |
-| 5 | Double delete / undefined behavior | Default copy constructor copies pointer; both objects try to delete same memory | #shallow_copy_problem |
-| 6 | Constructor called once, destructor called once | C++17 RVO eliminates move; single object constructed in caller's stack frame | #rvo #move_semantics |
-| 7 | `Locked` `In critical section` `Unlocked` `Caught` | Mutex properly unlocked during stack unwinding via RAII lock destructor | #exception_safe_locking |
-| 8 | `R1 acquired` `R2 acquired` `R2 released` `R1 released` `Exception caught` | Members fully constructed before constructor body throws; their destructors called; Container destructor NOT called | #partial_construction |
-| 9 | Memory leak - file never closed | Using `new` with RAII bypasses automatic cleanup; must manually delete, risking leaks | #new_with_raii |
-| 10 | test1: `BEGIN` `COMMIT` `COMMITTED`<br>test2: `BEGIN` `ROLLBACK` | Explicit commit changes flag; exception prevents commit reaching, triggers rollback | #commit_rollback |
-| 11 | File leaks on all three early returns | Manual resource management fails with multiple exit points; needs RAII | #multiple_exits |
-| 12 | `Base()` `Derived()` `~Derived()` `~Base()` | Base constructed first, destroyed last; derived constructed last, destroyed first | #inheritance_order |
-| 13 | Output: `Acquired` `Caught` - Yes, memory leak | Destructor not called because constructor threw; allocated memory leaks | #constructor_throw_leak |
-| 14 | One allocation, one deallocation at end of test() | `unique_ptr` destructor deallocates when it goes out of scope | #unique_ptr_lifetime |
-| 15 | `Block 1` `Cleanup` `Outside block` | Destructor called when Logger goes out of inner block scope | #scope_based_destruction |
-
 #### RAII Principles Summary
 
 | Principle | Description | Benefit |

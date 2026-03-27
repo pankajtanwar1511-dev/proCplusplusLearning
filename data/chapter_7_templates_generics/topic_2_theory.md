@@ -1626,31 +1626,6 @@ This example demonstrates how modern C++ metaprogramming techniques enable autom
 
 ### QUICK_REFERENCE: Answer Key and Technique Comparison
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `integral`<br>Compilation error | First call matches integral SFINAE; second fails (no float overload) | #sfinae |
-| 2 | `1`<br>`0` | `std::vector` has `.size()` method; `int` doesn't | #expression_sfinae |
-| 3 | `D::impl` | CRTP static dispatch calls derived implementation | #crtp |
-| 4 | `pointer`<br>`non-pointer` | SFINAE selects correct overload based on pointer trait | #sfinae |
-| 5 | `3` | Each `Widget` instance increments static counter in base | #crtp |
-| 6 | `integral`<br>`other` | Tag dispatch selects overload via `true_type`/`false_type` | #tag_dispatch |
-| 7 | `class`<br>Compilation error | SFINAE only enables for class types; `int` fails | #sfinae |
-| 8 | `Data` | CRTP mixin calls derived `toString()` via static cast | #crtp |
-| 9 | `42` | `decltype` deduces return type from `func()` method | #decltype |
-| 10 | `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error | Combined SFINAE conditions; `bool` fails both conditions | #sfinae |
-| 11 | Compilation error | Missing `impl()` method in derived class | #crtp |
-| 12 | `1`<br>`0` | Expression SFINAE detects nested `value_type` | #expression_sfinae |
-| 13 | `DB created`<br>`1` | Singleton pattern via CRTP; both references point to same instance | #crtp |
-| 14 | `int version`<br>`float version` | Template parameter SFINAE with different default types | #sfinae |
-| 15 | `LOG: test`<br>`Extra` | CRTP mixin calls derived `extraLog()` method | #crtp |
-| 16 | `large type`<br>Compilation error | `long` is 8 bytes; `char` is 1 byte (fails SFINAE) | #sfinae |
-| 17 | `0` | `RemoveConst` strips const qualifier; result is non-const | #type_traits |
-| 18 | `Before`<br>`Executing`<br>`After` | CRTP Template Method pattern with static dispatch | #crtp |
-| 19 | `42`<br>Compilation error | `static_assert` enforces integral constraint; double fails | #static_assert |
-| 20 | `15`<br>`6`<br>`Hello World` | `decltype(a + b)` deduces result type of addition | #decltype |
-
 #### SFINAE Techniques Comparison
 
 | Technique | Syntax | Use Case | Readability |

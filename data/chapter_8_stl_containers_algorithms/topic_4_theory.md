@@ -870,31 +870,6 @@ The stable iterator property of ordered containers enables safe iteration with c
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Undefined behavior | Dereferencing invalidated iterator after erase | #iterator_invalidation |
-| 2 | `5 3 1` | std::greater sorts in descending order | #custom_comparator |
-| 3 | `0` then `1` | operator[] creates default entry (0), size becomes 1 | #default_construction |
-| 4 | `2 0` | Insert fails for duplicate, returns iterator to existing, inserted=false | #insert_behavior |
-| 5 | `A 0` | insert() doesn't overwrite existing keys, inserted=false | #insert_semantics |
-| 6 | `30 50` | lower_bound(25) finds first ≥25 (30), upper_bound(40) finds first >40 (50) | #range_queries |
-| 7 | No, compile error | Point has no operator< and no custom comparator provided | #custom_comparator |
-| 8 | Compile error | Cannot modify key (k is const), can modify value | #const_correctness |
-| 9 | `2` | Compares pointer addresses, not values; different pointers mean different elements | #pointer_comparison |
-| 10 | `caught0` | at() throws out_of_range, size remains 0 (no insertion) | #exception_safety |
-| 11 | `1 3`, both valid | Insert doesn't invalidate any iterators in ordered containers | #iterator_stability |
-| 12 | `2` | Erasing begin() removes first element, new begin() is second element | #erasure |
-| 13 | `5 1 9` | Size is 5 (duplicates removed), min is 1, max is 9 | #sorted_unique |
-| 14 | `20` | operator[] overwrites, insert() does nothing for existing keys | #assignment_vs_insert |
-| 15 | `not found` | find(25) returns end() as 25 doesn't exist | #find_behavior |
-| 16 | `4` | Modifying value through operator[] works correctly | #value_mutability |
-| 17 | Undefined behavior | Erasing invalidates iterator being incremented | #erase_during_iteration |
-| 18 | Undefined behavior | Comparator violates strict weak ordering (uses <=) | #strict_weak_ordering |
-| 19 | `20` | equal_range returns [lower_bound, upper_bound); for map, range contains at most 1 element | #equal_range |
-| 20 | `equal` | Sets support equality comparison; equal elements mean equal sets | #set_equality |
-
 ---
 
 #### Complexity Reference Table

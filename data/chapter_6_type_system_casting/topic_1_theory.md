@@ -1104,31 +1104,6 @@ This example demonstrates how understanding type conversions and deduction is cr
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Prints: `A(42)`<br>`test(A)` | Implicit conversion from int to A via conversion constructor | #conversion_constructor |
-| 2 | Prints: `int` | short promotes to int, which is preferred over standard conversion to double | #promotion |
-| 3 | Line with `b = 300` fails to compile<br>Prints: `100 200` | `b` is `const int&`, cannot be modified; `a` is mutable copy | #auto_keyword #const_correctness |
-| 4 | Prints: `8 12` (typical 64-bit) | `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes) | #array_decay |
-| 5 | First assignment fails, second succeeds<br>Prints: `200` | `getVal()` returns by value, `getRef()` returns reference due to parentheses | #decltype_auto |
-| 6 | First call fails, second succeeds | explicit constructor prevents implicit conversion; direct construction works | #explicit_keyword |
-| 7 | Prints: `int: 65`<br>`double: 2.5` | char promotes to int; float promotes to double | #promotion |
-| 8 | Prints: `3`<br>`1 2 3` | auto deduces `std::initializer_list<int>` which has size() method | #initializer_list |
-| 9 | Line with `int b{pi}` fails | Brace-initialization prevents narrowing conversions (double to int) | #narrowing_conversion |
-| 10 | Prints: `Derived(1.5)` | Base→double (user-defined) then double→Derived (user-defined) is allowed | #conversion_chain |
-| 11 | Both assignments fail | `a` is `const int`, `b` is `const int&`; both are immutable | #decltype |
-| 12 | Prints: `int`<br>`long`<br>`double` | Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion) | #overload_resolution |
-| 13 | Prints: `50 200` | `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent) | #forwarding_reference |
-| 14 | Only first assignment succeeds<br>Prints: `111` | `v1` is copy (mutable), `v2` and `v3` are const references | #auto_keyword #const_correctness |
-| 15 | Prints: `String(Hello)`<br>`String(World)` | Implicit conversion from `const char*` to String via conversion constructor | #conversion_constructor |
-| 16 | Prints: `50m` | char (50) promotes to int, then int→Meters via conversion constructor | #promotion #conversion_chain |
-| 17 | Line with `char c2{large}` fails<br>Prints: `44` (or impl-def) | Brace-init prevents narrowing; value wraps/truncates based on char range | #narrowing_conversion |
-| 18 | Prints: `lvalue`<br>`lvalue` | Both r1 and r2 are lvalues (named variables), regardless of what they bind to | #value_category |
-| 19 | Compilation fails | Ambiguous: both operator int() and operator double() are equally valid | #conversion_operator #ambiguity |
-| 20 | Undefined behavior<br>Typical: `50 100` or `100 100` | Modifying truly const object via const_cast is UB; compiler may optimize | #const_cast #undefined_behavior |
-
 #### Type Deduction Rules Summary
 
 | Syntax | const Behavior | Reference Behavior | Use Case |

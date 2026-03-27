@@ -1214,31 +1214,6 @@ PerceptionSystem: Freed resources
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compilation Error | s.x is accessible (struct defaults public), c.x is private (class defaults private) | #access_specifiers |
-| 2 | Derived | Virtual function dispatch through base pointer calls Derived's override | #polymorphism #virtual_functions |
-| 3 | A<br>(likely) | C++17 copy elision constructs directly without calling copy or move | #copy_elision #rvo |
-| 4 | ~Base | Non-virtual destructor causes only Base destructor to run, leaking Derived resources | #virtual_destructors #undefined_behavior |
-| 5 | Compilation Error | Cannot instantiate abstract class with pure virtual function | #abstract_class #pure_virtual |
-| 6 | Compilation Error | No default constructor; a1 construction fails | #default_constructor |
-| 7 | Base | Object slicing: d copied to b loses Derived part, calls Base::func | #object_slicing |
-| 8 | Runtime Error | Shallow copy causes double-delete when a1 and a2 destroyed | #shallow_copy #rule_of_three |
-| 9 | Compilation Error | Move constructor defined but no copy constructor; cannot copy a1 | #copy_constructor #move_semantics |
-| 10 | (No output) | Private destructor controlled lifetime pattern works correctly | #private_destructor #controlled_lifetime |
-| 11 | Compiles (C++17) | Mandatory copy elision allows compilation despite deleted copy constructor | #copy_elision #cpp17 |
-| 12 | Copy assign | No move assignment defined; std::move falls back to copy assignment | #move_assignment #copy_assignment |
-| 13 | Derived | Virtual function and virtual destructor work correctly for polymorphic behavior | #polymorphism #virtual_destructors |
-| 14 | A()<br>Copy | Pass by value invokes copy constructor | #copy_constructor #pass_by_value |
-| 15 | Compilation Error | final prevents further overriding; C's override attempt fails | #final #override |
-| 16 | Undefined Behavior | Calling pure virtual from constructor causes UB or crash | #pure_virtual #constructors #undefined_behavior |
-| 17 | Compilation Error | User-defined destructor suppresses move constructor generation | #move_constructor #compiler_generated |
-| 18 | 1 | Object slicing during copy; b gets only Base part with x=1 | #object_slicing |
-| 19 | Compilation Error | explicit prevents implicit conversion from int to A | #explicit #implicit_conversion |
-| 20 | Runtime Error | Default copy does shallow copy causing double-delete | #shallow_copy #rule_of_three |
-
 #### OOP Core Concepts Summary
 
 | Concept | Definition | Purpose |

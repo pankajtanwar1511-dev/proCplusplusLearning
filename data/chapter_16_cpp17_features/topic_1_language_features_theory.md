@@ -625,31 +625,6 @@ This example demonstrates real-world usage combining all three features: structu
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | 1 2 | Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}. | #structured_bindings #copy |
-| 2 | 100 10 | `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10). | #structured_bindings #references |
-| 3 | 11 3.14 | `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is. | #if_constexpr #type_traits |
-| 4 | 2 | Inline static variable shared across all instances. Two increments make it 2. | #inline_variables #static |
-| 5 | 12 | Structured bindings unpack map entries. Loop prints keys 1 and 2. | #structured_bindings #map |
-| 6 | 48 | int is 4 bytes, long long is 8 bytes. Prints "4" then "8". | #if_constexpr #sizeof |
-| 7 | 1 x | Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x. | #structured_bindings #tuple |
-| 8 | 42 | Inline constexpr static member accessible without instance. Prints 42. | #inline_variables #constexpr |
-| 9 | 10 | Structured bindings copy array elements. Modifying x doesn't affect arr[0]. | #structured_bindings #array #copy |
-| 10 | truefalse | if constexpr evaluates template parameter B at compile time. Prints "true" then "false". | #if_constexpr #template |
-| 11 | 1 5 | Unpacks pair<int, string>. x=1, y="hello". y.size() is 5. | #structured_bindings #pair |
-| 12 | 5 10 | const auto& creates const references. Prints p.x (5) and p.y (10). | #structured_bindings #const_references |
-| 13 | 42 42 | if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42. | #if_constexpr #pointers |
-| 14 | 3 | Each Counter construction increments shared static count. Three instances = 3. | #inline_variables #constructor |
-| 15 | 3 7 | Unpacks pairs and prints sums: 1+2=3, 3+4=7. | #structured_bindings #vector |
-| 16 | 0 1 | Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1). | #if_constexpr #constexpr |
-| 17 | 12 | Structured bindings copy Data members. x=1, y=2. Concatenates to "12". | #structured_bindings #struct |
-| 18 | 100 | Inline constexpr in namespace, accessible with qualified name. | #inline_variables #namespace |
-| 19 | 10 | auto& creates references to tuple elements. Modifying a modifies std::get<0>(t). | #structured_bindings #tuple #references |
-| 20 | intdoubleother | if constexpr checks types. int→"int", double→"double", const char*→"other". | #if_constexpr #type_checking |
-
 #### C++17 Language Features Summary
 
 | Feature | Syntax | Purpose | Key Benefit |

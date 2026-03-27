@@ -1420,7 +1420,6 @@ Sensors created with enum class priorities:
   LiDAR: Critical, Camera: High, Radar: Medium
   Ready status code: 2
 
-
 PART 2: Range-Based For Loops - Safe Iteration
 
 Calibrating all sensors:
@@ -1439,7 +1438,6 @@ Sensor Status Report:
   [lidar_rear] Status: Ready, No reading available
   [radar_rear] Status: Ready, No reading available
 
-
 PART 3: nullptr - Overload Resolution Safety
 
 Calling overloaded logEvent functions:
@@ -1449,14 +1447,12 @@ Calling overloaded logEvent functions:
   [Logger] Sensor: lidar_front, Status: Ready
   [Logger] (null sensor)
 
-
 PART 4: nullptr vs NULL - Function Overloading
 
 Using nullptr (type-safe):
 Skipping null sensor
 Using 0 (integer literal):
 Processing 0 sensor readings
-
 
 PART 5: Type-Safe Filtering with enum class
 
@@ -1466,7 +1462,6 @@ Critical Sensors:
 
 Offline sensors: 1
   - radar_rear
-
 
 PART 6: Range-Based For with Various Containers
 
@@ -1523,31 +1518,6 @@ Final Sensor Status:
 ---
 
 ### QUICK_REFERENCE: Answer Key and Safety Guidelines
-
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `1 2 3 4 5` | `auto` creates copies; modifications don't affect original vector | #range_based_for #copy_semantics |
-| 2 | `int int pointer` | `0` and `NULL` match int overload, `nullptr` matches pointer overload | #nullptr #overload_resolution |
-| 3 | No, compile error | Cannot compare `enum class` to integer without explicit cast | #enum_class #type_safety |
-| 4 | Undefined behavior | Temporary vector destroyed after initialization, references dangle | #temporary_lifetime #dangling_reference |
-| 5 | No, compile error | Cannot compare different `enum class` types | #enum_class #type_safety |
-| 6 | Yes, prints "ptr is null" | `nullptr` can compare with `NULL` (both represent null pointer state) | #nullptr #null |
-| 7 | No, compile error | No bitwise operators defined for `enum class` without explicit overloads | #enum_class #operators |
-| 8 | No, unchanged | `auto` creates copies of pairs; modifications don't affect map | #range_based_for #map |
-| 9 | Yes, valid | Range-based for works with braced initializer lists | #range_based_for #initializer_list |
-| 10 | `255` | Explicit cast converts enum value to underlying integer | #enum_class #casting |
-| 11 | May not work correctly | `vector<bool>` uses proxy references; `auto&` may not bind correctly, use `auto&&` | #vector_bool #proxy_type |
-| 12 | `nullptr_t` for first, error for second | `nullptr` matches `nullptr_t` overload; `NULL` is int, doesn't match either | #nullptr_t #overload_resolution |
-| 13 | `4` (typically) | Size matches underlying type `int`, which is 4 bytes on most platforms | #enum_class #sizeof |
-| 14 | `hello` | `auto` creates copies; modifications to copies don't affect vector | #range_based_for #copy_semantics |
-| 15 | `2` | `auto&` creates references; modifications affect original array | #range_based_for #references |
-| 16 | Yes, prints "Equal" | Both are null pointers; comparison is valid and true | #nullptr #pointer_comparison |
-| 17 | No, compile error | Case labels require qualified names like `Status::Running` | #enum_class #switch_statement |
-| 18 | Undefined behavior | Modifying container size during iteration invalidates iterators | #iterator_invalidation #undefined_behavior |
-| 19 | Valid but dangerous | Cast succeeds but 75 is not a valid enumerator; use is undefined | #enum_class #invalid_cast |
-| 20 | No, compile error | Structured bindings `[key, val]` are C++17 feature, not C++11 | #structured_bindings #c++17 |
 
 #### Range-Based For Loop Best Practices
 

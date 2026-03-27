@@ -761,31 +761,6 @@ This pattern is critical for real-time systems where copying a 100,000-point LiD
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Compilation error | `ref` is an lvalue, cannot bind rvalue reference to lvalue without `std::move` | #named_rvalue_lvalue |
-| 2 | Compilation error | `a` is lvalue, `func` expects rvalue reference; need `std::move(a)` | #reference_binding |
-| 3 | Compiles and runs | `rref` is a named variable (lvalue), can take its address even though type is `int&&` | #lvalue_with_rvalue_type |
-| 4 | Compiles and runs | `const T&` can bind to rvalues; temporary lifetime extended to `ref` | #const_ref_binding |
-| 5 | Compilation error | Non-const lvalue reference cannot bind to rvalue (expression result) | #non_const_ref_rvalue |
-| 6 | Compilation error | `rref` is lvalue (has name), cannot bind another rvalue ref without casting | #named_rvalue_lvalue |
-| 7 | Output: "rvalue" | `get()` returns `int&&` (xvalue/rvalue), calls rvalue overload | #return_rvalue_ref |
-| 8 | Output: 200 | `lref` and `rref` refer to same object; modifying through either changes both | #reference_aliasing |
-| 9 | Calls `take(int&&)` | Exact match preferred; rvalue binds to `int&&` over `const int&` | #overload_resolution |
-| 10 | Compiles and runs | Post-increment returns rvalue (copy of old value), can bind to rvalue ref | #postincrement_rvalue |
-| 11 | Undefined behavior | Returning reference to local variable; `a` destroyed when function exits | #dangling_reference |
-| 12 | Compilation error | `std::move(cx)` gives `const int&&`, cannot bind to non-const `int&&` | #const_rvalue_ref |
-| 13 | `b` is `int`;<br>`c` is `int&` | `decltype(a)` gives type; `decltype((a))` gives lvalue reference for variables | #decltype_parentheses |
-| 14 | Output: 30 | Assignment returns lvalue ref to `x`; `ref` aliases `x`; all changes affect `x` | #assignment_lvalue |
-| 15 | Compilation error | `5 + 5` is rvalue, cannot bind non-const lvalue reference to rvalue | #temporary_binding |
-| 16 | Output: 100 | Both `rref1` and `rref2` are lvalues referring to same object after move | #rvalue_ref_aliasing |
-| 17 | Output: "const&" | `x` is lvalue, binds to `const int&` (no non-const lvalue ref overload) | #lvalue_const_binding |
-| 18 | Compiles and runs | String literal converted to temporary `std::string`, lifetime extended | #temporary_lifetime |
-| 19 | Compilation error | `getValue()` returns prvalue (temporary), cannot bind to non-const lvalue ref | #temporary_no_lvalue_ref |
-| 20 | `a` is `int&`;<br>`b` is `int&&` | `auto&&` is forwarding reference: lvalue→lvalue ref, rvalue→rvalue ref | #forwarding_reference |
-
 #### Value Category Decision Tree
 
 | Expression Type | Value Category | Can Take Address? | Can Bind T&? | Can Bind const T&? | Can Bind T&&? |

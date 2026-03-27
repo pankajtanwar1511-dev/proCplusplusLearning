@@ -1737,31 +1737,6 @@ High-performance asynchronous observer with event queue. Events are published to
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Key Concept |
-|----|--------|-------------|
-| 1 | Deleting observer during notification causes use-after-free | #use_after_free |
-| 2 | Circular reference with shared_ptr causes memory leak | #circular_reference |
-| 3 | Not thread-safe - concurrent vector iteration is data race | #thread_safety |
-| 4 | Infinite notification loop - observer modifies subject | #infinite_loop |
-| 5 | Exception aborts loop, remaining observers not notified | #exception_safety |
-| 6 | Push model has tighter coupling than pull model | #push_vs_pull |
-| 7 | Expired weak_ptrs accumulate, need manual cleanup | #weak_ptr |
-| 8 | Copy allows safe attach/detach during notification | #iterator_invalidation |
-| 9 | Priority-based notification order implementation | #priority |
-| 10 | Signal/Slot uses std::function instead of interface | #signal_slot |
-| 11 | Deadlock - lock held during callback that reacquires | #deadlock |
-| 12 | Asynchronous notification: non-blocking publish | #asynchronous |
-| 13 | Event filtering reduces unnecessary notifications | #filtering |
-| 14 | Index-based iteration fails when observers remove themselves | #index_skipping |
-| 15 | RAII connection handle for automatic detachment | #raii |
-| 16 | Multiple signals enable fine-grained subscription | #multiple_signals |
-| 17 | Recursion depth tracking prevents infinite loops | #recursion_guard |
-| 18 | Multi-phase notification ensures correct execution order | #ordered_notification |
-| 19 | One-time observer for event completion patterns | #one_time_observer |
-| 20 | Catch-all exception handling silences errors | #exception_handling |
-
 #### Observer Pattern Implementation Comparison
 
 | Implementation | Ownership | Cleanup | Thread-Safe | Overhead |

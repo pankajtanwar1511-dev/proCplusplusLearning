@@ -1522,31 +1522,6 @@ Object pool factory reuses expensive objects instead of creating new ones each t
 
 ### QUICK_REFERENCE: Answer Key and Comparison Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Key Concept |
-|----|--------|-------------|
-| 1 | Memory fragmentation and allocation overhead - use object pool | #object_pooling |
-| 2 | Object slicing - return pointer not value | #object_slicing |
-| 3 | Not thread-safe - need mutex for cache access | #thread_safety |
-| 4 | Virtual factory allows runtime polymorphism; static is faster | #polymorphism |
-| 5 | Type-safe and zero overhead, but requires compile-time type | #templates |
-| 6 | Memory leak if initialize() throws - wrap in unique_ptr immediately | #exception_safety |
-| 7 | Undefined behavior calling null function - check existence first | #error_handling |
-| 8 | Compiler warns if enum cases missing (type safety) | #type_safety |
-| 9 | Use Abstract Factory for families of related objects | #abstract_factory |
-| 10 | No type safety with int - use enum class | #type_safety |
-| 11 | weak_ptr allows cached objects to be destroyed | #weak_ptr |
-| 12 | call_once ensures single initialization in thread-safe manner | #lazy_initialization |
-| 13 | Virtual constructor idiom (Prototype pattern) | #virtual_constructor |
-| 14 | Perfect forwarding preserves argument value categories | #perfect_forwarding |
-| 15 | Use std::visit to access variant contents | #variant |
-| 16 | Switch-based factory violates Open/Closed Principle | #ocp |
-| 17 | optional avoids exception overhead for expected errors | #optional |
-| 18 | Atomic increment safe, but increment+setID not atomic as unit | #atomics |
-| 19 | Hybrid Factory/Singleton - Flyweight or cached factory | #pattern_hybrid |
-| 20 | JSON parsing can throw - need validation and error handling | #error_handling |
-
 #### Factory Pattern Comparison
 
 | Aspect | Factory Method | Abstract Factory | Simple Factory | Registry Factory |

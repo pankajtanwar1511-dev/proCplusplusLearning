@@ -865,36 +865,6 @@ SensorDataBuffer: Destroying camera_left (freeing 512000 bytes)
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Default<br>Copy<br>Default<br>Assign | a1 default constructed; a2 copy constructed from a1; a3 default constructed; a3 assigned from a1 | #copy_constructor #assignment_operator |
-| 2 | Self-assignment | Assignment operator detects self-assignment and prints message | #self_assignment |
-| 3 | Default<br>(likely) | RVO/copy elision likely eliminates copy; without optimization might show "Copy" | #copy_elision #rvo |
-| 4 | A | Object slicing: only base part copied, vtable points to A, calls A::show | #object_slicing |
-| 5 | Compilation Error | Copy constructor deleted, cannot copy a1 to a2 | #deleted_functions |
-| 6 | Compiles in C++17 | Mandatory copy elision in C++17 for returning temporaries; pre-C++17 might error | #copy_elision #cpp17 |
-| 7 | Moved<br>(or nothing) | Move constructor called; RVO may elide it entirely | #move_constructor #rvo |
-| 8 | Move Assign | Temporary rvalue invokes move assignment operator | #move_assignment |
-| 9 | No output<br>(memory leak) | Copy constructor allocates but no destructor, leaks memory | #memory_leak #rule_of_three |
-| 10 | Runtime Error | Shallow copy (default); both objects delete same pointer causing double-free | #double_delete #shallow_copy |
-| 11 | No output | Rule of Three correctly implemented; deep copies work, no leaks or double-free | #rule_of_three |
-| 12 | Move | std::move forces move constructor; explicit move prevents NRVO | #move_semantics #std_move |
-| 13 | Compilation Error | No default constructor defined; A a1 fails to compile | #default_constructor |
-| 14 | Destroyed<br>Destroyed | Both objects destroyed; copy used default shallow copy (safe for this class) | #destructors |
-| 15 | Default<br>(or Copy) | RVO likely elides; might show "Copy" without optimization | #copy_elision #rvo |
-| 16 | Compiles in C++17 | Guaranteed copy elision for temporaries; copy constructor not needed | #copy_elision #cpp17 |
-| 17 | Move<br>(or nothing) | NRVO may elide; otherwise move constructor called | #move_constructor #nrvo |
-| 18 | Compilation Error | Both copy and move deleted; cannot return even with elision guarantee | #deleted_functions |
-| 19 | Move<br>(or nothing) | Move available for fallback if NRVO doesn't apply | #move_semantics |
-| 20 | Deep Copy | Rule of Three: copy constructor performs deep copy, destructor cleans up safely | #rule_of_three #deep_copy |
-| 21 | Copy | User-defined copy constructor in B called | #copy_constructor |
-| 22 | Move | std::move on return forces move constructor call | #move_semantics |
-| 23 | Compilation Error | Copy assignment deleted; a2 = a1 fails | #deleted_functions #assignment_operator |
-| 24 | Compilation Error | Copy constructor deleted; pass-by-value requires copy | #deleted_functions |
-| 25 | Ctor<br>End<br>Dtor<br>(likely) | RVO constructs object directly; if elided shows only Ctor, End, Dtor | #copy_elision #rvo |
-
 #### Copy Constructor vs Copy Assignment
 
 | Aspect | Copy Constructor | Copy Assignment Operator |

@@ -998,7 +998,6 @@ Readings above 20.0m:
   lidar_front: 30.2m at t=1100ms
   lidar_front: 42.1m at t=1300ms
 
-
 PART 2: Lambda Capture Modes
 
   ⚠️  Alert: lidar_front detected obstacle at 30.2m
@@ -1008,14 +1007,12 @@ Summary:
   Total alerts: 2
   Max distance: 42.1m
 
-
 PART 3: Event System with std::function
 
 Processing new sensor reading:
   [Logger] lidar_rear: 3.5m
   [Counter] Event #1 from lidar_rear
   [Alert] ⚠️  Too close: 3.5m!
-
 
 PART 4: Stateful Lambda - Moving Average Filter
 
@@ -1026,12 +1023,10 @@ Applying moving average filter:
   Raw: 13.0m -> Filtered: 12.0m
   Raw: 12.5m -> Filtered: 12.17m
 
-
 PART 5: Lambda vs std::bind
 
 std::bind version: 10.5
 Lambda version: 10.5
-
 
 PART 6: Sorting Sensor Data with Lambda
 
@@ -1080,31 +1075,6 @@ Sorted by distance (descending):
 ---
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
-
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `10 5 10` | Mutable lambda modifies its copy, not original; f() returns 10 each time from same copy | #mutable #capture |
-| 2 | `3 3 3` (or UB) | All lambdas capture reference to same loop variable i, which equals 3 after loop | #dangling_reference #loop_capture |
-| 3 | `200` | Reference capture sees modifications to original variable | #reference_capture |
-| 4 | **Compile Error** | Return type mismatch - lambda returns int, function pointer expects void return | #function_pointer #type_mismatch |
-| 5 | `10` | Value capture creates copy, safe even after scope ends | #lifetime #value_capture |
-| 6 | **Undefined Behavior** | [=] captures 'this' pointer, which is dangling after delete | #this_pointer #dangling_pointer |
-| 7 | `18` | bind fixes first arg to 10, placeholders fill others: 10 + 5 + 3 | #std_bind #partial_application |
-| 8 | **Compile Error** | Cannot modify captured-by-value variable without mutable keyword | #const_correctness #mutable |
-| 9 | `1 2 3` | Mutable lambda maintains state across calls | #stateful_lambda #mutable |
-| 10 | `0` (false) | Each lambda has unique compiler-generated type | #unique_type #lambda_type |
-| 11 | **Compile Error** | Cannot modify const variable even through reference | #const_correctness #reference |
-| 12 | `5 4 3 1 1` | Sorts in descending order (a > b comparator) | #stl_algorithms #lambda |
-| 13 | `10` | std::bind copies argument by default, std::ref needed for reference | #std_bind #std_ref |
-| 14 | `1 4` (typical) | No-capture lambda has empty class size (1), one-capture has sizeof(int) | #sizeof #memory_layout |
-| 15 | **Undefined Behavior** | Lambda captures local variable by reference, which is destroyed on return | #dangling_reference #lifetime |
-| 16 | `15` | std::function allows assignment between compatible callables; g adds 10 | #std_function #type_erasure |
-| 17 | `15 15` | Mixed capture: x by value (5), y by reference; y modified from 10 to 15 | #mixed_capture #reference |
-| 18 | **Compile Error** | Generic lambdas (auto parameters) require C++14 | #cpp14 #generic_lambda |
-| 19 | `1 2 2` | Static variables accessible without capture; counter modified directly | #static #capture |
-| 20 | **Compile Error** | C++11 std::function cannot store move-only captures | #move_semantics #std_function |
 
 #### Lambda Capture Modes Summary
 

@@ -779,31 +779,6 @@ List's sort accepts custom comparators via function objects or lambdas. The sort
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `0 6` | push_front adds 0 at beginning, push_back adds 6 at end. front() and back() access these. | #push_front #push_back |
-| 2 | `3` | pop_front removes first, pop_back removes last. 5 elements - 2 = 3. | #pop_operations #size |
-| 3 | `3` | remove(2) removes all occurrences of 2. Three 2s removed, 3 elements remain. | #remove #element_removal |
-| 4 | `1 2 3 4 5` | sort() arranges elements in ascending order using list's member function. | #sort #ordering |
-| 5 | `5 1` | reverse() reverses order. Original first (1) becomes last, original last (5) becomes first. | #reverse #bidirectional |
-| 6 | `6 0` | splice moves all elements from b to end of a. a has 6 elements, b is empty. | #splice #ownership_transfer |
-| 7 | `3` | unique() removes consecutive duplicates. Each pair becomes single element. | #unique #duplicates |
-| 8 | `4` | erase at position 2 (element 3) removes one element. 5 - 1 = 4. | #erase #iterator_based |
-| 9 | `5` | resize(5) grows from 3 to 5 elements by adding 2 default-initialized elements. | #resize #growth |
-| 10 | `0 1` | clear() removes all elements. size becomes 0, empty returns true (1). | #clear #empty |
-| 11 | `6 0` | merge combines sorted lists. All of b's elements move to a. | #merge #sorted_combine |
-| 12 | `1 99 2 3` | insert before position 1 (after first element) adds 99. | #insert #positioning |
-| 13 | `1` | Iterator remains valid through push_back due to list's iterator stability. | #iterator_stability #push_back |
-| 14 | `0 4` | emplace_front constructs 0 at front, emplace_back constructs 4 at back. | #emplace #in_place_construction |
-| 15 | `3` | remove_if with predicate removes even numbers (2, 4). Odd numbers remain. | #remove_if #predicate |
-| 16 | `3 3` | resize(3) shrinks to 3 elements. Last element is now 3. | #resize #shrinking |
-| 17 | `4 1` | splice single element (4) from b to end of a. a has 4 elements, b has 1. | #splice #single_element |
-| 18 | `2` | const list allows iteration and reading. Iterator increments to second element. | #const_iterator #read_only |
-| 19 | `5` | sort orders elements, then unique removes consecutive duplicates (the two 1s). | #sort #unique #combination |
-| 20 | `0 3` | Move constructor transfers ownership. lst1 becomes empty, lst2 has 3 elements. | #move_semantics #ownership |
-
 #### List Operations Complexity Summary
 
 | Operation | Time Complexity | Notes |

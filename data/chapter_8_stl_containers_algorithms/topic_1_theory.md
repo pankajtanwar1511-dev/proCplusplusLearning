@@ -721,31 +721,6 @@ Custom allocators give fine-grained control over memory management. This example
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `0 0 10 0` | Initially size and capacity are 0. reserve(10) sets capacity to 10 but size remains 0. | #reserve #capacity |
-| 2 | `1 2 4 5` | erase at index 2 removes element 3. Elements after are shifted left. | #erase #element_removal |
-| 3 | `1` | v2 is a copy of v1. Modifying v1 doesn't affect v2 (deep copy). | #copy_semantics #independence |
-| 4 | `5 10 10 10 10 10` | Parentheses create 5 elements, each with value 10. | #constructor #fill_initialization |
-| 5 | `2 5 10` | Braces create initializer list with 2 elements: 5 and 10. | #initializer_list #brace_initialization |
-| 6 | `1 99 2 3` | insert before position 1 (second element), shifting others right. | #insert #element_insertion |
-| 7 | `4` | remove-erase idiom removes all 3s. Size becomes 4. | #erase_remove_idiom #size |
-| 8 | `0` | resize(5) adds 2 default-initialized elements (0 for int). | #resize #default_initialization |
-| 9 | `3 [original capacity ≥ 5]` | resize(3) reduces size to 3 but capacity unchanged. | #resize #capacity_preservation |
-| 10 | `0 100` | resize(10) creates 10 default-initialized (0) elements. v[5]=100 then modifies. | #resize #element_access |
-| 11 | `0 3` | clear() destroys all elements (size=0) but capacity remains unchanged. | #clear #capacity_preservation |
-| 12 | `No, undefined behavior` | Reallocation invalidates all iterators. Using it is UB. | #iterator_invalidation #reallocation |
-| 13 | `0 3` | Move leaves v1 empty (or in valid-but-unspecified state), v2 has 3 elements. | #move_semantics #ownership_transfer |
-| 14 | `1 1 3 4 5` | std::sort sorts in ascending order. | #sorting #std_sort |
-| 15 | `5` | Both emplace_back and push_back add one element each. Total: 5. | #emplace_back #push_back |
-| 16 | `5 4 3 2 1` | std::reverse reverses elements in-place. | #reverse #algorithms |
-| 17 | `3` | unique moves first occurrence of consecutive duplicates to front. Returns iterator 3 positions from begin. | #unique #duplicate_removal |
-| 18 | `No, compile error` | const vector returns const_iterator. Cannot modify through it. | #const_correctness #const_iterator |
-| 19 | `3 100 100 100` | assign replaces all elements with 3 copies of 100. | #assign #replacement |
-| 20 | `1 2 5` | partial_sort sorts first 3 elements only. Rest unordered. | #partial_sort #optimization |
-
 #### Vector Operations Complexity Summary
 
 | Operation | Time Complexity | Notes |

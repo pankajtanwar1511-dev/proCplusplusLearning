@@ -850,31 +850,6 @@ Condition variables enable graceful thread pool shutdown: workers wait for tasks
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | May work or spurious wakeup may cause issues | No predicate - vulnerable to spurious wakeups | Spurious wakeup |
-| 2 | Race condition possible but predicate likely saves it | ready modified without lock - race, but predicate checks before waiting | Race on condition |
-| 3 | Output: "Done" | Predicate checked before waiting - early notification OK | Predicate prevents lost wakeup |
-| 4 | Output: "0 1 2 3 4" (order guaranteed within consumer) | notify_all wastes CPU but works | Thundering herd |
-| 5 | Output: "Timeout" (no notifier) | wait_for times out after 100ms | Timeout |
-| 6 | Waiter blocks forever | Notification before predicate true - lost wakeup | Lost wakeup |
-| 7 | Only one thread prints (0, 1, or 2), others wait forever | notify_one wakes only one thread | notify_one limitation |
-| 8 | Compilation error | wait() requires unique_lock, not lock_guard | Lock type requirement |
-| 9 | Output: "42" | Notify inside lock is correct, just potentially less efficient | Notify inside lock |
-| 10 | Output: "Working" | Predicate checked first despite late wait - works | Late wait OK with predicate |
-| 11 | Output: "Got 10" | Spurious wakeups handled by predicate rechecking | Multiple notifications |
-| 12 | Blocks forever | Predicate always false - infinite wait | Infinite wait |
-| 13 | Compilation error | shared_lock should use shared_mutex, not passed directly | condition_variable_any usage |
-| 14 | All three consumers print "done" | notify_all wakes all waiters | notify_all broadcast |
-| 15 | Output: "Timeout" (if flag not set within 1 second) | wait_until with time point | Absolute timeout |
-| 16 | Prints "0 1 2" then blocks forever | Producer finishes, consumer waits infinitely | Missing shutdown mechanism |
-| 17 | Output: "Counter is 5" (or higher) | Predicate rechecked each notification | Predicate handles races |
-| 18 | Output: "false" | Zero timeout with false predicate - instant return | Zero timeout |
-| 19 | Undefined behavior (different mutexes) | Consumer waits with wrong mutex - violates cv contract | Mutex mismatch |
-| 20 | Worker blocks forever | Coordinator forgot notify - waiter never woken | Missing notification |
-
 #### Condition Variable Operations
 
 | Operation | Syntax | Purpose | Behavior |

@@ -1062,31 +1062,6 @@ SafeSensorData: Auto-cleanup 15000 points
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Undefined behavior, likely crash | Returning pointer to local array (stack memory). Array `arr` is destroyed when function returns, pointer points to invalid memory. | #dangling_pointer #stack |
-| 2 | Memory leak / undefined behavior | Using scalar `delete` on array allocated with `new[]`. Should use `delete[]` to properly deallocate array. | #array_allocation #delete |
-| 3 | Memory leak, then potential double delete | First allocation leaked when `p = q` overwrites pointer. Then `delete p` and `delete q` delete same memory (double delete). | #memory_leak #double_delete |
-| 4 | Double delete crash | Compiler-generated copy constructor performs shallow copy of `data` pointer. Both destructors try to delete same array. Need deep copy or delete copy constructor. | #rule_of_three #shallow_copy |
-| 5 | Undefined behavior | Mixing `malloc` (C allocation) with `delete[]` (C++ deallocation). Must use `free(p)` with `malloc`. | #malloc #delete #mixing_allocators |
-| 6 | Undefined behavior, use-after-free | `local` and `global` point to same memory. After `delete local`, `global` becomes dangling pointer. Dereferencing in main is UB. | #dangling_pointer #use_after_free |
-| 7 | Compilation error | `std::unique_ptr` copy constructor is deleted. Cannot copy `p` to `q`. Must use `std::move(p)` for ownership transfer. | #unique_ptr #move_semantics |
-| 8 | Stack overflow likely | `Large` object is ~40 MB (10 million ints). Exceeds typical stack size limit, causing stack overflow crash. Should allocate on heap. | #stack_overflow #heap |
-| 9 | Undefined behavior (double delete) | `delete x` frees memory. Setting `x = nullptr` doesn't affect `y`. `delete y` attempts to free same memory (double delete). | #double_delete #nullptr |
-| 10 | Undefined behavior, buffer overflow | Array has indices 0-9. Accessing `arr[10]` is out of bounds (buffer overflow), writing to unowned memory. May corrupt heap or crash. | #buffer_overflow #bounds_checking |
-| 11 | Double delete crash during vector reallocation | `Resource` violates Rule of Three - no proper copy constructor. During `push_back`, vector may reallocate, copying objects with shallow copies. Multiple destructors delete same `data`. | #rule_of_three #vector #copy_constructor |
-| 12 | Memory leak | Early return prevents `delete p` from executing. Memory allocated by `new int(10)` is never freed. Use smart pointers for exception safety. | #memory_leak #exception_safety |
-| 13 | Prints 200 | `static` variable has static storage duration, persists for program lifetime. Safe to return pointer to it. Modifying via `p` changes the shared static variable. | #static #lifetime |
-| 14 | Prints 10 | Reference count mechanism. `p1.reset()` decrements count to 2, but `p2` and `p3` still reference the object. Object not deleted until all shared_ptrs destroyed. | #shared_ptr #reference_counting |
-| 15 | Prints "Safe" | `delete nullptr` is safe and well-defined as a no-op in C++. No crash or undefined behavior. | #nullptr #delete |
-| 16 | Memory leak | `Widget` destructor never deallocates `ptr`. Need custom destructor: `~Widget() { delete ptr; }` or use smart pointer member. | #memory_leak #destructor |
-| 17 | Exception thrown, but no leak | `std::vector` uses RAII. When exception thrown, vector's destructor automatically called during stack unwinding, properly cleaning up memory. | #exception_safety #raii #vector |
-| 18 | Memory leak from first allocation | First allocation (`new int(5)`) leaked when `p` reassigned. Only second allocation (`new int(10)`) properly deleted. | #memory_leak #pointer_reassignment |
-| 19 | Memory leak (circular reference) | Both Nodes hold shared_ptrs to each other, creating reference count cycle. Reference counts never reach zero, objects never deleted. Need weak_ptr for back-reference. | #shared_ptr #circular_reference #weak_ptr |
-| 20 | Undefined behavior, use-after-free | `p.get()` returns raw pointer without transferring ownership. `p.reset()` deletes managed object. `raw` now dangles, dereferencing causes UB. | #unique_ptr #dangling_pointer #get |
-
 #### Stack vs Heap Comparison
 
 | Aspect | Stack | Heap |

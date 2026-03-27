@@ -701,31 +701,6 @@ Timeout-based locking detects potential deadlocks and allows recovery (backoff a
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Output: < 20000 (varies, typically 10000-19000) | Race condition - concurrent unsynchronized increments | Data race / lost updates |
-| 2 | Likely deadlock | ABBA deadlock - T1 locks m1→m2, T2 locks m2→m1 | Lock ordering deadlock |
-| 3 | Output: "Thread 1" and "Thread 2" (order varies) | std::lock prevents deadlock regardless of argument order | std::lock deadlock prevention |
-| 4 | Possible output: 100 (race allows both threads to pass check) | Check-then-act race (TOCTOU) - check outside lock | TOCTOU race |
-| 5 | Possible deadlock | ABBA deadlock with accounts - lock order depends on arguments | Pointer-based deadlock |
-| 6 | Potential crash or wrong value | get_or_default has race - data.size() can change | TOCTOU / unsynchronized read |
-| 7 | Possible livelock | Both threads continuously back off for each other | Livelock |
-| 8 | Output: "100" printed 3 times | call_once ensures initialize runs exactly once | One-time initialization |
-| 9 | Output: "T1 timeout" and "T2 timeout" (or one succeeds) | Timeout-based deadlock detection | Timeout recovery |
-| 10 | Multiple readers or single writer executes (order varies) | shared_mutex allows concurrent reads | Readers-writer lock |
-| 11 | Output: "100" from all threads (correct double-checked locking) | Proper double-checked locking pattern | Lazy initialization |
-| 12 | May print "Inconsistent" | Reader sees partial write without synchronization | Read-write race |
-| 13 | Both threads might print (race on check-then-act) | Atomic doesn't make check-then-act atomic | Atomic check-then-act race |
-| 14 | Output: 1 (lost update) | Read outside lock, write inside - classic race | Read-modify-write race |
-| 15 | Output: "Initialized" once | C++11 guarantees thread-safe static local init | Meyers' Singleton |
-| 16 | Deadlock | Mutexes already locked, try to lock again without adopt_lock | Missing adopt_lock |
-| 17 | May print 0 or 42 (memory reordering) | No memory ordering on atomic store/load | Memory reordering race |
-| 18 | Compilation error | current not declared in outer scope | Scoping error + race |
-| 19 | Output: "Inner" then "Outer" | Recursive mutex allows same thread to relock | Recursive locking |
-| 20 | Output: "Thread 1" and "Thread 2" (serialized, no deadlock) | Same lock order prevents deadlock | Consistent lock ordering |
-
 #### Coffman Conditions for Deadlock
 
 | Condition | Description | How to Break |

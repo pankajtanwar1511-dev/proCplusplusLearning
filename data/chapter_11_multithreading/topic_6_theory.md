@@ -684,31 +684,6 @@ When a promise-based worker encounters an error, call set_exception() with std::
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Lambda executes during fut.get() | Deferred execution runs synchronously when get() or wait() is called | launch::deferred |
-| 2 | Throws std::future_error | Second get() throws future_error with no_state because future is single-use | single-use future |
-| 3 | "Done" prints after 2 seconds | Future destructor from async blocks until task completes | blocking destructor |
-| 4 | Correct, val = 42 | Promise properly moved into thread, set_value called, future receives value | promise move semantics |
-| 5 | Exception not thrown during sleep | Exception stored in shared state, rethrown on fut.get() call | exception propagation |
-| 6 | 0, 1, 0 | Default-constructed invalid (0), after async valid (1), after get() invalid (0) | future validity |
-| 7 | Unsafe: race condition | Detached thread may not complete before main exits; also lambda capture by reference dangerous | detached thread hazard |
-| 8 | Yes, future remains valid | wait_for() does not consume future; get() can still be called afterward | non-destructive wait |
-| 9 | "Task done", "Main done" | Promise set_value() unblocks fut.get(), ensuring task output before main output | synchronization order |
-| 10 | Blocks forever | Packaged_task not executed; get() waits indefinitely for value that never arrives | task execution requirement |
-| 11 | Throws std::future_error | Second set_value() throws promise_already_satisfied | single-set promise |
-| 12 | Yes, both succeed | shared_future allows multiple get() calls; both return 42 | shared_future semantics |
-| 13 | 0 1 | fut1 invalid after move (0), fut2 valid with ownership (1) | move semantics |
-| 14 | No effect, val = 42 | Moving promise does not invalidate future; shared state remains accessible | shared state stability |
-| 15 | No guarantee | Default policy allows implementation to choose; may be deferred | launch policy ambiguity |
-| 16 | future_error: broken_promise | Promise destroyed without setting value triggers broken_promise exception | broken promise |
-| 17 | On fut.get() call | Deferred task executes synchronously when get() invoked | lazy evaluation |
-| 18 | "Caught: Error" | Exception set via set_exception() and rethrown on get() | exception propagation |
-| 19 | 0 2 4 6 8 (order may vary) | Five async tasks run in parallel, results retrieved in loop order | parallel execution |
-| 20 | Thread throws future_error | Second set_value() throws promise_already_satisfied; program likely terminates | promise single-use error |
-
 #### std::async Launch Policies
 
 | Policy | Execution Timing | Thread Creation | Use Case |

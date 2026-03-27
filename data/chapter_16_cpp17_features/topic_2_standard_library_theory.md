@@ -854,21 +854,6 @@ This demonstrates practical filesystem usage for a common automotive task: manag
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | 42 | optional is empty, value_or returns default value 42 | #optional #value_or |
-| 2 | 3.14 | get<1> accesses second type (double) by index | #variant #index_access |
-| 3 | 42 | any_cast with pointer returns valid pointer, dereferences to 42 | #any #any_cast |
-| 4 | empty | Default-constructed optional has no value | #optional #has_value |
-| 5 | hello | holds_alternative checks type, get retrieves string | #variant #holds_alternative |
-| 6 | has value: 0 | Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value | #optional #bool |
-| 7 | error | any holds double, casting to int throws bad_any_cast | #any #exception |
-| 8 | 0 | Variant holds int (first type), index is 0 | #variant #index |
-| 9 | 15 | opt1 has 10, opt2 empty uses default 5, sum is 15 | #optional #value_or |
-| 10 | 42 | visit applies lambda to double value 42.0, prints without decimal | #variant #visit |
-
 #### std::optional vs Alternatives
 
 | Feature | optional<T> | T* (pointer) | Sentinel (-1, "") | bool + T& |

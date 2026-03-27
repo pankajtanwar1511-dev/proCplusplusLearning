@@ -1412,7 +1412,6 @@ PART 4: Reset Operations (final prevents override of critical logic)
 [ProductionLiDAR] Production sensor cannot be reset - factory sealed
 [Sensor] sensor_cleanup reset to defaults
 
-
 PART 5: Safety Features Demonstrated
 =====================================
 ✅ override catches:
@@ -1429,7 +1428,6 @@ PART 5: Safety Features Demonstrated
 ✅ Virtual destructor with override ensures:
    - Proper cleanup through base pointers
    - Detection if base destructor is not virtual
-
 
 === Cleanup (Virtual Destructors in Action) ===
 -----------------------------------------------
@@ -1495,31 +1493,6 @@ void calibrate(int x) override { }  // ❌ Error: parameter mismatch
 ---
 
 ### QUICK_REFERENCE: Override and Final Design Guide
-
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | No, compile error | `override` catches typo in function name (proccess vs process) | #override #typo_detection |
-| 2 | No, compile error | `override` catches const-qualification mismatch (base is const, derived is not) | #override #const_correctness |
-| 3 | No, compile error | `override` catches parameter type mismatch (int vs long) | #override #signature_matching |
-| 4 | No, compile error | `override` requires base function to be virtual | #override #non_virtual_error |
-| 5 | No, compile error | Cannot override `final` function from base class | #final #inheritance_prevention |
-| 6 | No, compile error | Cannot inherit from `final` class | #final #class_sealing |
-| 7 | No, compile error | `MoreDerived` cannot override `final` function from `Derived` | #final #override_prevention |
-| 8 | Yes, good practice | Destructors can be overridden; using `override` is recommended | #override #virtual_destructor |
-| 9 | Yes, order doesn't matter | Both `final override` and `override final` are valid and equivalent | #final #override #syntax |
-| 10 | Yes | `final` implicitly overrides matching signature; `override` keyword optional | #final #implicit_override |
-| 11 | No, compile error | Reference qualifiers must match; `&` in base, `&&` in derived is mismatch | #override #reference_qualifier |
-| 12 | Yes | Can override with more restrictive exception specification (`noexcept`) | #override #noexcept #exception_spec |
-| 13 | No, compile error | Static functions cannot be virtual or use `override` | #static #override_error |
-| 14 | No, compile error | Cannot inherit from `final` class `Derived` | #final #inheritance_error |
-| 15 | Yes, covariant return | Covariant return types allowed: derived can return more specific pointer type | #covariant_return #override |
-| 16 | Yes, valid | Pure virtual can be overridden and made final; `Derived` is concrete and instantiable | #final #pure_virtual |
-| 17 | Yes | Private virtual functions can be overridden (Non-Virtual Interface idiom) | #override #private_virtual |
-| 18 | Base default (10) | Default arguments bound at compile-time based on pointer type, not runtime type | #default_arguments #virtual |
-| 19 | Yes | `override` can be used in declaration; definition follows normal rules | #override #declaration_definition |
-| 20 | No, compile error | Pure virtual and final contradicts: cannot override but must provide implementation | #final #pure_virtual #contradiction |
 
 #### Override and Final Quick Reference
 

@@ -736,31 +736,6 @@ This wait-free counter uses fetch_add which completes in a bounded number of ste
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Thread2 may or may not print "Saw 1" | Relaxed ordering provides no inter-thread visibility guarantees; thread2 might never observe the write | memory_order_relaxed |
-| 2 | No, assertion may fail | Relaxed stores/loads do not synchronize; reader may see ready=true but data=0 due to reordering | memory ordering violation |
-| 3 | Likely around 11-20, not 110 | CAS without loop only succeeds for one thread; others fail and do not retry | compare_exchange usage |
-| 4 | Yes, correct | Release-acquire pair synchronizes; when acquire sees true, all prior operations (including earlier stores) are visible | acquire-release semantics |
-| 5 | 0 or 1 depending on timing | If thread1 runs first, was_set=0; if thread2 clears then thread1 runs, was_set=0; if thread1 then thread2, was_set=0 initially | atomic_flag behavior |
-| 6 | Never fails | Seq-cst provides total order; if thread2 sees y=1, it must see x=1 due to program order in thread1 | sequential consistency |
-| 7 | Unsafe: data lifetime issue | If data goes out of scope, p becomes dangling pointer; also no memory ordering guarantees without explicit orderings | pointer atomics |
-| 8 | CAS may fail spuriously or due to contention | Another thread may modify counter between load and CAS; weak CAS requires loop for spurious failures | compare_exchange_weak |
-| 9 | Race condition, not atomic | volatile provides no atomicity; ++counter decomposes into read-modify-write which is not atomic | volatile misconception |
-| 10 | z can be 0, 1, or 2 | Relaxed ordering allows total reordering; thread3/4 may see different orders of x/y becoming true | relaxed ordering |
-| 11 | Old: 100, New: 200 | exchange returns previous value (100) and sets new value (200) atomically | atomic exchange |
-| 12 | x = 15, deterministic | Both additions are atomic; order does not matter for final sum, though interleaving varies | fetch_add atomicity |
-| 13 | Race condition: no CAS | Multiple threads can overwrite head simultaneously; must use compare_exchange_weak in loop | lock-free push pattern |
-| 14 | Race on ready | ready is non-atomic bool; thread2's read is not synchronized with thread1's write; must use atomic<bool> | mixed atomic/non-atomic |
-| 15 | memory_order_seq_cst | Default for all atomic operations when no ordering specified | default memory ordering |
-| 16 | Compiles but likely not lock-free | Large types use internal mutex; is_lock_free() would return false; defeats purpose | lock-free guarantees |
-| 17 | 1 or 2 | Thread3 sees either thread1's or thread2's write; both use release-acquire so both are valid | concurrent stores |
-| 18 | Yes, correct | Fences provide necessary ordering despite relaxed flag operations; release fence ensures data visible, acquire fence ensures data read after flag | memory fences |
-| 19 | a: 11, b: 11, x: 12 | Pre-increment returns new value (11), post-increment returns old value (11), both increment x | atomic increment variants |
-| 20 | Prevents false sharing | 64-byte alignment ensures each atomic is on separate cache line, avoiding cache line bouncing between cores | false sharing mitigation |
-
 #### Memory Ordering Comparison
 
 | Ordering | Atomicity | Cross-Thread Ordering | Use Case | Performance |

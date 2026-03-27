@@ -762,31 +762,6 @@ int main() {
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Output: < 2000 (value varies, typically 1000-1999) | Race condition - concurrent increments without synchronization | Data race |
-| 2 | Deadlock | Same thread tries to lock non-recursive mutex twice | Self-deadlock |
-| 3 | Program terminates (std::terminate called) | Uncaught exception in thread (not caught in main) | Thread exception |
-| 4 | Undefined behavior (or exception) | Unlocking already-unlocked mutex | Double unlock |
-| 5 | Likely deadlock | Lock ordering creates circular wait | Lock ordering deadlock |
-| 6 | Deadlock | try to lock already-locked mutexes without adopt_lock | Missing adopt_lock |
-| 7 | Output: "Inner" | Recursive mutex allows same thread to relock | Recursive locking |
-| 8 | Output: "false" then "true" | defer_lock doesn't lock initially, manual lock acquires it | Deferred locking |
-| 9 | Output: "Locked" (if mutex available) | Timeout-based locking succeeds immediately when uncontended | Timed locking |
-| 10 | Output includes "Reading" (2x) and "Writing" (order varies) | Multiple readers or single writer | Shared mutex |
-| 11 | Deadlock | Non-recursive mutex locked twice by same thread | Self-deadlock |
-| 12 | Output: "1 2 3" (order may vary) | Thread-safe container modifications | Container protection |
-| 13 | Deadlock on subsequent calls | Early return without unlock | Missing unlock |
-| 14 | Output: "Init" (once only) | call_once ensures function runs exactly once | One-time initialization |
-| 15 | Output: "Locked both" | Correct use of std::lock with adopt_lock | Multi-mutex locking |
-| 16 | Output: "Work" then "Locked again" | unique_lock supports manual lock/unlock | Flexible locking |
-| 17 | Compilation error | Mutex is not movable | Non-movable type |
-| 18 | Output: "3 2 1" | Recursive mutex allows nested locking | Recursive locking |
-| 19 | Program terminates | Uncaught exception in thread | Exception in thread |
-| 20 | Output: "true" | Zero timeout try-lock succeeds if uncontended | Try-lock with timeout |
-
 #### Mutex Types Comparison
 
 | Type | Recursive | Timeout | Shared | Use Case |

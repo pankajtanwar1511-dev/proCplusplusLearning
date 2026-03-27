@@ -739,31 +739,6 @@ This pattern is fundamental to managing any resource-heavy objects in autonomous
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | A<br>B | Member object A constructed before B's body executes | #initialization_order |
-| 2 | A: 5 | Constructor body assignment works but less efficient than initializer list | #constructor_body |
-| 3 | 10 | In-class initializer provides default value when no initializer list entry | #in_class_initializer |
-| 4 | 20 | Initializer list overrides in-class initializer value | #initializer_list |
-| 5 | 100 | Reference member correctly initialized via initializer list | #reference_members |
-| 6 | Compilation Error | Const member must be initialized in initializer list, cannot be assigned | #const_members |
-| 7 | 20 10 | Members initialized in declaration order (x first, y second) despite list order | #initialization_order |
-| 8 | Param: 42<br>Default | Delegating constructor calls parameterized constructor first, then default body | #delegating_constructor |
-| 9 | A<br>B | Member objects constructed before containing object's constructor body | #composition |
-| 10 | Default<br>(Copy elided in C++17) | Likely just "Default" due to RVO; pre-C++17 might show Copy | #copy_elision #rvo |
-| 11 | Default<br>(Move elided in C++17) | C++17 mandatory elision: just "Default"; older: Default then Move | #copy_elision #move_constructor |
-| 12 | Base<br>Derived<br>Base | Object d constructed (Base, Derived), then sliced copy to Base for func parameter | #object_slicing |
-| 13 | A()<br>A(int) | Two constructor overloads called based on arguments provided | #constructor_overloading |
-| 14 | A<br>~A<br>End | Temporary destroyed immediately after statement, before "End" | #temporary_lifetime |
-| 15 | X()<br>Y() | Member X constructed before Y's constructor body | #composition #initialization_order |
-| 16 | Garbage 10<br>(Undefined) | x initialized before y (declaration order), so x gets garbage from uninitialized y | #initialization_order #undefined_behavior |
-| 17 | Compilation Error | explicit prevents implicit conversion from int to A in func(10) | #explicit #implicit_conversion |
-| 18 | A: 0<br>A: 5 | Default parameter allows default construction; a1 uses default 0, a2 passes 5 | #default_parameters |
-| 19 | Base(42)<br>Derived | Base constructor called with 42 before Derived constructor body | #inheritance #base_initialization |
-| 20 | (No output)<br>A(int) | `= default` generates default constructor; a1 uses it silently, a2 uses explicit version | #default_constructor |
-
 #### Constructor Types Comparison
 
 | Constructor Type | Signature | When Called | Can Be Implicit | Auto-Generated |

@@ -945,31 +945,6 @@ PathPlanner: Destroying A*
 
 ### QUICK_REFERENCE: Answer Keys and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Base | Non-virtual destructor causes UB; only Base::~Base() called, Derived::~Derived() never runs | #virtual_destructors #undefined_behavior |
-| 2 | Linker Error | Pure virtual destructor declared but not defined; must provide body | #pure_virtual #destructors |
-| 3 | Base | shared_ptr with non-virtual destructor; only Base::~Base() runs when ptr destroyed | #smart_pointers #virtual_destructors |
-| 4 | Shape | Object slicing in pass-by-value; Circle sliced to Shape, calls Shape::draw() | #object_slicing |
-| 5 | Base | Container slicing; Derived sliced when pushed to vector<Base>, calls Base::func() | #object_slicing #containers |
-| 6 | Compilation Error | User-defined destructor suppresses move constructor generation; no move available | #move_semantics #compiler_generated |
-| 7 | Compilation Error | Move constructor defined but no copy constructor; cannot copy a1 to a2 | #copy_constructor #move_semantics |
-| 8 | Move<br>Compilation Error | a2 created via move; a3 fails because copy constructor deleted | #move_only #deleted_functions |
-| 9 | Compilation Error | unique_ptr member makes class move-only; copy constructor implicitly deleted | #unique_ptr #move_only |
-| 10 | Compilation Error | Base class copy constructor deleted; derived class copy implicitly deleted | #inheritance #deleted_functions |
-| 11 | (Likely no output) | Copy elision in C++17; direct construction without move or copy | #copy_elision #rvo |
-| 12 | B<br>A<br>B<br>A | Virtual destructors work correctly; both destructors called for each object in correct order | #virtual_destructors #polymorphism |
-| 13 | 1<br>0 | Trivial has implicitly generated trivial destructor; NonTrivial's user-defined destructor makes it non-trivial | #trivial_destructor |
-| 14 | (No output) | Protected copy constructor accessible within derived class; c2 copy constructed from c1 | #protected_members #copy_constructor |
-| 15 | (No output) | Private destructor controlled lifetime pattern; object created and destroyed through controlled interface | #controlled_lifetime #private_destructor |
-| 16 | Base | Object slicing in assignment; Derived sliced to Base, calls Base::func() | #object_slicing #assignment |
-| 17 | Compilation Error | defaulted move constructor with deleted copy doesn't handle pointer member correctly; undefined behavior or error | #move_semantics #resource_management |
-| 18 | A()<br>~A()<br>(likely) | RVO likely elides move; if not elided shows A(), Move, ~A(), ~A() | #copy_elision #move_constructor |
-| 19 | Move | Explicit move via std::move calls move constructor | #move_semantics #std_move |
-| 20 | Processing<br>~Derived<br>~Base | Slicing occurs in parameter; then d destroyed normally with both destructors | #object_slicing #destructors |
-
 #### Rule of Five Special Member Functions
 
 | Function | Signature | When Auto-Generated | Suppressed By |

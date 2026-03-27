@@ -1210,31 +1210,6 @@ This comprehensive example shows how operator overloading transforms a mathemati
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | 5 7 7 | Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7 | #increment_operators #return_types |
-| 2 | Double-delete bug and memory leak | Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory. | #rule_of_three #shallow_copy #memory_leak |
-| 3 | 1 2 3 4 | operator new runs before constructor (1 2), destructor runs before operator delete (3 4) | #operator_new #object_lifecycle |
-| 4 | Called Expensive | Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value | #short_circuit #logical_operators |
-| 5 | Line A compiles, Line B fails | Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex. | #member_function #implicit_conversion #symmetry |
-| 6 | 30 20 | operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged. | #assignment_operator #return_types #chaining |
-| 7 | No, won't compile | Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal | #const_correctness #subscript_operator #reference_return |
-| 8 | 35 | Functor's operator() adds x (5) + a (10) + b (20) = 35 | #functor #operator_call |
-| 9 | 42 100 | operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100 | #smart_pointers #operator_overloading |
-| 10 | * + | Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +. | #operator_precedence #evaluation_order |
-| 11 | Both work | Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity. | #friend_function #symmetry #commutative_operations |
-| 12 | Returns reference to local | Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment. | #increment_operators #return_types #dangling_reference |
-| 13 | Allocating Ctor | Custom operator new with parameters (placement-like) runs first with message, then constructor | #placement_new #custom_parameters #operator_new |
-| 14 | Compiles, uses Y::operator+ | Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation. | #inheritance #operator_overloading #implicit_conversion |
-| 15 | 10 105 | lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105) | #ref_qualifiers #lvalue_rvalue #operator_overloading |
-| 16 | int double int | Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type. | #operator_chaining #stream_operators #overload_resolution |
-| 17 | Derived= Base= | Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly. | #virtual_functions #operator_overloading #polymorphism |
-| 18 | "A" printed, then compile errors | if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int) | #explicit_conversion #operator_bool #implicit_conversion |
-| 19 | 3 6 9 12 | std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12 | #functor #stl_algorithms #transform |
-| 20 | , , | Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,) | #comma_operator #sequence_point #operator_overloading |
-
 #### Operator Overloading Categories
 
 | Category | Operators | Must Be Member | Common Use |

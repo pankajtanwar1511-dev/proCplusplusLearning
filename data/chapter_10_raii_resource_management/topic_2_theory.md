@@ -2334,26 +2334,6 @@ This comprehensive example demonstrates how custom RAII wrappers solve complex r
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Constructor once, destructor once (C++17 RVO) | RVO elides move/copy; single object constructed in place | #rvo #move_semantics |
-| 2 | Double-delete, crash/UB | Default copy constructor copies pointer; both delete same memory | #shallow_copy #double_free |
-| 3 | One file opened, one closed, potential crash on f3 | f2's move leaves f1.file dangling pointer; f3 destructor calls fclose(nullptr) | #move_nullptr_bug |
-| 4 | Self-move bug: deletes data before transferring | Without self-check, deletes data then assigns already-deleted pointer | #self_move_assignment |
-| 5 | Non-virtual destructor leaks derivedData | Only ~Base() called; ~Derived() never runs; derivedData leaked | #virtual_destructor |
-| 6 | test1: `BEGIN` `COMMIT` `COMMIT` `ROLLBACK`<br>test2: `BEGIN` `ROLLBACK` | Commit called twice prints twice; test2 never commits so rolls back | #transaction_pattern |
-| 7 | C++17: `Acquired` `Released`<br>Pre-C++17: `Acquired` `Moved` `Released` | C++17 guaranteed RVO eliminates move; older standards may move | #rvo #copy_elision |
-| 8 | Not thread-safe; multiple threads can init simultaneously | No mutex protection on init() check; race condition on allocation | #lazy_init #thread_safety |
-| 9 | ScopedLock requires move constructor but is non-movable | Returning by value tries to move; deleted move constructor causes error | #non_movable_return |
-| 10 | vector requires movable or copyable elements | Both copy and move deleted; vector can't store or resize elements | #vector_requirements |
-| 11 | rawPtr leaks if second allocation throws | buffer is RAII-wrapped (safe); rawPtr allocated after might leak | #constructor_exception_safety |
-| 12 | Initialization order mismatch: r1 initialized first despite list order | Members init in declaration order (r1, r2) not initializer list order | #initialization_order |
-| 13 | Always closes file even when it doesn't own (stdin) | Destructor doesn't check owns flag before fclose; closes stdin | #conditional_ownership_bug |
-| 14 | Race condition: both threads might allocate | No synchronization on ptr check/initialization; double allocation possible | #lazy_thread_safety |
-| 15 | moreData leaked (20 ints) | Non-virtual ~Base means ~Derived never called through base pointer | #virtual_destructor_leak |
-
 #### Rule of Five Special Members
 
 | Special Member | Purpose | When Needed | Example |

@@ -1176,31 +1176,6 @@ This example demonstrates C++14 init-capture (move capture), which allows captur
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | May print garbage or crash (UB) | `reserve` may reallocate, invalidating `it` | #iterator_invalidation |
-| 2 | Compilation error | `std::sort` requires random access iterators, list has bidirectional | #iterator_categories |
-| 3 | Prints 5 | `remove` doesn't change container size, only reorders elements | #remove_erase_idiom |
-| 4 | Prints "11 10" | `mutable` allows modifying captured copy, original `x` unchanged | #mutable_lambda |
-| 5 | Undefined behavior | Appending while iterating invalidates iterators | #iterator_invalidation |
-| 6 | Prints 40 | Reverse iterator's `base()` points one position after | #reverse_iterator |
-| 7 | Compilation error | Allocator missing `rebind` template required by `std::list` | #allocator_rebind |
-| 8 | Prints 8 | `distance` is O(1) for random access iterators (vector) | #iterator_complexity |
-| 9 | Undefined behavior | Erasing invalidates iterator, then incrementing causes UB | #iterator_invalidation |
-| 10 | Undefined behavior | Modifying keys in hash map breaks internal structure | #undefined_behavior |
-| 11 | Prints 42 | C++14 init-capture moves `unique_ptr` into lambda | #move_capture |
-| 12 | Prints false (or true if lucky) | `binary_search` requires sorted input; `v` is unsorted | #algorithm_preconditions |
-| 13 | Undefined behavior or empty | Writing to unallocated space; should use `back_inserter` | #output_iterator |
-| 14 | Compilation error | `accumulate` with string requires specifying initial value type | #accumulate_type |
-| 15 | Undefined behavior | `reserve` doesn't construct elements; accessing uninitialized memory | #reserve_vs_resize |
-| 16 | May be invalid | `push_front` on deque may invalidate iterators | #iterator_invalidation |
-| 17 | Moves `b` contents before second element of `a` | `splice` moves elements in O(1), `b` becomes empty | #splice_semantics |
-| 18 | Prints 4 (or nearby value) | `nth_element` partially sorts, placing nth element correctly | #nth_element |
-| 19 | Undefined behavior | Capturing local by reference; `count` destroyed before lambda use | #dangling_reference |
-| 20 | Prints 3 | `equal_range` returns range of elements equal to 3 | #binary_search_variants |
-
 #### Iterator Categories Comparison
 
 | Category | Operations | Typical Containers | Use Cases |

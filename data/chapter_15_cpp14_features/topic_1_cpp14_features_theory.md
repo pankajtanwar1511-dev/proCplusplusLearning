@@ -587,31 +587,6 @@ Variable templates combined with SFINAE provide cleaner, more readable template 
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | Undefined behavior (likely crash) | `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB. | #decltype_auto #dangling_reference |
-| 2 | 3 4 | Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal). | #generic_lambdas #type_deduction |
-| 3 | 100 1 | Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true). | #init_capture #move_semantics |
-| 4 | 120 | Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time. | #constexpr #compile_time |
-| 5 | 10 20 | `std::exchange(a, 20)` returns old value (10) and sets `a` to 20. | #std_exchange #utility |
-| 6 | 2.5 | `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous. | #std_get #tuple |
-| 7 | 0 1 | Variable template `is_float<int>` is false (0), `is_float<double>` is true (1). | #variable_templates #type_traits |
-| 8 | 10 1000 | Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored). | #binary_literals #digit_separators |
-| 9 | 15 6 | Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6). | #generic_lambdas #auto_parameters |
-| 10 | 200 | `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`. | #decltype_auto #reference_return |
-| 11 | 42 2 | Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`). | #shared_ptr #reference_counting |
-| 12 | 9 | `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9. | #constexpr #array_size |
-| 13 | 3 3.14159 | Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159. | #variable_templates #templates |
-| 14 | 1 2 | Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2. | #return_type_deduction #auto |
-| 15 | 20 | `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20. | #decltype_auto #lvalue_reference |
-| 16 | 1 | `std::get<0>` accesses first element by index. Works even though `int` appears twice. | #std_get #tuple_index |
-| 17 | 42 | `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42. | #generic_lambdas #static_assert |
-| 18 | 10 5 | Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10. | #std_exchange #evaluation_order |
-| 19 | 15 100 | Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100. | #binary_literals #digit_separators |
-| 20 | 99 50 | Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again. | #init_capture #mutable_lambda #std_exchange |
-
 #### C++14 Features Summary
 
 | Feature | Description | Key Benefit |

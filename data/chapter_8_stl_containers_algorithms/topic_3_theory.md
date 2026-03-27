@@ -852,31 +852,6 @@ Forward_list's splice_after works like list's splice but follows the after patte
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
-#### Answer Key for Practice Questions
-
-| Q# | Answer | Explanation | Key Concept |
-|----|--------|-------------|-------------|
-| 1 | `5 10` | push_front adds 5 at front, push_back adds 10 at back. front() returns 5, back() returns 10. | #push_operations #double_ended |
-| 2 | `3` | pop_front removes first, pop_back removes last. 5 - 2 = 3 elements remain. | #pop_operations #size |
-| 3 | `1 99 2 3` | insert at position 1 (before second element) adds 99, shifting others right. | #insert #middle_insertion |
-| 4 | `1 2 3 4 5` | std::sort works with deque's random access iterators, sorting in ascending order. | #sort #random_access |
-| 5 | `1 5` | operator[] provides O(1) random access. dq[0] is first element, dq[4] is fifth. | #random_access #operator_bracket |
-| 6 | `0` | push_front adds 0 to front. front() returns the first element. | #push_front #forward_list |
-| 7 | `0` | insert_after with before_begin() inserts at front. front() returns 0. | #insert_after #before_begin |
-| 8 | `3` | remove(2) removes all occurrences of 2. Three 2s removed, 3 elements remain: {1, 3, 4}. | #remove #element_removal |
-| 9 | `1` | sort() arranges in ascending order. First element after sorting is 1. | #sort #ordering |
-| 10 | `5` | reverse() reverses order. Original last element (5) becomes first. | #reverse #pointer_manipulation |
-| 11 | `5` | resize(5) grows from 3 to 5 elements by adding 2 default-initialized elements. | #resize #growth |
-| 12 | `0 1` | clear() removes all elements. size becomes 0, empty returns true (1). | #clear #empty |
-| 13 | `{4, 5, 6, 1, 2, 3}, b is empty` | splice_after at before_begin moves all of b to front of a. | #splice_after #ownership_transfer |
-| 14 | `1` | Deque's push_back usually preserves iterators unless map reallocation occurs. | #iterator_stability #push_back |
-| 15 | `0` | emplace_front constructs 0 in-place at front. front() returns 0. | #emplace_front #in_place |
-| 16 | `4` | erase at position 2 (element 3) removes one element. 5 - 1 = 4. | #erase #removal |
-| 17 | `3` | unique() removes consecutive duplicates: {1, 2, 3}. Three elements remain. | #unique #duplicates |
-| 18 | `0 3` | Move constructor transfers ownership. dq1 becomes empty, dq2 has 3 elements. | #move_semantics #ownership |
-| 19 | `{1, 3, 5}` | remove_if removes even numbers (2, 4). Odd numbers remain. | #remove_if #predicate |
-| 20 | `5 40` | push_front(5) adds to front, push_back(40) adds to back. front is 5, back is 40. | #double_ended #push_operations |
-
 #### Container Comparison: Deque vs Vector vs List vs Forward_list
 
 | Feature | deque | vector | list | forward_list |
