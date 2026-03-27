@@ -868,6 +868,104 @@
   font-weight: 600;
 }
 
+/* NEW: Answer + Explanation Container */
+.answer-explanation-container {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.answer-section,
+.explanation-section,
+.key-concept-section {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.answer-section:last-child,
+.explanation-section:last-child,
+.key-concept-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.answer-section strong,
+.explanation-section strong,
+.key-concept-section strong {
+  display: block;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.answer-text {
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: 0.5rem 0;
+}
+
+.explanation-content {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.explanation-content ul,
+.explanation-content ol {
+  margin-left: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.explanation-content li {
+  margin-bottom: 0.5rem;
+}
+
+/* Highlight Key Concept in explanation */
+.explanation-content li:has(strong:contains("Key Concept")),
+.explanation-content li strong:first-child {
+  /* Target last bullet with Key Concept */
+}
+
+.explanation-content strong {
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.explanation-content code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--primary-dark);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.875em;
+}
+
+.concept-text {
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: 0.5rem 0;
+}
+
+/* Fixed Version Section */
+.fixed-version-section {
+  margin-top: 1.5rem;
+}
+
+.fixed-version-label {
+  display: block;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
 /* C++ Syntax Highlighting for Code Blocks */
 /* Apply to all code blocks in content-card, example-card, practice-content, markdown-content */
 .content-card pre code,

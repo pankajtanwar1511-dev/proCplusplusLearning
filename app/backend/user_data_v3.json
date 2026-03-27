@@ -6,6 +6,11 @@
           "completed": false,
           "score": 0,
           "attempts": 2
+        },
+        "1": {
+          "completed": false,
+          "score": 0,
+          "attempts": 1
         }
       }
     },
@@ -31,6 +36,16 @@
       "passed": false,
       "time_taken": 7,
       "date": "2026-03-25T17:23:27.537849"
+    },
+    {
+      "topic_id": "cpp_1_1",
+      "catalog": "cpp",
+      "score": 0,
+      "correct": 0,
+      "total": 10,
+      "passed": false,
+      "time_taken": 0,
+      "date": "2026-03-26T15:31:31.145502"
     }
   ],
   "bookmarks": [],
