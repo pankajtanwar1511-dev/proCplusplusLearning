@@ -545,206 +545,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstd::pair<int, int> get_pair() { return {1, 2}; }\nint main() {\n    auto [x, y] = get_pair();\n    x = 10;\n    auto [a, b] = get_pair();\n    std::cout << a << \" \" << b;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 2\n\n**Explanation:** Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}.\n\n**Key Concept:** #structured_bindings #copy\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 2\n```\n\n**Explanation:**\n- C++17 structured bindings `auto [x, y]` unpacks pair by copying elements by default\n- `x = 10` modifies the local copy of first element, not the returned pair\n- Second call `get_pair()` returns fresh pair {1, 2} (independent from first call)\n- `[a, b]` receives new copies: a=1, b=2\n- **Key Concept:** Structured bindings create copies by default; use auto& for references to modify original",
           "code": "#include <iostream>\nstd::pair<int, int> get_pair() { return {1, 2}; }\nint main() {\n    auto [x, y] = get_pair();\n    x = 10;\n    auto [a, b] = get_pair();\n    std::cout << a << \" \" << b;\n}",
+          "answer": "1 2",
+          "explanation": "- C++17 structured bindings `auto [x, y]` unpacks pair by copying elements by default\n- `x = 10` modifies the local copy of first element, not the returned pair\n- Second call `get_pair()` returns fresh pair {1, 2} (independent from first call)\n- `[a, b]` receives new copies: a=1, b=2\n- **Key Concept:** Structured bindings create copies by default; use auto& for references to modify original",
+          "key_concept": "Structured bindings create copies by default; use auto& for references to modify original",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 2"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Point { int x = 5; int y = 10; };\nint main() {\n    Point p;\n    auto& [a, b] = p;\n    a = 100;\n    std::cout << p.x << \" \" << p.y;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100 10\n\n**Explanation:** `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10).\n\n**Key Concept:** #structured_bindings #references\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100 10\n```\n\n**Explanation:**\n- `auto&` creates reference bindings (not copies)\n- `[a, b]` are references to `p.x` and `p.y` respectively\n- `a = 100` modifies `p.x` through the reference\n- Output shows modified `p.x` (100) and unchanged `p.y` (10)\n- **Key Concept:** auto& structured bindings create references allowing modification of original object members",
           "code": "#include <iostream>\nstruct Point { int x = 5; int y = 10; };\nint main() {\n    Point p;\n    auto& [a, b] = p;\n    a = 100;\n    std::cout << p.x << \" \" << p.y;\n}",
+          "answer": "100 10",
+          "explanation": "- `auto&` creates reference bindings (not copies)\n- `[a, b]` are references to `p.x` and `p.y` respectively\n- `a = 100` modifies `p.x` through the reference\n- Output shows modified `p.x` (100) and unchanged `p.y` (10)\n- **Key Concept:** auto& structured bindings create references allowing modification of original object members",
+          "key_concept": "auto& structured bindings create references allowing modification of original object members",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100 10"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nvoid func(T val) {\n    if constexpr (std::is_integral_v<T>) {\n        std::cout << val + 1;\n    } else {\n        std::cout << val;\n    }\n}\nint main() {\n    func(10);\n    std::cout << \" \";\n    func(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 11 3.14\n\n**Explanation:** `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is.\n\n**Key Concept:** #if_constexpr #type_traits\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n11 3.14\n```\n\n**Explanation:**\n- `if constexpr` evaluates condition at compile time, discarding non-taken branch\n- `func(10)`: T=int, `is_integral_v<int>` is true → prints 10+1=11\n- `func(3.14)`: T=double, `is_integral_v<double>` is false → prints 3.14 as-is\n- Unlike regular if, discarded branch is not compiled (no instantiation errors)\n- **Key Concept:** if constexpr enables compile-time branching in templates; discarded branches never instantiated",
           "code": "#include <iostream>\ntemplate<typename T>\nvoid func(T val) {\n    if constexpr (std::is_integral_v<T>) {\n        std::cout << val + 1;\n    } else {\n        std::cout << val;\n    }\n}\nint main() {\n    func(10);\n    std::cout << \" \";\n    func(3.14);\n}",
+          "answer": "11 3.14",
+          "explanation": "- `if constexpr` evaluates condition at compile time, discarding non-taken branch\n- `func(10)`: T=int, `is_integral_v<int>` is true → prints 10+1=11\n- `func(3.14)`: T=double, `is_integral_v<double>` is false → prints 3.14 as-is\n- Unlike regular if, discarded branch is not compiled (no instantiation errors)\n- **Key Concept:** if constexpr enables compile-time branching in templates; discarded branches never instantiated",
+          "key_concept": "if constexpr enables compile-time branching in templates; discarded branches never instantiated",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "11 3.14"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Config {\n    inline static int count = 0;\n};\nint main() {\n    Config::count++;\n    Config::count++;\n    std::cout << Config::count;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 2\n\n**Explanation:** Inline static variable shared across all instances. Two increments make it 2.\n\n**Key Concept:** #inline_variables #static\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2\n```\n\n**Explanation:**\n- C++17 `inline static` allows in-class initialization of static members (no separate definition needed)\n- Single shared variable across all instances and direct access via class name\n- First `Config::count++` increments from 0 to 1\n- Second `Config::count++` increments from 1 to 2\n- **Key Concept:** inline static variables eliminate need for out-of-class definition; shared state directly accessible",
           "code": "#include <iostream>\nstruct Config {\n    inline static int count = 0;\n};\nint main() {\n    Config::count++;\n    Config::count++;\n    std::cout << Config::count;\n}",
+          "answer": "2",
+          "explanation": "- C++17 `inline static` allows in-class initialization of static members (no separate definition needed)\n- Single shared variable across all instances and direct access via class name\n- First `Config::count++` increments from 0 to 1\n- Second `Config::count++` increments from 1 to 2\n- **Key Concept:** inline static variables eliminate need for out-of-class definition; shared state directly accessible",
+          "key_concept": "inline static variables eliminate need for out-of-class definition; shared state directly accessible",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <map>\nint main() {\n    std::map<int, std::string> m = {{1, \"a\"}, {2, \"b\"}};\n    for (const auto& [k, v] : m) {\n        std::cout << k;\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 12\n\n**Explanation:** Structured bindings unpack map entries. Loop prints keys 1 and 2.\n\n**Key Concept:** #structured_bindings #map\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n12\n```\n\n**Explanation:**\n- Structured bindings unpack map entries (std::pair<const int, std::string>)\n- `[k, v]` extracts key and value from each pair\n- `const auto&` avoids copying map entries (efficient for large values)\n- Loop iterates in sorted order (map keeps keys sorted): key 1, then key 2\n- **Key Concept:** Structured bindings simplify range-based loops over maps by unpacking key-value pairs directly",
           "code": "#include <iostream>\n#include <map>\nint main() {\n    std::map<int, std::string> m = {{1, \"a\"}, {2, \"b\"}};\n    for (const auto& [k, v] : m) {\n        std::cout << k;\n    }\n}",
+          "answer": "12",
+          "explanation": "- Structured bindings unpack map entries (std::pair<const int, std::string>)\n- `[k, v]` extracts key and value from each pair\n- `const auto&` avoids copying map entries (efficient for large values)\n- Loop iterates in sorted order (map keeps keys sorted): key 1, then key 2\n- **Key Concept:** Structured bindings simplify range-based loops over maps by unpacking key-value pairs directly",
+          "key_concept": "Structured bindings simplify range-based loops over maps by unpacking key-value pairs directly",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "12"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nvoid check(T val) {\n    if constexpr (sizeof(T) == 4) {\n        std::cout << \"4\";\n    } else {\n        std::cout << \"8\";\n    }\n}\nint main() {\n    check(10);\n    check(10LL);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 48\n\n**Explanation:** int is 4 bytes, long long is 8 bytes. Prints \"4\" then \"8\".\n\n**Key Concept:** #if_constexpr #sizeof\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n48\n```\n\n**Explanation:**\n- `sizeof(T)` evaluated at compile time for each instantiation\n- `check(10)`: T=int, typically 4 bytes → prints \"4\"\n- `check(10LL)`: T=long long, typically 8 bytes → prints \"8\"\n- `if constexpr` allows compile-time size checking without runtime overhead\n- **Key Concept:** if constexpr with sizeof enables compile-time type size branching for optimization",
           "code": "#include <iostream>\ntemplate<typename T>\nvoid check(T val) {\n    if constexpr (sizeof(T) == 4) {\n        std::cout << \"4\";\n    } else {\n        std::cout << \"8\";\n    }\n}\nint main() {\n    check(10);\n    check(10LL);\n}",
+          "answer": "48",
+          "explanation": "- `sizeof(T)` evaluated at compile time for each instantiation\n- `check(10)`: T=int, typically 4 bytes → prints \"4\"\n- `check(10LL)`: T=long long, typically 8 bytes → prints \"8\"\n- `if constexpr` allows compile-time size checking without runtime overhead\n- **Key Concept:** if constexpr with sizeof enables compile-time type size branching for optimization",
+          "key_concept": "if constexpr with sizeof enables compile-time type size branching for optimization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "48"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <tuple>\nint main() {\n    auto [a, b, c] = std::make_tuple(1, 2.5, 'x');\n    std::cout << a << \" \" << c;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 x\n\n**Explanation:** Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x.\n\n**Key Concept:** #structured_bindings #tuple\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 x\n```\n\n**Explanation:**\n- Structured bindings unpack tuple elements in declaration order\n- `a` receives first element (int 1)\n- `b` receives second element (double 2.5, unused)\n- `c` receives third element (char 'x')\n- Types automatically deduced: a=int, b=double, c=char\n- **Key Concept:** Structured bindings work with tuples for convenient multi-value unpacking with automatic type deduction",
           "code": "#include <iostream>\n#include <tuple>\nint main() {\n    auto [a, b, c] = std::make_tuple(1, 2.5, 'x');\n    std::cout << a << \" \" << c;\n}",
+          "answer": "1 x",
+          "explanation": "- Structured bindings unpack tuple elements in declaration order\n- `a` receives first element (int 1)\n- `b` receives second element (double 2.5, unused)\n- `c` receives third element (char 'x')\n- Types automatically deduced: a=int, b=double, c=char\n- **Key Concept:** Structured bindings work with tuples for convenient multi-value unpacking with automatic type deduction",
+          "key_concept": "Structured bindings work with tuples for convenient multi-value unpacking with automatic type deduction",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 x"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    inline static constexpr int val = 42;\n};\nint main() {\n    std::cout << S::val;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** Inline constexpr static member accessible without instance. Prints 42.\n\n**Key Concept:** #inline_variables #constexpr\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- `inline static constexpr` combines three specifiers: inline (in-class definition), static (shared), constexpr (compile-time constant)\n- No separate definition required outside class (inline eliminates ODR issues)\n- Accessible via class name without instance: `S::val`\n- Value 42 computed at compile time (constexpr)\n- **Key Concept:** inline static constexpr enables compile-time constants defined directly in class without external definition",
           "code": "#include <iostream>\nstruct S {\n    inline static constexpr int val = 42;\n};\nint main() {\n    std::cout << S::val;\n}",
+          "answer": "42",
+          "explanation": "- `inline static constexpr` combines three specifiers: inline (in-class definition), static (shared), constexpr (compile-time constant)\n- No separate definition required outside class (inline eliminates ODR issues)\n- Accessible via class name without instance: `S::val`\n- Value 42 computed at compile time (constexpr)\n- **Key Concept:** inline static constexpr enables compile-time constants defined directly in class without external definition",
+          "key_concept": "inline static constexpr enables compile-time constants defined directly in class without external definition",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    int arr[3] = {10, 20, 30};\n    auto [x, y, z] = arr;\n    x = 100;\n    std::cout << arr[0];\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10\n\n**Explanation:** Structured bindings copy array elements. Modifying x doesn't affect arr[0].\n\n**Key Concept:** #structured_bindings #array #copy\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10\n```\n\n**Explanation:**\n- Structured bindings copy array elements by default\n- `[x, y, z]` creates three independent variables: x=10, y=20, z=30\n- `x = 100` modifies the copy, not `arr[0]`\n- `arr[0]` remains 10 (original array unchanged)\n- **Key Concept:** Structured bindings copy arrays; use auto& to bind to original array elements",
           "code": "#include <iostream>\nint main() {\n    int arr[3] = {10, 20, 30};\n    auto [x, y, z] = arr;\n    x = 100;\n    std::cout << arr[0];\n}",
+          "answer": "10",
+          "explanation": "- Structured bindings copy array elements by default\n- `[x, y, z]` creates three independent variables: x=10, y=20, z=30\n- `x = 100` modifies the copy, not `arr[0]`\n- `arr[0]` remains 10 (original array unchanged)\n- **Key Concept:** Structured bindings copy arrays; use auto& to bind to original array elements",
+          "key_concept": "Structured bindings copy arrays; use auto& to bind to original array elements",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<bool B>\nvoid func() {\n    if constexpr (B) {\n        std::cout << \"true\";\n    } else {\n        std::cout << \"false\";\n    }\n}\nint main() {\n    func<true>();\n    func<false>();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** truefalse\n\n**Explanation:** if constexpr evaluates template parameter B at compile time. Prints \"true\" then \"false\".\n\n**Key Concept:** #if_constexpr #template\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\ntruefalse\n```\n\n**Explanation:**\n- Template parameter `B` is compile-time constant (non-type template parameter)\n- `func<true>()`: B=true, if constexpr takes true branch → prints \"true\"\n- `func<false>()`: B=false, if constexpr takes else branch → prints \"false\"\n- Each instantiation compiles only the taken branch (discarded branch removed)\n- **Key Concept:** if constexpr with template parameters enables compile-time conditional compilation based on template arguments",
           "code": "#include <iostream>\ntemplate<bool B>\nvoid func() {\n    if constexpr (B) {\n        std::cout << \"true\";\n    } else {\n        std::cout << \"false\";\n    }\n}\nint main() {\n    func<true>();\n    func<false>();\n}",
+          "answer": "truefalse",
+          "explanation": "- Template parameter `B` is compile-time constant (non-type template parameter)\n- `func<true>()`: B=true, if constexpr takes true branch → prints \"true\"\n- `func<false>()`: B=false, if constexpr takes else branch → prints \"false\"\n- Each instantiation compiles only the taken branch (discarded branch removed)\n- **Key Concept:** if constexpr with template parameters enables compile-time conditional compilation based on template arguments",
+          "key_concept": "if constexpr with template parameters enables compile-time conditional compilation based on template arguments",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "truefalse"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <string>\nint main() {\n    auto [x, y] = std::pair{1, std::string(\"hello\")};\n    std::cout << x << \" \" << y.size();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 5\n\n**Explanation:** Unpacks pair<int, string>. x=1, y=\"hello\". y.size() is 5.\n\n**Key Concept:** #structured_bindings #pair\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 5\n```\n\n**Explanation:**\n- C++17 CTAD (Class Template Argument Deduction) deduces `pair<int, string>` from initializer\n- Structured bindings unpack pair: x=1, y=\"hello\"\n- `x` is int, `y` is std::string (move-constructed from temporary)\n- `y.size()` returns 5 (length of \"hello\")\n- **Key Concept:** Structured bindings combined with CTAD simplify pair/tuple creation and unpacking",
           "code": "#include <iostream>\n#include <string>\nint main() {\n    auto [x, y] = std::pair{1, std::string(\"hello\")};\n    std::cout << x << \" \" << y.size();\n}",
+          "answer": "1 5",
+          "explanation": "- C++17 CTAD (Class Template Argument Deduction) deduces `pair<int, string>` from initializer\n- Structured bindings unpack pair: x=1, y=\"hello\"\n- `x` is int, `y` is std::string (move-constructed from temporary)\n- `y.size()` returns 5 (length of \"hello\")\n- **Key Concept:** Structured bindings combined with CTAD simplify pair/tuple creation and unpacking",
+          "key_concept": "Structured bindings combined with CTAD simplify pair/tuple creation and unpacking",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 5"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Point { int x; int y; };\nint main() {\n    Point p{5, 10};\n    const auto& [a, b] = p;\n    std::cout << a << \" \" << b;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 5 10\n\n**Explanation:** const auto& creates const references. Prints p.x (5) and p.y (10).\n\n**Key Concept:** #structured_bindings #const_references\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5 10\n```\n\n**Explanation:**\n- `const auto&` creates const reference bindings to struct members\n- `a` is const reference to `p.x`, `b` is const reference to `p.y`\n- Cannot modify through `a` or `b` (const references)\n- Efficient: no copying, just references to existing members\n- **Key Concept:** const auto& structured bindings create const references for read-only access without copying",
           "code": "#include <iostream>\nstruct Point { int x; int y; };\nint main() {\n    Point p{5, 10};\n    const auto& [a, b] = p;\n    std::cout << a << \" \" << b;\n}",
+          "answer": "5 10",
+          "explanation": "- `const auto&` creates const reference bindings to struct members\n- `a` is const reference to `p.x`, `b` is const reference to `p.y`\n- Cannot modify through `a` or `b` (const references)\n- Efficient: no copying, just references to existing members\n- **Key Concept:** const auto& structured bindings create const references for read-only access without copying",
+          "key_concept": "const auto& structured bindings create const references for read-only access without copying",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5 10"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nvoid process(T val) {\n    if constexpr (std::is_pointer_v<T>) {\n        std::cout << *val;\n    } else {\n        std::cout << val;\n    }\n}\nint main() {\n    int x = 42;\n    process(&x);\n    std::cout << \" \";\n    process(x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42 42\n\n**Explanation:** if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42.\n\n**Key Concept:** #if_constexpr #pointers\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42 42\n```\n\n**Explanation:**\n- `process(&x)`: T=int*, `is_pointer_v<int*>` is true → dereferences: `*val` prints 42\n- `process(x)`: T=int, `is_pointer_v<int>` is false → prints value directly: 42\n- `if constexpr` prevents compilation errors in discarded branches\n- Without constexpr, `*val` for non-pointer would fail to compile\n- **Key Concept:** if constexpr enables type-dependent operations that would be invalid in discarded branches",
           "code": "#include <iostream>\ntemplate<typename T>\nvoid process(T val) {\n    if constexpr (std::is_pointer_v<T>) {\n        std::cout << *val;\n    } else {\n        std::cout << val;\n    }\n}\nint main() {\n    int x = 42;\n    process(&x);\n    std::cout << \" \";\n    process(x);\n}",
+          "answer": "42 42",
+          "explanation": "- `process(&x)`: T=int*, `is_pointer_v<int*>` is true → dereferences: `*val` prints 42\n- `process(x)`: T=int, `is_pointer_v<int>` is false → prints value directly: 42\n- `if constexpr` prevents compilation errors in discarded branches\n- Without constexpr, `*val` for non-pointer would fail to compile\n- **Key Concept:** if constexpr enables type-dependent operations that would be invalid in discarded branches",
+          "key_concept": "if constexpr enables type-dependent operations that would be invalid in discarded branches",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42 42"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Counter {\n    inline static int count = 0;\n    Counter() { ++count; }\n};\nint main() {\n    Counter c1, c2, c3;\n    std::cout << Counter::count;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3\n\n**Explanation:** Each Counter construction increments shared static count. Three instances = 3.\n\n**Key Concept:** #inline_variables #constructor\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3\n```\n\n**Explanation:**\n- `inline static int count = 0` initialized once, shared across all instances\n- Constructor increments shared `count` for each object created\n- c1 construction: count becomes 1\n- c2 construction: count becomes 2\n- c3 construction: count becomes 3\n- **Key Concept:** inline static members track instance count or shared state across all objects",
           "code": "#include <iostream>\nstruct Counter {\n    inline static int count = 0;\n    Counter() { ++count; }\n};\nint main() {\n    Counter c1, c2, c3;\n    std::cout << Counter::count;\n}",
+          "answer": "3",
+          "explanation": "- `inline static int count = 0` initialized once, shared across all instances\n- Constructor increments shared `count` for each object created\n- c1 construction: count becomes 1\n- c2 construction: count becomes 2\n- c3 construction: count becomes 3\n- **Key Concept:** inline static members track instance count or shared state across all objects",
+          "key_concept": "inline static members track instance count or shared state across all objects",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <vector>\nint main() {\n    std::vector<std::pair<int, int>> v = {{1,2}, {3,4}};\n    for (const auto& [a, b] : v) {\n        std::cout << a + b << \" \";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3 7\n\n**Explanation:** Unpacks pairs and prints sums: 1+2=3, 3+4=7.\n\n**Key Concept:** #structured_bindings #vector\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 7\n```\n\n**Explanation:**\n- Vector contains pairs: {1,2} and {3,4}\n- Structured bindings in range-based for loop unpack each pair\n- First iteration: a=1, b=2 → prints 1+2=3\n- Second iteration: a=3, b=4 → prints 3+4=7\n- **Key Concept:** Structured bindings in range-based loops simplify iteration over containers of pairs/tuples",
           "code": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<std::pair<int, int>> v = {{1,2}, {3,4}};\n    for (const auto& [a, b] : v) {\n        std::cout << a + b << \" \";\n    }\n}",
+          "answer": "3 7",
+          "explanation": "- Vector contains pairs: {1,2} and {3,4}\n- Structured bindings in range-based for loop unpack each pair\n- First iteration: a=1, b=2 → prints 1+2=3\n- Second iteration: a=3, b=4 → prints 3+4=7\n- **Key Concept:** Structured bindings in range-based loops simplify iteration over containers of pairs/tuples",
+          "key_concept": "Structured bindings in range-based loops simplify iteration over containers of pairs/tuples",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 7"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nconstexpr bool is_large() {\n    if constexpr (sizeof(T) > 4) {\n        return true;\n    } else {\n        return false;\n    }\n}\nint main() {\n    std::cout << is_large<int>() << \" \" << is_large<long long>();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 0 1\n\n**Explanation:** Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1).\n\n**Key Concept:** #if_constexpr #constexpr\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0 1\n```\n\n**Explanation:**\n- `constexpr` function evaluated at compile time when possible\n- `is_large<int>()`: sizeof(int)=4, not > 4 → returns false (printed as 0)\n- `is_large<long long>()`: sizeof(long long)=8, > 4 → returns true (printed as 1)\n- `if constexpr` ensures only one branch exists per instantiation\n- **Key Concept:** constexpr functions with if constexpr enable compile-time type trait queries",
           "code": "#include <iostream>\ntemplate<typename T>\nconstexpr bool is_large() {\n    if constexpr (sizeof(T) > 4) {\n        return true;\n    } else {\n        return false;\n    }\n}\nint main() {\n    std::cout << is_large<int>() << \" \" << is_large<long long>();\n}",
+          "answer": "0 1",
+          "explanation": "- `constexpr` function evaluated at compile time when possible\n- `is_large<int>()`: sizeof(int)=4, not > 4 → returns false (printed as 0)\n- `is_large<long long>()`: sizeof(long long)=8, > 4 → returns true (printed as 1)\n- `if constexpr` ensures only one branch exists per instantiation\n- **Key Concept:** constexpr functions with if constexpr enable compile-time type trait queries",
+          "key_concept": "constexpr functions with if constexpr enable compile-time type trait queries",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0 1"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Data {\n    int a = 1;\n    int b = 2;\n};\nint main() {\n    Data d;\n    auto [x, y] = d;\n    std::cout << x << y;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 12\n\n**Explanation:** Structured bindings copy Data members. x=1, y=2. Concatenates to \"12\".\n\n**Key Concept:** #structured_bindings #struct\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n12\n```\n\n**Explanation:**\n- Structured bindings unpack struct members in declaration order\n- `x` receives copy of `d.a` (1)\n- `y` receives copy of `d.b` (2)\n- `std::cout << x << y` prints 1 then 2 without space: \"12\"\n- **Key Concept:** Structured bindings work with simple structs, unpacking public members in declaration order",
           "code": "#include <iostream>\nstruct Data {\n    int a = 1;\n    int b = 2;\n};\nint main() {\n    Data d;\n    auto [x, y] = d;\n    std::cout << x << y;\n}",
+          "answer": "12",
+          "explanation": "- Structured bindings unpack struct members in declaration order\n- `x` receives copy of `d.a` (1)\n- `y` receives copy of `d.b` (2)\n- `std::cout << x << y` prints 1 then 2 without space: \"12\"\n- **Key Concept:** Structured bindings work with simple structs, unpacking public members in declaration order",
+          "key_concept": "Structured bindings work with simple structs, unpacking public members in declaration order",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "12"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nnamespace Config {\n    inline constexpr int Size = 100;\n}\nint main() {\n    std::cout << Config::Size;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100\n\n**Explanation:** Inline constexpr in namespace, accessible with qualified name.\n\n**Key Concept:** #inline_variables #namespace\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100\n```\n\n**Explanation:**\n- `inline constexpr` in namespace defines compile-time constant with internal linkage\n- No separate definition needed (inline eliminates ODR issues across translation units)\n- Accessible via namespace qualification: `Config::Size`\n- Value known at compile time (constexpr)\n- **Key Concept:** inline constexpr in namespaces provides header-only compile-time constants",
           "code": "#include <iostream>\nnamespace Config {\n    inline constexpr int Size = 100;\n}\nint main() {\n    std::cout << Config::Size;\n}",
+          "answer": "100",
+          "explanation": "- `inline constexpr` in namespace defines compile-time constant with internal linkage\n- No separate definition needed (inline eliminates ODR issues across translation units)\n- Accessible via namespace qualification: `Config::Size`\n- Value known at compile time (constexpr)\n- **Key Concept:** inline constexpr in namespaces provides header-only compile-time constants",
+          "key_concept": "inline constexpr in namespaces provides header-only compile-time constants",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <tuple>\nint main() {\n    auto t = std::make_tuple(1, 2, 3);\n    auto& [a, b, c] = t;\n    a = 10;\n    std::cout << std::get<0>(t);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10\n\n**Explanation:** auto& creates references to tuple elements. Modifying a modifies std::get<0>(t).\n\n**Key Concept:** #structured_bindings #tuple #references\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10\n```\n\n**Explanation:**\n- `auto&` creates reference bindings to tuple elements\n- `a` is reference to first element of `t`\n- `a = 10` modifies `std::get<0>(t)` through reference\n- `std::get<0>(t)` returns modified value: 10\n- **Key Concept:** auto& structured bindings allow modification of tuple elements via references",
           "code": "#include <iostream>\n#include <tuple>\nint main() {\n    auto t = std::make_tuple(1, 2, 3);\n    auto& [a, b, c] = t;\n    a = 10;\n    std::cout << std::get<0>(t);\n}",
+          "answer": "10",
+          "explanation": "- `auto&` creates reference bindings to tuple elements\n- `a` is reference to first element of `t`\n- `a = 10` modifies `std::get<0>(t)` through reference\n- `std::get<0>(t)` returns modified value: 10\n- **Key Concept:** auto& structured bindings allow modification of tuple elements via references",
+          "key_concept": "auto& structured bindings allow modification of tuple elements via references",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nvoid func(T val) {\n    if constexpr (std::is_same_v<T, int>) {\n        std::cout << \"int\";\n    } else if constexpr (std::is_same_v<T, double>) {\n        std::cout << \"double\";\n    } else {\n        std::cout << \"other\";\n    }\n}\nint main() {\n    func(10);\n    func(3.14);\n    func(\"hi\");\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** intdoubleother\n\n**Explanation:** if constexpr checks types. int→\"int\", double→\"double\", const char*→\"other\".\n\n**Key Concept:** #if_constexpr #type_checking\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nintdoubleother\n```\n\n**Explanation:**\n- `if constexpr` chain for compile-time type checking\n- `func(10)`: T=int, first condition true → prints \"int\"\n- `func(3.14)`: T=double, second condition true → prints \"double\"\n- `func(\"hi\")`: T=const char*, both conditions false → prints \"other\"\n- Each instantiation has only relevant code (other branches discarded)\n- **Key Concept:** if constexpr chains enable compile-time type dispatch without runtime overhead\n\n---\n\n\n## TOPIC: C++17 Language Features - Structured Bindings, if constexpr, Inline Variables",
           "code": "#include <iostream>\ntemplate<typename T>\nvoid func(T val) {\n    if constexpr (std::is_same_v<T, int>) {\n        std::cout << \"int\";\n    } else if constexpr (std::is_same_v<T, double>) {\n        std::cout << \"double\";\n    } else {\n        std::cout << \"other\";\n    }\n}\nint main() {\n    func(10);\n    func(3.14);\n    func(\"hi\");\n}",
+          "answer": "intdoubleother",
+          "explanation": "- `if constexpr` chain for compile-time type checking\n- `func(10)`: T=int, first condition true → prints \"int\"\n- `func(3.14)`: T=double, second condition true → prints \"double\"\n- `func(\"hi\")`: T=const char*, both conditions false → prints \"other\"\n- Each instantiation has only relevant code (other branches discarded)\n- **Key Concept:** if constexpr chains enable compile-time type dispatch without runtime overhead",
+          "key_concept": "if constexpr chains enable compile-time type dispatch without runtime overhead",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "intdoubleother"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 1 2 | Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}. | #structured_bindings #copy |\n| 2 | 100 10 | `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10). | #structured_bindings #references |\n| 3 | 11 3.14 | `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is. | #if_constexpr #type_traits |\n| 4 | 2 | Inline static variable shared across all instances. Two increments make it 2. | #inline_variables #static |\n| 5 | 12 | Structured bindings unpack map entries. Loop prints keys 1 and 2. | #structured_bindings #map |\n| 6 | 48 | int is 4 bytes, long long is 8 bytes. Prints \"4\" then \"8\". | #if_constexpr #sizeof |\n| 7 | 1 x | Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x. | #structured_bindings #tuple |\n| 8 | 42 | Inline constexpr static member accessible without instance. Prints 42. | #inline_variables #constexpr |\n| 9 | 10 | Structured bindings copy array elements. Modifying x doesn't affect arr[0]. | #structured_bindings #array #copy |\n| 10 | truefalse | if constexpr evaluates template parameter B at compile time. Prints \"true\" then \"false\". | #if_constexpr #template |\n| 11 | 1 5 | Unpacks pair<int, string>. x=1, y=\"hello\". y.size() is 5. | #structured_bindings #pair |\n| 12 | 5 10 | const auto& creates const references. Prints p.x (5) and p.y (10). | #structured_bindings #const_references |\n| 13 | 42 42 | if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42. | #if_constexpr #pointers |\n| 14 | 3 | Each Counter construction increments shared static count. Three instances = 3. | #inline_variables #constructor |\n| 15 | 3 7 | Unpacks pairs and prints sums: 1+2=3, 3+4=7. | #structured_bindings #vector |\n| 16 | 0 1 | Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1). | #if_constexpr #constexpr |\n| 17 | 12 | Structured bindings copy Data members. x=1, y=2. Concatenates to \"12\". | #structured_bindings #struct |\n| 18 | 100 | Inline constexpr in namespace, accessible with qualified name. | #inline_variables #namespace |\n| 19 | 10 | auto& creates references to tuple elements. Modifying a modifies std::get<0>(t). | #structured_bindings #tuple #references |\n| 20 | intdoubleother | if constexpr checks types. int→\"int\", double→\"double\", const char*→\"other\". | #if_constexpr #type_checking |\n\n#### C++17 Language Features Summary\n\n| Feature | Syntax | Purpose | Key Benefit |\n|---------|--------|---------|-------------|\n| Structured Bindings | `auto [a, b] = obj;` | Unpack structured types | Cleaner code, less boilerplate |\n| if constexpr | `if constexpr (cond)` | Compile-time branching | Replace SFINAE, simpler templates |\n| Inline Variables | `inline static int x;` | Header-only variables | No ODR violations, no .cpp needed |\n\n#### Structured Bindings Supported Types\n\n| Type | Example | Notes |\n|------|---------|-------|\n| Array | `auto [a, b] = arr;` | Fixed-size arrays only |\n| std::pair | `auto [x, y] = pair;` | Common with map iterators |\n| std::tuple | `auto [a, b, c] = tuple;` | Any number of elements |\n| Aggregate struct | `auto [x, y] = Point{1,2};` | All public members, no constructors |\n\n#### if constexpr vs if Comparison\n\n| Aspect | `if` | `if constexpr` |\n|--------|------|----------------|\n| Evaluation | Runtime | Compile time |\n| Dead branch | Compiled (must be valid) | Discarded (can be invalid) |\n| Use in templates | Both branches must compile | Type-specific code allowed |\n| Performance | Runtime branch | Zero overhead |\n| Non-template code | Normal use | Dead code elimination |\n\n#### Inline Variables Use Cases\n\n| Scenario | C++14 | C++17 |\n|----------|-------|-------|\n| Static class member | Declaration in header + definition in .cpp | `inline static` in header only |\n| Global constant | `extern` in header + definition in .cpp | `inline constexpr` in header only |\n| Template static | Definition in header (risky) | `inline static` (safe) |\n| Mutable global | Definition in .cpp only | `inline` in header (shared) |\n\n#### Common Pitfalls and Solutions\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| Structured bindings with temporaries | Dangling references with `auto&` | Use `auto` (copy) or bind to named object |\n| Lambda capture of bindings | Can't name bindings in capture list | Use `[=]` or `[&]` instead |\n| if constexpr in non-template | Works but limited benefit | Use for guaranteed dead code elimination |\n| Inline without constexpr | Mutable global state | Prefer `inline constexpr` for constants |\n| Wrong binding count | Compile error if count mismatches | Ensure binding count matches struct size |\n\n---\n\n**End of Chapter 16 Topic 1: C++17 Language Features**\n\nThese three language features form the foundation of modern C++17 code. Structured bindings make code more readable and maintainable, if constexpr simplifies template metaprogramming dramatically, and inline variables enable clean header-only library design. Together, they represent a significant step toward making C++ more expressive and less error-prone. Master these features as they're heavily tested in technical interviews and are essential for professional C++17+ development.\n\n**Note:** This is Part 1 of 3 for Chapter 16. The remaining topics (Standard Library features like optional/variant/any/string_view/filesystem and Template Improvements like CTAD/Fold Expressions) will be covered in separate documents due to the extensive content in C++17.",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 1 2 | Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}. | #structured_bindings #copy |\n| 2 | 100 10 | `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10). | #structured_bindings #references |\n| 3 | 11 3.14 | `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is. | #if_constexpr #type_traits |\n| 4 | 2 | Inline static variable shared across all instances. Two increments make it 2. | #inline_variables #static |\n| 5 | 12 | Structured bindings unpack map entries. Loop prints keys 1 and 2. | #structured_bindings #map |\n| 6 | 48 | int is 4 bytes, long long is 8 bytes. Prints \"4\" then \"8\". | #if_constexpr #sizeof |\n| 7 | 1 x | Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x. | #structured_bindings #tuple |\n| 8 | 42 | Inline constexpr static member accessible without instance. Prints 42. | #inline_variables #constexpr |\n| 9 | 10 | Structured bindings copy array elements. Modifying x doesn't affect arr[0]. | #structured_bindings #array #copy |\n| 10 | truefalse | if constexpr evaluates template parameter B at compile time. Prints \"true\" then \"false\". | #if_constexpr #template |\n| 11 | 1 5 | Unpacks pair<int, string>. x=1, y=\"hello\". y.size() is 5. | #structured_bindings #pair |\n| 12 | 5 10 | const auto& creates const references. Prints p.x (5) and p.y (10). | #structured_bindings #const_references |\n| 13 | 42 42 | if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42. | #if_constexpr #pointers |\n| 14 | 3 | Each Counter construction increments shared static count. Three instances = 3. | #inline_variables #constructor |\n| 15 | 3 7 | Unpacks pairs and prints sums: 1+2=3, 3+4=7. | #structured_bindings #vector |\n| 16 | 0 1 | Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1). | #if_constexpr #constexpr |\n| 17 | 12 | Structured bindings copy Data members. x=1, y=2. Concatenates to \"12\". | #structured_bindings #struct |\n| 18 | 100 | Inline constexpr in namespace, accessible with qualified name. | #inline_variables #namespace |\n| 19 | 10 | auto& creates references to tuple elements. Modifying a modifies std::get<0>(t). | #structured_bindings #tuple #references |\n| 20 | intdoubleother | if constexpr checks types. int→\"int\", double→\"double\", const char*→\"other\". | #if_constexpr #type_checking |\n\n#### C++17 Language Features Summary\n\n| Feature | Syntax | Purpose | Key Benefit |\n|---------|--------|---------|-------------|\n| Structured Bindings | `auto [a, b] = obj;` | Unpack structured types | Cleaner code, less boilerplate |\n| if constexpr | `if constexpr (cond)` | Compile-time branching | Replace SFINAE, simpler templates |\n| Inline Variables | `inline static int x;` | Header-only variables | No ODR violations, no .cpp needed |\n\n#### Structured Bindings Supported Types\n\n| Type | Example | Notes |\n|------|---------|-------|\n| Array | `auto [a, b] = arr;` | Fixed-size arrays only |\n| std::pair | `auto [x, y] = pair;` | Common with map iterators |\n| std::tuple | `auto [a, b, c] = tuple;` | Any number of elements |\n| Aggregate struct | `auto [x, y] = Point{1,2};` | All public members, no constructors |\n\n#### if constexpr vs if Comparison\n\n| Aspect | `if` | `if constexpr` |\n|--------|------|----------------|\n| Evaluation | Runtime | Compile time |\n| Dead branch | Compiled (must be valid) | Discarded (can be invalid) |\n| Use in templates | Both branches must compile | Type-specific code allowed |\n| Performance | Runtime branch | Zero overhead |\n| Non-template code | Normal use | Dead code elimination |\n\n#### Inline Variables Use Cases\n\n| Scenario | C++14 | C++17 |\n|----------|-------|-------|\n| Static class member | Declaration in header + definition in .cpp | `inline static` in header only |\n| Global constant | `extern` in header + definition in .cpp | `inline constexpr` in header only |\n| Template static | Definition in header (risky) | `inline static` (safe) |\n| Mutable global | Definition in .cpp only | `inline` in header (shared) |\n\n#### Common Pitfalls and Solutions\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| Structured bindings with temporaries | Dangling references with `auto&` | Use `auto` (copy) or bind to named object |\n| Lambda capture of bindings | Can't name bindings in capture list | Use `[=]` or `[&]` instead |\n| if constexpr in non-template | Works but limited benefit | Use for guaranteed dead code elimination |\n| Inline without constexpr | Mutable global state | Prefer `inline constexpr` for constants |\n| Wrong binding count | Compile error if count mismatches | Ensure binding count matches struct size |\n\n---\n\n**End of Chapter 16 Topic 1: C++17 Language Features**\n\nThese three language features form the foundation of modern C++17 code. Structured bindings make code more readable and maintainable, if constexpr simplifies template metaprogramming dramatically, and inline variables enable clean header-only library design. Together, they represent a significant step toward making C++ more expressive and less error-prone. Master these features as they're heavily tested in technical interviews and are essential for professional C++17+ development.\n\n**Note:** This is Part 1 of 3 for Chapter 16. The remaining topics (Standard Library features like optional/variant/any/string_view/filesystem and Template Improvements like CTAD/Fold Expressions) will be covered in separate documents due to the extensive content in C++17.\n\n\n## TOPIC: C++17 Language Features - Structured Bindings, if constexpr, Inline Variables",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 1 2 | Structured bindings copy by default. `x = 10` modifies the copy, not the returned pair. Second call returns fresh {1,2}. | #structured_bindings #copy |\n| 2 | 100 10 | `auto&` creates references. Modifying `a` modifies `p.x`. Output shows modified p.x (100) and unchanged p.y (10). | #structured_bindings #references |\n| 3 | 11 3.14 | `if constexpr` branches at compile time. For int, adds 1. For double, prints as-is. | #if_constexpr #type_traits |\n| 4 | 2 | Inline static variable shared across all instances. Two increments make it 2. | #inline_variables #static |\n| 5 | 12 | Structured bindings unpack map entries. Loop prints keys 1 and 2. | #structured_bindings #map |\n| 6 | 48 | int is 4 bytes, long long is 8 bytes. Prints \"4\" then \"8\". | #if_constexpr #sizeof |\n| 7 | 1 x | Tuple unpacked: a=1 (int), b=2.5 (double), c='x' (char). Prints 1 and x. | #structured_bindings #tuple |\n| 8 | 42 | Inline constexpr static member accessible without instance. Prints 42. | #inline_variables #constexpr |\n| 9 | 10 | Structured bindings copy array elements. Modifying x doesn't affect arr[0]. | #structured_bindings #array #copy |\n| 10 | truefalse | if constexpr evaluates template parameter B at compile time. Prints \"true\" then \"false\". | #if_constexpr #template |\n| 11 | 1 5 | Unpacks pair<int, string>. x=1, y=\"hello\". y.size() is 5. | #structured_bindings #pair |\n| 12 | 5 10 | const auto& creates const references. Prints p.x (5) and p.y (10). | #structured_bindings #const_references |\n| 13 | 42 42 | if constexpr checks if T is pointer. For &x, dereferences to 42. For x, prints value 42. | #if_constexpr #pointers |\n| 14 | 3 | Each Counter construction increments shared static count. Three instances = 3. | #inline_variables #constructor |\n| 15 | 3 7 | Unpacks pairs and prints sums: 1+2=3, 3+4=7. | #structured_bindings #vector |\n| 16 | 0 1 | Compile-time function. int (4 bytes) returns false (0), long long (8 bytes) returns true (1). | #if_constexpr #constexpr |\n| 17 | 12 | Structured bindings copy Data members. x=1, y=2. Concatenates to \"12\". | #structured_bindings #struct |\n| 18 | 100 | Inline constexpr in namespace, accessible with qualified name. | #inline_variables #namespace |\n| 19 | 10 | auto& creates references to tuple elements. Modifying a modifies std::get<0>(t). | #structured_bindings #tuple #references |\n| 20 | intdoubleother | if constexpr checks types. int→\"int\", double→\"double\", const char*→\"other\". | #if_constexpr #type_checking |",
           "| Feature | Syntax | Purpose | Key Benefit |\n|---------|--------|---------|-------------|\n| Structured Bindings | `auto [a, b] = obj;` | Unpack structured types | Cleaner code, less boilerplate |\n| if constexpr | `if constexpr (cond)` | Compile-time branching | Replace SFINAE, simpler templates |\n| Inline Variables | `inline static int x;` | Header-only variables | No ODR violations, no .cpp needed |",
@@ -1294,106 +1414,166 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <optional>\n#include <iostream>\nstd::optional<int> get() { return std::nullopt; }\nint main() {\n    auto opt = get();\n    std::cout << opt.value_or(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** optional is empty, value_or returns default value 42\n\n**Key Concept:** #optional #value_or\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- `std::nullopt` represents an empty optional (no value contained)\n- `get()` returns empty optional\n- `value_or(42)` returns contained value if present, otherwise returns default (42)\n- Since optional is empty, returns the provided default value 42\n- **Key Concept:** value_or provides safe access with fallback, avoiding exceptions when optional is empty",
           "code": "#include <optional>\n#include <iostream>\nstd::optional<int> get() { return std::nullopt; }\nint main() {\n    auto opt = get();\n    std::cout << opt.value_or(42);\n}",
+          "answer": "42",
+          "explanation": "- `std::nullopt` represents an empty optional (no value contained)\n- `get()` returns empty optional\n- `value_or(42)` returns contained value if present, otherwise returns default (42)\n- Since optional is empty, returns the provided default value 42\n- **Key Concept:** value_or provides safe access with fallback, avoiding exceptions when optional is empty",
+          "key_concept": "value_or provides safe access with fallback, avoiding exceptions when optional is empty",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, double> v = 3.14;\n    std::cout << std::get<1>(v);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3.14\n\n**Explanation:** get<1> accesses second type (double) by index\n\n**Key Concept:** #variant #index_access\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3.14\n```\n\n**Explanation:**\n- `variant<int, double>` can hold either int or double\n- Initialized with 3.14 (double), so variant holds double at index 1\n- `std::get<1>(v)` accesses alternative by index (0=int, 1=double)\n- Returns the double value 3.14\n- **Key Concept:** std::get with index accesses variant alternatives by position; throws if wrong index",
           "code": "#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, double> v = 3.14;\n    std::cout << std::get<1>(v);\n}",
+          "answer": "3.14",
+          "explanation": "- `variant<int, double>` can hold either int or double\n- Initialized with 3.14 (double), so variant holds double at index 1\n- `std::get<1>(v)` accesses alternative by index (0=int, 1=double)\n- Returns the double value 3.14\n- **Key Concept:** std::get with index accesses variant alternatives by position; throws if wrong index",
+          "key_concept": "std::get with index accesses variant alternatives by position; throws if wrong index",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3.14"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <any>\n#include <iostream>\nint main() {\n    std::any a = 42;\n    if (auto* p = std::any_cast<int>(&a)) {\n        std::cout << *p;\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** any_cast with pointer returns valid pointer, dereferences to 42\n\n**Key Concept:** #any #any_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- `std::any` can hold any type with type erasure\n- `any_cast<int>(&a)` with pointer argument returns pointer if type matches, nullptr otherwise\n- Type matches (any contains int), so returns valid int* pointer\n- Dereferences pointer to print 42\n- **Key Concept:** any_cast with pointer returns nullptr on type mismatch instead of throwing; safer for checking",
           "code": "#include <any>\n#include <iostream>\nint main() {\n    std::any a = 42;\n    if (auto* p = std::any_cast<int>(&a)) {\n        std::cout << *p;\n    }\n}",
+          "answer": "42",
+          "explanation": "- `std::any` can hold any type with type erasure\n- `any_cast<int>(&a)` with pointer argument returns pointer if type matches, nullptr otherwise\n- Type matches (any contains int), so returns valid int* pointer\n- Dereferences pointer to print 42\n- **Key Concept:** any_cast with pointer returns nullptr on type mismatch instead of throwing; safer for checking",
+          "key_concept": "any_cast with pointer returns nullptr on type mismatch instead of throwing; safer for checking",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <optional>\n#include <iostream>\nint main() {\n    std::optional<int> opt;\n    if (opt) {\n        std::cout << \"has value\";\n    } else {\n        std::cout << \"empty\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** empty\n\n**Explanation:** Default-constructed optional has no value\n\n**Key Concept:** #optional #has_value\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nempty\n```\n\n**Explanation:**\n- Default-constructed optional is empty (no value)\n- `if (opt)` checks `has_value()` implicitly via bool conversion operator\n- Since opt is empty, condition is false\n- Prints \"empty\"\n- **Key Concept:** optional provides implicit bool conversion to check presence; cleaner than explicit has_value()",
           "code": "#include <optional>\n#include <iostream>\nint main() {\n    std::optional<int> opt;\n    if (opt) {\n        std::cout << \"has value\";\n    } else {\n        std::cout << \"empty\";\n    }\n}",
+          "answer": "empty",
+          "explanation": "- Default-constructed optional is empty (no value)\n- `if (opt)` checks `has_value()` implicitly via bool conversion operator\n- Since opt is empty, condition is false\n- Prints \"empty\"\n- **Key Concept:** optional provides implicit bool conversion to check presence; cleaner than explicit has_value()",
+          "key_concept": "optional provides implicit bool conversion to check presence; cleaner than explicit has_value()",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "empty"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, std::string> v = \"hello\";\n    if (std::holds_alternative<std::string>(v)) {\n        std::cout << std::get<std::string>(v);\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** hello\n\n**Explanation:** holds_alternative checks type, get retrieves string\n\n**Key Concept:** #variant #holds_alternative\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nhello\n```\n\n**Explanation:**\n- Variant initialized with string literal, holds std::string (via conversion)\n- `holds_alternative<std::string>(v)` checks if variant currently holds string (true)\n- `std::get<std::string>(v)` retrieves by type (alternative to index access)\n- Prints \"hello\"\n- **Key Concept:** holds_alternative checks type before access; prevents bad_variant_access exceptions",
           "code": "#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, std::string> v = \"hello\";\n    if (std::holds_alternative<std::string>(v)) {\n        std::cout << std::get<std::string>(v);\n    }\n}",
+          "answer": "hello",
+          "explanation": "- Variant initialized with string literal, holds std::string (via conversion)\n- `holds_alternative<std::string>(v)` checks if variant currently holds string (true)\n- `std::get<std::string>(v)` retrieves by type (alternative to index access)\n- Prints \"hello\"\n- **Key Concept:** holds_alternative checks type before access; prevents bad_variant_access exceptions",
+          "key_concept": "holds_alternative checks type before access; prevents bad_variant_access exceptions",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "hello"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <optional>\n#include <iostream>\nint main() {\n    std::optional<bool> opt = false;\n    if (opt) {\n        std::cout << \"has value: \" << *opt;\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** has value: 0\n\n**Explanation:** Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value\n\n**Key Concept:** #optional #bool\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nhas value: 0\n```\n\n**Explanation:**\n- `optional<bool>` initialized with false (has a value, the value is false)\n- `if (opt)` checks presence (has_value()), NOT the contained bool value\n- Since opt contains a value, condition is true\n- `*opt` dereferences to get bool false, printed as 0\n- **Key Concept:** optional's bool conversion checks presence, not the contained value; subtle with bool types",
           "code": "#include <optional>\n#include <iostream>\nint main() {\n    std::optional<bool> opt = false;\n    if (opt) {\n        std::cout << \"has value: \" << *opt;\n    }\n}",
+          "answer": "has value: 0",
+          "explanation": "- `optional<bool>` initialized with false (has a value, the value is false)\n- `if (opt)` checks presence (has_value()), NOT the contained bool value\n- Since opt contains a value, condition is true\n- `*opt` dereferences to get bool false, printed as 0\n- **Key Concept:** optional's bool conversion checks presence, not the contained value; subtle with bool types",
+          "key_concept": "optional's bool conversion checks presence, not the contained value; subtle with bool types",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "has value: 0"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <any>\n#include <iostream>\nint main() {\n    std::any a = 3.14;\n    try {\n        std::cout << std::any_cast<int>(a);\n    } catch(...) {\n        std::cout << \"error\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** error\n\n**Explanation:** any holds double, casting to int throws bad_any_cast\n\n**Key Concept:** #any #exception\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nerror\n```\n\n**Explanation:**\n- `std::any` holds double (3.14)\n- `any_cast<int>(a)` with value argument throws `bad_any_cast` if type mismatch\n- Attempting to cast double to int fails (no implicit conversion)\n- Exception caught, prints \"error\"\n- **Key Concept:** any_cast by value throws on type mismatch; use pointer version for non-throwing check",
           "code": "#include <any>\n#include <iostream>\nint main() {\n    std::any a = 3.14;\n    try {\n        std::cout << std::any_cast<int>(a);\n    } catch(...) {\n        std::cout << \"error\";\n    }\n}",
+          "answer": "error",
+          "explanation": "- `std::any` holds double (3.14)\n- `any_cast<int>(a)` with value argument throws `bad_any_cast` if type mismatch\n- Attempting to cast double to int fails (no implicit conversion)\n- Exception caught, prints \"error\"\n- **Key Concept:** any_cast by value throws on type mismatch; use pointer version for non-throwing check",
+          "key_concept": "any_cast by value throws on type mismatch; use pointer version for non-throwing check",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "error"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, float> v = 42;\n    std::cout << v.index();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 0\n\n**Explanation:** Variant holds int (first type), index is 0\n\n**Key Concept:** #variant #index\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0\n```\n\n**Explanation:**\n- Variant initialized with int 42\n- `index()` returns zero-based index of currently active alternative\n- int is first type (index 0), float is second (index 1)\n- Returns 0\n- **Key Concept:** variant's index() provides runtime type identification via alternative position",
           "code": "#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, float> v = 42;\n    std::cout << v.index();\n}",
+          "answer": "0",
+          "explanation": "- Variant initialized with int 42\n- `index()` returns zero-based index of currently active alternative\n- int is first type (index 0), float is second (index 1)\n- Returns 0\n- **Key Concept:** variant's index() provides runtime type identification via alternative position",
+          "key_concept": "variant's index() provides runtime type identification via alternative position",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <optional>\n#include <iostream>\nint main() {\n    std::optional<int> opt1 = 10;\n    std::optional<int> opt2;\n    std::cout << (opt1.value() + opt2.value_or(5));\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 15\n\n**Explanation:** opt1 has 10, opt2 empty uses default 5, sum is 15\n\n**Key Concept:** #optional #value_or\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n15\n```\n\n**Explanation:**\n- `opt1` contains 10, `opt2` is empty\n- `opt1.value()` returns 10 (safe because opt1 has value)\n- `opt2.value_or(5)` returns 5 (default, since opt2 is empty)\n- Sum: 10 + 5 = 15\n- **Key Concept:** Combining value() and value_or() allows safe operations mixing present and empty optionals",
           "code": "#include <optional>\n#include <iostream>\nint main() {\n    std::optional<int> opt1 = 10;\n    std::optional<int> opt2;\n    std::cout << (opt1.value() + opt2.value_or(5));\n}",
+          "answer": "15",
+          "explanation": "- `opt1` contains 10, `opt2` is empty\n- `opt1.value()` returns 10 (safe because opt1 has value)\n- `opt2.value_or(5)` returns 5 (default, since opt2 is empty)\n- Sum: 10 + 5 = 15\n- **Key Concept:** Combining value() and value_or() allows safe operations mixing present and empty optionals",
+          "key_concept": "Combining value() and value_or() allows safe operations mixing present and empty optionals",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "15"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, double, std::string> v = 42.0;\n    std::visit([](auto&& val) {\n        std::cout << val;\n    }, v);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** visit applies lambda to double value 42.0, prints without decimal\n\n**Key Concept:** #variant #visit\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- Variant initialized with double 42.0\n- `std::visit` applies callable (lambda) to currently held alternative\n- Generic lambda with `auto&&` deduces double type\n- `std::cout << 42.0` prints as \"42\" (default formatting drops unnecessary decimals)\n- **Key Concept:** std::visit provides type-safe variant access via visitor pattern without explicit type checking\n\n---\n\n\n## TOPIC: C++17 Standard Library - optional, variant, any, string_view, filesystem",
           "code": "#include <variant>\n#include <iostream>\nint main() {\n    std::variant<int, double, std::string> v = 42.0;\n    std::visit([](auto&& val) {\n        std::cout << val;\n    }, v);\n}",
+          "answer": "42",
+          "explanation": "- Variant initialized with double 42.0\n- `std::visit` applies callable (lambda) to currently held alternative\n- Generic lambda with `auto&&` deduces double type\n- `std::cout << 42.0` prints as \"42\" (default formatting drops unnecessary decimals)\n- **Key Concept:** std::visit provides type-safe variant access via visitor pattern without explicit type checking",
+          "key_concept": "std::visit provides type-safe variant access via visitor pattern without explicit type checking",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 42 | optional is empty, value_or returns default value 42 | #optional #value_or |\n| 2 | 3.14 | get<1> accesses second type (double) by index | #variant #index_access |\n| 3 | 42 | any_cast with pointer returns valid pointer, dereferences to 42 | #any #any_cast |\n| 4 | empty | Default-constructed optional has no value | #optional #has_value |\n| 5 | hello | holds_alternative checks type, get retrieves string | #variant #holds_alternative |\n| 6 | has value: 0 | Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value | #optional #bool |\n| 7 | error | any holds double, casting to int throws bad_any_cast | #any #exception |\n| 8 | 0 | Variant holds int (first type), index is 0 | #variant #index |\n| 9 | 15 | opt1 has 10, opt2 empty uses default 5, sum is 15 | #optional #value_or |\n| 10 | 42 | visit applies lambda to double value 42.0, prints without decimal | #variant #visit |\n\n#### std::optional vs Alternatives\n\n| Feature | optional<T> | T* (pointer) | Sentinel (-1, \"\") | bool + T& |\n|---------|-------------|--------------|-------------------|-----------|\n| Heap allocation | No | Usually | No | No |\n| Type safe | Yes | Moderate | No | Moderate |\n| Explicit empty state | Yes | nullptr | Magic value | bool |\n| Works with any T | Yes | Yes | No | Ref only |\n| Value semantics | Yes | No | Yes | No |\n\n#### std::variant vs Alternatives\n\n| Feature | variant<Ts...> | union | Inheritance | any |\n|---------|----------------|-------|-------------|-----|\n| Type safety | Compile-time | None | Runtime | Runtime |\n| Overhead | Discriminator | None | vtable ptr | Type info + alloc |\n| Closed type set | Yes | Yes | No | No |\n| Value semantics | Yes | Yes | No | Yes |\n| Exhaustiveness check | Yes (visit) | No | No | No |\n\n#### Standard Library Type Comparison\n\n| Type | Purpose | Overhead | Safety |\n|------|---------|----------|--------|\n| `optional<T>` | May/may not have T | 1 byte + padding | Checked access |\n| `variant<Ts...>` | One of fixed types | 1-8 bytes | Type-checked |\n| `any` | Any type at runtime | Type info + heap | Cast checked |\n| `string_view` | Non-owning string ref | 16 bytes | Lifetime dependent |\n| `unique_ptr<T>` | Unique ownership | Pointer size | RAII |\n\n#### filesystem Common Operations\n\n| Operation | Function | Purpose |\n|-----------|----------|---------|\n| Check existence | `fs::exists(p)` | Test if path exists |\n| Get file size | `fs::file_size(p)` | Size in bytes |\n| Copy file | `fs::copy(src, dst)` | Copy file or directory |\n| Remove file | `fs::remove(p)` | Delete file |\n| Create directory | `fs::create_directory(p)` | Make new directory |\n| List directory | `fs::directory_iterator(p)` | Iterate contents |\n| Recursive list | `fs::recursive_directory_iterator(p)` | Iterate recursively |\n\n---\n\n**End of Chapter 16 Topic 2: C++17 Standard Library Features**\n\nThese standard library additions represent a major leap in C++ expressiveness and safety. optional, variant, and any provide type-safe alternatives to error-prone patterns. string_view enables efficient string handling without copies. filesystem brings portable file operations to standard C++. Together, these features make C++17 code safer, clearer, and more maintainable. Master these types as they're heavily used in modern codebases and frequently tested in technical interviews.\n\n**Note:** This is Part 2 of 3 for Chapter 16. Topic 3 will cover Template Improvements (CTAD, Fold Expressions, and remaining features).",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 42 | optional is empty, value_or returns default value 42 | #optional #value_or |\n| 2 | 3.14 | get<1> accesses second type (double) by index | #variant #index_access |\n| 3 | 42 | any_cast with pointer returns valid pointer, dereferences to 42 | #any #any_cast |\n| 4 | empty | Default-constructed optional has no value | #optional #has_value |\n| 5 | hello | holds_alternative checks type, get retrieves string | #variant #holds_alternative |\n| 6 | has value: 0 | Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value | #optional #bool |\n| 7 | error | any holds double, casting to int throws bad_any_cast | #any #exception |\n| 8 | 0 | Variant holds int (first type), index is 0 | #variant #index |\n| 9 | 15 | opt1 has 10, opt2 empty uses default 5, sum is 15 | #optional #value_or |\n| 10 | 42 | visit applies lambda to double value 42.0, prints without decimal | #variant #visit |\n\n#### std::optional vs Alternatives\n\n| Feature | optional<T> | T* (pointer) | Sentinel (-1, \"\") | bool + T& |\n|---------|-------------|--------------|-------------------|-----------|\n| Heap allocation | No | Usually | No | No |\n| Type safe | Yes | Moderate | No | Moderate |\n| Explicit empty state | Yes | nullptr | Magic value | bool |\n| Works with any T | Yes | Yes | No | Ref only |\n| Value semantics | Yes | No | Yes | No |\n\n#### std::variant vs Alternatives\n\n| Feature | variant<Ts...> | union | Inheritance | any |\n|---------|----------------|-------|-------------|-----|\n| Type safety | Compile-time | None | Runtime | Runtime |\n| Overhead | Discriminator | None | vtable ptr | Type info + alloc |\n| Closed type set | Yes | Yes | No | No |\n| Value semantics | Yes | Yes | No | Yes |\n| Exhaustiveness check | Yes (visit) | No | No | No |\n\n#### Standard Library Type Comparison\n\n| Type | Purpose | Overhead | Safety |\n|------|---------|----------|--------|\n| `optional<T>` | May/may not have T | 1 byte + padding | Checked access |\n| `variant<Ts...>` | One of fixed types | 1-8 bytes | Type-checked |\n| `any` | Any type at runtime | Type info + heap | Cast checked |\n| `string_view` | Non-owning string ref | 16 bytes | Lifetime dependent |\n| `unique_ptr<T>` | Unique ownership | Pointer size | RAII |\n\n#### filesystem Common Operations\n\n| Operation | Function | Purpose |\n|-----------|----------|---------|\n| Check existence | `fs::exists(p)` | Test if path exists |\n| Get file size | `fs::file_size(p)` | Size in bytes |\n| Copy file | `fs::copy(src, dst)` | Copy file or directory |\n| Remove file | `fs::remove(p)` | Delete file |\n| Create directory | `fs::create_directory(p)` | Make new directory |\n| List directory | `fs::directory_iterator(p)` | Iterate contents |\n| Recursive list | `fs::recursive_directory_iterator(p)` | Iterate recursively |\n\n---\n\n**End of Chapter 16 Topic 2: C++17 Standard Library Features**\n\nThese standard library additions represent a major leap in C++ expressiveness and safety. optional, variant, and any provide type-safe alternatives to error-prone patterns. string_view enables efficient string handling without copies. filesystem brings portable file operations to standard C++. Together, these features make C++17 code safer, clearer, and more maintainable. Master these types as they're heavily used in modern codebases and frequently tested in technical interviews.\n\n**Note:** This is Part 2 of 3 for Chapter 16. Topic 3 will cover Template Improvements (CTAD, Fold Expressions, and remaining features).\n\n\n## TOPIC: C++17 Standard Library - optional, variant, any, string_view, filesystem",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 42 | optional is empty, value_or returns default value 42 | #optional #value_or |\n| 2 | 3.14 | get<1> accesses second type (double) by index | #variant #index_access |\n| 3 | 42 | any_cast with pointer returns valid pointer, dereferences to 42 | #any #any_cast |\n| 4 | empty | Default-constructed optional has no value | #optional #has_value |\n| 5 | hello | holds_alternative checks type, get retrieves string | #variant #holds_alternative |\n| 6 | has value: 0 | Optional has value (bool=false), prints 0. Note: if(opt) checks presence, not bool value | #optional #bool |\n| 7 | error | any holds double, casting to int throws bad_any_cast | #any #exception |\n| 8 | 0 | Variant holds int (first type), index is 0 | #variant #index |\n| 9 | 15 | opt1 has 10, opt2 empty uses default 5, sum is 15 | #optional #value_or |\n| 10 | 42 | visit applies lambda to double value 42.0, prints without decimal | #variant #visit |",
           "| Feature | optional<T> | T* (pointer) | Sentinel (-1, \"\") | bool + T& |\n|---------|-------------|--------------|-------------------|-----------|\n| Heap allocation | No | Usually | No | No |\n| Type safe | Yes | Moderate | No | Moderate |\n| Explicit empty state | Yes | nullptr | Magic value | bool |\n| Works with any T | Yes | Yes | No | Ref only |\n| Value semantics | Yes | No | Yes | No |",
@@ -1789,9 +1969,13 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nCreate a `Resource` class template that manages different types of autonomous vehicle resources (sensors, actuators, etc.). Implement proper CTAD so that `Resource r(sensor_ptr)` correctly deduces the template type from the smart pointer argument.\n\n**Answer:**\n```cpp\n#include <memory>\n#include <iostream>\n#include <string>\n\ntemplate<typename T>\nclass Resource {\n    std::shared_ptr<T> ptr;\n    std::string name;\n\npublic:\n    // Constructor from shared_ptr\n    Resource(std::shared_ptr<T> p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    // Constructor from raw pointer (creates shared_ptr)\n    Resource(T* p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    void print() const {\n        std::cout << \"Resource: \" << name << \"\\n\";\n    }\n\n    T* get() { return ptr.get(); }\n};\n\n// Deduction guides\ntemplate<typename T>\nResource(std::shared_ptr<T>, std::string) -> Resource<T>;\n\ntemplate<typename T>\nResource(T*, std::string) -> Resource<T>;\n\n// Test classes\nstruct Sensor {\n    std::string type;\n    Sensor(std::string t) : type(t) {}\n};\n\nint main() {\n    auto sensor_ptr = std::make_shared<Sensor>(\"LIDAR\");\n\n    // CTAD deduces Resource<Sensor>\n    Resource r1(sensor_ptr, \"front_lidar\");\n    Resource r2(new Sensor(\"Camera\"), \"rear_camera\");\n\n    r1.print();\n    r2.print();\n\n    return 0;\n}\n```\n\n**Explanation:** CTAD deduction guides map shared_ptr<T> and T* to Resource<T>, enabling clean type deduction.\n\n---",
+          "description": "**Difficulty:** Medium\n\nCreate a `Resource` class template that manages different types of autonomous vehicle resources (sensors, actuators, etc.). Implement proper CTAD so that `Resource r(sensor_ptr)` correctly deduces the template type from the smart pointer argument.",
+          "full_content": "**Difficulty:** Medium\n\nCreate a `Resource` class template that manages different types of autonomous vehicle resources (sensors, actuators, etc.). Implement proper CTAD so that `Resource r(sensor_ptr)` correctly deduces the template type from the smart pointer argument.\n\n**Answer:**\n\n\n**Explanation:** CTAD deduction guides map shared_ptr<T> and T* to Resource<T>, enabling clean type deduction.",
           "code": "#include <memory>\n#include <iostream>\n#include <string>\n\ntemplate<typename T>\nclass Resource {\n    std::shared_ptr<T> ptr;\n    std::string name;\n\npublic:\n    // Constructor from shared_ptr\n    Resource(std::shared_ptr<T> p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    // Constructor from raw pointer (creates shared_ptr)\n    Resource(T* p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    void print() const {\n        std::cout << \"Resource: \" << name << \"\\n\";\n    }\n\n    T* get() { return ptr.get(); }\n};\n\n// Deduction guides\ntemplate<typename T>\nResource(std::shared_ptr<T>, std::string) -> Resource<T>;\n\ntemplate<typename T>\nResource(T*, std::string) -> Resource<T>;\n\n// Test classes\nstruct Sensor {\n    std::string type;\n    Sensor(std::string t) : type(t) {}\n};\n\nint main() {\n    auto sensor_ptr = std::make_shared<Sensor>(\"LIDAR\");\n\n    // CTAD deduces Resource<Sensor>\n    Resource r1(sensor_ptr, \"front_lidar\");\n    Resource r2(new Sensor(\"Camera\"), \"rear_camera\");\n\n    r1.print();\n    r2.print();\n\n    return 0;\n}",
+          "answer": "cpp\n#include <memory>\n#include <iostream>\n#include <string>\n\ntemplate<typename T>\nclass Resource {\n    std::shared_ptr<T> ptr;\n    std::string name;\n\npublic:\n    // Constructor from shared_ptr\n    Resource(std::shared_ptr<T> p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    // Constructor from raw pointer (creates shared_ptr)\n    Resource(T* p, std::string n = \"unnamed\")\n        : ptr(p), name(n) {}\n\n    void print() const {\n        std::cout << \"Resource: \" << name << \"\\n\";\n    }\n\n    T* get() { return ptr.get(); }\n};\n\n// Deduction guides\ntemplate<typename T>\nResource(std::shared_ptr<T>, std::string) -> Resource<T>;\n\ntemplate<typename T>\nResource(T*, std::string) -> Resource<T>;\n\n// Test classes\nstruct Sensor {\n    std::string type;\n    Sensor(std::string t) : type(t) {}\n};\n\nint main() {\n    auto sensor_ptr = std::make_shared<Sensor>(\"LIDAR\");\n\n    // CTAD deduces Resource<Sensor>\n    Resource r1(sensor_ptr, \"front_lidar\");\n    Resource r2(new Sensor(\"Camera\"), \"rear_camera\");\n\n    r1.print();\n    r2.print();\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1799,9 +1983,13 @@
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nWrite a variadic template function `validate_all` that takes multiple predicate functions and returns true only if all predicates return true. Use fold expressions.\n\n**Answer:**\n```cpp\n#include <iostream>\n#include <functional>\n\ntemplate<typename... Predicates>\nbool validate_all(Predicates... preds) {\n    return (... && preds());  // Left fold with &&\n}\n\nbool check_speed() {\n    std::cout << \"Checking speed... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_sensors() {\n    std::cout << \"Checking sensors... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_battery() {\n    std::cout << \"Checking battery... \";\n    bool ok = false;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nint main() {\n    bool all_ok = validate_all(check_speed, check_sensors, check_battery);\n\n    std::cout << \"System ready: \" << std::boolalpha << all_ok << \"\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** Fold expression `(... && preds())` short-circuits on first false, efficient validation.\n\n---",
+          "description": "**Difficulty:** Medium\n\nWrite a variadic template function `validate_all` that takes multiple predicate functions and returns true only if all predicates return true. Use fold expressions.",
+          "full_content": "**Difficulty:** Medium\n\nWrite a variadic template function `validate_all` that takes multiple predicate functions and returns true only if all predicates return true. Use fold expressions.\n\n**Answer:**\n\n\n**Explanation:** Fold expression `(... && preds())` short-circuits on first false, efficient validation.",
           "code": "#include <iostream>\n#include <functional>\n\ntemplate<typename... Predicates>\nbool validate_all(Predicates... preds) {\n    return (... && preds());  // Left fold with &&\n}\n\nbool check_speed() {\n    std::cout << \"Checking speed... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_sensors() {\n    std::cout << \"Checking sensors... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_battery() {\n    std::cout << \"Checking battery... \";\n    bool ok = false;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nint main() {\n    bool all_ok = validate_all(check_speed, check_sensors, check_battery);\n\n    std::cout << \"System ready: \" << std::boolalpha << all_ok << \"\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <iostream>\n#include <functional>\n\ntemplate<typename... Predicates>\nbool validate_all(Predicates... preds) {\n    return (... && preds());  // Left fold with &&\n}\n\nbool check_speed() {\n    std::cout << \"Checking speed... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_sensors() {\n    std::cout << \"Checking sensors... \";\n    bool ok = true;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nbool check_battery() {\n    std::cout << \"Checking battery... \";\n    bool ok = false;\n    std::cout << (ok ? \"OK\\n\" : \"FAIL\\n\");\n    return ok;\n}\n\nint main() {\n    bool all_ok = validate_all(check_speed, check_sensors, check_battery);\n\n    std::cout << \"System ready: \" << std::boolalpha << all_ok << \"\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1809,9 +1997,13 @@
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "**Difficulty:** Hard",
-          "full_content": "**Difficulty:** Hard\n\nImplement a parallel point cloud filter that removes outliers based on distance threshold. Compare sequential vs parallel performance.\n\n**Answer:**\n```cpp\n#include <vector>\n#include <algorithm>\n#include <execution>\n#include <random>\n#include <chrono>\n#include <iostream>\n#include <cmath>\n\nstruct Point3D {\n    double x, y, z;\n\n    double distance_from_origin() const {\n        return std::sqrt(x*x + y*y + z*z);\n    }\n};\n\nstd::vector<Point3D> generate_cloud(size_t n) {\n    std::vector<Point3D> cloud;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> dis(-100.0, 100.0);\n\n    for (size_t i = 0; i < n; ++i) {\n        cloud.push_back({dis(gen), dis(gen), dis(gen)});\n    }\n    return cloud;\n}\n\ntemplate<typename Policy>\nstd::vector<Point3D> filter_outliers(Policy&& policy,\n                                      const std::vector<Point3D>& cloud,\n                                      double threshold) {\n    std::vector<Point3D> filtered;\n    std::copy_if(policy, cloud.begin(), cloud.end(),\n                 std::back_inserter(filtered),\n                 [threshold](const Point3D& p) {\n                     return p.distance_from_origin() <= threshold;\n                 });\n    return filtered;\n}\n\nint main() {\n    const size_t N = 1'000'000;\n    const double THRESHOLD = 50.0;\n\n    auto cloud = generate_cloud(N);\n    std::cout << \"Generated \" << N << \" points\\n\";\n\n    // Sequential\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    auto filtered_seq = filter_outliers(std::execution::seq, cloud, THRESHOLD);\n    auto end_seq = std::chrono::high_resolution_clock::now();\n    auto dur_seq = std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);\n\n    // Parallel\n    auto start_par = std::chrono::high_resolution_clock::now();\n    auto filtered_par = filter_outliers(std::execution::par, cloud, THRESHOLD);\n    auto end_par = std::chrono::high_resolution_clock::now();\n    auto dur_par = std::chrono::duration_cast<std::chrono::milliseconds>(end_par - start_par);\n\n    std::cout << \"Sequential: \" << filtered_seq.size() << \" points in \"\n              << dur_seq.count() << \" ms\\n\";\n    std::cout << \"Parallel: \" << filtered_par.size() << \" points in \"\n              << dur_par.count() << \" ms\\n\";\n    std::cout << \"Speedup: \" << static_cast<double>(dur_seq.count()) / dur_par.count() << \"x\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** Parallel copy_if can significantly speed up filtering large datasets on multi-core systems.\n\n---",
+          "description": "**Difficulty:** Hard\n\nImplement a parallel point cloud filter that removes outliers based on distance threshold. Compare sequential vs parallel performance.",
+          "full_content": "**Difficulty:** Hard\n\nImplement a parallel point cloud filter that removes outliers based on distance threshold. Compare sequential vs parallel performance.\n\n**Answer:**\n\n\n**Explanation:** Parallel copy_if can significantly speed up filtering large datasets on multi-core systems.",
           "code": "#include <vector>\n#include <algorithm>\n#include <execution>\n#include <random>\n#include <chrono>\n#include <iostream>\n#include <cmath>\n\nstruct Point3D {\n    double x, y, z;\n\n    double distance_from_origin() const {\n        return std::sqrt(x*x + y*y + z*z);\n    }\n};\n\nstd::vector<Point3D> generate_cloud(size_t n) {\n    std::vector<Point3D> cloud;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> dis(-100.0, 100.0);\n\n    for (size_t i = 0; i < n; ++i) {\n        cloud.push_back({dis(gen), dis(gen), dis(gen)});\n    }\n    return cloud;\n}\n\ntemplate<typename Policy>\nstd::vector<Point3D> filter_outliers(Policy&& policy,\n                                      const std::vector<Point3D>& cloud,\n                                      double threshold) {\n    std::vector<Point3D> filtered;\n    std::copy_if(policy, cloud.begin(), cloud.end(),\n                 std::back_inserter(filtered),\n                 [threshold](const Point3D& p) {\n                     return p.distance_from_origin() <= threshold;\n                 });\n    return filtered;\n}\n\nint main() {\n    const size_t N = 1'000'000;\n    const double THRESHOLD = 50.0;\n\n    auto cloud = generate_cloud(N);\n    std::cout << \"Generated \" << N << \" points\\n\";\n\n    // Sequential\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    auto filtered_seq = filter_outliers(std::execution::seq, cloud, THRESHOLD);\n    auto end_seq = std::chrono::high_resolution_clock::now();\n    auto dur_seq = std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);\n\n    // Parallel\n    auto start_par = std::chrono::high_resolution_clock::now();\n    auto filtered_par = filter_outliers(std::execution::par, cloud, THRESHOLD);\n    auto end_par = std::chrono::high_resolution_clock::now();\n    auto dur_par = std::chrono::duration_cast<std::chrono::milliseconds>(end_par - start_par);\n\n    std::cout << \"Sequential: \" << filtered_seq.size() << \" points in \"\n              << dur_seq.count() << \" ms\\n\";\n    std::cout << \"Parallel: \" << filtered_par.size() << \" points in \"\n              << dur_par.count() << \" ms\\n\";\n    std::cout << \"Speedup: \" << static_cast<double>(dur_seq.count()) / dur_par.count() << \"x\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <vector>\n#include <algorithm>\n#include <execution>\n#include <random>\n#include <chrono>\n#include <iostream>\n#include <cmath>\n\nstruct Point3D {\n    double x, y, z;\n\n    double distance_from_origin() const {\n        return std::sqrt(x*x + y*y + z*z);\n    }\n};\n\nstd::vector<Point3D> generate_cloud(size_t n) {\n    std::vector<Point3D> cloud;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> dis(-100.0, 100.0);\n\n    for (size_t i = 0; i < n; ++i) {\n        cloud.push_back({dis(gen), dis(gen), dis(gen)});\n    }\n    return cloud;\n}\n\ntemplate<typename Policy>\nstd::vector<Point3D> filter_outliers(Policy&& policy,\n                                      const std::vector<Point3D>& cloud,\n                                      double threshold) {\n    std::vector<Point3D> filtered;\n    std::copy_if(policy, cloud.begin(), cloud.end(),\n                 std::back_inserter(filtered),\n                 [threshold](const Point3D& p) {\n                     return p.distance_from_origin() <= threshold;\n                 });\n    return filtered;\n}\n\nint main() {\n    const size_t N = 1'000'000;\n    const double THRESHOLD = 50.0;\n\n    auto cloud = generate_cloud(N);\n    std::cout << \"Generated \" << N << \" points\\n\";\n\n    // Sequential\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    auto filtered_seq = filter_outliers(std::execution::seq, cloud, THRESHOLD);\n    auto end_seq = std::chrono::high_resolution_clock::now();\n    auto dur_seq = std::chrono::duration_cast<std::chrono::milliseconds>(end_seq - start_seq);\n\n    // Parallel\n    auto start_par = std::chrono::high_resolution_clock::now();\n    auto filtered_par = filter_outliers(std::execution::par, cloud, THRESHOLD);\n    auto end_par = std::chrono::high_resolution_clock::now();\n    auto dur_par = std::chrono::duration_cast<std::chrono::milliseconds>(end_par - start_par);\n\n    std::cout << \"Sequential: \" << filtered_seq.size() << \" points in \"\n              << dur_seq.count() << \" ms\\n\";\n    std::cout << \"Parallel: \" << filtered_par.size() << \" points in \"\n              << dur_par.count() << \" ms\\n\";\n    std::cout << \"Speedup: \" << static_cast<double>(dur_seq.count()) / dur_par.count() << \"x\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1819,9 +2011,13 @@
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nImplement a resource manager that safely acquires multiple resources simultaneously using std::scoped_lock to prevent deadlock.\n\n**Answer:**\n```cpp\n#include <mutex>\n#include <thread>\n#include <vector>\n#include <iostream>\n#include <chrono>\n\nclass Resource {\n    std::mutex mtx;\n    int value;\n    std::string name;\n\npublic:\n    Resource(std::string n, int v) : name(n), value(v) {}\n\n    std::mutex& get_mutex() { return mtx; }\n\n    void modify(int delta) {\n        // Assumes mutex is already locked\n        value += delta;\n    }\n\n    int get_value() const { return value; }\n    std::string get_name() const { return name; }\n};\n\nclass ResourceManager {\n    std::vector<Resource*> resources;\n\npublic:\n    void add_resource(Resource* r) {\n        resources.push_back(r);\n    }\n\n    // Safely transfer value between two resources\n    void transfer(Resource& from, Resource& to, int amount) {\n        // Deadlock-free locking regardless of order\n        std::scoped_lock lock(from.get_mutex(), to.get_mutex());\n\n        from.modify(-amount);\n        to.modify(amount);\n\n        std::cout << \"Transferred \" << amount << \" from \"\n                  << from.get_name() << \" to \" << to.get_name() << \"\\n\";\n    }\n};\n\nint main() {\n    Resource r1(\"BatteryA\", 100);\n    Resource r2(\"BatteryB\", 100);\n    Resource r3(\"BatteryC\", 100);\n\n    ResourceManager mgr;\n    mgr.add_resource(&r1);\n    mgr.add_resource(&r2);\n    mgr.add_resource(&r3);\n\n    // Multiple threads transferring in different directions\n    std::thread t1([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r1, r2, 10);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t2([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r2, r3, 5);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t3([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r3, r1, 8);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    t1.join();\n    t2.join();\n    t3.join();\n\n    std::cout << \"\\nFinal values:\\n\";\n    std::cout << r1.get_name() << \": \" << r1.get_value() << \"\\n\";\n    std::cout << r2.get_name() << \": \" << r2.get_value() << \"\\n\";\n    std::cout << r3.get_name() << \": \" << r3.get_value() << \"\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** scoped_lock prevents deadlock even when multiple threads lock resources in different orders.\n\n---",
+          "description": "**Difficulty:** Medium\n\nImplement a resource manager that safely acquires multiple resources simultaneously using std::scoped_lock to prevent deadlock.",
+          "full_content": "**Difficulty:** Medium\n\nImplement a resource manager that safely acquires multiple resources simultaneously using std::scoped_lock to prevent deadlock.\n\n**Answer:**\n\n\n**Explanation:** scoped_lock prevents deadlock even when multiple threads lock resources in different orders.",
           "code": "#include <mutex>\n#include <thread>\n#include <vector>\n#include <iostream>\n#include <chrono>\n\nclass Resource {\n    std::mutex mtx;\n    int value;\n    std::string name;\n\npublic:\n    Resource(std::string n, int v) : name(n), value(v) {}\n\n    std::mutex& get_mutex() { return mtx; }\n\n    void modify(int delta) {\n        // Assumes mutex is already locked\n        value += delta;\n    }\n\n    int get_value() const { return value; }\n    std::string get_name() const { return name; }\n};\n\nclass ResourceManager {\n    std::vector<Resource*> resources;\n\npublic:\n    void add_resource(Resource* r) {\n        resources.push_back(r);\n    }\n\n    // Safely transfer value between two resources\n    void transfer(Resource& from, Resource& to, int amount) {\n        // Deadlock-free locking regardless of order\n        std::scoped_lock lock(from.get_mutex(), to.get_mutex());\n\n        from.modify(-amount);\n        to.modify(amount);\n\n        std::cout << \"Transferred \" << amount << \" from \"\n                  << from.get_name() << \" to \" << to.get_name() << \"\\n\";\n    }\n};\n\nint main() {\n    Resource r1(\"BatteryA\", 100);\n    Resource r2(\"BatteryB\", 100);\n    Resource r3(\"BatteryC\", 100);\n\n    ResourceManager mgr;\n    mgr.add_resource(&r1);\n    mgr.add_resource(&r2);\n    mgr.add_resource(&r3);\n\n    // Multiple threads transferring in different directions\n    std::thread t1([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r1, r2, 10);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t2([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r2, r3, 5);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t3([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r3, r1, 8);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    t1.join();\n    t2.join();\n    t3.join();\n\n    std::cout << \"\\nFinal values:\\n\";\n    std::cout << r1.get_name() << \": \" << r1.get_value() << \"\\n\";\n    std::cout << r2.get_name() << \": \" << r2.get_value() << \"\\n\";\n    std::cout << r3.get_name() << \": \" << r3.get_value() << \"\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <mutex>\n#include <thread>\n#include <vector>\n#include <iostream>\n#include <chrono>\n\nclass Resource {\n    std::mutex mtx;\n    int value;\n    std::string name;\n\npublic:\n    Resource(std::string n, int v) : name(n), value(v) {}\n\n    std::mutex& get_mutex() { return mtx; }\n\n    void modify(int delta) {\n        // Assumes mutex is already locked\n        value += delta;\n    }\n\n    int get_value() const { return value; }\n    std::string get_name() const { return name; }\n};\n\nclass ResourceManager {\n    std::vector<Resource*> resources;\n\npublic:\n    void add_resource(Resource* r) {\n        resources.push_back(r);\n    }\n\n    // Safely transfer value between two resources\n    void transfer(Resource& from, Resource& to, int amount) {\n        // Deadlock-free locking regardless of order\n        std::scoped_lock lock(from.get_mutex(), to.get_mutex());\n\n        from.modify(-amount);\n        to.modify(amount);\n\n        std::cout << \"Transferred \" << amount << \" from \"\n                  << from.get_name() << \" to \" << to.get_name() << \"\\n\";\n    }\n};\n\nint main() {\n    Resource r1(\"BatteryA\", 100);\n    Resource r2(\"BatteryB\", 100);\n    Resource r3(\"BatteryC\", 100);\n\n    ResourceManager mgr;\n    mgr.add_resource(&r1);\n    mgr.add_resource(&r2);\n    mgr.add_resource(&r3);\n\n    // Multiple threads transferring in different directions\n    std::thread t1([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r1, r2, 10);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t2([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r2, r3, 5);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    std::thread t3([&]() {\n        for (int i = 0; i < 5; ++i) {\n            mgr.transfer(r3, r1, 8);\n            std::this_thread::sleep_for(std::chrono::milliseconds(10));\n        }\n    });\n\n    t1.join();\n    t2.join();\n    t3.join();\n\n    std::cout << \"\\nFinal values:\\n\";\n    std::cout << r1.get_name() << \": \" << r1.get_value() << \"\\n\";\n    std::cout << r2.get_name() << \": \" << r2.get_value() << \"\\n\";\n    std::cout << r3.get_name() << \": \" << r3.get_value() << \"\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1829,9 +2025,13 @@
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nCreate compile-time lookup tables for trigonometric functions used in autonomous vehicle trajectory planning using constexpr lambdas.\n\n**Answer:**\n```cpp\n#include <iostream>\n#include <array>\n#include <cmath>\n\n// constexpr pi\nconstexpr double PI = 3.14159265358979323846;\n\n// Generate sine lookup table at compile time\ntemplate<size_t N>\nconstexpr auto generate_sin_table() {\n    std::array<double, N> table{};\n\n    constexpr auto sine = [](double angle) {\n        // Use Taylor series for constexpr sine (simplified)\n        // For actual use, use std::sin (constexpr in C++26)\n        double x = angle;\n        double term = x;\n        double result = term;\n\n        for (int i = 1; i < 10; ++i) {\n            term *= -x * x / ((2 * i) * (2 * i + 1));\n            result += term;\n        }\n\n        return result;\n    };\n\n    for (size_t i = 0; i < N; ++i) {\n        double angle = (static_cast<double>(i) / N) * 2 * PI;\n        table[i] = sine(angle);\n    }\n\n    return table;\n}\n\n// Compile-time constant\nconstexpr auto SIN_TABLE = generate_sin_table<360>();\n\n// Fast sine lookup\ndouble fast_sin(double degrees) {\n    int index = static_cast<int>(degrees) % 360;\n    if (index < 0) index += 360;\n    return SIN_TABLE[index];\n}\n\nint main() {\n    std::cout << \"Compile-time sine table (first 10 entries):\\n\";\n    for (int i = 0; i < 10; ++i) {\n        std::cout << \"sin(\" << i << \"°) ≈ \" << SIN_TABLE[i] << \"\\n\";\n    }\n\n    std::cout << \"\\nFast lookup:\\n\";\n    std::cout << \"sin(30°) ≈ \" << fast_sin(30) << \"\\n\";\n    std::cout << \"sin(90°) ≈ \" << fast_sin(90) << \"\\n\";\n\n    // Can be used in constant expressions\n    static_assert(SIN_TABLE[0] < 0.1);  // sin(0) ≈ 0\n\n    return 0;\n}\n```\n\n**Explanation:** constexpr lambda enables compile-time generation of lookup tables, eliminating runtime computation overhead.\n\n---",
+          "description": "**Difficulty:** Medium\n\nCreate compile-time lookup tables for trigonometric functions used in autonomous vehicle trajectory planning using constexpr lambdas.",
+          "full_content": "**Difficulty:** Medium\n\nCreate compile-time lookup tables for trigonometric functions used in autonomous vehicle trajectory planning using constexpr lambdas.\n\n**Answer:**\n\n\n**Explanation:** constexpr lambda enables compile-time generation of lookup tables, eliminating runtime computation overhead.",
           "code": "#include <iostream>\n#include <array>\n#include <cmath>\n\n// constexpr pi\nconstexpr double PI = 3.14159265358979323846;\n\n// Generate sine lookup table at compile time\ntemplate<size_t N>\nconstexpr auto generate_sin_table() {\n    std::array<double, N> table{};\n\n    constexpr auto sine = [](double angle) {\n        // Use Taylor series for constexpr sine (simplified)\n        // For actual use, use std::sin (constexpr in C++26)\n        double x = angle;\n        double term = x;\n        double result = term;\n\n        for (int i = 1; i < 10; ++i) {\n            term *= -x * x / ((2 * i) * (2 * i + 1));\n            result += term;\n        }\n\n        return result;\n    };\n\n    for (size_t i = 0; i < N; ++i) {\n        double angle = (static_cast<double>(i) / N) * 2 * PI;\n        table[i] = sine(angle);\n    }\n\n    return table;\n}\n\n// Compile-time constant\nconstexpr auto SIN_TABLE = generate_sin_table<360>();\n\n// Fast sine lookup\ndouble fast_sin(double degrees) {\n    int index = static_cast<int>(degrees) % 360;\n    if (index < 0) index += 360;\n    return SIN_TABLE[index];\n}\n\nint main() {\n    std::cout << \"Compile-time sine table (first 10 entries):\\n\";\n    for (int i = 0; i < 10; ++i) {\n        std::cout << \"sin(\" << i << \"°) ≈ \" << SIN_TABLE[i] << \"\\n\";\n    }\n\n    std::cout << \"\\nFast lookup:\\n\";\n    std::cout << \"sin(30°) ≈ \" << fast_sin(30) << \"\\n\";\n    std::cout << \"sin(90°) ≈ \" << fast_sin(90) << \"\\n\";\n\n    // Can be used in constant expressions\n    static_assert(SIN_TABLE[0] < 0.1);  // sin(0) ≈ 0\n\n    return 0;\n}",
+          "answer": "cpp\n#include <iostream>\n#include <array>\n#include <cmath>\n\n// constexpr pi\nconstexpr double PI = 3.14159265358979323846;\n\n// Generate sine lookup table at compile time\ntemplate<size_t N>\nconstexpr auto generate_sin_table() {\n    std::array<double, N> table{};\n\n    constexpr auto sine = [](double angle) {\n        // Use Taylor series for constexpr sine (simplified)\n        // For actual use, use std::sin (constexpr in C++26)\n        double x = angle;\n        double term = x;\n        double result = term;\n\n        for (int i = 1; i < 10; ++i) {\n            term *= -x * x / ((2 * i) * (2 * i + 1));\n            result += term;\n        }\n\n        return result;\n    };\n\n    for (size_t i = 0; i < N; ++i) {\n        double angle = (static_cast<double>(i) / N) * 2 * PI;\n        table[i] = sine(angle);\n    }\n\n    return table;\n}\n\n// Compile-time constant\nconstexpr auto SIN_TABLE = generate_sin_table<360>();\n\n// Fast sine lookup\ndouble fast_sin(double degrees) {\n    int index = static_cast<int>(degrees) % 360;\n    if (index < 0) index += 360;\n    return SIN_TABLE[index];\n}\n\nint main() {\n    std::cout << \"Compile-time sine table (first 10 entries):\\n\";\n    for (int i = 0; i < 10; ++i) {\n        std::cout << \"sin(\" << i << \"°) ≈ \" << SIN_TABLE[i] << \"\\n\";\n    }\n\n    std::cout << \"\\nFast lookup:\\n\";\n    std::cout << \"sin(30°) ≈ \" << fast_sin(30) << \"\\n\";\n    std::cout << \"sin(90°) ≈ \" << fast_sin(90) << \"\\n\";\n\n    // Can be used in constant expressions\n    static_assert(SIN_TABLE[0] < 0.1);  // sin(0) ≈ 0\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1839,9 +2039,13 @@
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nImplement a fast logger using std::to_chars that formats sensor readings without allocations.\n\n**Answer:**\n```cpp\n#include <charconv>\n#include <string_view>\n#include <iostream>\n#include <chrono>\n#include <vector>\n\nclass FastLogger {\n    char buffer[1024];\n    char* current;\n\npublic:\n    FastLogger() : current(buffer) {}\n\n    void reset() { current = buffer; }\n\n    void add(std::string_view str) {\n        size_t len = str.size();\n        std::copy(str.begin(), str.end(), current);\n        current += len;\n    }\n\n    void add(int value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    void add(double value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    std::string_view get_log() const {\n        return std::string_view(buffer, current - buffer);\n    }\n\n    void flush() {\n        std::cout << get_log();\n        reset();\n    }\n};\n\nstruct SensorReading {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\nint main() {\n    std::vector<SensorReading> readings = {\n        {\"LIDAR\", 12.456, 1000},\n        {\"Camera\", 30.123, 1001},\n        {\"RADAR\", 45.678, 1002},\n        {\"GPS\", 100.234, 1003}\n    };\n\n    FastLogger logger;\n\n    auto start = std::chrono::high_resolution_clock::now();\n\n    for (const auto& reading : readings) {\n        logger.add(\"[\");\n        logger.add(reading.timestamp);\n        logger.add(\"] \");\n        logger.add(reading.name);\n        logger.add(\": \");\n        logger.add(reading.value);\n        logger.add(\"\\n\");\n    }\n\n    auto end = std::chrono::high_resolution_clock::now();\n    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);\n\n    logger.flush();\n    std::cout << \"\\nLogging took \" << duration.count() << \" μs\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** std::to_chars provides zero-allocation, high-performance numeric formatting for logging systems.\n\n---",
+          "description": "**Difficulty:** Medium\n\nImplement a fast logger using std::to_chars that formats sensor readings without allocations.",
+          "full_content": "**Difficulty:** Medium\n\nImplement a fast logger using std::to_chars that formats sensor readings without allocations.\n\n**Answer:**\n\n\n**Explanation:** std::to_chars provides zero-allocation, high-performance numeric formatting for logging systems.",
           "code": "#include <charconv>\n#include <string_view>\n#include <iostream>\n#include <chrono>\n#include <vector>\n\nclass FastLogger {\n    char buffer[1024];\n    char* current;\n\npublic:\n    FastLogger() : current(buffer) {}\n\n    void reset() { current = buffer; }\n\n    void add(std::string_view str) {\n        size_t len = str.size();\n        std::copy(str.begin(), str.end(), current);\n        current += len;\n    }\n\n    void add(int value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    void add(double value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    std::string_view get_log() const {\n        return std::string_view(buffer, current - buffer);\n    }\n\n    void flush() {\n        std::cout << get_log();\n        reset();\n    }\n};\n\nstruct SensorReading {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\nint main() {\n    std::vector<SensorReading> readings = {\n        {\"LIDAR\", 12.456, 1000},\n        {\"Camera\", 30.123, 1001},\n        {\"RADAR\", 45.678, 1002},\n        {\"GPS\", 100.234, 1003}\n    };\n\n    FastLogger logger;\n\n    auto start = std::chrono::high_resolution_clock::now();\n\n    for (const auto& reading : readings) {\n        logger.add(\"[\");\n        logger.add(reading.timestamp);\n        logger.add(\"] \");\n        logger.add(reading.name);\n        logger.add(\": \");\n        logger.add(reading.value);\n        logger.add(\"\\n\");\n    }\n\n    auto end = std::chrono::high_resolution_clock::now();\n    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);\n\n    logger.flush();\n    std::cout << \"\\nLogging took \" << duration.count() << \" μs\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <charconv>\n#include <string_view>\n#include <iostream>\n#include <chrono>\n#include <vector>\n\nclass FastLogger {\n    char buffer[1024];\n    char* current;\n\npublic:\n    FastLogger() : current(buffer) {}\n\n    void reset() { current = buffer; }\n\n    void add(std::string_view str) {\n        size_t len = str.size();\n        std::copy(str.begin(), str.end(), current);\n        current += len;\n    }\n\n    void add(int value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    void add(double value) {\n        auto [ptr, ec] = std::to_chars(current, buffer + sizeof(buffer), value);\n        if (ec == std::errc{}) {\n            current = ptr;\n        }\n    }\n\n    std::string_view get_log() const {\n        return std::string_view(buffer, current - buffer);\n    }\n\n    void flush() {\n        std::cout << get_log();\n        reset();\n    }\n};\n\nstruct SensorReading {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\nint main() {\n    std::vector<SensorReading> readings = {\n        {\"LIDAR\", 12.456, 1000},\n        {\"Camera\", 30.123, 1001},\n        {\"RADAR\", 45.678, 1002},\n        {\"GPS\", 100.234, 1003}\n    };\n\n    FastLogger logger;\n\n    auto start = std::chrono::high_resolution_clock::now();\n\n    for (const auto& reading : readings) {\n        logger.add(\"[\");\n        logger.add(reading.timestamp);\n        logger.add(\"] \");\n        logger.add(reading.name);\n        logger.add(\": \");\n        logger.add(reading.value);\n        logger.add(\"\\n\");\n    }\n\n    auto end = std::chrono::high_resolution_clock::now();\n    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);\n\n    logger.flush();\n    std::cout << \"\\nLogging took \" << duration.count() << \" μs\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1849,9 +2053,13 @@
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "**Difficulty:** Hard",
-          "full_content": "**Difficulty:** Hard\n\nImplement a function composer using fold expressions that chains multiple transformation functions.\n\n**Answer:**\n```cpp\n#include <iostream>\n#include <functional>\n\n// Compose functions using fold expressions\ntemplate<typename... Funcs>\nauto compose(Funcs... funcs) {\n    return [=](auto x) {\n        // Right fold: f(g(h(x)))\n        return (... (funcs(x)));  // Error: this doesn't work!\n\n        // Need to manually chain\n    };\n}\n\n// Better approach: using fold with function call chaining\ntemplate<typename T, typename... Funcs>\nauto apply_all(T value, Funcs... funcs) {\n    // Left fold that threads value through functions\n    T result = value;\n    ((result = funcs(result)), ...);\n    return result;\n}\n\n// Alternative: using fold to build composed function\ntemplate<typename... Funcs>\nauto compose_right(Funcs... funcs) {\n    return [=](auto x) {\n        auto apply = [&](auto&& f, auto&& val) {\n            return f(val);\n        };\n\n        // Store in tuple and apply in reverse\n        auto tuple = std::make_tuple(funcs...);\n\n        // For simplicity, use apply_all approach\n        auto result = x;\n        ((result = funcs(result)), ...);\n        return result;\n    };\n}\n\nint main() {\n    auto add_10 = [](int x) { return x + 10; };\n    auto multiply_2 = [](int x) { return x * 2; };\n    auto subtract_5 = [](int x) { return x - 5; };\n\n    // Apply functions in sequence\n    int result = apply_all(5, add_10, multiply_2, subtract_5);\n    // (((5 + 10) * 2) - 5) = 25\n\n    std::cout << \"Result: \" << result << \"\\n\";\n\n    // Composed function\n    auto composed = compose_right(add_10, multiply_2, subtract_5);\n    std::cout << \"Composed: \" << composed(5) << \"\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** Fold expressions enable compact function composition, though true composition requires careful ordering.\n\n---",
+          "description": "**Difficulty:** Hard\n\nImplement a function composer using fold expressions that chains multiple transformation functions.",
+          "full_content": "**Difficulty:** Hard\n\nImplement a function composer using fold expressions that chains multiple transformation functions.\n\n**Answer:**\n\n\n**Explanation:** Fold expressions enable compact function composition, though true composition requires careful ordering.",
           "code": "#include <iostream>\n#include <functional>\n\n// Compose functions using fold expressions\ntemplate<typename... Funcs>\nauto compose(Funcs... funcs) {\n    return [=](auto x) {\n        // Right fold: f(g(h(x)))\n        return (... (funcs(x)));  // Error: this doesn't work!\n\n        // Need to manually chain\n    };\n}\n\n// Better approach: using fold with function call chaining\ntemplate<typename T, typename... Funcs>\nauto apply_all(T value, Funcs... funcs) {\n    // Left fold that threads value through functions\n    T result = value;\n    ((result = funcs(result)), ...);\n    return result;\n}\n\n// Alternative: using fold to build composed function\ntemplate<typename... Funcs>\nauto compose_right(Funcs... funcs) {\n    return [=](auto x) {\n        auto apply = [&](auto&& f, auto&& val) {\n            return f(val);\n        };\n\n        // Store in tuple and apply in reverse\n        auto tuple = std::make_tuple(funcs...);\n\n        // For simplicity, use apply_all approach\n        auto result = x;\n        ((result = funcs(result)), ...);\n        return result;\n    };\n}\n\nint main() {\n    auto add_10 = [](int x) { return x + 10; };\n    auto multiply_2 = [](int x) { return x * 2; };\n    auto subtract_5 = [](int x) { return x - 5; };\n\n    // Apply functions in sequence\n    int result = apply_all(5, add_10, multiply_2, subtract_5);\n    // (((5 + 10) * 2) - 5) = 25\n\n    std::cout << \"Result: \" << result << \"\\n\";\n\n    // Composed function\n    auto composed = compose_right(add_10, multiply_2, subtract_5);\n    std::cout << \"Composed: \" << composed(5) << \"\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <iostream>\n#include <functional>\n\n// Compose functions using fold expressions\ntemplate<typename... Funcs>\nauto compose(Funcs... funcs) {\n    return [=](auto x) {\n        // Right fold: f(g(h(x)))\n        return (... (funcs(x)));  // Error: this doesn't work!\n\n        // Need to manually chain\n    };\n}\n\n// Better approach: using fold with function call chaining\ntemplate<typename T, typename... Funcs>\nauto apply_all(T value, Funcs... funcs) {\n    // Left fold that threads value through functions\n    T result = value;\n    ((result = funcs(result)), ...);\n    return result;\n}\n\n// Alternative: using fold to build composed function\ntemplate<typename... Funcs>\nauto compose_right(Funcs... funcs) {\n    return [=](auto x) {\n        auto apply = [&](auto&& f, auto&& val) {\n            return f(val);\n        };\n\n        // Store in tuple and apply in reverse\n        auto tuple = std::make_tuple(funcs...);\n\n        // For simplicity, use apply_all approach\n        auto result = x;\n        ((result = funcs(result)), ...);\n        return result;\n    };\n}\n\nint main() {\n    auto add_10 = [](int x) { return x + 10; };\n    auto multiply_2 = [](int x) { return x * 2; };\n    auto subtract_5 = [](int x) { return x - 5; };\n\n    // Apply functions in sequence\n    int result = apply_all(5, add_10, multiply_2, subtract_5);\n    // (((5 + 10) * 2) - 5) = 25\n\n    std::cout << \"Result: \" << result << \"\\n\";\n\n    // Composed function\n    auto composed = compose_right(add_10, multiply_2, subtract_5);\n    std::cout << \"Composed: \" << composed(5) << \"\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1859,9 +2067,13 @@
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "**Difficulty:** Medium",
-          "full_content": "**Difficulty:** Medium\n\nCreate a type-safe message system using std::variant with CTAD for autonomous vehicle communication.\n\n**Answer:**\n```cpp\n#include <variant>\n#include <string>\n#include <iostream>\n\nstruct SpeedCommand {\n    double speed;\n};\n\nstruct StopCommand {\n    std::string reason;\n};\n\nstruct TurnCommand {\n    double angle;\n    std::string direction;\n};\n\nusing Command = std::variant<SpeedCommand, StopCommand, TurnCommand>;\n\nclass CommandHandler {\npublic:\n    void handle(const Command& cmd) {\n        std::visit([](const auto& c) {\n            using T = std::decay_t<decltype(c)>;\n\n            if constexpr (std::is_same_v<T, SpeedCommand>) {\n                std::cout << \"Setting speed to \" << c.speed << \" km/h\\n\";\n            }\n            else if constexpr (std::is_same_v<T, StopCommand>) {\n                std::cout << \"Stopping: \" << c.reason << \"\\n\";\n            }\n            else if constexpr (std::is_same_v<T, TurnCommand>) {\n                std::cout << \"Turning \" << c.angle << \"° \" << c.direction << \"\\n\";\n            }\n        }, cmd);\n    }\n};\n\nint main() {\n    CommandHandler handler;\n\n    // CTAD for variant construction\n    Command cmd1 = SpeedCommand{60.0};\n    Command cmd2 = StopCommand{\"Obstacle detected\"};\n    Command cmd3 = TurnCommand{15.0, \"left\"};\n\n    handler.handle(cmd1);\n    handler.handle(cmd2);\n    handler.handle(cmd3);\n\n    return 0;\n}\n```\n\n**Explanation:** std::variant with CTAD provides type-safe message passing without inheritance overhead.\n\n---",
+          "description": "**Difficulty:** Medium\n\nCreate a type-safe message system using std::variant with CTAD for autonomous vehicle communication.",
+          "full_content": "**Difficulty:** Medium\n\nCreate a type-safe message system using std::variant with CTAD for autonomous vehicle communication.\n\n**Answer:**\n\n\n**Explanation:** std::variant with CTAD provides type-safe message passing without inheritance overhead.",
           "code": "#include <variant>\n#include <string>\n#include <iostream>\n\nstruct SpeedCommand {\n    double speed;\n};\n\nstruct StopCommand {\n    std::string reason;\n};\n\nstruct TurnCommand {\n    double angle;\n    std::string direction;\n};\n\nusing Command = std::variant<SpeedCommand, StopCommand, TurnCommand>;\n\nclass CommandHandler {\npublic:\n    void handle(const Command& cmd) {\n        std::visit([](const auto& c) {\n            using T = std::decay_t<decltype(c)>;\n\n            if constexpr (std::is_same_v<T, SpeedCommand>) {\n                std::cout << \"Setting speed to \" << c.speed << \" km/h\\n\";\n            }\n            else if constexpr (std::is_same_v<T, StopCommand>) {\n                std::cout << \"Stopping: \" << c.reason << \"\\n\";\n            }\n            else if constexpr (std::is_same_v<T, TurnCommand>) {\n                std::cout << \"Turning \" << c.angle << \"° \" << c.direction << \"\\n\";\n            }\n        }, cmd);\n    }\n};\n\nint main() {\n    CommandHandler handler;\n\n    // CTAD for variant construction\n    Command cmd1 = SpeedCommand{60.0};\n    Command cmd2 = StopCommand{\"Obstacle detected\"};\n    Command cmd3 = TurnCommand{15.0, \"left\"};\n\n    handler.handle(cmd1);\n    handler.handle(cmd2);\n    handler.handle(cmd3);\n\n    return 0;\n}",
+          "answer": "cpp\n#include <variant>\n#include <string>\n#include <iostream>\n\nstruct SpeedCommand {\n    double speed;\n};\n\nstruct StopCommand {\n    std::string reason;\n};\n\nstruct TurnCommand {\n    double angle;\n    std::string direction;\n};\n\nusing Command = std::variant<SpeedCommand, StopCommand, TurnCommand>;\n\nclass CommandHandler {\npublic:\n    void handle(const Command& cmd) {\n        std::visit([](const auto& c) {\n            using T = std::decay_t<decltype(c)>;\n\n            if constexpr (std::is_same_v<T, SpeedCommand>) {\n                std::cout << \"Setting speed to \" << c.speed << \" km/h\\n\";\n            }\n            else if constexpr (std::is_same_v<T, StopCommand>) {\n                std::cout << \"Stopping: \" << c.reason << \"\\n\";\n            }\n            else if constexpr (std::is_same_v<T, TurnCommand>) {\n                std::cout << \"Turning \" << c.angle << \"° \" << c.direction << \"\\n\";\n            }\n        }, cmd);\n    }\n};\n\nint main() {\n    CommandHandler handler;\n\n    // CTAD for variant construction\n    Command cmd1 = SpeedCommand{60.0};\n    Command cmd2 = StopCommand{\"Obstacle detected\"};\n    Command cmd3 = TurnCommand{15.0, \"left\"};\n\n    handler.handle(cmd1);\n    handler.handle(cmd2);\n    handler.handle(cmd3);\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1869,9 +2081,13 @@
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "**Difficulty:** Hard",
-          "full_content": "**Difficulty:** Hard\n\nImplement sensor fusion that combines multiple sensor readings using parallel std::reduce.\n\n**Answer:**\n```cpp\n#include <vector>\n#include <numeric>\n#include <execution>\n#include <iostream>\n#include <random>\n\nstruct SensorReading {\n    double value;\n    double confidence;  // 0.0 to 1.0\n\n    SensorReading operator+(const SensorReading& other) const {\n        // Weighted average based on confidence\n        double total_conf = confidence + other.confidence;\n        if (total_conf == 0) return {0, 0};\n\n        double fused_value = (value * confidence + other.value * other.confidence) / total_conf;\n        double fused_conf = (confidence + other.confidence) / 2.0;\n\n        return {fused_value, fused_conf};\n    }\n};\n\nint main() {\n    // Generate random sensor readings\n    std::vector<SensorReading> readings;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> val_dis(50.0, 100.0);\n    std::uniform_real_distribution<> conf_dis(0.7, 1.0);\n\n    for (int i = 0; i < 1000; ++i) {\n        readings.push_back({val_dis(gen), conf_dis(gen)});\n    }\n\n    // Sequential fusion\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    SensorReading fused_seq = std::reduce(\n        std::execution::seq,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_seq = std::chrono::high_resolution_clock::now();\n\n    // Parallel fusion\n    auto start_par = std::chrono::high_resolution_clock::now();\n    SensorReading fused_par = std::reduce(\n        std::execution::par,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_par = std::chrono::high_resolution_clock::now();\n\n    auto dur_seq = std::chrono::duration_cast<std::chrono::microseconds>(end_seq - start_seq);\n    auto dur_par = std::chrono::duration_cast<std::chrono::microseconds>(end_par - start_par);\n\n    std::cout << \"Fused reading: \" << fused_par.value\n              << \" (confidence: \" << fused_par.confidence << \")\\n\";\n    std::cout << \"Sequential: \" << dur_seq.count() << \" μs\\n\";\n    std::cout << \"Parallel: \" << dur_par.count() << \" μs\\n\";\n\n    return 0;\n}\n```\n\n**Explanation:** Parallel reduce efficiently combines large datasets using associative operations.\n\n---",
+          "description": "**Difficulty:** Hard\n\nImplement sensor fusion that combines multiple sensor readings using parallel std::reduce.",
+          "full_content": "**Difficulty:** Hard\n\nImplement sensor fusion that combines multiple sensor readings using parallel std::reduce.\n\n**Answer:**\n\n\n**Explanation:** Parallel reduce efficiently combines large datasets using associative operations.",
           "code": "#include <vector>\n#include <numeric>\n#include <execution>\n#include <iostream>\n#include <random>\n\nstruct SensorReading {\n    double value;\n    double confidence;  // 0.0 to 1.0\n\n    SensorReading operator+(const SensorReading& other) const {\n        // Weighted average based on confidence\n        double total_conf = confidence + other.confidence;\n        if (total_conf == 0) return {0, 0};\n\n        double fused_value = (value * confidence + other.value * other.confidence) / total_conf;\n        double fused_conf = (confidence + other.confidence) / 2.0;\n\n        return {fused_value, fused_conf};\n    }\n};\n\nint main() {\n    // Generate random sensor readings\n    std::vector<SensorReading> readings;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> val_dis(50.0, 100.0);\n    std::uniform_real_distribution<> conf_dis(0.7, 1.0);\n\n    for (int i = 0; i < 1000; ++i) {\n        readings.push_back({val_dis(gen), conf_dis(gen)});\n    }\n\n    // Sequential fusion\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    SensorReading fused_seq = std::reduce(\n        std::execution::seq,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_seq = std::chrono::high_resolution_clock::now();\n\n    // Parallel fusion\n    auto start_par = std::chrono::high_resolution_clock::now();\n    SensorReading fused_par = std::reduce(\n        std::execution::par,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_par = std::chrono::high_resolution_clock::now();\n\n    auto dur_seq = std::chrono::duration_cast<std::chrono::microseconds>(end_seq - start_seq);\n    auto dur_par = std::chrono::duration_cast<std::chrono::microseconds>(end_par - start_par);\n\n    std::cout << \"Fused reading: \" << fused_par.value\n              << \" (confidence: \" << fused_par.confidence << \")\\n\";\n    std::cout << \"Sequential: \" << dur_seq.count() << \" μs\\n\";\n    std::cout << \"Parallel: \" << dur_par.count() << \" μs\\n\";\n\n    return 0;\n}",
+          "answer": "cpp\n#include <vector>\n#include <numeric>\n#include <execution>\n#include <iostream>\n#include <random>\n\nstruct SensorReading {\n    double value;\n    double confidence;  // 0.0 to 1.0\n\n    SensorReading operator+(const SensorReading& other) const {\n        // Weighted average based on confidence\n        double total_conf = confidence + other.confidence;\n        if (total_conf == 0) return {0, 0};\n\n        double fused_value = (value * confidence + other.value * other.confidence) / total_conf;\n        double fused_conf = (confidence + other.confidence) / 2.0;\n\n        return {fused_value, fused_conf};\n    }\n};\n\nint main() {\n    // Generate random sensor readings\n    std::vector<SensorReading> readings;\n    std::random_device rd;\n    std::mt19937 gen(rd());\n    std::uniform_real_distribution<> val_dis(50.0, 100.0);\n    std::uniform_real_distribution<> conf_dis(0.7, 1.0);\n\n    for (int i = 0; i < 1000; ++i) {\n        readings.push_back({val_dis(gen), conf_dis(gen)});\n    }\n\n    // Sequential fusion\n    auto start_seq = std::chrono::high_resolution_clock::now();\n    SensorReading fused_seq = std::reduce(\n        std::execution::seq,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_seq = std::chrono::high_resolution_clock::now();\n\n    // Parallel fusion\n    auto start_par = std::chrono::high_resolution_clock::now();\n    SensorReading fused_par = std::reduce(\n        std::execution::par,\n        readings.begin(),\n        readings.end(),\n        SensorReading{0, 0}\n    );\n    auto end_par = std::chrono::high_resolution_clock::now();\n\n    auto dur_seq = std::chrono::duration_cast<std::chrono::microseconds>(end_seq - start_seq);\n    auto dur_par = std::chrono::duration_cast<std::chrono::microseconds>(end_par - start_par);\n\n    std::cout << \"Fused reading: \" << fused_par.value\n              << \" (confidence: \" << fused_par.confidence << \")\\n\";\n    std::cout << \"Sequential: \" << dur_seq.count() << \" μs\\n\";\n    std::cout << \"Parallel: \" << dur_par.count() << \" μs\\n\";\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -1879,9 +2095,13 @@
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "**Difficulty:** Hard",
-          "full_content": "**Difficulty:** Hard\n\nCreate a comprehensive example that uses multiple C++17 features together in a realistic autonomous vehicle scenario.\n\n**Answer:**\n```cpp\n#include <iostream>\n#include <vector>\n#include <optional>\n#include <variant>\n#include <string_view>\n#include <filesystem>\n#include <algorithm>\n#include <execution>\n#include <map>\n\nnamespace fs = std::filesystem;\n\n// Structured binding ready struct\nstruct SensorData {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\n// Variant for different message types\nusing Message = std::variant<SensorData, std::string>;\n\n// CTAD-enabled container\ntemplate<typename T>\nclass DataBuffer {\n    std::vector<T> data;\n\npublic:\n    DataBuffer(std::initializer_list<T> init) : data(init) {}\n\n    // Try to find element\n    [[nodiscard]] std::optional<T> find_if(auto pred) const {\n        auto it = std::find_if(data.begin(), data.end(), pred);\n        if (it != data.end()) return *it;\n        return std::nullopt;\n    }\n\n    void process_parallel() {\n        std::for_each(std::execution::par, data.begin(), data.end(),\n                      [](T& item) { /* process */ });\n    }\n\n    auto begin() { return data.begin(); }\n    auto end() { return data.end(); }\n};\n\n// Deduction guide\ntemplate<typename T>\nDataBuffer(std::initializer_list<T>) -> DataBuffer<T>;\n\n// Fold expression utility\ntemplate<typename... Sensors>\nbool all_ready(const Sensors&... sensors) {\n    return (... && sensors.is_ready());\n}\n\n// constexpr lambda for compile-time config\nconstexpr auto get_max_speed = []() { return 120; };\n\nint main() {\n    // Structured bindings\n    auto [name, value, time] = SensorData{\"LIDAR\", 42.5, 1000};\n    std::cout << \"Sensor: \" << name << \" = \" << value << \"\\n\";\n\n    // CTAD\n    DataBuffer buffer{SensorData{\"S1\", 10, 100},\n                      SensorData{\"S2\", 20, 200}};\n\n    // std::optional\n    auto found = buffer.find_if([](const SensorData& s) {\n        return s.value > 15;\n    });\n\n    if (found) {\n        std::cout << \"Found: \" << found->name << \"\\n\";\n    }\n\n    // Nested namespace\n    namespace config::vehicle::limits {\n        inline constexpr int max_speed = 120;\n    }\n\n    // constexpr lambda\n    static_assert(get_max_speed() == 120);\n\n    // if constexpr\n    auto process = [](auto val) {\n        if constexpr (std::is_integral_v<decltype(val)>) {\n            return val * 2;\n        } else {\n            return val;\n        }\n    };\n\n    std::cout << \"Process int: \" << process(42) << \"\\n\";\n    std::cout << \"Process double: \" << process(3.14) << \"\\n\";\n\n    // std::variant with std::visit\n    std::vector<Message> messages = {\n        SensorData{\"Temp\", 25.0, 500},\n        std::string(\"System ready\"),\n        SensorData{\"Speed\", 60.0, 501}\n    };\n\n    for (const auto& msg : messages) {\n        std::visit([](const auto& m) {\n            using T = std::decay_t<decltype(m)>;\n            if constexpr (std::is_same_v<T, SensorData>) {\n                std::cout << \"Data: \" << m.name << \" = \" << m.value << \"\\n\";\n            } else {\n                std::cout << \"Message: \" << m << \"\\n\";\n            }\n        }, msg);\n    }\n\n    return 0;\n}\n```\n\n**Explanation:** This example integrates CTAD, structured bindings, optional, variant, if constexpr, fold expressions, nested namespaces, inline variables, constexpr lambda, and parallel algorithms in a cohesive autonomous vehicle scenario.\n\n---",
+          "description": "**Difficulty:** Hard\n\nCreate a comprehensive example that uses multiple C++17 features together in a realistic autonomous vehicle scenario.",
+          "full_content": "**Difficulty:** Hard\n\nCreate a comprehensive example that uses multiple C++17 features together in a realistic autonomous vehicle scenario.\n\n**Answer:**\n\n\n**Explanation:** This example integrates CTAD, structured bindings, optional, variant, if constexpr, fold expressions, nested namespaces, inline variables, constexpr lambda, and parallel algorithms in a cohesive autonomous vehicle scenario.",
           "code": "#include <iostream>\n#include <vector>\n#include <optional>\n#include <variant>\n#include <string_view>\n#include <filesystem>\n#include <algorithm>\n#include <execution>\n#include <map>\n\nnamespace fs = std::filesystem;\n\n// Structured binding ready struct\nstruct SensorData {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\n// Variant for different message types\nusing Message = std::variant<SensorData, std::string>;\n\n// CTAD-enabled container\ntemplate<typename T>\nclass DataBuffer {\n    std::vector<T> data;\n\npublic:\n    DataBuffer(std::initializer_list<T> init) : data(init) {}\n\n    // Try to find element\n    [[nodiscard]] std::optional<T> find_if(auto pred) const {\n        auto it = std::find_if(data.begin(), data.end(), pred);\n        if (it != data.end()) return *it;\n        return std::nullopt;\n    }\n\n    void process_parallel() {\n        std::for_each(std::execution::par, data.begin(), data.end(),\n                      [](T& item) { /* process */ });\n    }\n\n    auto begin() { return data.begin(); }\n    auto end() { return data.end(); }\n};\n\n// Deduction guide\ntemplate<typename T>\nDataBuffer(std::initializer_list<T>) -> DataBuffer<T>;\n\n// Fold expression utility\ntemplate<typename... Sensors>\nbool all_ready(const Sensors&... sensors) {\n    return (... && sensors.is_ready());\n}\n\n// constexpr lambda for compile-time config\nconstexpr auto get_max_speed = []() { return 120; };\n\nint main() {\n    // Structured bindings\n    auto [name, value, time] = SensorData{\"LIDAR\", 42.5, 1000};\n    std::cout << \"Sensor: \" << name << \" = \" << value << \"\\n\";\n\n    // CTAD\n    DataBuffer buffer{SensorData{\"S1\", 10, 100},\n                      SensorData{\"S2\", 20, 200}};\n\n    // std::optional\n    auto found = buffer.find_if([](const SensorData& s) {\n        return s.value > 15;\n    });\n\n    if (found) {\n        std::cout << \"Found: \" << found->name << \"\\n\";\n    }\n\n    // Nested namespace\n    namespace config::vehicle::limits {\n        inline constexpr int max_speed = 120;\n    }\n\n    // constexpr lambda\n    static_assert(get_max_speed() == 120);\n\n    // if constexpr\n    auto process = [](auto val) {\n        if constexpr (std::is_integral_v<decltype(val)>) {\n            return val * 2;\n        } else {\n            return val;\n        }\n    };\n\n    std::cout << \"Process int: \" << process(42) << \"\\n\";\n    std::cout << \"Process double: \" << process(3.14) << \"\\n\";\n\n    // std::variant with std::visit\n    std::vector<Message> messages = {\n        SensorData{\"Temp\", 25.0, 500},\n        std::string(\"System ready\"),\n        SensorData{\"Speed\", 60.0, 501}\n    };\n\n    for (const auto& msg : messages) {\n        std::visit([](const auto& m) {\n            using T = std::decay_t<decltype(m)>;\n            if constexpr (std::is_same_v<T, SensorData>) {\n                std::cout << \"Data: \" << m.name << \" = \" << m.value << \"\\n\";\n            } else {\n                std::cout << \"Message: \" << m << \"\\n\";\n            }\n        }, msg);\n    }\n\n    return 0;\n}",
+          "answer": "cpp\n#include <iostream>\n#include <vector>\n#include <optional>\n#include <variant>\n#include <string_view>\n#include <filesystem>\n#include <algorithm>\n#include <execution>\n#include <map>\n\nnamespace fs = std::filesystem;\n\n// Structured binding ready struct\nstruct SensorData {\n    std::string name;\n    double value;\n    int timestamp;\n};\n\n// Variant for different message types\nusing Message = std::variant<SensorData, std::string>;\n\n// CTAD-enabled container\ntemplate<typename T>\nclass DataBuffer {\n    std::vector<T> data;\n\npublic:\n    DataBuffer(std::initializer_list<T> init) : data(init) {}\n\n    // Try to find element\n    [[nodiscard]] std::optional<T> find_if(auto pred) const {\n        auto it = std::find_if(data.begin(), data.end(), pred);\n        if (it != data.end()) return *it;\n        return std::nullopt;\n    }\n\n    void process_parallel() {\n        std::for_each(std::execution::par, data.begin(), data.end(),\n                      [](T& item) { /* process */ });\n    }\n\n    auto begin() { return data.begin(); }\n    auto end() { return data.end(); }\n};\n\n// Deduction guide\ntemplate<typename T>\nDataBuffer(std::initializer_list<T>) -> DataBuffer<T>;\n\n// Fold expression utility\ntemplate<typename... Sensors>\nbool all_ready(const Sensors&... sensors) {\n    return (... && sensors.is_ready());\n}\n\n// constexpr lambda for compile-time config\nconstexpr auto get_max_speed = []() { return 120; };\n\nint main() {\n    // Structured bindings\n    auto [name, value, time] = SensorData{\"LIDAR\", 42.5, 1000};\n    std::cout << \"Sensor: \" << name << \" = \" << value << \"\\n\";\n\n    // CTAD\n    DataBuffer buffer{SensorData{\"S1\", 10, 100},\n                      SensorData{\"S2\", 20, 200}};\n\n    // std::optional\n    auto found = buffer.find_if([](const SensorData& s) {\n        return s.value > 15;\n    });\n\n    if (found) {\n        std::cout << \"Found: \" << found->name << \"\\n\";\n    }\n\n    // Nested namespace\n    namespace config::vehicle::limits {\n        inline constexpr int max_speed = 120;\n    }\n\n    // constexpr lambda\n    static_assert(get_max_speed() == 120);\n\n    // if constexpr\n    auto process = [](auto val) {\n        if constexpr (std::is_integral_v<decltype(val)>) {\n            return val * 2;\n        } else {\n            return val;\n        }\n    };\n\n    std::cout << \"Process int: \" << process(42) << \"\\n\";\n    std::cout << \"Process double: \" << process(3.14) << \"\\n\";\n\n    // std::variant with std::visit\n    std::vector<Message> messages = {\n        SensorData{\"Temp\", 25.0, 500},\n        std::string(\"System ready\"),\n        SensorData{\"Speed\", 60.0, 501}\n    };\n\n    for (const auto& msg : messages) {\n        std::visit([](const auto& m) {\n            using T = std::decay_t<decltype(m)>;\n            if constexpr (std::is_same_v<T, SensorData>) {\n                std::cout << \"Data: \" << m.name << \" = \" << m.value << \"\\n\";\n            } else {\n                std::cout << \"Message: \" << m << \"\\n\";\n            }\n        }, msg);\n    }\n\n    return 0;\n}",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": []
@@ -2177,56 +2397,86 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::vector<int> data = {1, 2, 3, 4, 5};\nint product = std::reduce(std::execution::par, data.begin(), data.end(),\n                          1, std::multiplies<>());\nstd::cout << product;\n// What is printed?\n```",
-          "code": "std::vector<int> data = {1, 2, 3, 4, 5};\nint product = std::reduce(std::execution::par, data.begin(), data.end(),\n                          1, std::multiplies<>());\nstd::cout << product;\n// What is printed?",
+          "description": "",
+          "full_content": "**Answer:**\n```\n120\n```\n\n**Explanation:**\n- `std::reduce` with `std::execution::par` performs parallel reduction\n- Initial value is 1, operation is multiplication\n- Calculates: 1 × 1 × 2 × 3 × 4 × 5 = 120\n- Parallel execution doesn't affect result for associative operations\n- **Key Concept:** std::reduce with parallel policy enables efficient parallel reduction for associative operations like multiplication",
+          "code": "#include <iostream>\n#include <vector>\n#include <numeric>\n#include <execution>\nint main() {\n    std::vector<int> data = {1, 2, 3, 4, 5};\n    int product = std::reduce(std::execution::par, data.begin(), data.end(),\n                              1, std::multiplies<>());\n    std::cout << product;\n}",
+          "answer": "120",
+          "explanation": "- `std::reduce` with `std::execution::par` performs parallel reduction\n- Initial value is 1, operation is multiplication\n- Calculates: 1 × 1 × 2 × 3 × 4 × 5 = 120\n- Parallel execution doesn't affect result for associative operations\n- **Key Concept:** std::reduce with parallel policy enables efficient parallel reduction for associative operations like multiplication",
+          "key_concept": "std::reduce with parallel policy enables efficient parallel reduction for associative operations like multiplication",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "120"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::vector<int> data(100);\nint sum = 0;\nstd::for_each(std::execution::par, data.begin(), data.end(),\n              [&sum](int x) { sum += x; });\n// Is this safe? What is the problem?\n```",
-          "code": "std::vector<int> data(100);\nint sum = 0;\nstd::for_each(std::execution::par, data.begin(), data.end(),\n              [&sum](int x) { sum += x; });\n// Is this safe? What is the problem?",
+          "description": "",
+          "full_content": "**Answer:**\n```\nData race - undefined behavior\n```\n\n**Explanation:**\n- Multiple threads access `sum` concurrently without synchronization\n- `sum += x` is not atomic - read-modify-write race condition\n- Undefined behavior: sum may have incorrect value, or program may crash\n- Should use `std::reduce` instead, or protect `sum` with mutex (but defeats parallelism)\n- **Key Concept:** Parallel algorithms require thread-safe operations; avoid capturing mutable state by reference in parallel lambdas",
+          "code": "#include <vector>\n#include <algorithm>\n#include <execution>\nint main() {\n    std::vector<int> data(100);\n    int sum = 0;\n    std::for_each(std::execution::par, data.begin(), data.end(),\n                  [&sum](int x) { sum += x; });\n}",
+          "answer": "Data race - undefined behavior",
+          "explanation": "- Multiple threads access `sum` concurrently without synchronization\n- `sum += x` is not atomic - read-modify-write race condition\n- Undefined behavior: sum may have incorrect value, or program may crash\n- Should use `std::reduce` instead, or protect `sum` with mutex (but defeats parallelism)\n- **Key Concept:** Parallel algorithms require thread-safe operations; avoid capturing mutable state by reference in parallel lambdas",
+          "key_concept": "Parallel algorithms require thread-safe operations; avoid capturing mutable state by reference in parallel lambdas",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Data race - undefined behavior"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::vector<int> data(10);  // Small dataset\nstd::sort(std::execution::par, data.begin(), data.end());\n// Is parallel sort beneficial here? Why or why not?\n```",
-          "code": "std::vector<int> data(10);  // Small dataset\nstd::sort(std::execution::par, data.begin(), data.end());\n// Is parallel sort beneficial here? Why or why not?",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNot beneficial - overhead exceeds gains\n```\n\n**Explanation:**\n- Parallel execution has overhead: thread creation, synchronization, work distribution\n- For small datasets (10 elements), sequential sort is faster\n- Break-even point typically thousands to millions of elements (depends on hardware)\n- Parallel overhead can make small operations slower than sequential\n- **Key Concept:** Parallel algorithms beneficial only when data size justifies threading overhead; profile to find break-even point",
+          "code": "#include <vector>\n#include <algorithm>\n#include <execution>\nint main() {\n    std::vector<int> data(10);  // Small dataset\n    std::sort(std::execution::par, data.begin(), data.end());\n}",
+          "answer": "Not beneficial - overhead exceeds gains",
+          "explanation": "- Parallel execution has overhead: thread creation, synchronization, work distribution\n- For small datasets (10 elements), sequential sort is faster\n- Break-even point typically thousands to millions of elements (depends on hardware)\n- Parallel overhead can make small operations slower than sequential\n- **Key Concept:** Parallel algorithms beneficial only when data size justifies threading overhead; profile to find break-even point",
+          "key_concept": "Parallel algorithms beneficial only when data size justifies threading overhead; profile to find break-even point",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Not beneficial - overhead exceeds gains"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::mutex mtx;\nstd::vector<int> data(1000);\nstd::for_each(std::execution::par_unseq, data.begin(), data.end(),\n              [&](int x) {\n                  std::lock_guard lock(mtx);\n                  std::cout << x;\n              });\n// What is wrong with this code?\n```",
-          "code": "std::mutex mtx;\nstd::vector<int> data(1000);\nstd::for_each(std::execution::par_unseq, data.begin(), data.end(),\n              [&](int x) {\n                  std::lock_guard lock(mtx);\n                  std::cout << x;\n              });\n// What is wrong with this code?",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior - mutex not allowed with par_unseq\n```\n\n**Explanation:**\n- `std::execution::par_unseq` allows SIMD vectorization within threads\n- Vectorized code cannot use mutexes (blocking operations forbidden)\n- Using mutex with `par_unseq` violates standard requirements - undefined behavior\n- Should use `std::execution::par` if synchronization needed, or redesign to avoid shared state\n- **Key Concept:** par_unseq policy forbids blocking operations like mutexes; use only for lock-free, exception-free operations",
+          "code": "#include <vector>\n#include <algorithm>\n#include <execution>\n#include <mutex>\n#include <iostream>\nint main() {\n    std::mutex mtx;\n    std::vector<int> data(1000);\n    std::for_each(std::execution::par_unseq, data.begin(), data.end(),\n                  [&](int x) {\n                      std::lock_guard lock(mtx);\n                      std::cout << x;\n                  });\n}",
+          "answer": "Undefined behavior - mutex not allowed with par_unseq",
+          "explanation": "- `std::execution::par_unseq` allows SIMD vectorization within threads\n- Vectorized code cannot use mutexes (blocking operations forbidden)\n- Using mutex with `par_unseq` violates standard requirements - undefined behavior\n- Should use `std::execution::par` if synchronization needed, or redesign to avoid shared state\n- **Key Concept:** par_unseq policy forbids blocking operations like mutexes; use only for lock-free, exception-free operations",
+          "key_concept": "par_unseq policy forbids blocking operations like mutexes; use only for lock-free, exception-free operations",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior - mutex not allowed with par_unseq"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::vector<double> v = {1e10, 1.0, -1e10};\ndouble sum1 = std::accumulate(v.begin(), v.end(), 0.0);\ndouble sum2 = std::reduce(std::execution::par, v.begin(), v.end(), 0.0);\n// Are sum1 and sum2 guaranteed to be equal?\n```\n\n---",
-          "code": "std::vector<double> v = {1e10, 1.0, -1e10};\ndouble sum1 = std::accumulate(v.begin(), v.end(), 0.0);\ndouble sum2 = std::reduce(std::execution::par, v.begin(), v.end(), 0.0);\n// Are sum1 and sum2 guaranteed to be equal?",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNot guaranteed equal - may differ due to floating-point associativity\n```\n\n**Explanation:**\n- `std::accumulate` processes sequentially: ((1e10 + 1.0) - 1e10) = 1.0 (precision loss)\n- `std::reduce` may reorder: (1e10 - 1e10) + 1.0 = 1.0, or 1e10 + (1.0 - 1e10) = different result\n- Floating-point addition is not perfectly associative (rounding errors)\n- Parallel reduce trades determinism for performance\n- **Key Concept:** Parallel reduce may reorder operations; results differ for non-associative operations like floating-point arithmetic\n\n---\n\n\n## TOPIC: C++17 Parallel Algorithms - Execution Policies and Performance",
+          "code": "#include <vector>\n#include <numeric>\n#include <execution>\n#include <iostream>\nint main() {\n    std::vector<double> v = {1e10, 1.0, -1e10};\n    double sum1 = std::accumulate(v.begin(), v.end(), 0.0);\n    double sum2 = std::reduce(std::execution::par, v.begin(), v.end(), 0.0);\n    std::cout << \"accumulate: \" << sum1 << \" reduce: \" << sum2;\n}",
+          "answer": "Not guaranteed equal - may differ due to floating-point associativity",
+          "explanation": "- `std::accumulate` processes sequentially: ((1e10 + 1.0) - 1e10) = 1.0 (precision loss)\n- `std::reduce` may reorder: (1e10 - 1e10) + 1.0 = 1.0, or 1e10 + (1.0 - 1e10) = different result\n- Floating-point addition is not perfectly associative (rounding errors)\n- Parallel reduce trades determinism for performance\n- **Key Concept:** Parallel reduce may reorder operations; results differ for non-associative operations like floating-point arithmetic",
+          "key_concept": "Parallel reduce may reorder operations; results differ for non-associative operations like floating-point arithmetic",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Not guaranteed equal - may differ due to floating-point associativity"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Tasks\n\n| Task | Answer | Explanation |\n|------|--------|-------------|\n| 1 | 120 | Parallel multiply: 1 * 2 * 3 * 4 * 5 = 120 |\n| 2 | Unsafe - data race | Multiple threads modify `sum` without synchronization |\n| 3 | No - overhead dominates | Small data set: parallel overhead > benefits |\n| 4 | UB - lock in par_unseq | Locks in vectorized code cause undefined behavior |\n| 5 | No - different ordering | Parallel may group differently, changing floating-point rounding |\n\n#### Execution Policy Comparison\n\n| Policy | Parallelism | Vectorization | Requirements |\n|--------|-------------|---------------|--------------|\n| `seq` | ❌ No | ❌ No | None (default behavior) |\n| `par` | ✅ Yes | ❌ No | Thread-safe operations |\n| `par_unseq` | ✅ Yes | ✅ Yes | Thread-safe + vectorization-safe |\n| `unseq` (C++20) | ❌ No | ✅ Yes | Vectorization-safe |\n\n#### Parallelization Guidelines\n\n| Data Size | Algorithm | Recommendation |\n|-----------|-----------|----------------|\n| < 1,000 | Any | Sequential (overhead too high) |\n| 1K - 10K | Simple (sort, find) | Test both |\n| 10K - 100K | Most | Likely beneficial |\n| > 100K | All | Strongly beneficial |\n\n#### Thread Safety Requirements\n\n| Allowed in par | Allowed in par_unseq |\n|----------------|----------------------|\n| ✅ Thread-safe operations | ✅ Pure computations only |\n| ✅ Locks/mutexes | ❌ No locks |\n| ✅ Allocations | ❌ No allocations |\n| ✅ Exceptions | ❌ No exceptions |\n| ✅ I/O | ❌ No I/O |\n\n---\n\n**End of Chapter 16 Topic 4: C++17 Parallel Algorithms**\n\nParallel algorithms represent a major leap in C++ performance capabilities, enabling automatic multi-core utilization without manual threading complexity. Understanding execution policies, thread safety requirements, and performance characteristics is essential for high-performance C++ development, especially in data-intensive domains like autonomous vehicle perception where processing millions of sensor data points per second is routine. Master these features to write scalable, performant code that leverages modern hardware automatically.",
+        "content": "#### Answer Key for Practice Tasks\n\n| Task | Answer | Explanation |\n|------|--------|-------------|\n| 1 | 120 | Parallel multiply: 1 * 2 * 3 * 4 * 5 = 120 |\n| 2 | Unsafe - data race | Multiple threads modify `sum` without synchronization |\n| 3 | No - overhead dominates | Small data set: parallel overhead > benefits |\n| 4 | UB - lock in par_unseq | Locks in vectorized code cause undefined behavior |\n| 5 | No - different ordering | Parallel may group differently, changing floating-point rounding |\n\n#### Execution Policy Comparison\n\n| Policy | Parallelism | Vectorization | Requirements |\n|--------|-------------|---------------|--------------|\n| `seq` | ❌ No | ❌ No | None (default behavior) |\n| `par` | ✅ Yes | ❌ No | Thread-safe operations |\n| `par_unseq` | ✅ Yes | ✅ Yes | Thread-safe + vectorization-safe |\n| `unseq` (C++20) | ❌ No | ✅ Yes | Vectorization-safe |\n\n#### Parallelization Guidelines\n\n| Data Size | Algorithm | Recommendation |\n|-----------|-----------|----------------|\n| < 1,000 | Any | Sequential (overhead too high) |\n| 1K - 10K | Simple (sort, find) | Test both |\n| 10K - 100K | Most | Likely beneficial |\n| > 100K | All | Strongly beneficial |\n\n#### Thread Safety Requirements\n\n| Allowed in par | Allowed in par_unseq |\n|----------------|----------------------|\n| ✅ Thread-safe operations | ✅ Pure computations only |\n| ✅ Locks/mutexes | ❌ No locks |\n| ✅ Allocations | ❌ No allocations |\n| ✅ Exceptions | ❌ No exceptions |\n| ✅ I/O | ❌ No I/O |\n\n---\n\n**End of Chapter 16 Topic 4: C++17 Parallel Algorithms**\n\nParallel algorithms represent a major leap in C++ performance capabilities, enabling automatic multi-core utilization without manual threading complexity. Understanding execution policies, thread safety requirements, and performance characteristics is essential for high-performance C++ development, especially in data-intensive domains like autonomous vehicle perception where processing millions of sensor data points per second is routine. Master these features to write scalable, performant code that leverages modern hardware automatically.\n\n\n## TOPIC: C++17 Parallel Algorithms - Execution Policies and Performance",
         "tables": [
           "| Task | Answer | Explanation |\n|------|--------|-------------|\n| 1 | 120 | Parallel multiply: 1 * 2 * 3 * 4 * 5 = 120 |\n| 2 | Unsafe - data race | Multiple threads modify `sum` without synchronization |\n| 3 | No - overhead dominates | Small data set: parallel overhead > benefits |\n| 4 | UB - lock in par_unseq | Locks in vectorized code cause undefined behavior |\n| 5 | No - different ordering | Parallel may group differently, changing floating-point rounding |",
           "| Policy | Parallelism | Vectorization | Requirements |\n|--------|-------------|---------------|--------------|\n| `seq` | ❌ No | ❌ No | None (default behavior) |\n| `par` | ✅ Yes | ❌ No | Thread-safe operations |\n| `par_unseq` | ✅ Yes | ✅ Yes | Thread-safe + vectorization-safe |\n| `unseq` (C++20) | ❌ No | ✅ Yes | Vectorization-safe |",

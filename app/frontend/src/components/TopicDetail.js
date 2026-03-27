@@ -618,32 +618,6 @@ const TopicDetail = () => {
                   </button>
                 </div>
                 {topic.practice_tasks.map((task, index) => {
-                  // Extract answer from Quick Reference if available
-                  const extractAnswer = (qNum) => {
-                    if (!topic.quick_reference || !topic.quick_reference.content) return null;
-                    const content = topic.quick_reference.content;
-
-                    // Look for answer key table
-                    const answerKeyMatch = content.match(/#### Answer Key[^|]*(\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[\s\S]*?)(?=####|$)/i);
-                    if (!answerKeyMatch) return null;
-
-                    // Find the row for this question number
-                    const rows = answerKeyMatch[1].split('\n').filter(row => row.trim().startsWith('|'));
-                    for (const row of rows) {
-                      const cells = row.split('|').map(c => c.trim()).filter(c => c && c !== '---' && c !== ':---' && c !== ':---:');
-                      if (cells.length >= 3 && cells[0] === String(qNum)) {
-                        return {
-                          answer: cells[1],
-                          explanation: cells[2],
-                          concept: cells[3] || ''
-                        };
-                      }
-                    }
-                    return null;
-                  };
-
-                  const answerInfo = extractAnswer(task.question_number || index + 1);
-
                   return (
                     <div key={index} className="example-card">
                       <div className="example-header">
@@ -684,7 +658,9 @@ const TopicDetail = () => {
                         </div>
                       )}
 
+                      {/* Don't show description for bug analysis format (has answer field) */}
                       {task.description && task.description.trim() &&
+                       !task.answer &&
                        !task.description.trim().match(/^```(cpp|c\+\+)?$/i) && (
                         <div className="example-explanation">
                           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
@@ -693,25 +669,19 @@ const TopicDetail = () => {
                         </div>
                       )}
 
-                      {/* Answer Section - Collapsible */}
-                      {answerInfo && (
+                      {/* Answer Section - Collapsible - Display full_content as-is */}
+                      {task.full_content && (
                         <details className="practice-answer-section">
                           <summary className="practice-answer-toggle">
                             <CheckCircle size={16} />
                             Show Answer
                           </summary>
                           <div className="practice-answer-content">
-                            <div className="answer-row">
-                              <strong>Answer:</strong> <span>{answerInfo.answer}</span>
+                            <div className="markdown-content">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                {typeof task.full_content === 'string' ? task.full_content : ''}
+                              </ReactMarkdown>
                             </div>
-                            <div className="answer-row">
-                              <strong>Explanation:</strong> <span>{answerInfo.explanation}</span>
-                            </div>
-                            {answerInfo.concept && (
-                              <div className="answer-row">
-                                <strong>Key Concept:</strong> <span className="concept-tag">{answerInfo.concept}</span>
-                              </div>
-                            )}
                           </div>
                         </details>
                       )}

@@ -584,206 +584,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nauto foo() { return 42; }\ndecltype(auto) bar() { int x = 42; return (x); }\nint main() {\n    auto a = foo();\n    auto b = bar();\n    std::cout << a << \" \" << b;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior (likely crash)\n\n**Explanation:** `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB.\n\n**Key Concept:** #decltype_auto #dangling_reference\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (likely crash)\n```\n\n**Explanation:**\n- `foo()` returns `int` by value (auto deduction drops references)\n- `bar()` with `decltype(auto)` preserves exact type: `(x)` is lvalue, so returns `int&`\n- Local variable `x` destroyed when `bar()` returns - `b` is dangling reference\n- Accessing dangling reference `b` is undefined behavior (crash or garbage)\n- **Key Concept:** decltype(auto) preserves reference types; parentheses around expression make it lvalue reference",
           "code": "#include <iostream>\nauto foo() { return 42; }\ndecltype(auto) bar() { int x = 42; return (x); }\nint main() {\n    auto a = foo();\n    auto b = bar();\n    std::cout << a << \" \" << b;\n}",
+          "answer": "Undefined behavior (likely crash)",
+          "explanation": "- `foo()` returns `int` by value (auto deduction drops references)\n- `bar()` with `decltype(auto)` preserves exact type: `(x)` is lvalue, so returns `int&`\n- Local variable `x` destroyed when `bar()` returns - `b` is dangling reference\n- Accessing dangling reference `b` is undefined behavior (crash or garbage)\n- **Key Concept:** decltype(auto) preserves reference types; parentheses around expression make it lvalue reference",
+          "key_concept": "decltype(auto) preserves reference types; parentheses around expression make it lvalue reference",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (likely crash)"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nauto lambda = [](auto x, auto y) { return x + y; };\nint main() {\n    std::cout << lambda(1, 2) << \" \" << lambda(1.5, 2.5);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3 4\n\n**Explanation:** Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal).\n\n**Key Concept:** #generic_lambdas #type_deduction\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 4\n```\n\n**Explanation:**\n- C++14 generic lambdas use `auto` parameters for template-like behavior\n- First call `lambda(1, 2)`: x=int, y=int → 1+2=3\n- Second call `lambda(1.5, 2.5)`: x=double, y=double → 1.5+2.5=4.0\n- Double 4.0 printed as integer 4 (default cout formatting)\n- **Key Concept:** Generic lambdas with auto parameters enable polymorphic behavior without explicit templates",
           "code": "#include <iostream>\nauto lambda = [](auto x, auto y) { return x + y; };\nint main() {\n    std::cout << lambda(1, 2) << \" \" << lambda(1.5, 2.5);\n}",
+          "answer": "3 4",
+          "explanation": "- C++14 generic lambdas use `auto` parameters for template-like behavior\n- First call `lambda(1, 2)`: x=int, y=int → 1+2=3\n- Second call `lambda(1.5, 2.5)`: x=double, y=double → 1.5+2.5=4.0\n- Double 4.0 printed as integer 4 (default cout formatting)\n- **Key Concept:** Generic lambdas with auto parameters enable polymorphic behavior without explicit templates",
+          "key_concept": "Generic lambdas with auto parameters enable polymorphic behavior without explicit templates",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 4"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <memory>\nint main() {\n    auto ptr = std::make_unique<int>(100);\n    auto lam = [p = std::move(ptr)]() { return *p; };\n    std::cout << lam() << \" \" << (ptr == nullptr);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100 1\n\n**Explanation:** Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true).\n\n**Key Concept:** #init_capture #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100 1\n```\n\n**Explanation:**\n- C++14 init capture allows moving `ptr` into lambda: `[p = std::move(ptr)]`\n- unique_ptr ownership transferred to lambda's capture `p`\n- Original `ptr` becomes nullptr after move\n- `lam()` dereferences captured `p` returning 100, `ptr == nullptr` evaluates to true (1)\n- **Key Concept:** Init captures enable move-only types in lambdas; useful for capturing unique_ptr, thread, etc.",
           "code": "#include <iostream>\n#include <memory>\nint main() {\n    auto ptr = std::make_unique<int>(100);\n    auto lam = [p = std::move(ptr)]() { return *p; };\n    std::cout << lam() << \" \" << (ptr == nullptr);\n}",
+          "answer": "100 1",
+          "explanation": "- C++14 init capture allows moving `ptr` into lambda: `[p = std::move(ptr)]`\n- unique_ptr ownership transferred to lambda's capture `p`\n- Original `ptr` becomes nullptr after move\n- `lam()` dereferences captured `p` returning 100, `ptr == nullptr` evaluates to true (1)\n- **Key Concept:** Init captures enable move-only types in lambdas; useful for capturing unique_ptr, thread, etc.",
+          "key_concept": "Init captures enable move-only types in lambdas; useful for capturing unique_ptr, thread, etc.",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100 1"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nconstexpr int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; ++i)\n        result *= i;\n    return result;\n}\nint main() {\n    constexpr int x = factorial(5);\n    std::cout << x;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 120\n\n**Explanation:** Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time.\n\n**Key Concept:** #constexpr #compile_time\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n120\n```\n\n**Explanation:**\n- C++14 relaxed constexpr restrictions: loops, multiple statements, mutable variables allowed\n- `factorial(5)` computes 5! = 5×4×3×2×1 = 120 at compile time\n- C++11 would require recursive template metaprogramming for this\n- Result stored as compile-time constant `x = 120`\n- **Key Concept:** C++14 constexpr functions can use loops and mutable local variables for easier compile-time computation",
           "code": "#include <iostream>\nconstexpr int factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; ++i)\n        result *= i;\n    return result;\n}\nint main() {\n    constexpr int x = factorial(5);\n    std::cout << x;\n}",
+          "answer": "120",
+          "explanation": "- C++14 relaxed constexpr restrictions: loops, multiple statements, mutable variables allowed\n- `factorial(5)` computes 5! = 5×4×3×2×1 = 120 at compile time\n- C++11 would require recursive template metaprogramming for this\n- Result stored as compile-time constant `x = 120`\n- **Key Concept:** C++14 constexpr functions can use loops and mutable local variables for easier compile-time computation",
+          "key_concept": "C++14 constexpr functions can use loops and mutable local variables for easier compile-time computation",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "120"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <utility>\nint main() {\n    int a = 10;\n    int old = std::exchange(a, 20);\n    std::cout << old << \" \" << a;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10 20\n\n**Explanation:** `std::exchange(a, 20)` returns old value (10) and sets `a` to 20.\n\n**Key Concept:** #std_exchange #utility\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10 20\n```\n\n**Explanation:**\n- `std::exchange(a, 20)` replaces `a` with 20 and returns old value (10)\n- Atomic operation: old_value = a; a = new_value; return old_value\n- Useful for implementing move operations, resetting values while preserving old state\n- After execution: `old = 10` (original value), `a = 20` (new value)\n- **Key Concept:** std::exchange provides atomic value replacement with return of old value; cleaner than manual swap",
           "code": "#include <iostream>\n#include <utility>\nint main() {\n    int a = 10;\n    int old = std::exchange(a, 20);\n    std::cout << old << \" \" << a;\n}",
+          "answer": "10 20",
+          "explanation": "- `std::exchange(a, 20)` replaces `a` with 20 and returns old value (10)\n- Atomic operation: old_value = a; a = new_value; return old_value\n- Useful for implementing move operations, resetting values while preserving old state\n- After execution: `old = 10` (original value), `a = 20` (new value)\n- **Key Concept:** std::exchange provides atomic value replacement with return of old value; cleaner than manual swap",
+          "key_concept": "std::exchange provides atomic value replacement with return of old value; cleaner than manual swap",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10 20"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <tuple>\nint main() {\n    std::tuple<int, double, char> t{1, 2.5, 'a'};\n    std::cout << std::get<double>(t);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 2.5\n\n**Explanation:** `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous.\n\n**Key Concept:** #std_get #tuple\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2.5\n```\n\n**Explanation:**\n- C++14 allows `std::get<Type>` to access tuple element by type (not just index)\n- `std::get<double>(t)` retrieves element of type double (2.5)\n- Requires type to appear exactly once in tuple (ambiguous if multiple doubles)\n- More readable than index-based `std::get<1>(t)`\n- **Key Concept:** C++14 std::get supports type-based tuple element access for improved code clarity",
           "code": "#include <iostream>\n#include <tuple>\nint main() {\n    std::tuple<int, double, char> t{1, 2.5, 'a'};\n    std::cout << std::get<double>(t);\n}",
+          "answer": "2.5",
+          "explanation": "- C++14 allows `std::get<Type>` to access tuple element by type (not just index)\n- `std::get<double>(t)` retrieves element of type double (2.5)\n- Requires type to appear exactly once in tuple (ambiguous if multiple doubles)\n- More readable than index-based `std::get<1>(t)`\n- **Key Concept:** C++14 std::get supports type-based tuple element access for improved code clarity",
+          "key_concept": "C++14 std::get supports type-based tuple element access for improved code clarity",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2.5"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nconstexpr bool is_float = std::is_floating_point<T>::value;\nint main() {\n    std::cout << is_float<int> << \" \" << is_float<double>;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 0 1\n\n**Explanation:** Variable template `is_float<int>` is false (0), `is_float<double>` is true (1).\n\n**Key Concept:** #variable_templates #type_traits\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0 1\n```\n\n**Explanation:**\n- C++14 variable templates allow templated variables (not just classes/functions)\n- `is_float<int>` evaluates to false (0), `is_float<double>` evaluates to true (1)\n- Cleaner syntax than `std::is_floating_point<T>::value` repeatedly\n- Compile-time constant for each template instantiation\n- **Key Concept:** Variable templates enable templated constants; simplify type trait usage",
           "code": "#include <iostream>\ntemplate<typename T>\nconstexpr bool is_float = std::is_floating_point<T>::value;\nint main() {\n    std::cout << is_float<int> << \" \" << is_float<double>;\n}",
+          "answer": "0 1",
+          "explanation": "- C++14 variable templates allow templated variables (not just classes/functions)\n- `is_float<int>` evaluates to false (0), `is_float<double>` evaluates to true (1)\n- Cleaner syntax than `std::is_floating_point<T>::value` repeatedly\n- Compile-time constant for each template instantiation\n- **Key Concept:** Variable templates enable templated constants; simplify type trait usage",
+          "key_concept": "Variable templates enable templated constants; simplify type trait usage",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0 1"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    int x = 0b1010;\n    int y = 1'000;\n    std::cout << x << \" \" << y;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10 1000\n\n**Explanation:** Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored).\n\n**Key Concept:** #binary_literals #digit_separators\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10 1000\n```\n\n**Explanation:**\n- `0b1010` is binary literal (C++14): 1×8 + 0×4 + 1×2 + 0×1 = 10 decimal\n- `1'000` uses digit separator (') for readability: 1000 (separator ignored by compiler)\n- Both features improve code readability for bit patterns and large numbers\n- Can use separators anywhere: `1'000'000` or `0xDEAD'BEEF`\n- **Key Concept:** C++14 binary literals (0b) and digit separators (') enhance numeric literal readability",
           "code": "#include <iostream>\nint main() {\n    int x = 0b1010;\n    int y = 1'000;\n    std::cout << x << \" \" << y;\n}",
+          "answer": "10 1000",
+          "explanation": "- `0b1010` is binary literal (C++14): 1×8 + 0×4 + 1×2 + 0×1 = 10 decimal\n- `1'000` uses digit separator (') for readability: 1000 (separator ignored by compiler)\n- Both features improve code readability for bit patterns and large numbers\n- Can use separators anywhere: `1'000'000` or `0xDEAD'BEEF`\n- **Key Concept:** C++14 binary literals (0b) and digit separators (') enhance numeric literal readability",
+          "key_concept": "C++14 binary literals (0b) and digit separators (') enhance numeric literal readability",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10 1000"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nauto add = [](auto a, auto b) { return a + b; };\nint main() {\n    std::cout << add(5, 10) << \" \" << add(2.5, 3.5);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 15 6\n\n**Explanation:** Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6).\n\n**Key Concept:** #generic_lambdas #auto_parameters\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n15 6\n```\n\n**Explanation:**\n- Generic lambda works with different types via template-like auto parameters\n- `add(5, 10)`: int + int = 15\n- `add(2.5, 3.5)`: double + double = 6.0, printed as 6 (default formatting)\n- Single lambda definition handles multiple types without explicit overloading\n- **Key Concept:** Generic lambdas eliminate need for multiple overloaded lambdas or function templates",
           "code": "#include <iostream>\nauto add = [](auto a, auto b) { return a + b; };\nint main() {\n    std::cout << add(5, 10) << \" \" << add(2.5, 3.5);\n}",
+          "answer": "15 6",
+          "explanation": "- Generic lambda works with different types via template-like auto parameters\n- `add(5, 10)`: int + int = 15\n- `add(2.5, 3.5)`: double + double = 6.0, printed as 6 (default formatting)\n- Single lambda definition handles multiple types without explicit overloading\n- **Key Concept:** Generic lambdas eliminate need for multiple overloaded lambdas or function templates",
+          "key_concept": "Generic lambdas eliminate need for multiple overloaded lambdas or function templates",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "15 6"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint global = 100;\ndecltype(auto) get_ref() { return (global); }\nint main() {\n    get_ref() = 200;\n    std::cout << global;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 200\n\n**Explanation:** `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`.\n\n**Key Concept:** #decltype_auto #reference_return\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n200\n```\n\n**Explanation:**\n- `decltype(auto)` preserves exact expression type including references\n- `(global)` is lvalue expression → returns `int&` (reference to global)\n- `get_ref()` returns reference, allowing assignment: `get_ref() = 200` modifies `global`\n- Without parentheses, `return global` would return `int` (by value)\n- **Key Concept:** Parentheses in decltype(auto) return create lvalue reference; enables reference returns for modification",
           "code": "#include <iostream>\nint global = 100;\ndecltype(auto) get_ref() { return (global); }\nint main() {\n    get_ref() = 200;\n    std::cout << global;\n}",
+          "answer": "200",
+          "explanation": "- `decltype(auto)` preserves exact expression type including references\n- `(global)` is lvalue expression → returns `int&` (reference to global)\n- `get_ref()` returns reference, allowing assignment: `get_ref() = 200` modifies `global`\n- Without parentheses, `return global` would return `int` (by value)\n- **Key Concept:** Parentheses in decltype(auto) return create lvalue reference; enables reference returns for modification",
+          "key_concept": "Parentheses in decltype(auto) return create lvalue reference; enables reference returns for modification",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "200"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <memory>\nint main() {\n    auto sp = std::make_shared<int>(42);\n    auto lam = [p = sp]() { return *p; };\n    std::cout << lam() << \" \" << sp.use_count();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42 2\n\n**Explanation:** Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`).\n\n**Key Concept:** #shared_ptr #reference_counting\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42 2\n```\n\n**Explanation:**\n- Init capture `[p = sp]` copies shared_ptr (not moves)\n- Two shared_ptr instances now own the resource: `sp` and captured `p`\n- Reference count becomes 2 (shared ownership)\n- `lam()` returns 42, `sp.use_count()` returns 2\n- **Key Concept:** Init captures without std::move copy shared_ptr, incrementing reference count",
           "code": "#include <iostream>\n#include <memory>\nint main() {\n    auto sp = std::make_shared<int>(42);\n    auto lam = [p = sp]() { return *p; };\n    std::cout << lam() << \" \" << sp.use_count();\n}",
+          "answer": "42 2",
+          "explanation": "- Init capture `[p = sp]` copies shared_ptr (not moves)\n- Two shared_ptr instances now own the resource: `sp` and captured `p`\n- Reference count becomes 2 (shared ownership)\n- `lam()` returns 42, `sp.use_count()` returns 2\n- **Key Concept:** Init captures without std::move copy shared_ptr, incrementing reference count",
+          "key_concept": "Init captures without std::move copy shared_ptr, incrementing reference count",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42 2"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nconstexpr int square(int x) { return x * x; }\nint main() {\n    int arr[square(3)];\n    std::cout << sizeof(arr) / sizeof(int);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 9\n\n**Explanation:** `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9.\n\n**Key Concept:** #constexpr #array_size\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n9\n```\n\n**Explanation:**\n- `square(3)` evaluated at compile time: 3×3 = 9\n- Array declared with compile-time constant size: `int arr[9]`\n- `sizeof(arr)` = 9 elements × 4 bytes = 36 bytes (typically)\n- `sizeof(arr) / sizeof(int)` = 36 / 4 = 9\n- **Key Concept:** constexpr functions usable in constant expression contexts like array bounds",
           "code": "#include <iostream>\nconstexpr int square(int x) { return x * x; }\nint main() {\n    int arr[square(3)];\n    std::cout << sizeof(arr) / sizeof(int);\n}",
+          "answer": "9",
+          "explanation": "- `square(3)` evaluated at compile time: 3×3 = 9\n- Array declared with compile-time constant size: `int arr[9]`\n- `sizeof(arr)` = 9 elements × 4 bytes = 36 bytes (typically)\n- `sizeof(arr) / sizeof(int)` = 36 / 4 = 9\n- **Key Concept:** constexpr functions usable in constant expression contexts like array bounds",
+          "key_concept": "constexpr functions usable in constant expression contexts like array bounds",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "9"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\ntemplate<typename T>\nconstexpr T pi = T(3.14159);\nint main() {\n    std::cout << pi<int> << \" \" << pi<double>;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3 3.14159\n\n**Explanation:** Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159.\n\n**Key Concept:** #variable_templates #templates\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 3.14159\n```\n\n**Explanation:**\n- Variable template `pi<T>` creates type-specific constants\n- `pi<int>` converts 3.14159 to int (truncates): 3\n- `pi<double>` remains double: 3.14159\n- Each instantiation is separate compile-time constant\n- **Key Concept:** Variable templates enable type-parametrized constants with compile-time evaluation",
           "code": "#include <iostream>\ntemplate<typename T>\nconstexpr T pi = T(3.14159);\nint main() {\n    std::cout << pi<int> << \" \" << pi<double>;\n}",
+          "answer": "3 3.14159",
+          "explanation": "- Variable template `pi<T>` creates type-specific constants\n- `pi<int>` converts 3.14159 to int (truncates): 3\n- `pi<double>` remains double: 3.14159\n- Each instantiation is separate compile-time constant\n- **Key Concept:** Variable templates enable type-parametrized constants with compile-time evaluation",
+          "key_concept": "Variable templates enable type-parametrized constants with compile-time evaluation",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 3.14159"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nauto foo(bool b) {\n    if (b) return 1;\n    else return 2;\n}\nint main() {\n    std::cout << foo(true) << \" \" << foo(false);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 2\n\n**Explanation:** Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2.\n\n**Key Concept:** #return_type_deduction #auto\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 2\n```\n\n**Explanation:**\n- C++14 return type deduction from function body\n- Both return paths produce `int`, so deduced return type is `int`\n- `foo(true)` returns 1, `foo(false)` returns 2\n- Would fail compilation if return types differ (e.g., `return 1` vs `return 1.5`)\n- **Key Concept:** Auto return type deduction succeeds when all return statements deduce to same type",
           "code": "#include <iostream>\nauto foo(bool b) {\n    if (b) return 1;\n    else return 2;\n}\nint main() {\n    std::cout << foo(true) << \" \" << foo(false);\n}",
+          "answer": "1 2",
+          "explanation": "- C++14 return type deduction from function body\n- Both return paths produce `int`, so deduced return type is `int`\n- `foo(true)` returns 1, `foo(false)` returns 2\n- Would fail compilation if return types differ (e.g., `return 1` vs `return 1.5`)\n- **Key Concept:** Auto return type deduction succeeds when all return statements deduce to same type",
+          "key_concept": "Auto return type deduction succeeds when all return statements deduce to same type",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 2"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint x = 10;\nauto f1() { return x; }\ndecltype(auto) f2() { return (x); }\nint main() {\n    f2() = 20;\n    std::cout << x;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 20\n\n**Explanation:** `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20.\n\n**Key Concept:** #decltype_auto #lvalue_reference\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n20\n```\n\n**Explanation:**\n- `f1()` returns `int` by value (auto drops references)\n- `f2()` with `decltype(auto)` and `(x)` returns `int&` (lvalue reference)\n- `f2() = 20` assigns through reference, modifying global `x`\n- Demonstrates difference between auto (value semantics) and decltype(auto) (exact type preservation)\n- **Key Concept:** decltype(auto) enables perfect forwarding of value category; parentheses matter",
           "code": "#include <iostream>\nint x = 10;\nauto f1() { return x; }\ndecltype(auto) f2() { return (x); }\nint main() {\n    f2() = 20;\n    std::cout << x;\n}",
+          "answer": "20",
+          "explanation": "- `f1()` returns `int` by value (auto drops references)\n- `f2()` with `decltype(auto)` and `(x)` returns `int&` (lvalue reference)\n- `f2() = 20` assigns through reference, modifying global `x`\n- Demonstrates difference between auto (value semantics) and decltype(auto) (exact type preservation)\n- **Key Concept:** decltype(auto) enables perfect forwarding of value category; parentheses matter",
+          "key_concept": "decltype(auto) enables perfect forwarding of value category; parentheses matter",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "20"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <tuple>\nint main() {\n    std::tuple<int, double, int> t{1, 2.5, 3};\n    std::cout << std::get<0>(t);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1\n\n**Explanation:** `std::get<0>` accesses first element by index. Works even though `int` appears twice.\n\n**Key Concept:** #std_get #tuple_index\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `std::get<0>(t)` accesses first element by index (index 0)\n- Works even though `int` appears twice in tuple (ambiguous for type-based access)\n- Index-based access unambiguous: always returns first element\n- Type-based `std::get<int>(t)` would fail compilation (multiple int types)\n- **Key Concept:** Index-based std::get always unambiguous; type-based get requires unique type",
           "code": "#include <iostream>\n#include <tuple>\nint main() {\n    std::tuple<int, double, int> t{1, 2.5, 3};\n    std::cout << std::get<0>(t);\n}",
+          "answer": "1",
+          "explanation": "- `std::get<0>(t)` accesses first element by index (index 0)\n- Works even though `int` appears twice in tuple (ambiguous for type-based access)\n- Index-based access unambiguous: always returns first element\n- Type-based `std::get<int>(t)` would fail compilation (multiple int types)\n- **Key Concept:** Index-based std::get always unambiguous; type-based get requires unique type",
+          "key_concept": "Index-based std::get always unambiguous; type-based get requires unique type",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nauto lambda = [](auto val) {\n    static_assert(std::is_integral<decltype(val)>::value, \"Integral required\");\n    return val * 2;\n};\nint main() {\n    std::cout << lambda(21);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42.\n\n**Key Concept:** #generic_lambdas #static_assert\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- Generic lambda with compile-time constraint via static_assert\n- `lambda(21)` instantiates with `val` = int (integral type)\n- `static_assert` passes (int is integral), returns 21×2 = 42\n- Calling `lambda(2.5)` would fail compilation (double not integral)\n- **Key Concept:** Generic lambdas combined with static_assert enable compile-time type constraints",
           "code": "#include <iostream>\nauto lambda = [](auto val) {\n    static_assert(std::is_integral<decltype(val)>::value, \"Integral required\");\n    return val * 2;\n};\nint main() {\n    std::cout << lambda(21);\n}",
+          "answer": "42",
+          "explanation": "- Generic lambda with compile-time constraint via static_assert\n- `lambda(21)` instantiates with `val` = int (integral type)\n- `static_assert` passes (int is integral), returns 21×2 = 42\n- Calling `lambda(2.5)` would fail compilation (double not integral)\n- **Key Concept:** Generic lambdas combined with static_assert enable compile-time type constraints",
+          "key_concept": "Generic lambdas combined with static_assert enable compile-time type constraints",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <utility>\nint main() {\n    int x = 5;\n    int y = std::exchange(x, std::exchange(x, 10));\n    std::cout << x << \" \" << y;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10 5\n\n**Explanation:** Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10.\n\n**Key Concept:** #std_exchange #evaluation_order\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5 10\n```\n\n**Explanation:**\n- Inner `std::exchange(x, 10)`: x changes from 5 to 10, returns 5\n- Outer `std::exchange(x, 5)`: x changes from 10 to 5, returns 10\n- Final state: `x = 5`, `y = 10`\n- Evaluation order: right-to-left for function arguments (inner first)\n- **Key Concept:** std::exchange returns old value while setting new; nested exchanges demonstrate evaluation order",
           "code": "#include <iostream>\n#include <utility>\nint main() {\n    int x = 5;\n    int y = std::exchange(x, std::exchange(x, 10));\n    std::cout << x << \" \" << y;\n}",
+          "answer": "5 10",
+          "explanation": "- Inner `std::exchange(x, 10)`: x changes from 5 to 10, returns 5\n- Outer `std::exchange(x, 5)`: x changes from 10 to 5, returns 10\n- Final state: `x = 5`, `y = 10`\n- Evaluation order: right-to-left for function arguments (inner first)\n- **Key Concept:** std::exchange returns old value while setting new; nested exchanges demonstrate evaluation order",
+          "key_concept": "std::exchange returns old value while setting new; nested exchanges demonstrate evaluation order",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5 10"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    int binary = 0b1111;\n    int readable = 1'00'0;\n    std::cout << binary << \" \" << readable;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 15 100\n\n**Explanation:** Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100.\n\n**Key Concept:** #binary_literals #digit_separators\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n15 100\n```\n\n**Explanation:**\n- `0b1111` binary literal: 1×8 + 1×4 + 1×2 + 1×1 = 15 decimal\n- `1'00'0` uses digit separators (flexible placement): 100 decimal\n- Separators can be placed anywhere for readability: `1'00'0` or `10'0` both equal 100\n- Binary literals useful for bit masks, flags, permissions\n- **Key Concept:** Binary literals and digit separators improve readability without changing numeric value",
           "code": "#include <iostream>\nint main() {\n    int binary = 0b1111;\n    int readable = 1'00'0;\n    std::cout << binary << \" \" << readable;\n}",
+          "answer": "15 100",
+          "explanation": "- `0b1111` binary literal: 1×8 + 1×4 + 1×2 + 1×1 = 15 decimal\n- `1'00'0` uses digit separators (flexible placement): 100 decimal\n- Separators can be placed anywhere for readability: `1'00'0` or `10'0` both equal 100\n- Binary literals useful for bit masks, flags, permissions\n- **Key Concept:** Binary literals and digit separators improve readability without changing numeric value",
+          "key_concept": "Binary literals and digit separators improve readability without changing numeric value",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "15 100"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <memory>\nauto ptr = std::make_unique<int>(99);\nauto f = [p = std::move(ptr)]() mutable {\n    return std::exchange(*p, 50);\n};\nint main() {\n    std::cout << f() << \" \" << f();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 99 50\n\n**Explanation:** Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again.\n\n**Key Concept:** #init_capture #mutable_lambda #std_exchange\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n99 50\n```\n\n**Explanation:**\n- Init capture with move: `ptr` ownership transferred to lambda's `p`\n- `mutable` allows modifying captured values (lambda operator() non-const)\n- First `f()`: `exchange(*p, 50)` returns 99 (original), sets `*p` to 50\n- Second `f()`: `exchange(*p, 50)` returns 50 (current), sets `*p` to 50 (no change)\n- **Key Concept:** Mutable lambdas with init capture enable stateful operations on moved-in resources\n\n---\n\n\n## TOPIC: C++14 Language and Library Enhancements",
           "code": "#include <iostream>\n#include <memory>\nauto ptr = std::make_unique<int>(99);\nauto f = [p = std::move(ptr)]() mutable {\n    return std::exchange(*p, 50);\n};\nint main() {\n    std::cout << f() << \" \" << f();\n}",
+          "answer": "99 50",
+          "explanation": "- Init capture with move: `ptr` ownership transferred to lambda's `p`\n- `mutable` allows modifying captured values (lambda operator() non-const)\n- First `f()`: `exchange(*p, 50)` returns 99 (original), sets `*p` to 50\n- Second `f()`: `exchange(*p, 50)` returns 50 (current), sets `*p` to 50 (no change)\n- **Key Concept:** Mutable lambdas with init capture enable stateful operations on moved-in resources",
+          "key_concept": "Mutable lambdas with init capture enable stateful operations on moved-in resources",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "99 50"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior (likely crash) | `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB. | #decltype_auto #dangling_reference |\n| 2 | 3 4 | Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal). | #generic_lambdas #type_deduction |\n| 3 | 100 1 | Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true). | #init_capture #move_semantics |\n| 4 | 120 | Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time. | #constexpr #compile_time |\n| 5 | 10 20 | `std::exchange(a, 20)` returns old value (10) and sets `a` to 20. | #std_exchange #utility |\n| 6 | 2.5 | `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous. | #std_get #tuple |\n| 7 | 0 1 | Variable template `is_float<int>` is false (0), `is_float<double>` is true (1). | #variable_templates #type_traits |\n| 8 | 10 1000 | Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored). | #binary_literals #digit_separators |\n| 9 | 15 6 | Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6). | #generic_lambdas #auto_parameters |\n| 10 | 200 | `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`. | #decltype_auto #reference_return |\n| 11 | 42 2 | Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`). | #shared_ptr #reference_counting |\n| 12 | 9 | `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9. | #constexpr #array_size |\n| 13 | 3 3.14159 | Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159. | #variable_templates #templates |\n| 14 | 1 2 | Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2. | #return_type_deduction #auto |\n| 15 | 20 | `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20. | #decltype_auto #lvalue_reference |\n| 16 | 1 | `std::get<0>` accesses first element by index. Works even though `int` appears twice. | #std_get #tuple_index |\n| 17 | 42 | `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42. | #generic_lambdas #static_assert |\n| 18 | 10 5 | Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10. | #std_exchange #evaluation_order |\n| 19 | 15 100 | Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100. | #binary_literals #digit_separators |\n| 20 | 99 50 | Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again. | #init_capture #mutable_lambda #std_exchange |\n\n#### C++14 Features Summary\n\n| Feature | Description | Key Benefit |\n|---------|-------------|-------------|\n| Return type deduction | `auto` for any function | Reduces verbosity in templates |\n| Generic lambdas | `auto` parameters | Template-like behavior without explicit syntax |\n| Init-capture | `[x = expr]` in lambda | Move semantics in captures |\n| decltype(auto) | Exact type preservation | Perfect forwarding of return types |\n| Relaxed constexpr | Loops, locals, statements | Practical compile-time algorithms |\n| std::make_unique | Type-safe unique_ptr creation | Exception safety, cleaner syntax |\n| std::exchange | Atomic replace-and-return | Cleaner move operations |\n| std::integer_sequence | Compile-time index generation | Tuple unpacking, variadic expansion |\n| Variable templates | Template variables | Cleaner metaprogramming syntax |\n| Binary literals | `0b` prefix | Clarity in bit manipulation |\n| Digit separators | `'` in numbers | Readability for large constants |\n| [[deprecated]] | Deprecation attribute | Gradual API evolution |\n\n#### Return Type Deduction Comparison\n\n| Feature | Strips Refs/Const? | Use Case |\n|---------|-------------------|----------|\n| `auto` | Yes (always value) | Simple returns, no reference semantics |\n| `auto&` / `auto&&` | Explicit reference | Forced reference return |\n| `decltype(auto)` | No (preserves exact type) | Perfect forwarding, proxy types |\n| Explicit return type | N/A | Complex types, documentation |\n\n#### Lambda Capture Modes (C++14)\n\n| Syntax | Meaning | When to Use |\n|--------|---------|-------------|\n| `[=]` | Capture all by value | Read-only access, small data |\n| `[&]` | Capture all by reference | Modify outer scope, large data |\n| `[x]` | Capture `x` by value | Specific value capture |\n| `[&x]` | Capture `x` by reference | Specific reference capture |\n| `[x = expr]` | Init-capture (C++14) | Move semantics, transformation |\n| `[p = std::move(ptr)]` | Move-capture (C++14) | Transfer unique ownership |\n\n#### constexpr Evolution\n\n| C++11 | C++14 | C++17 | C++20 |\n|-------|-------|-------|-------|\n| Single return | Loops, locals | Lambdas | Dynamic allocation (limited) |\n| Recursion only | Multiple statements | if constexpr | Virtual functions (limited) |\n| No local vars | Conditionals (if/switch) | | try-catch |\n\n#### Type Traits with Variable Templates\n\n**C++11 Style:**\n```cpp\nstd::is_integral<T>::value\nstd::is_pointer<T>::value\n```\n\n**C++14 Style (with custom variable templates):**\n```cpp\ntemplate<typename T> constexpr bool is_integral_v = std::is_integral<T>::value;\nis_integral_v<T>\n```\n\n**C++17 Style (standard library):**\n```cpp\nstd::is_integral_v<T>  // Built-in\n```\n\n#### Common Pitfalls and Solutions\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| `return (local)` with `decltype(auto)` | Dangling reference | Remove parentheses or return by value |\n| Mixed return types with `auto` | Compilation error | Use explicit return type or common type |\n| Generic lambda with `{}` list | Deduction failure | Use explicit type or `initializer_list` |\n| Non-const variable template in header | ODR violation | Make const/constexpr or use inline (C++17) |\n| `std::get<T>(tuple)` with duplicate type | Ambiguity error | Use index-based `std::get<Index>` |\n\n---\n\n**End of Chapter 15: C++14 Feature Deep Dive**\n\nC++14 represents a maturation of C++11's revolutionary features. While not introducing fundamentally new paradigms, it removed friction points, filled critical gaps (make_unique), and made existing features more practical (relaxed constexpr, generic lambdas). Modern C++ codebases heavily rely on these conveniences, making C++14 an essential baseline for professional development. The features covered here form the foundation for understanding C++17's further enhancements and C++20's paradigm shifts with concepts and coroutines.",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior (likely crash) | `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB. | #decltype_auto #dangling_reference |\n| 2 | 3 4 | Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal). | #generic_lambdas #type_deduction |\n| 3 | 100 1 | Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true). | #init_capture #move_semantics |\n| 4 | 120 | Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time. | #constexpr #compile_time |\n| 5 | 10 20 | `std::exchange(a, 20)` returns old value (10) and sets `a` to 20. | #std_exchange #utility |\n| 6 | 2.5 | `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous. | #std_get #tuple |\n| 7 | 0 1 | Variable template `is_float<int>` is false (0), `is_float<double>` is true (1). | #variable_templates #type_traits |\n| 8 | 10 1000 | Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored). | #binary_literals #digit_separators |\n| 9 | 15 6 | Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6). | #generic_lambdas #auto_parameters |\n| 10 | 200 | `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`. | #decltype_auto #reference_return |\n| 11 | 42 2 | Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`). | #shared_ptr #reference_counting |\n| 12 | 9 | `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9. | #constexpr #array_size |\n| 13 | 3 3.14159 | Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159. | #variable_templates #templates |\n| 14 | 1 2 | Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2. | #return_type_deduction #auto |\n| 15 | 20 | `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20. | #decltype_auto #lvalue_reference |\n| 16 | 1 | `std::get<0>` accesses first element by index. Works even though `int` appears twice. | #std_get #tuple_index |\n| 17 | 42 | `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42. | #generic_lambdas #static_assert |\n| 18 | 10 5 | Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10. | #std_exchange #evaluation_order |\n| 19 | 15 100 | Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100. | #binary_literals #digit_separators |\n| 20 | 99 50 | Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again. | #init_capture #mutable_lambda #std_exchange |\n\n#### C++14 Features Summary\n\n| Feature | Description | Key Benefit |\n|---------|-------------|-------------|\n| Return type deduction | `auto` for any function | Reduces verbosity in templates |\n| Generic lambdas | `auto` parameters | Template-like behavior without explicit syntax |\n| Init-capture | `[x = expr]` in lambda | Move semantics in captures |\n| decltype(auto) | Exact type preservation | Perfect forwarding of return types |\n| Relaxed constexpr | Loops, locals, statements | Practical compile-time algorithms |\n| std::make_unique | Type-safe unique_ptr creation | Exception safety, cleaner syntax |\n| std::exchange | Atomic replace-and-return | Cleaner move operations |\n| std::integer_sequence | Compile-time index generation | Tuple unpacking, variadic expansion |\n| Variable templates | Template variables | Cleaner metaprogramming syntax |\n| Binary literals | `0b` prefix | Clarity in bit manipulation |\n| Digit separators | `'` in numbers | Readability for large constants |\n| [[deprecated]] | Deprecation attribute | Gradual API evolution |\n\n#### Return Type Deduction Comparison\n\n| Feature | Strips Refs/Const? | Use Case |\n|---------|-------------------|----------|\n| `auto` | Yes (always value) | Simple returns, no reference semantics |\n| `auto&` / `auto&&` | Explicit reference | Forced reference return |\n| `decltype(auto)` | No (preserves exact type) | Perfect forwarding, proxy types |\n| Explicit return type | N/A | Complex types, documentation |\n\n#### Lambda Capture Modes (C++14)\n\n| Syntax | Meaning | When to Use |\n|--------|---------|-------------|\n| `[=]` | Capture all by value | Read-only access, small data |\n| `[&]` | Capture all by reference | Modify outer scope, large data |\n| `[x]` | Capture `x` by value | Specific value capture |\n| `[&x]` | Capture `x` by reference | Specific reference capture |\n| `[x = expr]` | Init-capture (C++14) | Move semantics, transformation |\n| `[p = std::move(ptr)]` | Move-capture (C++14) | Transfer unique ownership |\n\n#### constexpr Evolution\n\n| C++11 | C++14 | C++17 | C++20 |\n|-------|-------|-------|-------|\n| Single return | Loops, locals | Lambdas | Dynamic allocation (limited) |\n| Recursion only | Multiple statements | if constexpr | Virtual functions (limited) |\n| No local vars | Conditionals (if/switch) | | try-catch |\n\n#### Type Traits with Variable Templates\n\n**C++11 Style:**\n```cpp\nstd::is_integral<T>::value\nstd::is_pointer<T>::value\n```\n\n**C++14 Style (with custom variable templates):**\n```cpp\ntemplate<typename T> constexpr bool is_integral_v = std::is_integral<T>::value;\nis_integral_v<T>\n```\n\n**C++17 Style (standard library):**\n```cpp\nstd::is_integral_v<T>  // Built-in\n```\n\n#### Common Pitfalls and Solutions\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| `return (local)` with `decltype(auto)` | Dangling reference | Remove parentheses or return by value |\n| Mixed return types with `auto` | Compilation error | Use explicit return type or common type |\n| Generic lambda with `{}` list | Deduction failure | Use explicit type or `initializer_list` |\n| Non-const variable template in header | ODR violation | Make const/constexpr or use inline (C++17) |\n| `std::get<T>(tuple)` with duplicate type | Ambiguity error | Use index-based `std::get<Index>` |\n\n---\n\n**End of Chapter 15: C++14 Feature Deep Dive**\n\nC++14 represents a maturation of C++11's revolutionary features. While not introducing fundamentally new paradigms, it removed friction points, filled critical gaps (make_unique), and made existing features more practical (relaxed constexpr, generic lambdas). Modern C++ codebases heavily rely on these conveniences, making C++14 an essential baseline for professional development. The features covered here form the foundation for understanding C++17's further enhancements and C++20's paradigm shifts with concepts and coroutines.\n\n\n## TOPIC: C++14 Language and Library Enhancements",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Undefined behavior (likely crash) | `bar()` returns `int&` to destroyed local `x` via `decltype(auto)` with parentheses. Accessing `b` is UB. | #decltype_auto #dangling_reference |\n| 2 | 3 4 | Generic lambda works with both `int` and `double`. First call: 1+2=3, second: 1.5+2.5=4.0 (printed without decimal). | #generic_lambdas #type_deduction |\n| 3 | 100 1 | Lambda captures unique_ptr by move. `lam()` returns 100, `ptr` is nullptr after move (prints 1 for true). | #init_capture #move_semantics |\n| 4 | 120 | Relaxed constexpr allows loops. `factorial(5)` = 5*4*3*2*1 = 120, computed at compile time. | #constexpr #compile_time |\n| 5 | 10 20 | `std::exchange(a, 20)` returns old value (10) and sets `a` to 20. | #std_exchange #utility |\n| 6 | 2.5 | `std::get<double>` accesses tuple element by type. `double` appears once, so unambiguous. | #std_get #tuple |\n| 7 | 0 1 | Variable template `is_float<int>` is false (0), `is_float<double>` is true (1). | #variable_templates #type_traits |\n| 8 | 10 1000 | Binary literal 0b1010 = 10 decimal. Digit separator 1'000 = 1000 (separator ignored). | #binary_literals #digit_separators |\n| 9 | 15 6 | Generic lambda adds arguments. 5+10=15, 2.5+3.5=6.0 (printed as 6). | #generic_lambdas #auto_parameters |\n| 10 | 200 | `get_ref()` returns `int&` due to `decltype(auto)` and parentheses. Assignment modifies `global`. | #decltype_auto #reference_return |\n| 11 | 42 2 | Lambda copies `shared_ptr` (not move). Reference count becomes 2 (original `sp` + captured `p`). | #shared_ptr #reference_counting |\n| 12 | 9 | `square(3)` = 9 at compile time. Array has 9 ints. `sizeof(arr)` = 9*4 = 36 bytes typically, divided by 4 = 9. | #constexpr #array_size |\n| 13 | 3 3.14159 | Variable template `pi<int>` truncates to 3, `pi<double>` is 3.14159. | #variable_templates #templates |\n| 14 | 1 2 | Both return paths return `int`, so return type deduction succeeds. `foo(true)` returns 1, `foo(false)` returns 2. | #return_type_deduction #auto |\n| 15 | 20 | `f2()` returns `int&` to `global x`. Assignment `f2() = 20` modifies `x` to 20. | #decltype_auto #lvalue_reference |\n| 16 | 1 | `std::get<0>` accesses first element by index. Works even though `int` appears twice. | #std_get #tuple_index |\n| 17 | 42 | `lambda(21)` passes `int`, which satisfies `is_integral`. Returns 21*2 = 42. | #generic_lambdas #static_assert |\n| 18 | 10 5 | Inner `exchange(x, 10)` sets `x` to 10, returns 5. Outer `exchange(x, 5)` sets `x` to 5 (wait, x was 10), returns 10. Actually: inner executes first: x=5 initially, `exchange(x,10)` makes x=10 and returns 5. Then outer `exchange(x, 5)` makes x=5 and returns 10. Wait, let me recalculate: x starts as 5. Inner `std::exchange(x, 10)` changes x to 10 and returns 5. Then outer `std::exchange(x, 5)` changes x to 5 and returns 10. So x=5, y=10. But actually, evaluation order: the inner exchange happens as part of the outer's argument, so inner first: x=5→10, returns 5. Outer: x=10→5, returns 10. So x=5, y=10. No wait: `int y = std::exchange(x, std::exchange(x, 10));` - right operand evaluates first in most cases. Inner: x=5→10, returns 5. Outer: std::exchange(x, 5) makes x=5, returns 10. So x=5, y=10. But the outer exchange receives 5 as second arg from inner. So outer is `exchange(x, 5)` where x is now 10. So outer: x=10→5, returns 10. Result: x=5, y=10. | #std_exchange #evaluation_order |\n| 19 | 15 100 | Binary 0b1111 = 15 decimal. Digit separator 1'00'0 = 100. | #binary_literals #digit_separators |\n| 20 | 99 50 | Mutable lambda allows modifying captured `p`. First call: `exchange(*p, 50)` returns 99, sets *p to 50. Second call: `exchange(*p, 50)` returns 50, sets *p to 50 again. | #init_capture #mutable_lambda #std_exchange |",
           "| Feature | Description | Key Benefit |\n|---------|-------------|-------------|\n| Return type deduction | `auto` for any function | Reduces verbosity in templates |\n| Generic lambdas | `auto` parameters | Template-like behavior without explicit syntax |\n| Init-capture | `[x = expr]` in lambda | Move semantics in captures |\n| decltype(auto) | Exact type preservation | Perfect forwarding of return types |\n| Relaxed constexpr | Loops, locals, statements | Practical compile-time algorithms |\n| std::make_unique | Type-safe unique_ptr creation | Exception safety, cleaner syntax |\n| std::exchange | Atomic replace-and-return | Cleaner move operations |\n| std::integer_sequence | Compile-time index generation | Tuple unpacking, variadic expansion |\n| Variable templates | Template variables | Cleaner metaprogramming syntax |\n| Binary literals | `0b` prefix | Clarity in bit manipulation |\n| Digit separators | `'` in numbers | Readability for large constants |\n| [[deprecated]] | Deprecation attribute | Gradual API evolution |",

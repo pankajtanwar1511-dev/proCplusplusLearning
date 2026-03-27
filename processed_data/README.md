@@ -172,11 +172,65 @@ cd /home/pankaj/cplusplus/proCplusplus/verification_scripts
 
 ## 🛠️ Parser Details
 
-### `markdown_to_json.py` - C++ Parser
-- **Input**: `data/chapter_*/` markdown files
-- **Output**: `json_output/` JSON files
-- **Features**: Flexible format support, pattern warnings, UTF-8 encoding
-- **Usage**: See header documentation in file
+### `markdown_to_json.py` - C++ Parser (CURRENT VERSION)
+
+**Status**: ✅ Production Ready - March 27, 2026
+
+**Input**: `data/chapter_*/` markdown files (split structure: theory + practice + qa)
+**Output**: `json_output/` JSON files (20 chapters, 88 topics)
+
+**Key Features**:
+1. **Dual Format Support**:
+   - **Bug Analysis Format**: Code with bug → Answer → Explanation (with Key Concept) → Fixed Version
+   - **Classic Format**: Description → Code → Expected Output → Solution
+
+2. **Smart Content Extraction**:
+   - Removes duplicate question code from `full_content` (March 27, 2026 fix)
+   - Preserves complete markdown in `full_content` for raw display
+   - Extracts structured fields (answer, explanation, key_concept, fixed_version)
+
+3. **Practice Task Structure**:
+   ```json
+   {
+     "question_number": 1,
+     "title": "Question 1",
+     "code": "// Question code (displayed in question area)",
+     "full_content": "**Answer:**\n... (displayed in answer area, NO duplicate code)",
+     "answer": "Brief diagnosis",
+     "explanation": "Detailed explanation with bullets",
+     "key_concept": "Main learning point",
+     "fixed_version": "// Corrected code"
+   }
+   ```
+
+4. **File Structure Support**:
+   - **Preferred**: Split files (`topic_1_theory.md`, `topic_1_practice.md`, `topic_1_qa.md`)
+   - **Legacy**: Single file (`topic_1.md`)
+   - Automatically detects and combines split files
+
+5. **Flexible Patterns**:
+   - Section headers: `### SECTION_NAME:` or `### SECTION_NAME`
+   - Interview QA: `#### Q1: Question?` or `#### Q1` (question in body)
+   - Edge cases: `#### Edge Case N: Title`
+   - Code examples: `#### Example N: Title`
+   - Practice tasks: `#### QN` (no colon)
+
+6. **Recent Updates**:
+   - **March 27, 2026**: Fixed duplicate code issue - removes first code block from `full_content`
+   - **March 26, 2026**: Enhanced explanation extraction with regex improvements
+   - Handles optional newlines before closing code fences: `\n?` ```
+
+**Usage**:
+```bash
+# Process all chapters
+python3 markdown_to_json.py
+
+# Process specific chapter
+python3 markdown_to_json.py --chapter 20
+
+# Custom directories
+python3 markdown_to_json.py --data-dir ../../data --output-dir ../json_output
+```
 
 ### `markdown_to_json_ros2.py` - ROS2 Parser
 - **Input**: `data_ros2/chapter_*/` markdown files
@@ -237,6 +291,7 @@ The JSON data supports:
 
 ---
 
-**Last Updated**: March 26, 2026
+**Last Updated**: March 27, 2026
+**Parser Version**: 2.1 (Duplicate code fix, simplified display)
 **Content Version**: 2.0 (Dual catalog system)
 **Total Content**: 119 topics across 26 chapters (C++ + ROS2)

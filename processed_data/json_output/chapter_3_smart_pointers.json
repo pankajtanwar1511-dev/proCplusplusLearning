@@ -796,206 +796,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p1 = std::make_unique<int>(42);\nstd::unique_ptr<int> p2 = p1;\nstd::cout << *p2;\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** unique_ptr copy constructor is deleted. Cannot copy p1 to p2. Must use std::move for ownership transfer.\n\n**Key Concept:** #unique_ptr #deleted_copy\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error\n```\n\n**Explanation:**\n- unique_ptr enforces exclusive ownership (only one owner at a time)\n- Copy constructor explicitly deleted: `unique_ptr(const unique_ptr&) = delete`\n- `std::unique_ptr<int> p2 = p1` attempts to copy p1 to p2 (won't compile!)\n- Compiler error: \"use of deleted function 'unique_ptr::unique_ptr(const unique_ptr&)'\"\n- **Fix:** Use move semantics: `std::unique_ptr<int> p2 = std::move(p1);`\n- After move, p1 becomes nullptr, p2 owns the int(42)\n- **Key Concept:** unique_ptr is non-copyable but movable; enforces single ownership",
           "code": "std::unique_ptr<int> p1 = std::make_unique<int>(42);\nstd::unique_ptr<int> p2 = p1;\nstd::cout << *p2;",
+          "answer": "Compilation error",
+          "explanation": "- unique_ptr enforces exclusive ownership (only one owner at a time)\n- Copy constructor explicitly deleted: `unique_ptr(const unique_ptr&) = delete`\n- `std::unique_ptr<int> p2 = p1` attempts to copy p1 to p2 (won't compile!)\n- Compiler error: \"use of deleted function 'unique_ptr::unique_ptr(const unique_ptr&)'\"\n- **Fix:** Use move semantics: `std::unique_ptr<int> p2 = std::move(p1);`\n- After move, p1 becomes nullptr, p2 owns the int(42)\n- **Key Concept:** unique_ptr is non-copyable but movable; enforces single ownership",
+          "key_concept": "unique_ptr is non-copyable but movable; enforces single ownership",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p1 = std::make_unique<int>(100);\nstd::unique_ptr<int> p2 = std::move(p1);\nif (p1 == nullptr) {\n    std::cout << \"p1 is null\\n\";\n}\nstd::cout << *p2;\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"p1 is null\" then 100\n\n**Explanation:** std::move transfers ownership from p1 to p2. p1 becomes nullptr. p2 now owns the int containing 100.\n\n**Key Concept:** #unique_ptr #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\np1 is null\n100\n```\n\n**Explanation:**\n- `make_unique<int>(100)` creates unique_ptr owning int(100)\n- `std::move(p1)` converts p1 to rvalue reference, enabling move\n- Move constructor transfers ownership from p1 to p2\n- After move: p1 becomes nullptr (moved-from state), p2 owns int(100)\n- `p1 == nullptr` is true, prints \"p1 is null\"\n- `*p2` dereferences p2, prints 100\n- Only one owner at any time - ownership successfully transferred\n- **Key Concept:** Moving unique_ptr transfers ownership; source becomes nullptr",
           "code": "std::unique_ptr<int> p1 = std::make_unique<int>(100);\nstd::unique_ptr<int> p2 = std::move(p1);\nif (p1 == nullptr) {\n    std::cout << \"p1 is null\\n\";\n}\nstd::cout << *p2;",
+          "answer": "p1 is null\n100",
+          "explanation": "- `make_unique<int>(100)` creates unique_ptr owning int(100)\n- `std::move(p1)` converts p1 to rvalue reference, enabling move\n- Move constructor transfers ownership from p1 to p2\n- After move: p1 becomes nullptr (moved-from state), p2 owns int(100)\n- `p1 == nullptr` is true, prints \"p1 is null\"\n- `*p2` dereferences p2, prints 100\n- Only one owner at any time - ownership successfully transferred\n- **Key Concept:** Moving unique_ptr transfers ownership; source becomes nullptr",
+          "key_concept": "Moving unique_ptr transfers ownership; source becomes nullptr",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "p1 is null\n100"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::shared_ptr<int> sp1 = std::make_shared<int>(42);\nstd::shared_ptr<int> sp2 = sp1;\nstd::cout << sp1.use_count() << \" \" << sp2.use_count();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"2 2\"\n\n**Explanation:** Both sp1 and sp2 share ownership of the same object. use_count() returns the total reference count, which is 2 for both.\n\n**Key Concept:** #shared_ptr #reference_counting\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2 2\n```\n\n**Explanation:**\n- `make_shared<int>(42)` creates shared_ptr with reference count 1\n- `sp2 = sp1` copies shared_ptr, incrementing reference count to 2\n- Both sp1 and sp2 own the SAME int(42) object\n- `use_count()` returns current reference count for the shared object\n- Both sp1.use_count() and sp2.use_count() return 2 (total owners)\n- Object will be deleted when both sp1 and sp2 destroyed (count reaches 0)\n- **Key Concept:** shared_ptr uses reference counting; all copies share same count",
           "code": "std::shared_ptr<int> sp1 = std::make_shared<int>(42);\nstd::shared_ptr<int> sp2 = sp1;\nstd::cout << sp1.use_count() << \" \" << sp2.use_count();",
+          "answer": "2 2",
+          "explanation": "- `make_shared<int>(42)` creates shared_ptr with reference count 1\n- `sp2 = sp1` copies shared_ptr, incrementing reference count to 2\n- Both sp1 and sp2 own the SAME int(42) object\n- `use_count()` returns current reference count for the shared object\n- Both sp1.use_count() and sp2.use_count() return 2 (total owners)\n- Object will be deleted when both sp1 and sp2 destroyed (count reaches 0)\n- **Key Concept:** shared_ptr uses reference counting; all copies share same count",
+          "key_concept": "shared_ptr uses reference counting; all copies share same count",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2 2"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\nstruct Node {\n    std::shared_ptr<Node> next;\n    ~Node() { std::cout << \"~Node\\n\"; }\n};\n\nvoid test() {\n    auto a = std::make_shared<Node>();\n    auto b = std::make_shared<Node>();\n    a->next = b;\n    b->next = a;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Memory leak, ~Node never printed\n\n**Explanation:** Circular reference: a->next points to b, b->next points to a. Reference counts never reach zero. Neither destructor runs.\n\n**Key Concept:** #circular_reference #memory_leak\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nMemory leak, ~Node never printed\n```\n\n**Explanation:**\n- Two Node objects created: a and b\n- `a->next = b` increments b's reference count to 2\n- `b->next = a` increments a's reference count to 2\n- Function ends: local variables a and b destroyed, counts drop to 1 each\n- But a is still owned by b->next, and b is still owned by a->next\n- Circular reference: neither count reaches zero, neither deleted\n- Destructors never called, memory leaked\n- **Fix:** Use `weak_ptr<Node> next` to break cycle\n- **Key Concept:** Circular shared_ptr references prevent deletion; use weak_ptr for back-pointers",
           "code": "struct Node {\n    std::shared_ptr<Node> next;\n    ~Node() { std::cout << \"~Node\\n\"; }\n};\n\nvoid test() {\n    auto a = std::make_shared<Node>();\n    auto b = std::make_shared<Node>();\n    a->next = b;\n    b->next = a;\n}",
+          "answer": "Memory leak, ~Node never printed",
+          "explanation": "- Two Node objects created: a and b\n- `a->next = b` increments b's reference count to 2\n- `b->next = a` increments a's reference count to 2\n- Function ends: local variables a and b destroyed, counts drop to 1 each\n- But a is still owned by b->next, and b is still owned by a->next\n- Circular reference: neither count reaches zero, neither deleted\n- Destructors never called, memory leaked\n- **Fix:** Use `weak_ptr<Node> next` to break cycle\n- **Key Concept:** Circular shared_ptr references prevent deletion; use weak_ptr for back-pointers",
+          "key_concept": "Circular shared_ptr references prevent deletion; use weak_ptr for back-pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Memory leak, ~Node never printed"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::weak_ptr<int> weak;\n{\n    std::shared_ptr<int> shared = std::make_shared<int>(42);\n    weak = shared;\n    std::cout << weak.use_count() << \"\\n\";\n}\nstd::cout << weak.expired();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1\" then \"1\" (true)\n\n**Explanation:** Weak_ptr doesn't increment strong count. When shared destroyed, weak.expired() returns true (1). First line shows shared's use_count is 1.\n\n**Key Concept:** #weak_ptr #expired\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n1\n```\n\n**Explanation:**\n- `make_shared<int>(42)` creates shared_ptr with count 1\n- `weak = shared` creates weak_ptr observing the int (doesn't increment count)\n- `weak.use_count()` returns strong count (still 1 - weak doesn't count)\n- Inner scope ends: shared destroyed, int deleted, strong count becomes 0\n- `weak.expired()` returns true (1) - object no longer exists\n- weak_ptr safe to use after object deleted - just reports expired\n- **Key Concept:** weak_ptr doesn't affect reference count; detects when object deleted",
           "code": "std::weak_ptr<int> weak;\n{\n    std::shared_ptr<int> shared = std::make_shared<int>(42);\n    weak = shared;\n    std::cout << weak.use_count() << \"\\n\";\n}\nstd::cout << weak.expired();",
+          "answer": "1\n1",
+          "explanation": "- `make_shared<int>(42)` creates shared_ptr with count 1\n- `weak = shared` creates weak_ptr observing the int (doesn't increment count)\n- `weak.use_count()` returns strong count (still 1 - weak doesn't count)\n- Inner scope ends: shared destroyed, int deleted, strong count becomes 0\n- `weak.expired()` returns true (1) - object no longer exists\n- weak_ptr safe to use after object deleted - just reports expired\n- **Key Concept:** weak_ptr doesn't affect reference count; detects when object deleted",
+          "key_concept": "weak_ptr doesn't affect reference count; detects when object deleted",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1\n1"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\nint* raw = new int(100);\nstd::shared_ptr<int> sp1(raw);\nstd::shared_ptr<int> sp2(raw);\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Double delete, crash\n\n**Explanation:** Two independent shared_ptrs created from same raw pointer. Each has separate control block. Both will delete the object → double delete.\n\n**Key Concept:** #shared_ptr #double_delete\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDouble delete, crash\n```\n\n**Explanation:**\n- `new int(100)` allocates int on heap\n- `sp1(raw)` creates first shared_ptr with its own control block\n- `sp2(raw)` creates SECOND shared_ptr with SEPARATE control block\n- sp1 and sp2 don't know about each other - each thinks it's the sole owner\n- When sp1 destroyed: deletes int(100)\n- When sp2 destroyed: tries to delete already-freed memory (double delete!)\n- Undefined behavior, likely crash\n- **Fix:** `sp2 = sp1` to share control block, OR only create one shared_ptr\n- **Key Concept:** Never create multiple shared_ptrs from same raw pointer; always copy from shared_ptr",
           "code": "int* raw = new int(100);\nstd::shared_ptr<int> sp1(raw);\nstd::shared_ptr<int> sp2(raw);",
+          "answer": "Double delete, crash",
+          "explanation": "- `new int(100)` allocates int on heap\n- `sp1(raw)` creates first shared_ptr with its own control block\n- `sp2(raw)` creates SECOND shared_ptr with SEPARATE control block\n- sp1 and sp2 don't know about each other - each thinks it's the sole owner\n- When sp1 destroyed: deletes int(100)\n- When sp2 destroyed: tries to delete already-freed memory (double delete!)\n- Undefined behavior, likely crash\n- **Fix:** `sp2 = sp1` to share control block, OR only create one shared_ptr\n- **Key Concept:** Never create multiple shared_ptrs from same raw pointer; always copy from shared_ptr",
+          "key_concept": "Never create multiple shared_ptrs from same raw pointer; always copy from shared_ptr",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Double delete, crash"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int[]> arr(new int[5]);\ndelete arr.get();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Double delete, undefined behavior\n\n**Explanation:** Manually deleting through get() doesn't release ownership. When arr destroyed, it calls delete[] again on already-freed memory.\n\n**Key Concept:** #unique_ptr #get #double_delete\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDouble delete, undefined behavior\n```\n\n**Explanation:**\n- `unique_ptr<int[]>` specialization for arrays, uses delete[] on destruction\n- `arr.get()` returns raw pointer to the array WITHOUT releasing ownership\n- `delete arr.get()` manually deletes array using scalar delete (wrong!)\n- arr still owns the array, doesn't know it was deleted\n- When arr destroyed: calls delete[] on already-freed memory (double delete!)\n- Undefined behavior, likely crash or heap corruption\n- **Key Concept:** Never manually delete through get(); unique_ptr owns and will delete",
           "code": "std::unique_ptr<int[]> arr(new int[5]);\ndelete arr.get();",
+          "answer": "Double delete, undefined behavior",
+          "explanation": "- `unique_ptr<int[]>` specialization for arrays, uses delete[] on destruction\n- `arr.get()` returns raw pointer to the array WITHOUT releasing ownership\n- `delete arr.get()` manually deletes array using scalar delete (wrong!)\n- arr still owns the array, doesn't know it was deleted\n- When arr destroyed: calls delete[] on already-freed memory (double delete!)\n- Undefined behavior, likely crash or heap corruption\n- **Key Concept:** Never manually delete through get(); unique_ptr owns and will delete",
+          "key_concept": "Never manually delete through get(); unique_ptr owns and will delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Double delete, undefined behavior"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\nauto p = std::make_shared<int>(42);\nint* raw = p.get();\np.reset();\nstd::cout << *raw;\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior, dangling pointer\n\n**Explanation:** p.reset() deletes the managed int. raw now points to freed memory. Dereferencing causes use-after-free UB.\n\n**Key Concept:** #dangling_pointer #use_after_free\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (use-after-free)\n```\n\n**Explanation:**\n- `make_shared<int>(42)` creates shared_ptr owning int(42)\n- `raw = p.get()` returns raw pointer WITHOUT transferring ownership\n- raw is just an observer, p still owns the int\n- `p.reset()` explicitly deletes the managed int, p becomes nullptr\n- raw now points to freed memory (dangling pointer)\n- `*raw` dereferences freed memory - use-after-free UB\n- May crash, print garbage, or appear to work (all undefined behavior)\n- **Key Concept:** get() returns observer pointer; unsafe after owner deletes object",
           "code": "auto p = std::make_shared<int>(42);\nint* raw = p.get();\np.reset();\nstd::cout << *raw;",
+          "answer": "Undefined behavior (use-after-free)",
+          "explanation": "- `make_shared<int>(42)` creates shared_ptr owning int(42)\n- `raw = p.get()` returns raw pointer WITHOUT transferring ownership\n- raw is just an observer, p still owns the int\n- `p.reset()` explicitly deletes the managed int, p becomes nullptr\n- raw now points to freed memory (dangling pointer)\n- `*raw` dereferences freed memory - use-after-free UB\n- May crash, print garbage, or appear to work (all undefined behavior)\n- **Key Concept:** get() returns observer pointer; unsafe after owner deletes object",
+          "key_concept": "get() returns observer pointer; unsafe after owner deletes object",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (use-after-free)"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\nstruct Base {\n    ~Base() { std::cout << \"~Base\\n\"; }\n};\n\nstruct Derived : Base {\n    ~Derived() { std::cout << \"~Derived\\n\"; }\n};\n\nstd::unique_ptr<Base> ptr = std::make_unique<Derived>();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Only prints \"~Base\" - resource leak\n\n**Explanation:** Base destructor not virtual. Polymorphic deletion only calls ~Base(), not ~Derived(). Derived resources leak. Need virtual ~Base().\n\n**Key Concept:** #virtual_destructor #polymorphism\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nOnly prints \"~Base\" - Derived destructor not called (resource leak)\n```\n\n**Explanation:**\n- `make_unique<Derived>()` creates Derived object\n- Implicitly converts to `unique_ptr<Base>` (polymorphism)\n- When ptr destroyed: calls delete on Base pointer\n- Base destructor is NOT virtual - polymorphic behavior undefined\n- Only ~Base() called, ~Derived() never called\n- If Derived has resources (file handles, memory), they leak\n- **Fix:** Declare `virtual ~Base() { std::cout << \"~Base\\n\"; }`\n- **Key Concept:** Base class destructors must be virtual for polymorphic deletion",
           "code": "struct Base {\n    ~Base() { std::cout << \"~Base\\n\"; }\n};\n\nstruct Derived : Base {\n    ~Derived() { std::cout << \"~Derived\\n\"; }\n};\n\nstd::unique_ptr<Base> ptr = std::make_unique<Derived>();",
+          "answer": "Only prints \"~Base\" - Derived destructor not called (resource leak)",
+          "explanation": "- `make_unique<Derived>()` creates Derived object\n- Implicitly converts to `unique_ptr<Base>` (polymorphism)\n- When ptr destroyed: calls delete on Base pointer\n- Base destructor is NOT virtual - polymorphic behavior undefined\n- Only ~Base() called, ~Derived() never called\n- If Derived has resources (file handles, memory), they leak\n- **Fix:** Declare `virtual ~Base() { std::cout << \"~Base\\n\"; }`\n- **Key Concept:** Base class destructors must be virtual for polymorphic deletion",
+          "key_concept": "Base class destructors must be virtual for polymorphic deletion",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Only prints \"~Base\" - Derived destructor not called (resource leak)"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p1 = std::make_unique<int>(42);\nstd::unique_ptr<int> p2;\np2 = std::move(p1);\nstd::cout << (p1 == nullptr);\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1\" (true)\n\n**Explanation:** Move assignment transfers ownership from p1 to p2. p1 becomes nullptr. Comparison with nullptr returns true.\n\n**Key Concept:** #unique_ptr #move_assignment\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `make_unique<int>(42)` creates unique_ptr owning int(42)\n- `p2` is default-constructed (nullptr)\n- `p2 = std::move(p1)` move assignment operator transfers ownership\n- p2 now owns int(42), p1 becomes nullptr (moved-from state)\n- `p1 == nullptr` evaluates to true (1)\n- unique_ptr provides comparison operators with nullptr\n- **Key Concept:** Move assignment transfers ownership; source becomes nullptr",
           "code": "std::unique_ptr<int> p1 = std::make_unique<int>(42);\nstd::unique_ptr<int> p2;\np2 = std::move(p1);\nstd::cout << (p1 == nullptr);",
+          "answer": "1",
+          "explanation": "- `make_unique<int>(42)` creates unique_ptr owning int(42)\n- `p2` is default-constructed (nullptr)\n- `p2 = std::move(p1)` move assignment operator transfers ownership\n- p2 now owns int(42), p1 becomes nullptr (moved-from state)\n- `p1 == nullptr` evaluates to true (1)\n- unique_ptr provides comparison operators with nullptr\n- **Key Concept:** Move assignment transfers ownership; source becomes nullptr",
+          "key_concept": "Move assignment transfers ownership; source becomes nullptr",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::shared_ptr<int> sp;\nstd::weak_ptr<int> wp = sp;\nauto locked = wp.lock();\nif (locked) {\n    std::cout << \"Locked\\n\";\n} else {\n    std::cout << \"Null\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"Null\"\n\n**Explanation:** sp is default-constructed (nullptr). weak_ptr observing nullptr. lock() returns empty shared_ptr, condition is false.\n\n**Key Concept:** #weak_ptr #lock\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNull\n```\n\n**Explanation:**\n- `sp` is default-constructed shared_ptr (nullptr, no managed object)\n- `wp = sp` creates weak_ptr observing nullptr (nothing to observe)\n- `wp.lock()` attempts to create shared_ptr from weak_ptr\n- Since observed object doesn't exist, lock() returns empty shared_ptr\n- Empty shared_ptr evaluates to false in boolean context\n- else branch executes, prints \"Null\"\n- **Key Concept:** weak_ptr::lock() returns empty shared_ptr if object expired or never existed",
           "code": "std::shared_ptr<int> sp;\nstd::weak_ptr<int> wp = sp;\nauto locked = wp.lock();\nif (locked) {\n    std::cout << \"Locked\\n\";\n} else {\n    std::cout << \"Null\\n\";\n}",
+          "answer": "Null",
+          "explanation": "- `sp` is default-constructed shared_ptr (nullptr, no managed object)\n- `wp = sp` creates weak_ptr observing nullptr (nothing to observe)\n- `wp.lock()` attempts to create shared_ptr from weak_ptr\n- Since observed object doesn't exist, lock() returns empty shared_ptr\n- Empty shared_ptr evaluates to false in boolean context\n- else branch executes, prints \"Null\"\n- **Key Concept:** weak_ptr::lock() returns empty shared_ptr if object expired or never existed",
+          "key_concept": "weak_ptr::lock() returns empty shared_ptr if object expired or never existed",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Null"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\nauto sp1 = std::make_shared<int>(100);\nstd::weak_ptr<int> wp = sp1;\nsp1.reset();\nstd::cout << wp.expired();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1\" (true)\n\n**Explanation:** sp1.reset() destroys the managed object. weak_ptr detects this and expired() returns true.\n\n**Key Concept:** #weak_ptr #expired\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `make_shared<int>(100)` creates shared_ptr with count 1\n- `wp = sp1` creates weak_ptr observing the int (doesn't increment count)\n- `sp1.reset()` destroys managed int, decrements count to 0, deletes object\n- sp1 becomes nullptr\n- `wp.expired()` checks if observed object still exists\n- Returns true (1) because object was deleted\n- Safe way to check validity before accessing through weak_ptr\n- **Key Concept:** weak_ptr::expired() detects when observed object deleted",
           "code": "auto sp1 = std::make_shared<int>(100);\nstd::weak_ptr<int> wp = sp1;\nsp1.reset();\nstd::cout << wp.expired();",
+          "answer": "1",
+          "explanation": "- `make_shared<int>(100)` creates shared_ptr with count 1\n- `wp = sp1` creates weak_ptr observing the int (doesn't increment count)\n- `sp1.reset()` destroys managed int, decrements count to 0, deletes object\n- sp1 becomes nullptr\n- `wp.expired()` checks if observed object still exists\n- Returns true (1) because object was deleted\n- Safe way to check validity before accessing through weak_ptr\n- **Key Concept:** weak_ptr::expired() detects when observed object deleted",
+          "key_concept": "weak_ptr::expired() detects when observed object deleted",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p(new int(42));\nint* raw = p.release();\nstd::cout << (p == nullptr);\ndelete raw;\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1\" (true) then completes\n\n**Explanation:** release() returns raw pointer and makes p null. Ownership transferred to caller. Must manually delete raw. p == nullptr is true.\n\n**Key Concept:** #unique_ptr #release\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `unique_ptr<int> p(new int(42))` takes ownership of heap int\n- `p.release()` returns raw pointer AND releases ownership\n- After release(): p becomes nullptr, ownership transferred to caller\n- `p == nullptr` is true (1)\n- Caller now responsible for deletion: `delete raw` required\n- Different from get(): release() gives up ownership, get() keeps ownership\n- **Key Concept:** release() transfers ownership to caller; must manually delete",
           "code": "std::unique_ptr<int> p(new int(42));\nint* raw = p.release();\nstd::cout << (p == nullptr);\ndelete raw;",
+          "answer": "1",
+          "explanation": "- `unique_ptr<int> p(new int(42))` takes ownership of heap int\n- `p.release()` returns raw pointer AND releases ownership\n- After release(): p becomes nullptr, ownership transferred to caller\n- `p == nullptr` is true (1)\n- Caller now responsible for deletion: `delete raw` required\n- Different from get(): release() gives up ownership, get() keeps ownership\n- **Key Concept:** release() transfers ownership to caller; must manually delete",
+          "key_concept": "release() transfers ownership to caller; must manually delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::shared_ptr<int> sp1 = std::make_shared<int>(42);\nstd::shared_ptr<int> sp2 = sp1;\nsp1.reset();\nstd::cout << sp2.use_count();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1\"\n\n**Explanation:** sp1.reset() decrements count to 1. sp2 still holds reference. sp2.use_count() returns 1.\n\n**Key Concept:** #shared_ptr #reset\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `make_shared<int>(42)` creates shared_ptr with count 1\n- `sp2 = sp1` copies shared_ptr, incrementing count to 2\n- Both sp1 and sp2 own same int(42)\n- `sp1.reset()` destroys sp1's reference, decrements count from 2 to 1\n- sp1 becomes nullptr, but int(42) still alive (sp2 owns it)\n- `sp2.use_count()` returns 1 (one remaining owner)\n- Object will be deleted when sp2 destroyed\n- **Key Concept:** reset() decrements count; object survives if other owners exist",
           "code": "std::shared_ptr<int> sp1 = std::make_shared<int>(42);\nstd::shared_ptr<int> sp2 = sp1;\nsp1.reset();\nstd::cout << sp2.use_count();",
+          "answer": "1",
+          "explanation": "- `make_shared<int>(42)` creates shared_ptr with count 1\n- `sp2 = sp1` copies shared_ptr, incrementing count to 2\n- Both sp1 and sp2 own same int(42)\n- `sp1.reset()` destroys sp1's reference, decrements count from 2 to 1\n- sp1 becomes nullptr, but int(42) still alive (sp2 owns it)\n- `sp2.use_count()` returns 1 (one remaining owner)\n- Object will be deleted when sp2 destroyed\n- **Key Concept:** reset() decrements count; object survives if other owners exist",
+          "key_concept": "reset() decrements count; object survives if other owners exist",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int[]> arr = std::make_unique<int[]>(5);\narr[0] = 10;\nstd::cout << arr[0];\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** make_unique doesn't support array syntax. Should use: unique_ptr<int[]>(new int[5]) or unique_ptr<int[]> arr(new int[5]).\n\n**Key Concept:** #make_unique #arrays\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10\n```\n\n**Explanation:**\n- C++14+ added make_unique array support: `make_unique<int[]>(5)`\n- Creates array of 5 uninitialized ints on heap\n- unique_ptr<int[]> array specialization provides operator[] for access\n- `arr[0] = 10` sets first element to 10\n- `arr[0]` reads and prints 10\n- When arr destroyed: automatically calls delete[] (not delete)\n- Safer than manual `unique_ptr<int[]>(new int[5])`\n- **Key Concept:** make_unique supports arrays since C++14; unique_ptr<T[]> automatically uses delete[]",
           "code": "std::unique_ptr<int[]> arr = std::make_unique<int[]>(5);\narr[0] = 10;\nstd::cout << arr[0];",
+          "answer": "10",
+          "explanation": "- C++14+ added make_unique array support: `make_unique<int[]>(5)`\n- Creates array of 5 uninitialized ints on heap\n- unique_ptr<int[]> array specialization provides operator[] for access\n- `arr[0] = 10` sets first element to 10\n- `arr[0]` reads and prints 10\n- When arr destroyed: automatically calls delete[] (not delete)\n- Safer than manual `unique_ptr<int[]>(new int[5])`\n- **Key Concept:** make_unique supports arrays since C++14; unique_ptr<T[]> automatically uses delete[]",
+          "key_concept": "make_unique supports arrays since C++14; unique_ptr<T[]> automatically uses delete[]",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\nauto deleter = [](int* p) {\n    std::cout << \"Custom delete\\n\";\n    delete p;\n};\n\nstd::unique_ptr<int, decltype(deleter)> p(new int(42), deleter);\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"Custom delete\" when p destroyed\n\n**Explanation:** Custom deleter invoked when unique_ptr destroyed. Lambda prints message then deletes pointer. Deleter type is part of unique_ptr's type.\n\n**Key Concept:** #custom_deleter #unique_ptr\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nPrints \"Custom delete\" when p destroyed\n```\n\n**Explanation:**\n- Lambda function creates custom deleter for unique_ptr\n- Deleter type becomes part of unique_ptr's type signature\n- `decltype(deleter)` deduces lambda type for template parameter\n- When p destroyed (end of scope): custom deleter invoked instead of default delete\n- Custom deleter prints message, then manually deletes pointer\n- Useful for: closing file handles, releasing non-memory resources, logging\n- **Key Concept:** unique_ptr supports custom deleters; deleter type is part of unique_ptr's type",
           "code": "auto deleter = [](int* p) {\n    std::cout << \"Custom delete\\n\";\n    delete p;\n};\n\nstd::unique_ptr<int, decltype(deleter)> p(new int(42), deleter);",
+          "answer": "Prints \"Custom delete\" when p destroyed",
+          "explanation": "- Lambda function creates custom deleter for unique_ptr\n- Deleter type becomes part of unique_ptr's type signature\n- `decltype(deleter)` deduces lambda type for template parameter\n- When p destroyed (end of scope): custom deleter invoked instead of default delete\n- Custom deleter prints message, then manually deletes pointer\n- Useful for: closing file handles, releasing non-memory resources, logging\n- **Key Concept:** unique_ptr supports custom deleters; deleter type is part of unique_ptr's type",
+          "key_concept": "unique_ptr supports custom deleters; deleter type is part of unique_ptr's type",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Prints \"Custom delete\" when p destroyed"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p1 = std::make_unique<int>(42);\nauto p2 = std::make_shared<int>(100);\np2 = std::move(p1);\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Cannot assign unique_ptr to shared_ptr variable. Need conversion: shared_ptr<int> sp = std::move(p1), or create new variable.\n\n**Key Concept:** #type_mismatch #smart_pointers\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error\n```\n\n**Explanation:**\n- `p1` has type `unique_ptr<int>`\n- `p2` deduced as `shared_ptr<int>` from make_shared\n- `p2 = std::move(p1)` attempts to assign unique_ptr to shared_ptr variable\n- shared_ptr move assignment expects shared_ptr, not unique_ptr\n- Type mismatch: no matching operator= for shared_ptr = unique_ptr\n- **Fix:** Create new shared_ptr: `std::shared_ptr<int> sp = std::move(p1);`\n- **Key Concept:** Cannot assign unique_ptr to existing shared_ptr variable; can convert via construction",
           "code": "std::unique_ptr<int> p1 = std::make_unique<int>(42);\nauto p2 = std::make_shared<int>(100);\np2 = std::move(p1);",
+          "answer": "Compilation error",
+          "explanation": "- `p1` has type `unique_ptr<int>`\n- `p2` deduced as `shared_ptr<int>` from make_shared\n- `p2 = std::move(p1)` attempts to assign unique_ptr to shared_ptr variable\n- shared_ptr move assignment expects shared_ptr, not unique_ptr\n- Type mismatch: no matching operator= for shared_ptr = unique_ptr\n- **Fix:** Create new shared_ptr: `std::shared_ptr<int> sp = std::move(p1);`\n- **Key Concept:** Cannot assign unique_ptr to existing shared_ptr variable; can convert via construction",
+          "key_concept": "Cannot assign unique_ptr to existing shared_ptr variable; can convert via construction",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\nstruct Widget {\n    int data = 42;\n};\n\nauto widget = std::make_shared<Widget>();\nstd::shared_ptr<int> dataPtr(widget, &widget->data);\nwidget.reset();\nstd::cout << *dataPtr;\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"42\"\n\n**Explanation:** Aliasing constructor: dataPtr shares widget's control block but points to data member. Even after widget.reset(), dataPtr keeps Widget alive.\n\n**Key Concept:** #aliasing_constructor #shared_ptr\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- Aliasing constructor: `shared_ptr(shared_ptr<Y>, T*)`\n- `dataPtr` shares widget's control block BUT points to member data\n- dataPtr increments widget's reference count (count becomes 2)\n- dataPtr points to int member, not Widget itself\n- `widget.reset()` decrements count to 1, Widget NOT deleted\n- dataPtr still owns Widget (keeps it alive), points to data member\n- `*dataPtr` safely accesses data (42)\n- Widget deleted when dataPtr destroyed\n- **Key Concept:** Aliasing constructor allows pointing to sub-objects while keeping parent alive",
           "code": "struct Widget {\n    int data = 42;\n};\n\nauto widget = std::make_shared<Widget>();\nstd::shared_ptr<int> dataPtr(widget, &widget->data);\nwidget.reset();\nstd::cout << *dataPtr;",
+          "answer": "42",
+          "explanation": "- Aliasing constructor: `shared_ptr(shared_ptr<Y>, T*)`\n- `dataPtr` shares widget's control block BUT points to member data\n- dataPtr increments widget's reference count (count becomes 2)\n- dataPtr points to int member, not Widget itself\n- `widget.reset()` decrements count to 1, Widget NOT deleted\n- dataPtr still owns Widget (keeps it alive), points to data member\n- `*dataPtr` safely accesses data (42)\n- Widget deleted when dataPtr destroyed\n- **Key Concept:** Aliasing constructor allows pointing to sub-objects while keeping parent alive",
+          "key_concept": "Aliasing constructor allows pointing to sub-objects while keeping parent alive",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> p = std::make_unique<int>(42);\nstd::shared_ptr<int> sp = std::move(p);\nstd::cout << sp.use_count() << \" \" << (p == nullptr);\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"1 1\" (true)\n\n**Explanation:** unique_ptr converts to shared_ptr via move. sp has use_count 1. p becomes nullptr. Successful ownership transfer.\n\n**Key Concept:** #unique_to_shared #move_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 1\n```\n\n**Explanation:**\n- unique_ptr can convert to shared_ptr via move constructor\n- `std::move(p)` converts p to rvalue, enables move\n- shared_ptr move constructor from unique_ptr takes ownership\n- sp now owns int(42) with reference count 1\n- p becomes nullptr (moved-from state)\n- `sp.use_count()` returns 1 (sole owner)\n- `p == nullptr` is true (1)\n- One-way conversion: can convert unique → shared, not shared → unique\n- **Key Concept:** unique_ptr converts to shared_ptr; useful for flexibility without overhead",
           "code": "std::unique_ptr<int> p = std::make_unique<int>(42);\nstd::shared_ptr<int> sp = std::move(p);\nstd::cout << sp.use_count() << \" \" << (p == nullptr);",
+          "answer": "1 1",
+          "explanation": "- unique_ptr can convert to shared_ptr via move constructor\n- `std::move(p)` converts p to rvalue, enables move\n- shared_ptr move constructor from unique_ptr takes ownership\n- sp now owns int(42) with reference count 1\n- p becomes nullptr (moved-from state)\n- `sp.use_count()` returns 1 (sole owner)\n- `p == nullptr` is true (1)\n- One-way conversion: can convert unique → shared, not shared → unique\n- **Key Concept:** unique_ptr converts to shared_ptr; useful for flexibility without overhead",
+          "key_concept": "unique_ptr converts to shared_ptr; useful for flexibility without overhead",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 1"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::shared_ptr<int> sp = std::make_shared<int>(42);\nstd::weak_ptr<int> wp1 = sp;\nstd::weak_ptr<int> wp2 = sp;\nsp.reset();\nstd::cout << wp1.use_count() << \" \" << wp2.use_count();\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints \"0 0\"\n\n**Explanation:** When sp.reset(), strong count becomes 0, object deleted. Weak_ptrs remain but use_count() (strong count) is 0 for both.\n\n**Key Concept:** #weak_ptr #use_count\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0 0\n```\n\n**Explanation:**\n- `make_shared<int>(42)` creates shared_ptr with strong count 1\n- `wp1 = sp` and `wp2 = sp` create weak_ptrs (don't increment strong count)\n- weak_ptrs observe the object without owning it\n- `sp.reset()` destroys sole owner, strong count drops to 0, int deleted\n- Both weak_ptrs still exist but observed object gone\n- `use_count()` returns strong count (number of shared_ptr owners), which is 0\n- Both wp1 and wp2 report 0 owners\n- `wp1.expired()` and `wp2.expired()` would return true\n- **Key Concept:** weak_ptr::use_count() returns strong count; 0 means object deleted\n\n---\n\n\n## TOPIC: Smart Pointers in Modern C++",
           "code": "std::shared_ptr<int> sp = std::make_shared<int>(42);\nstd::weak_ptr<int> wp1 = sp;\nstd::weak_ptr<int> wp2 = sp;\nsp.reset();\nstd::cout << wp1.use_count() << \" \" << wp2.use_count();",
+          "answer": "0 0",
+          "explanation": "- `make_shared<int>(42)` creates shared_ptr with strong count 1\n- `wp1 = sp` and `wp2 = sp` create weak_ptrs (don't increment strong count)\n- weak_ptrs observe the object without owning it\n- `sp.reset()` destroys sole owner, strong count drops to 0, int deleted\n- Both weak_ptrs still exist but observed object gone\n- `use_count()` returns strong count (number of shared_ptr owners), which is 0\n- Both wp1 and wp2 report 0 owners\n- `wp1.expired()` and `wp2.expired()` would return true\n- **Key Concept:** weak_ptr::use_count() returns strong count; 0 means object deleted",
+          "key_concept": "weak_ptr::use_count() returns strong count; 0 means object deleted",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0 0"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Compilation error | unique_ptr copy constructor is deleted. Cannot copy p1 to p2. Must use std::move for ownership transfer. | #unique_ptr #deleted_copy |\n| 2 | Prints \"p1 is null\" then 100 | std::move transfers ownership from p1 to p2. p1 becomes nullptr. p2 now owns the int containing 100. | #unique_ptr #move_semantics |\n| 3 | Prints \"2 2\" | Both sp1 and sp2 share ownership of the same object. use_count() returns the total reference count, which is 2 for both. | #shared_ptr #reference_counting |\n| 4 | Memory leak, ~Node never printed | Circular reference: a->next points to b, b->next points to a. Reference counts never reach zero. Neither destructor runs. | #circular_reference #memory_leak |\n| 5 | Prints \"1\" then \"1\" (true) | Weak_ptr doesn't increment strong count. When shared destroyed, weak.expired() returns true (1). First line shows shared's use_count is 1. | #weak_ptr #expired |\n| 6 | Double delete, crash | Two independent shared_ptrs created from same raw pointer. Each has separate control block. Both will delete the object → double delete. | #shared_ptr #double_delete |\n| 7 | Double delete, undefined behavior | Manually deleting through get() doesn't release ownership. When arr destroyed, it calls delete[] again on already-freed memory. | #unique_ptr #get #double_delete |\n| 8 | Undefined behavior, dangling pointer | p.reset() deletes the managed int. raw now points to freed memory. Dereferencing causes use-after-free UB. | #dangling_pointer #use_after_free |\n| 9 | Only prints \"~Base\" - resource leak | Base destructor not virtual. Polymorphic deletion only calls ~Base(), not ~Derived(). Derived resources leak. Need virtual ~Base(). | #virtual_destructor #polymorphism |\n| 10 | Prints \"1\" (true) | Move assignment transfers ownership from p1 to p2. p1 becomes nullptr. Comparison with nullptr returns true. | #unique_ptr #move_assignment |\n| 11 | Prints \"Null\" | sp is default-constructed (nullptr). weak_ptr observing nullptr. lock() returns empty shared_ptr, condition is false. | #weak_ptr #lock |\n| 12 | Prints \"1\" (true) | sp1.reset() destroys the managed object. weak_ptr detects this and expired() returns true. | #weak_ptr #expired |\n| 13 | Prints \"1\" (true) then completes | release() returns raw pointer and makes p null. Ownership transferred to caller. Must manually delete raw. p == nullptr is true. | #unique_ptr #release |\n| 14 | Prints \"1\" | sp1.reset() decrements count to 1. sp2 still holds reference. sp2.use_count() returns 1. | #shared_ptr #reset |\n| 15 | Compilation error | make_unique doesn't support array syntax. Should use: unique_ptr<int[]>(new int[5]) or unique_ptr<int[]> arr(new int[5]). | #make_unique #arrays |\n| 16 | Prints \"Custom delete\" when p destroyed | Custom deleter invoked when unique_ptr destroyed. Lambda prints message then deletes pointer. Deleter type is part of unique_ptr's type. | #custom_deleter #unique_ptr |\n| 17 | Compilation error | Cannot assign unique_ptr to shared_ptr variable. Need conversion: shared_ptr<int> sp = std::move(p1), or create new variable. | #type_mismatch #smart_pointers |\n| 18 | Prints \"42\" | Aliasing constructor: dataPtr shares widget's control block but points to data member. Even after widget.reset(), dataPtr keeps Widget alive. | #aliasing_constructor #shared_ptr |\n| 19 | Prints \"1 1\" (true) | unique_ptr converts to shared_ptr via move. sp has use_count 1. p becomes nullptr. Successful ownership transfer. | #unique_to_shared #move_conversion |\n| 20 | Prints \"0 0\" | When sp.reset(), strong count becomes 0, object deleted. Weak_ptrs remain but use_count() (strong count) is 0 for both. | #weak_ptr #use_count |\n\n#### Smart Pointer Type Comparison\n\n| Feature | unique_ptr | shared_ptr | weak_ptr |\n|---------|-----------|-----------|----------|\n| **Ownership** | Exclusive | Shared | Non-owning observer |\n| **Copyable** | No (deleted) | Yes | Yes |\n| **Movable** | Yes | Yes | Yes |\n| **Size** | 1 pointer (default deleter) | 2 pointers | 2 pointers |\n| **Runtime Overhead** | Zero (default deleter) | Atomic ops, control block | Minimal |\n| **Thread Safety** | No | Control block only | Control block only |\n| **Primary Use** | Single ownership, RAII | Multiple owners | Break cycles, observation |\n| **Reference Counting** | No | Yes (strong count) | Yes (weak count) |\n| **Custom Deleter** | Template parameter | Type-erased in control block | Inherits from shared_ptr |\n| **Array Support** | unique_ptr<T[]> | Limited (custom deleter pre-C++17) | N/A |\n| **Best For** | Default choice, performance | Shared ownership, caching | Avoiding cycles, callbacks |\n\n#### Smart Pointer Operations Reference\n\n| Operation | unique_ptr | shared_ptr | weak_ptr |\n|-----------|-----------|-----------|----------|\n| **Creation** | make_unique<T>(args) | make_shared<T>(args) | From shared_ptr |\n| **Access Object** | *, -> | *, -> | lock() returns shared_ptr |\n| **Get Raw Pointer** | get() | get() | N/A (use lock()) |\n| **Release Ownership** | release() | reset() | reset() |\n| **Replace Object** | reset(ptr) | reset(ptr) | N/A |\n| **Check Validity** | ptr != nullptr | ptr != nullptr | !expired() or lock() |\n| **Transfer Ownership** | std::move | Copy or move | N/A (non-owning) |\n| **Reference Count** | N/A | use_count() | use_count() |\n| **Sole Owner Check** | N/A | unique() | N/A |\n| **Array Element Access** | operator[] (T[]) | No (unless custom) | N/A |\n\n#### Custom Deleter Patterns\n\n| Resource Type | Deleter Example | Smart Pointer Type |\n|--------------|-----------------|-------------------|\n| **FILE*** | `[](FILE* f) { if (f) fclose(f); }` | unique_ptr<FILE, decltype(lambda)> |\n| **malloc Memory** | `[](T* p) { free(p); }` | shared_ptr<T> with deleter |\n| **Array** | `[](T* p) { delete[] p; }` | shared_ptr<T> with deleter |\n| **Windows Handle** | `[](HANDLE h) { CloseHandle(h); }` | unique_ptr<void, decltype(lambda)> |\n| **Custom Cleanup** | `[](T* p) { p->cleanup(); delete p; }` | Either smart pointer type |\n| **No-op** | `[](T*) {}` | For non-owned resources |\n| **Function Pointer** | `&fclose`, `&free` | unique_ptr with function type |\n\n#### Common Smart Pointer Pitfalls\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| **Copying unique_ptr** | Compile error due to deleted copy | Use std::move for transfer |\n| **Circular shared_ptr** | Memory leak from ref cycle | Use weak_ptr for back-references |\n| **Multiple shared_ptrs from raw** | Double delete from separate control blocks | Only create from make_shared or copy existing |\n| **Non-virtual destructor** | Incomplete polymorphic deletion | Always use virtual destructor in base |\n| **Using get() for ownership** | Double ownership and deletion | Use get() only for borrowing |\n| **Array with wrong delete** | UB from delete vs delete[] mismatch | Use unique_ptr<T[]> specialization |\n| **Passing shared_ptr by value** | Unnecessary atomic operations | Pass by const reference unless extending lifetime |\n| **Checking expired() then lock()** | Race condition in multithreaded code | Use lock() directly in condition |\n| **Creating from this** | Separate control block, double delete | Use enable_shared_from_this |\n| **Delaying weak_ptr memory** | Control block lingers after object deleted | Expected behavior, not a leak |\n\n#### When to Use Each Smart Pointer\n\n| Scenario | Recommended Smart Pointer | Rationale |\n|----------|--------------------------|-----------|\n| **Single owner** | unique_ptr | Zero overhead, clear semantics |\n| **Factory functions** | unique_ptr (or shared if needed) | Explicit ownership transfer |\n| **Resource management** | unique_ptr with custom deleter | RAII for any resource type |\n| **Multiple owners** | shared_ptr | Reference-counted shared ownership |\n| **Caching** | weak_ptr to cached items | Allows cache invalidation |\n| **Observer pattern** | weak_ptr to subject | Non-owning observation |\n| **Callbacks** | weak_ptr to context | Prevents dangling callbacks |\n| **Parent-child relationships** | shared_ptr parent, weak_ptr child | Breaks ownership cycle |\n| **Graph structures** | shared_ptr nodes, weak_ptr back-edges | Prevents cyclic leaks |\n| **Temporary borrowing** | Raw pointer or reference | No ownership needed |\n| **Function parameters (non-owning)** | Raw pointer/reference | Most efficient for borrowing |\n| **Function parameters (sink)** | unique_ptr by value | Takes ownership |\n| **Containers of owned objects** | vector<unique_ptr<T>> | Clear ownership in collections |\n\n#### Performance Characteristics\n\n| Operation | unique_ptr | shared_ptr | weak_ptr | Raw Pointer |\n|-----------|-----------|-----------|----------|-------------|\n| **Construction** | O(1) | O(1) + atomic init | O(1) + atomic inc | O(1) |\n| **Copy** | N/A (deleted) | O(1) + atomic inc | O(1) + atomic inc | O(1) |\n| **Move** | O(1) | O(1) | O(1) | O(1) |\n| **Destruction** | O(1) + delete | O(1) + atomic dec + maybe delete | O(1) + atomic dec | O(1) |\n| **Dereference** | O(1) | O(1) | Must lock first | O(1) |\n| **Size** | sizeof(T*) + deleter | 2 * sizeof(T*) | 2 * sizeof(T*) | sizeof(T*) |\n| **Cache Efficiency** | Excellent | Control block separate | Control block separate | Excellent |\n| **Thread Contention** | None | Possible on control block | Minimal | None |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Compilation error | unique_ptr copy constructor is deleted. Cannot copy p1 to p2. Must use std::move for ownership transfer. | #unique_ptr #deleted_copy |\n| 2 | Prints \"p1 is null\" then 100 | std::move transfers ownership from p1 to p2. p1 becomes nullptr. p2 now owns the int containing 100. | #unique_ptr #move_semantics |\n| 3 | Prints \"2 2\" | Both sp1 and sp2 share ownership of the same object. use_count() returns the total reference count, which is 2 for both. | #shared_ptr #reference_counting |\n| 4 | Memory leak, ~Node never printed | Circular reference: a->next points to b, b->next points to a. Reference counts never reach zero. Neither destructor runs. | #circular_reference #memory_leak |\n| 5 | Prints \"1\" then \"1\" (true) | Weak_ptr doesn't increment strong count. When shared destroyed, weak.expired() returns true (1). First line shows shared's use_count is 1. | #weak_ptr #expired |\n| 6 | Double delete, crash | Two independent shared_ptrs created from same raw pointer. Each has separate control block. Both will delete the object → double delete. | #shared_ptr #double_delete |\n| 7 | Double delete, undefined behavior | Manually deleting through get() doesn't release ownership. When arr destroyed, it calls delete[] again on already-freed memory. | #unique_ptr #get #double_delete |\n| 8 | Undefined behavior, dangling pointer | p.reset() deletes the managed int. raw now points to freed memory. Dereferencing causes use-after-free UB. | #dangling_pointer #use_after_free |\n| 9 | Only prints \"~Base\" - resource leak | Base destructor not virtual. Polymorphic deletion only calls ~Base(), not ~Derived(). Derived resources leak. Need virtual ~Base(). | #virtual_destructor #polymorphism |\n| 10 | Prints \"1\" (true) | Move assignment transfers ownership from p1 to p2. p1 becomes nullptr. Comparison with nullptr returns true. | #unique_ptr #move_assignment |\n| 11 | Prints \"Null\" | sp is default-constructed (nullptr). weak_ptr observing nullptr. lock() returns empty shared_ptr, condition is false. | #weak_ptr #lock |\n| 12 | Prints \"1\" (true) | sp1.reset() destroys the managed object. weak_ptr detects this and expired() returns true. | #weak_ptr #expired |\n| 13 | Prints \"1\" (true) then completes | release() returns raw pointer and makes p null. Ownership transferred to caller. Must manually delete raw. p == nullptr is true. | #unique_ptr #release |\n| 14 | Prints \"1\" | sp1.reset() decrements count to 1. sp2 still holds reference. sp2.use_count() returns 1. | #shared_ptr #reset |\n| 15 | Compilation error | make_unique doesn't support array syntax. Should use: unique_ptr<int[]>(new int[5]) or unique_ptr<int[]> arr(new int[5]). | #make_unique #arrays |\n| 16 | Prints \"Custom delete\" when p destroyed | Custom deleter invoked when unique_ptr destroyed. Lambda prints message then deletes pointer. Deleter type is part of unique_ptr's type. | #custom_deleter #unique_ptr |\n| 17 | Compilation error | Cannot assign unique_ptr to shared_ptr variable. Need conversion: shared_ptr<int> sp = std::move(p1), or create new variable. | #type_mismatch #smart_pointers |\n| 18 | Prints \"42\" | Aliasing constructor: dataPtr shares widget's control block but points to data member. Even after widget.reset(), dataPtr keeps Widget alive. | #aliasing_constructor #shared_ptr |\n| 19 | Prints \"1 1\" (true) | unique_ptr converts to shared_ptr via move. sp has use_count 1. p becomes nullptr. Successful ownership transfer. | #unique_to_shared #move_conversion |\n| 20 | Prints \"0 0\" | When sp.reset(), strong count becomes 0, object deleted. Weak_ptrs remain but use_count() (strong count) is 0 for both. | #weak_ptr #use_count |\n\n#### Smart Pointer Type Comparison\n\n| Feature | unique_ptr | shared_ptr | weak_ptr |\n|---------|-----------|-----------|----------|\n| **Ownership** | Exclusive | Shared | Non-owning observer |\n| **Copyable** | No (deleted) | Yes | Yes |\n| **Movable** | Yes | Yes | Yes |\n| **Size** | 1 pointer (default deleter) | 2 pointers | 2 pointers |\n| **Runtime Overhead** | Zero (default deleter) | Atomic ops, control block | Minimal |\n| **Thread Safety** | No | Control block only | Control block only |\n| **Primary Use** | Single ownership, RAII | Multiple owners | Break cycles, observation |\n| **Reference Counting** | No | Yes (strong count) | Yes (weak count) |\n| **Custom Deleter** | Template parameter | Type-erased in control block | Inherits from shared_ptr |\n| **Array Support** | unique_ptr<T[]> | Limited (custom deleter pre-C++17) | N/A |\n| **Best For** | Default choice, performance | Shared ownership, caching | Avoiding cycles, callbacks |\n\n#### Smart Pointer Operations Reference\n\n| Operation | unique_ptr | shared_ptr | weak_ptr |\n|-----------|-----------|-----------|----------|\n| **Creation** | make_unique<T>(args) | make_shared<T>(args) | From shared_ptr |\n| **Access Object** | *, -> | *, -> | lock() returns shared_ptr |\n| **Get Raw Pointer** | get() | get() | N/A (use lock()) |\n| **Release Ownership** | release() | reset() | reset() |\n| **Replace Object** | reset(ptr) | reset(ptr) | N/A |\n| **Check Validity** | ptr != nullptr | ptr != nullptr | !expired() or lock() |\n| **Transfer Ownership** | std::move | Copy or move | N/A (non-owning) |\n| **Reference Count** | N/A | use_count() | use_count() |\n| **Sole Owner Check** | N/A | unique() | N/A |\n| **Array Element Access** | operator[] (T[]) | No (unless custom) | N/A |\n\n#### Custom Deleter Patterns\n\n| Resource Type | Deleter Example | Smart Pointer Type |\n|--------------|-----------------|-------------------|\n| **FILE*** | `[](FILE* f) { if (f) fclose(f); }` | unique_ptr<FILE, decltype(lambda)> |\n| **malloc Memory** | `[](T* p) { free(p); }` | shared_ptr<T> with deleter |\n| **Array** | `[](T* p) { delete[] p; }` | shared_ptr<T> with deleter |\n| **Windows Handle** | `[](HANDLE h) { CloseHandle(h); }` | unique_ptr<void, decltype(lambda)> |\n| **Custom Cleanup** | `[](T* p) { p->cleanup(); delete p; }` | Either smart pointer type |\n| **No-op** | `[](T*) {}` | For non-owned resources |\n| **Function Pointer** | `&fclose`, `&free` | unique_ptr with function type |\n\n#### Common Smart Pointer Pitfalls\n\n| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| **Copying unique_ptr** | Compile error due to deleted copy | Use std::move for transfer |\n| **Circular shared_ptr** | Memory leak from ref cycle | Use weak_ptr for back-references |\n| **Multiple shared_ptrs from raw** | Double delete from separate control blocks | Only create from make_shared or copy existing |\n| **Non-virtual destructor** | Incomplete polymorphic deletion | Always use virtual destructor in base |\n| **Using get() for ownership** | Double ownership and deletion | Use get() only for borrowing |\n| **Array with wrong delete** | UB from delete vs delete[] mismatch | Use unique_ptr<T[]> specialization |\n| **Passing shared_ptr by value** | Unnecessary atomic operations | Pass by const reference unless extending lifetime |\n| **Checking expired() then lock()** | Race condition in multithreaded code | Use lock() directly in condition |\n| **Creating from this** | Separate control block, double delete | Use enable_shared_from_this |\n| **Delaying weak_ptr memory** | Control block lingers after object deleted | Expected behavior, not a leak |\n\n#### When to Use Each Smart Pointer\n\n| Scenario | Recommended Smart Pointer | Rationale |\n|----------|--------------------------|-----------|\n| **Single owner** | unique_ptr | Zero overhead, clear semantics |\n| **Factory functions** | unique_ptr (or shared if needed) | Explicit ownership transfer |\n| **Resource management** | unique_ptr with custom deleter | RAII for any resource type |\n| **Multiple owners** | shared_ptr | Reference-counted shared ownership |\n| **Caching** | weak_ptr to cached items | Allows cache invalidation |\n| **Observer pattern** | weak_ptr to subject | Non-owning observation |\n| **Callbacks** | weak_ptr to context | Prevents dangling callbacks |\n| **Parent-child relationships** | shared_ptr parent, weak_ptr child | Breaks ownership cycle |\n| **Graph structures** | shared_ptr nodes, weak_ptr back-edges | Prevents cyclic leaks |\n| **Temporary borrowing** | Raw pointer or reference | No ownership needed |\n| **Function parameters (non-owning)** | Raw pointer/reference | Most efficient for borrowing |\n| **Function parameters (sink)** | unique_ptr by value | Takes ownership |\n| **Containers of owned objects** | vector<unique_ptr<T>> | Clear ownership in collections |\n\n#### Performance Characteristics\n\n| Operation | unique_ptr | shared_ptr | weak_ptr | Raw Pointer |\n|-----------|-----------|-----------|----------|-------------|\n| **Construction** | O(1) | O(1) + atomic init | O(1) + atomic inc | O(1) |\n| **Copy** | N/A (deleted) | O(1) + atomic inc | O(1) + atomic inc | O(1) |\n| **Move** | O(1) | O(1) | O(1) | O(1) |\n| **Destruction** | O(1) + delete | O(1) + atomic dec + maybe delete | O(1) + atomic dec | O(1) |\n| **Dereference** | O(1) | O(1) | Must lock first | O(1) |\n| **Size** | sizeof(T*) + deleter | 2 * sizeof(T*) | 2 * sizeof(T*) | sizeof(T*) |\n| **Cache Efficiency** | Excellent | Control block separate | Control block separate | Excellent |\n| **Thread Contention** | None | Possible on control block | Minimal | None |\n\n\n## TOPIC: Smart Pointers in Modern C++",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Compilation error | unique_ptr copy constructor is deleted. Cannot copy p1 to p2. Must use std::move for ownership transfer. | #unique_ptr #deleted_copy |\n| 2 | Prints \"p1 is null\" then 100 | std::move transfers ownership from p1 to p2. p1 becomes nullptr. p2 now owns the int containing 100. | #unique_ptr #move_semantics |\n| 3 | Prints \"2 2\" | Both sp1 and sp2 share ownership of the same object. use_count() returns the total reference count, which is 2 for both. | #shared_ptr #reference_counting |\n| 4 | Memory leak, ~Node never printed | Circular reference: a->next points to b, b->next points to a. Reference counts never reach zero. Neither destructor runs. | #circular_reference #memory_leak |\n| 5 | Prints \"1\" then \"1\" (true) | Weak_ptr doesn't increment strong count. When shared destroyed, weak.expired() returns true (1). First line shows shared's use_count is 1. | #weak_ptr #expired |\n| 6 | Double delete, crash | Two independent shared_ptrs created from same raw pointer. Each has separate control block. Both will delete the object → double delete. | #shared_ptr #double_delete |\n| 7 | Double delete, undefined behavior | Manually deleting through get() doesn't release ownership. When arr destroyed, it calls delete[] again on already-freed memory. | #unique_ptr #get #double_delete |\n| 8 | Undefined behavior, dangling pointer | p.reset() deletes the managed int. raw now points to freed memory. Dereferencing causes use-after-free UB. | #dangling_pointer #use_after_free |\n| 9 | Only prints \"~Base\" - resource leak | Base destructor not virtual. Polymorphic deletion only calls ~Base(), not ~Derived(). Derived resources leak. Need virtual ~Base(). | #virtual_destructor #polymorphism |\n| 10 | Prints \"1\" (true) | Move assignment transfers ownership from p1 to p2. p1 becomes nullptr. Comparison with nullptr returns true. | #unique_ptr #move_assignment |\n| 11 | Prints \"Null\" | sp is default-constructed (nullptr). weak_ptr observing nullptr. lock() returns empty shared_ptr, condition is false. | #weak_ptr #lock |\n| 12 | Prints \"1\" (true) | sp1.reset() destroys the managed object. weak_ptr detects this and expired() returns true. | #weak_ptr #expired |\n| 13 | Prints \"1\" (true) then completes | release() returns raw pointer and makes p null. Ownership transferred to caller. Must manually delete raw. p == nullptr is true. | #unique_ptr #release |\n| 14 | Prints \"1\" | sp1.reset() decrements count to 1. sp2 still holds reference. sp2.use_count() returns 1. | #shared_ptr #reset |\n| 15 | Compilation error | make_unique doesn't support array syntax. Should use: unique_ptr<int[]>(new int[5]) or unique_ptr<int[]> arr(new int[5]). | #make_unique #arrays |\n| 16 | Prints \"Custom delete\" when p destroyed | Custom deleter invoked when unique_ptr destroyed. Lambda prints message then deletes pointer. Deleter type is part of unique_ptr's type. | #custom_deleter #unique_ptr |\n| 17 | Compilation error | Cannot assign unique_ptr to shared_ptr variable. Need conversion: shared_ptr<int> sp = std::move(p1), or create new variable. | #type_mismatch #smart_pointers |\n| 18 | Prints \"42\" | Aliasing constructor: dataPtr shares widget's control block but points to data member. Even after widget.reset(), dataPtr keeps Widget alive. | #aliasing_constructor #shared_ptr |\n| 19 | Prints \"1 1\" (true) | unique_ptr converts to shared_ptr via move. sp has use_count 1. p becomes nullptr. Successful ownership transfer. | #unique_to_shared #move_conversion |\n| 20 | Prints \"0 0\" | When sp.reset(), strong count becomes 0, object deleted. Weak_ptrs remain but use_count() (strong count) is 0 for both. | #weak_ptr #use_count |",
           "| Feature | unique_ptr | shared_ptr | weak_ptr |\n|---------|-----------|-----------|----------|\n| **Ownership** | Exclusive | Shared | Non-owning observer |\n| **Copyable** | No (deleted) | Yes | Yes |\n| **Movable** | Yes | Yes | Yes |\n| **Size** | 1 pointer (default deleter) | 2 pointers | 2 pointers |\n| **Runtime Overhead** | Zero (default deleter) | Atomic ops, control block | Minimal |\n| **Thread Safety** | No | Control block only | Control block only |\n| **Primary Use** | Single ownership, RAII | Multiple owners | Break cycles, observation |\n| **Reference Counting** | No | Yes (strong count) | Yes (weak count) |\n| **Custom Deleter** | Template parameter | Type-erased in control block | Inherits from shared_ptr |\n| **Array Support** | unique_ptr<T[]> | Limited (custom deleter pre-C++17) | N/A |\n| **Best For** | Default choice, performance | Shared ownership, caching | Avoiding cycles, callbacks |",
@@ -1003,7 +1123,7 @@
           "| Resource Type | Deleter Example | Smart Pointer Type |\n|--------------|-----------------|-------------------|\n| **FILE*** | `[](FILE* f) { if (f) fclose(f); }` | unique_ptr<FILE, decltype(lambda)> |\n| **malloc Memory** | `[](T* p) { free(p); }` | shared_ptr<T> with deleter |\n| **Array** | `[](T* p) { delete[] p; }` | shared_ptr<T> with deleter |\n| **Windows Handle** | `[](HANDLE h) { CloseHandle(h); }` | unique_ptr<void, decltype(lambda)> |\n| **Custom Cleanup** | `[](T* p) { p->cleanup(); delete p; }` | Either smart pointer type |\n| **No-op** | `[](T*) {}` | For non-owned resources |\n| **Function Pointer** | `&fclose`, `&free` | unique_ptr with function type |",
           "| Pitfall | Problem | Solution |\n|---------|---------|----------|\n| **Copying unique_ptr** | Compile error due to deleted copy | Use std::move for transfer |\n| **Circular shared_ptr** | Memory leak from ref cycle | Use weak_ptr for back-references |\n| **Multiple shared_ptrs from raw** | Double delete from separate control blocks | Only create from make_shared or copy existing |\n| **Non-virtual destructor** | Incomplete polymorphic deletion | Always use virtual destructor in base |\n| **Using get() for ownership** | Double ownership and deletion | Use get() only for borrowing |\n| **Array with wrong delete** | UB from delete vs delete[] mismatch | Use unique_ptr<T[]> specialization |\n| **Passing shared_ptr by value** | Unnecessary atomic operations | Pass by const reference unless extending lifetime |\n| **Checking expired() then lock()** | Race condition in multithreaded code | Use lock() directly in condition |\n| **Creating from this** | Separate control block, double delete | Use enable_shared_from_this |\n| **Delaying weak_ptr memory** | Control block lingers after object deleted | Expected behavior, not a leak |",
           "| Scenario | Recommended Smart Pointer | Rationale |\n|----------|--------------------------|-----------|\n| **Single owner** | unique_ptr | Zero overhead, clear semantics |\n| **Factory functions** | unique_ptr (or shared if needed) | Explicit ownership transfer |\n| **Resource management** | unique_ptr with custom deleter | RAII for any resource type |\n| **Multiple owners** | shared_ptr | Reference-counted shared ownership |\n| **Caching** | weak_ptr to cached items | Allows cache invalidation |\n| **Observer pattern** | weak_ptr to subject | Non-owning observation |\n| **Callbacks** | weak_ptr to context | Prevents dangling callbacks |\n| **Parent-child relationships** | shared_ptr parent, weak_ptr child | Breaks ownership cycle |\n| **Graph structures** | shared_ptr nodes, weak_ptr back-edges | Prevents cyclic leaks |\n| **Temporary borrowing** | Raw pointer or reference | No ownership needed |\n| **Function parameters (non-owning)** | Raw pointer/reference | Most efficient for borrowing |\n| **Function parameters (sink)** | unique_ptr by value | Takes ownership |\n| **Containers of owned objects** | vector<unique_ptr<T>> | Clear ownership in collections |",
-          "| Operation | unique_ptr | shared_ptr | weak_ptr | Raw Pointer |\n|-----------|-----------|-----------|----------|-------------|\n| **Construction** | O(1) | O(1) + atomic init | O(1) + atomic inc | O(1) |\n| **Copy** | N/A (deleted) | O(1) + atomic inc | O(1) + atomic inc | O(1) |\n| **Move** | O(1) | O(1) | O(1) | O(1) |\n| **Destruction** | O(1) + delete | O(1) + atomic dec + maybe delete | O(1) + atomic dec | O(1) |\n| **Dereference** | O(1) | O(1) | Must lock first | O(1) |\n| **Size** | sizeof(T*) + deleter | 2 * sizeof(T*) | 2 * sizeof(T*) | sizeof(T*) |\n| **Cache Efficiency** | Excellent | Control block separate | Control block separate | Excellent |"
+          "| Operation | unique_ptr | shared_ptr | weak_ptr | Raw Pointer |\n|-----------|-----------|-----------|----------|-------------|\n| **Construction** | O(1) | O(1) + atomic init | O(1) + atomic inc | O(1) |\n| **Copy** | N/A (deleted) | O(1) + atomic inc | O(1) + atomic inc | O(1) |\n| **Move** | O(1) | O(1) | O(1) | O(1) |\n| **Destruction** | O(1) + delete | O(1) + atomic dec + maybe delete | O(1) + atomic dec | O(1) |\n| **Dereference** | O(1) | O(1) | Must lock first | O(1) |\n| **Size** | sizeof(T*) + deleter | 2 * sizeof(T*) | 2 * sizeof(T*) | sizeof(T*) |\n| **Cache Efficiency** | Excellent | Control block separate | Control block separate | Excellent |\n| **Thread Contention** | None | Possible on control block | Minimal | None |"
         ]
       }
     }

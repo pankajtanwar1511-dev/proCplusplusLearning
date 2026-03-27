@@ -5,7 +5,7 @@
   "topics": [
     {
       "topic": "Type Conversions and Type Deduction in C++",
-      "filename": "1_cpp_type_conversions_and_deduction.md",
+      "filename": "topic_1.md",
       "theory": {
         "subsections": [
           {
@@ -802,206 +802,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct A {\n    A(int x) { std::cout << \"A(\" << x << \")\\n\"; }\n};\n\nvoid test(A obj) {\n    std::cout << \"test(A)\\n\";\n}\n\nint main() {\n    test(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `A(42)`<br>`test(A)`\n\n**Explanation:** Implicit conversion from int to A via conversion constructor\n\n**Key Concept:** #conversion_constructor\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nA(42)\ntest(A)\n```\n\n**Explanation:**\n- `test(42)` calls test function expecting A object\n- 42 is int, not A type\n- A has non-explicit constructor `A(int x)` (conversion constructor)\n- Compiler implicitly converts: int 42 → A(42)\n- Constructor prints \"A(42)\"\n- Then test function executes, prints \"test(A)\"\n- Without explicit keyword, single-arg constructors enable implicit conversions\n- **Key Concept:** Non-explicit constructors allow implicit conversions; constructor called automatically",
           "code": "#include <iostream>\n\nstruct A {\n    A(int x) { std::cout << \"A(\" << x << \")\\n\"; }\n};\n\nvoid test(A obj) {\n    std::cout << \"test(A)\\n\";\n}\n\nint main() {\n    test(42);\n}",
+          "answer": "A(42)\ntest(A)",
+          "explanation": "- `test(42)` calls test function expecting A object\n- 42 is int, not A type\n- A has non-explicit constructor `A(int x)` (conversion constructor)\n- Compiler implicitly converts: int 42 → A(42)\n- Constructor prints \"A(42)\"\n- Then test function executes, prints \"test(A)\"\n- Without explicit keyword, single-arg constructors enable implicit conversions\n- **Key Concept:** Non-explicit constructors allow implicit conversions; constructor called automatically",
+          "key_concept": "Non-explicit constructors allow implicit conversions; constructor called automatically",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "A(42)\ntest(A)"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid func(int) { std::cout << \"int\\n\"; }\nvoid func(double) { std::cout << \"double\\n\"; }\n\nint main() {\n    short s = 5;\n    func(s);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `int`\n\n**Explanation:** short promotes to int, which is preferred over standard conversion to double\n\n**Key Concept:** #promotion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint\n```\n\n**Explanation:**\n- `func(s)` where s is short\n- Two viable overloads: func(int) and func(double)\n- short → int is integral promotion (preferred)\n- short → double is standard conversion (less preferred)\n- Overload resolution ranking: exact match > promotion > conversion\n- Promotion wins, calls func(int)\n- Prints \"int\"\n- **Key Concept:** Integral promotions (short/char→int) preferred over standard conversions in overload resolution",
           "code": "#include <iostream>\n\nvoid func(int) { std::cout << \"int\\n\"; }\nvoid func(double) { std::cout << \"double\\n\"; }\n\nint main() {\n    short s = 5;\n    func(s);\n}",
+          "answer": "int",
+          "explanation": "- `func(s)` where s is short\n- Two viable overloads: func(int) and func(double)\n- short → int is integral promotion (preferred)\n- short → double is standard conversion (less preferred)\n- Overload resolution ranking: exact match > promotion > conversion\n- Promotion wins, calls func(int)\n- Prints \"int\"\n- **Key Concept:** Integral promotions (short/char→int) preferred over standard conversions in overload resolution",
+          "key_concept": "Integral promotions (short/char→int) preferred over standard conversions in overload resolution",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    const int x = 100;\n    auto a = x;\n    auto& b = x;\n    \n    a = 200;\n    // b = 300;  // Will this compile?\n    \n    std::cout << x << \" \" << a << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Line with `b = 300` fails to compile<br>Prints: `100 200`\n\n**Explanation:** `b` is `const int&`, cannot be modified; `a` is mutable copy\n\n**Key Concept:** #auto_keyword #const_correctness\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error on b = 300\nPrints: 100 200\n```\n\n**Explanation:**\n- `auto a = x` where x is const int\n- auto drops top-level const: a deduced as int (mutable copy)\n- `auto& b = x` preserves const: b deduced as const int&\n- `a = 200` works - a is mutable copy\n- `b = 300` fails - cannot modify through const reference\n- x remains 100 (unchanged), a is 200\n- **Key Concept:** auto drops const/volatile; auto& preserves them; affects mutability",
           "code": "#include <iostream>\n\nint main() {\n    const int x = 100;\n    auto a = x;\n    auto& b = x;\n    \n    a = 200;\n    // b = 300;  // Will this compile?\n    \n    std::cout << x << \" \" << a << \"\\n\";\n}",
+          "answer": "Compilation error on b = 300\nPrints: 100 200",
+          "explanation": "- `auto a = x` where x is const int\n- auto drops top-level const: a deduced as int (mutable copy)\n- `auto& b = x` preserves const: b deduced as const int&\n- `a = 200` works - a is mutable copy\n- `b = 300` fails - cannot modify through const reference\n- x remains 100 (unchanged), a is 200\n- **Key Concept:** auto drops const/volatile; auto& preserves them; affects mutability",
+          "key_concept": "auto drops const/volatile; auto& preserves them; affects mutability",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error on b = 300\nPrints: 100 200"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    int arr[3] = {1, 2, 3};\n    auto x = arr;\n    auto& y = arr;\n    \n    std::cout << sizeof(x) << \" \" << sizeof(y) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `8 12` (typical 64-bit)\n\n**Explanation:** `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes)\n\n**Key Concept:** #array_decay\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n8 12 (on 64-bit systems)\n```\n\n**Explanation:**\n- `auto x = arr` where arr is int[3]\n- auto causes array decay: x deduced as int* (pointer to first element)\n- sizeof(x) = sizeof(int*) = 8 bytes (pointer size)\n- `auto& y = arr` prevents decay: y is reference to array\n- y deduced as int(&)[3] (reference to array of 3 ints)\n- sizeof(y) = sizeof(int[3]) = 3 × 4 = 12 bytes (full array size)\n- auto decays arrays to pointers, auto& preserves array type\n- **Key Concept:** Array decay with auto vs preservation with auto&; affects sizeof behavior",
           "code": "#include <iostream>\n\nint main() {\n    int arr[3] = {1, 2, 3};\n    auto x = arr;\n    auto& y = arr;\n    \n    std::cout << sizeof(x) << \" \" << sizeof(y) << \"\\n\";\n}",
+          "answer": "8 12 (on 64-bit systems)",
+          "explanation": "- `auto x = arr` where arr is int[3]\n- auto causes array decay: x deduced as int* (pointer to first element)\n- sizeof(x) = sizeof(int*) = 8 bytes (pointer size)\n- `auto& y = arr` prevents decay: y is reference to array\n- y deduced as int(&)[3] (reference to array of 3 ints)\n- sizeof(y) = sizeof(int[3]) = 3 × 4 = 12 bytes (full array size)\n- auto decays arrays to pointers, auto& preserves array type\n- **Key Concept:** Array decay with auto vs preservation with auto&; affects sizeof behavior",
+          "key_concept": "Array decay with auto vs preservation with auto&; affects sizeof behavior",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "8 12 (on 64-bit systems)"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint global = 42;\n\ndecltype(auto) getVal() {\n    return global;\n}\n\ndecltype(auto) getRef() {\n    return (global);\n}\n\nint main() {\n    getVal() = 100;    // Will this compile?\n    getRef() = 200;    // Will this compile?\n    std::cout << global << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** First assignment fails, second succeeds<br>Prints: `200`\n\n**Explanation:** `getVal()` returns by value, `getRef()` returns reference due to parentheses\n\n**Key Concept:** #decltype_auto\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error on getVal() = 100\nPrints: 200\n```\n\n**Explanation:**\n- `decltype(auto)` preserves exact type and value category\n- `return global` - unparenthesized: returns int by value\n- getVal() returns int (prvalue), cannot assign to temporary\n- `return (global)` - parenthesized: expression is lvalue\n- getRef() returns int& (reference), can assign through it\n- `getVal() = 100` fails - assigning to temporary rvalue\n- `getRef() = 200` works - assigns through reference to global\n- Parentheses change value category in decltype(auto)\n- **Key Concept:** decltype(auto) with parentheses returns reference; without returns value",
           "code": "#include <iostream>\n\nint global = 42;\n\ndecltype(auto) getVal() {\n    return global;\n}\n\ndecltype(auto) getRef() {\n    return (global);\n}\n\nint main() {\n    getVal() = 100;    // Will this compile?\n    getRef() = 200;    // Will this compile?\n    std::cout << global << \"\\n\";\n}",
+          "answer": "Compilation error on getVal() = 100\nPrints: 200",
+          "explanation": "- `decltype(auto)` preserves exact type and value category\n- `return global` - unparenthesized: returns int by value\n- getVal() returns int (prvalue), cannot assign to temporary\n- `return (global)` - parenthesized: expression is lvalue\n- getRef() returns int& (reference), can assign through it\n- `getVal() = 100` fails - assigning to temporary rvalue\n- `getRef() = 200` works - assigns through reference to global\n- Parentheses change value category in decltype(auto)\n- **Key Concept:** decltype(auto) with parentheses returns reference; without returns value",
+          "key_concept": "decltype(auto) with parentheses returns reference; without returns value",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error on getVal() = 100\nPrints: 200"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nclass Wrapper {\npublic:\n    explicit Wrapper(int v) : value(v) { }\n    int value;\n};\n\nvoid process(Wrapper w) {\n    std::cout << w.value << \"\\n\";\n}\n\nint main() {\n    process(50);         // Will this compile?\n    process(Wrapper(75)); // Will this compile?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** First call fails, second succeeds\n\n**Explanation:** explicit constructor prevents implicit conversion; direct construction works\n\n**Key Concept:** #explicit_keyword\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nFirst call fails compilation\nSecond call prints: 75\n```\n\n**Explanation:**\n- Wrapper has explicit constructor\n- `process(50)` attempts implicit conversion: int → Wrapper\n- explicit keyword prevents this implicit conversion (compilation error)\n- `process(Wrapper(75))` uses direct construction (allowed)\n- Explicitly constructing Wrapper object bypasses implicit conversion rules\n- Without explicit, both would compile\n- Use explicit to prevent unintended conversions\n- **Key Concept:** explicit prevents implicit conversions; direct construction still allowed",
           "code": "#include <iostream>\n\nclass Wrapper {\npublic:\n    explicit Wrapper(int v) : value(v) { }\n    int value;\n};\n\nvoid process(Wrapper w) {\n    std::cout << w.value << \"\\n\";\n}\n\nint main() {\n    process(50);         // Will this compile?\n    process(Wrapper(75)); // Will this compile?\n}",
+          "answer": "First call fails compilation\nSecond call prints: 75",
+          "explanation": "- Wrapper has explicit constructor\n- `process(50)` attempts implicit conversion: int → Wrapper\n- explicit keyword prevents this implicit conversion (compilation error)\n- `process(Wrapper(75))` uses direct construction (allowed)\n- Explicitly constructing Wrapper object bypasses implicit conversion rules\n- Without explicit, both would compile\n- Use explicit to prevent unintended conversions\n- **Key Concept:** explicit prevents implicit conversions; direct construction still allowed",
+          "key_concept": "explicit prevents implicit conversions; direct construction still allowed",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "First call fails compilation\nSecond call prints: 75"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid handle(int x) { std::cout << \"int: \" << x << \"\\n\"; }\nvoid handle(double x) { std::cout << \"double: \" << x << \"\\n\"; }\n\nint main() {\n    char c = 'A';\n    float f = 2.5f;\n    \n    handle(c);\n    handle(f);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `int: 65`<br>`double: 2.5`\n\n**Explanation:** char promotes to int; float promotes to double\n\n**Key Concept:** #promotion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint: 65\ndouble: 2.5\n```\n\n**Explanation:**\n- `handle(c)` where c is char 'A'\n- char promotes to int (integral promotion): 'A' = 65 in ASCII\n- Calls handle(int), prints \"int: 65\"\n- `handle(f)` where f is float 2.5f\n- float promotes to double (floating-point promotion)\n- Calls handle(double), prints \"double: 2.5\"\n- Promotions are preferred in overload resolution\n- **Key Concept:** Integral promotions (char→int) and floating promotions (float→double) preferred over conversions",
           "code": "#include <iostream>\n\nvoid handle(int x) { std::cout << \"int: \" << x << \"\\n\"; }\nvoid handle(double x) { std::cout << \"double: \" << x << \"\\n\"; }\n\nint main() {\n    char c = 'A';\n    float f = 2.5f;\n    \n    handle(c);\n    handle(f);\n}",
+          "answer": "int: 65\ndouble: 2.5",
+          "explanation": "- `handle(c)` where c is char 'A'\n- char promotes to int (integral promotion): 'A' = 65 in ASCII\n- Calls handle(int), prints \"int: 65\"\n- `handle(f)` where f is float 2.5f\n- float promotes to double (floating-point promotion)\n- Calls handle(double), prints \"double: 2.5\"\n- Promotions are preferred in overload resolution\n- **Key Concept:** Integral promotions (char→int) and floating promotions (float→double) preferred over conversions",
+          "key_concept": "Integral promotions (char→int) and floating promotions (float→double) preferred over conversions",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int: 65\ndouble: 2.5"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    auto x = {1, 2, 3};\n    std::cout << x.size() << \"\\n\";\n    \n    for(auto val : x) {\n        std::cout << val << \" \";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `3`<br>`1 2 3`\n\n**Explanation:** auto deduces `std::initializer_list<int>` which has size() method\n\n**Key Concept:** #initializer_list\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3\n1 2 3\n```\n\n**Explanation:**\n- `auto x = {1, 2, 3}` with braced-init-list\n- Special auto deduction rule: deduces std::initializer_list<int>\n- initializer_list has size() method, returns 3\n- initializer_list is iterable, supports range-for\n- Each element printed: 1 2 3\n- Different from `auto x{1, 2, 3}` which would fail (ambiguous)\n- Single element `auto x{5}` deduces int (special case)\n- **Key Concept:** auto with = and braces deduces initializer_list; has container-like interface",
           "code": "#include <iostream>\n\nint main() {\n    auto x = {1, 2, 3};\n    std::cout << x.size() << \"\\n\";\n    \n    for(auto val : x) {\n        std::cout << val << \" \";\n    }\n}",
+          "answer": "3\n1 2 3",
+          "explanation": "- `auto x = {1, 2, 3}` with braced-init-list\n- Special auto deduction rule: deduces std::initializer_list<int>\n- initializer_list has size() method, returns 3\n- initializer_list is iterable, supports range-for\n- Each element printed: 1 2 3\n- Different from `auto x{1, 2, 3}` which would fail (ambiguous)\n- Single element `auto x{5}` deduces int (special case)\n- **Key Concept:** auto with = and braces deduces initializer_list; has container-like interface",
+          "key_concept": "auto with = and braces deduces initializer_list; has container-like interface",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3\n1 2 3"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    double pi = 3.14159;\n    int a = pi;\n    int b{pi};  // Will this compile?\n    \n    std::cout << a << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Line with `int b{pi}` fails\n\n**Explanation:** Brace-initialization prevents narrowing conversions (double to int)\n\n**Key Concept:** #narrowing_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error on int b{pi}\nIf only a executed: prints 3\n```\n\n**Explanation:**\n- `int a = pi` uses copy-initialization (allows narrowing)\n- double 3.14159 truncates to int 3 (data loss allowed)\n- `int b{pi}` uses brace-initialization (prevents narrowing)\n- Narrowing conversion: loss of precision or range (double→int)\n- Brace-init detects narrowing at compile time, errors out\n- Prevents accidental data loss\n- Use braces for safety, = for explicit narrowing intent\n- **Key Concept:** Brace-initialization prevents narrowing conversions; safer than copy-initialization",
           "code": "#include <iostream>\n\nint main() {\n    double pi = 3.14159;\n    int a = pi;\n    int b{pi};  // Will this compile?\n    \n    std::cout << a << \"\\n\";\n}",
+          "answer": "Compilation error on int b{pi}\nIf only a executed: prints 3",
+          "explanation": "- `int a = pi` uses copy-initialization (allows narrowing)\n- double 3.14159 truncates to int 3 (data loss allowed)\n- `int b{pi}` uses brace-initialization (prevents narrowing)\n- Narrowing conversion: loss of precision or range (double→int)\n- Brace-init detects narrowing at compile time, errors out\n- Prevents accidental data loss\n- Use braces for safety, = for explicit narrowing intent\n- **Key Concept:** Brace-initialization prevents narrowing conversions; safer than copy-initialization",
+          "key_concept": "Brace-initialization prevents narrowing conversions; safer than copy-initialization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error on int b{pi}\nIf only a executed: prints 3"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Base {\n    operator double() const { return 1.5; }\n};\n\nstruct Derived {\n    Derived(double d) { std::cout << \"Derived(\" << d << \")\\n\"; }\n};\n\nvoid execute(Derived d) { }\n\nint main() {\n    Base b;\n    execute(b);  // What happens?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `Derived(1.5)`\n\n**Explanation:** Base→double (user-defined) then double→Derived (user-defined) is allowed\n\n**Key Concept:** #conversion_chain\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDerived(1.5)\n```\n\n**Explanation:**\n- `execute(b)` expects Derived, receives Base\n- Base has conversion operator: operator double() returns 1.5\n- Derived has conversion constructor: Derived(double)\n- Conversion chain: Base → double (user-defined) → Derived (user-defined)\n- Standard allows at most one user-defined conversion in chain\n- This appears to use two, but it's actually one per step\n- Base converts to double, then standard overload resolution finds Derived(double)\n- Constructor prints \"Derived(1.5)\"\n- **Key Concept:** Conversion chains allowed with user-defined conversions; enables flexible type compatibility",
           "code": "#include <iostream>\n\nstruct Base {\n    operator double() const { return 1.5; }\n};\n\nstruct Derived {\n    Derived(double d) { std::cout << \"Derived(\" << d << \")\\n\"; }\n};\n\nvoid execute(Derived d) { }\n\nint main() {\n    Base b;\n    execute(b);  // What happens?\n}",
+          "answer": "Derived(1.5)",
+          "explanation": "- `execute(b)` expects Derived, receives Base\n- Base has conversion operator: operator double() returns 1.5\n- Derived has conversion constructor: Derived(double)\n- Conversion chain: Base → double (user-defined) → Derived (user-defined)\n- Standard allows at most one user-defined conversion in chain\n- This appears to use two, but it's actually one per step\n- Base converts to double, then standard overload resolution finds Derived(double)\n- Constructor prints \"Derived(1.5)\"\n- **Key Concept:** Conversion chains allowed with user-defined conversions; enables flexible type compatibility",
+          "key_concept": "Conversion chains allowed with user-defined conversions; enables flexible type compatibility",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Derived(1.5)"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    const int x = 10;\n    decltype(x) a = x;\n    decltype((x)) b = x;\n    \n    a = 20;  // Will this compile?\n    b = 30;  // Will this compile?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Both assignments fail\n\n**Explanation:** `a` is `const int`, `b` is `const int&`; both are immutable\n\n**Key Concept:** #decltype\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBoth assignments fail compilation\n```\n\n**Explanation:**\n- `decltype(x)` where x is const int\n- Gives declared type of x: const int\n- a is const int, immutable\n- `decltype((x))` with parentheses gives value category type\n- (x) is lvalue expression → decltype gives const int&\n- b is const int& (reference to const)\n- Both a and b are const, cannot be modified\n- `a = 20` fails - const int\n- `b = 30` fails - const int&\n- **Key Concept:** decltype(name) gives declared type; decltype((name)) gives reference type based on value category",
           "code": "#include <iostream>\n\nint main() {\n    const int x = 10;\n    decltype(x) a = x;\n    decltype((x)) b = x;\n    \n    a = 20;  // Will this compile?\n    b = 30;  // Will this compile?\n}",
+          "answer": "Both assignments fail compilation",
+          "explanation": "- `decltype(x)` where x is const int\n- Gives declared type of x: const int\n- a is const int, immutable\n- `decltype((x))` with parentheses gives value category type\n- (x) is lvalue expression → decltype gives const int&\n- b is const int& (reference to const)\n- Both a and b are const, cannot be modified\n- `a = 20` fails - const int\n- `b = 30` fails - const int&\n- **Key Concept:** decltype(name) gives declared type; decltype((name)) gives reference type based on value category",
+          "key_concept": "decltype(name) gives declared type; decltype((name)) gives reference type based on value category",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Both assignments fail compilation"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid foo(int) { std::cout << \"int\\n\"; }\nvoid foo(double) { std::cout << \"double\\n\"; }\nvoid foo(long) { std::cout << \"long\\n\"; }\n\nint main() {\n    foo('Z');\n    foo(100L);\n    foo(3.14f);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `int`<br>`long`<br>`double`\n\n**Explanation:** Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion)\n\n**Key Concept:** #overload_resolution\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint\nlong\ndouble\n```\n\n**Explanation:**\n- `foo('Z')` where 'Z' is char\n- char promotes to int (integral promotion), calls foo(int)\n- Prints \"int\"\n- `foo(100L)` where 100L is long literal\n- Exact match with foo(long), calls foo(long)\n- Prints \"long\"\n- `foo(3.14f)` where 3.14f is float literal\n- float promotes to double (floating promotion), calls foo(double)\n- Prints \"double\"\n- Overload resolution prefers: exact match > promotion > conversion\n- **Key Concept:** Overload resolution ranks matches; promotions preferred over standard conversions",
           "code": "#include <iostream>\n\nvoid foo(int) { std::cout << \"int\\n\"; }\nvoid foo(double) { std::cout << \"double\\n\"; }\nvoid foo(long) { std::cout << \"long\\n\"; }\n\nint main() {\n    foo('Z');\n    foo(100L);\n    foo(3.14f);\n}",
+          "answer": "int\nlong\ndouble",
+          "explanation": "- `foo('Z')` where 'Z' is char\n- char promotes to int (integral promotion), calls foo(int)\n- Prints \"int\"\n- `foo(100L)` where 100L is long literal\n- Exact match with foo(long), calls foo(long)\n- Prints \"long\"\n- `foo(3.14f)` where 3.14f is float literal\n- float promotes to double (floating promotion), calls foo(double)\n- Prints \"double\"\n- Overload resolution prefers: exact match > promotion > conversion\n- **Key Concept:** Overload resolution ranks matches; promotions preferred over standard conversions",
+          "key_concept": "Overload resolution ranks matches; promotions preferred over standard conversions",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int\nlong\ndouble"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    int x = 42;\n    auto&& r1 = x;\n    auto&& r2 = 100;\n    \n    r1 = 50;\n    r2 = 200;\n    \n    std::cout << x << \" \" << r2 << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `50 200`\n\n**Explanation:** `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent)\n\n**Key Concept:** #forwarding_reference\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n50 200\n```\n\n**Explanation:**\n- `auto&& r1 = x` where x is lvalue int\n- Forwarding reference collapses to lvalue reference: r1 is int&\n- r1 is alias to x\n- `r1 = 50` modifies x through reference\n- `auto&& r2 = 100` where 100 is rvalue\n- Forwarding reference stays as rvalue reference: r2 is int&&\n- r2 binds to temporary, lifetime extended\n- `r2 = 200` modifies the temporary\n- x becomes 50, r2 is 200\n- **Key Concept:** auto&& forwarding references collapse differently for lvalues vs rvalues; preserves value category",
           "code": "#include <iostream>\n\nint main() {\n    int x = 42;\n    auto&& r1 = x;\n    auto&& r2 = 100;\n    \n    r1 = 50;\n    r2 = 200;\n    \n    std::cout << x << \" \" << r2 << \"\\n\";\n}",
+          "answer": "50 200",
+          "explanation": "- `auto&& r1 = x` where x is lvalue int\n- Forwarding reference collapses to lvalue reference: r1 is int&\n- r1 is alias to x\n- `r1 = 50` modifies x through reference\n- `auto&& r2 = 100` where 100 is rvalue\n- Forwarding reference stays as rvalue reference: r2 is int&&\n- r2 binds to temporary, lifetime extended\n- `r2 = 200` modifies the temporary\n- x becomes 50, r2 is 200\n- **Key Concept:** auto&& forwarding references collapse differently for lvalues vs rvalues; preserves value category",
+          "key_concept": "auto&& forwarding references collapse differently for lvalues vs rvalues; preserves value category",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "50 200"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nconst int& getData() {\n    static const int value = 999;\n    return value;\n}\n\nint main() {\n    auto v1 = getData();\n    auto& v2 = getData();\n    const auto& v3 = getData();\n    \n    v1 = 111;  // Will this compile?\n    // v2 = 222;  // Will this compile?\n    // v3 = 333;  // Will this compile?\n    \n    std::cout << v1 << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Only first assignment succeeds<br>Prints: `111`\n\n**Explanation:** `v1` is copy (mutable), `v2` and `v3` are const references\n\n**Key Concept:** #auto_keyword #const_correctness\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation errors on v2 and v3 assignments\nPrints: 111\n```\n\n**Explanation:**\n- getData() returns const int& to static variable\n- `auto v1 = getData()` - auto drops const, v1 is int (mutable copy)\n- `auto& v2 = getData()` - auto& preserves const, v2 is const int&\n- `const auto& v3 = getData()` - explicitly const, v3 is const int&\n- `v1 = 111` works - v1 is mutable copy, doesn't affect original\n- `v2 = 222` fails - v2 is const reference\n- `v3 = 333` fails - v3 is const reference\n- v1 is independent copy with value 111\n- **Key Concept:** auto drops const from copies; auto& preserves const from references",
           "code": "#include <iostream>\n\nconst int& getData() {\n    static const int value = 999;\n    return value;\n}\n\nint main() {\n    auto v1 = getData();\n    auto& v2 = getData();\n    const auto& v3 = getData();\n    \n    v1 = 111;  // Will this compile?\n    // v2 = 222;  // Will this compile?\n    // v3 = 333;  // Will this compile?\n    \n    std::cout << v1 << \"\\n\";\n}",
+          "answer": "Compilation errors on v2 and v3 assignments\nPrints: 111",
+          "explanation": "- getData() returns const int& to static variable\n- `auto v1 = getData()` - auto drops const, v1 is int (mutable copy)\n- `auto& v2 = getData()` - auto& preserves const, v2 is const int&\n- `const auto& v3 = getData()` - explicitly const, v3 is const int&\n- `v1 = 111` works - v1 is mutable copy, doesn't affect original\n- `v2 = 222` fails - v2 is const reference\n- `v3 = 333` fails - v3 is const reference\n- v1 is independent copy with value 111\n- **Key Concept:** auto drops const from copies; auto& preserves const from references",
+          "key_concept": "auto drops const from copies; auto& preserves const from references",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation errors on v2 and v3 assignments\nPrints: 111"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nclass String {\npublic:\n    String(const char* s) { std::cout << \"String(\" << s << \")\\n\"; }\n};\n\nvoid display(String str) { }\n\nint main() {\n    const char* text = \"Hello\";\n    display(text);\n    display(\"World\");\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `String(Hello)`<br>`String(World)`\n\n**Explanation:** Implicit conversion from `const char*` to String via conversion constructor\n\n**Key Concept:** #conversion_constructor\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nString(Hello)\nString(World)\n```\n\n**Explanation:**\n- String has non-explicit constructor String(const char*)\n- `display(text)` where text is const char* \"Hello\"\n- Implicit conversion: const char* → String via constructor\n- Constructor prints \"String(Hello)\"\n- `display(\"World\")` passes string literal directly\n- String literal is const char*, converts to String\n- Constructor prints \"String(World)\"\n- Without explicit, C-strings convert automatically to String\n- Convenient but can hide unintended conversions\n- **Key Concept:** Conversion constructors enable implicit conversions from compatible types; use explicit to prevent",
           "code": "#include <iostream>\n\nclass String {\npublic:\n    String(const char* s) { std::cout << \"String(\" << s << \")\\n\"; }\n};\n\nvoid display(String str) { }\n\nint main() {\n    const char* text = \"Hello\";\n    display(text);\n    display(\"World\");\n}",
+          "answer": "String(Hello)\nString(World)",
+          "explanation": "- String has non-explicit constructor String(const char*)\n- `display(text)` where text is const char* \"Hello\"\n- Implicit conversion: const char* → String via constructor\n- Constructor prints \"String(Hello)\"\n- `display(\"World\")` passes string literal directly\n- String literal is const char*, converts to String\n- Constructor prints \"String(World)\"\n- Without explicit, C-strings convert automatically to String\n- Convenient but can hide unintended conversions\n- **Key Concept:** Conversion constructors enable implicit conversions from compatible types; use explicit to prevent",
+          "key_concept": "Conversion constructors enable implicit conversions from compatible types; use explicit to prevent",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "String(Hello)\nString(World)"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Meters {\n    Meters(int m) : value(m) { }\n    int value;\n};\n\nvoid travel(Meters m) {\n    std::cout << m.value << \"m\\n\";\n}\n\nint main() {\n    char distance = 50;\n    travel(distance);  // What conversion happens?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `50m`\n\n**Explanation:** char (50) promotes to int, then int→Meters via conversion constructor\n\n**Key Concept:** #promotion #conversion_chain\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n50m\n```\n\n**Explanation:**\n- `travel(distance)` where distance is char with value 50\n- char promotes to int (integral promotion): 50\n- travel expects Meters object\n- Meters has conversion constructor Meters(int)\n- Conversion: char → int (promotion) → Meters (constructor)\n- Constructor initializes value to 50\n- Prints \"50m\"\n- Two-step conversion: promotion + user-defined\n- **Key Concept:** Promotions can chain with user-defined conversions; promotion happens first",
           "code": "#include <iostream>\n\nstruct Meters {\n    Meters(int m) : value(m) { }\n    int value;\n};\n\nvoid travel(Meters m) {\n    std::cout << m.value << \"m\\n\";\n}\n\nint main() {\n    char distance = 50;\n    travel(distance);  // What conversion happens?\n}",
+          "answer": "50m",
+          "explanation": "- `travel(distance)` where distance is char with value 50\n- char promotes to int (integral promotion): 50\n- travel expects Meters object\n- Meters has conversion constructor Meters(int)\n- Conversion: char → int (promotion) → Meters (constructor)\n- Constructor initializes value to 50\n- Prints \"50m\"\n- Two-step conversion: promotion + user-defined\n- **Key Concept:** Promotions can chain with user-defined conversions; promotion happens first",
+          "key_concept": "Promotions can chain with user-defined conversions; promotion happens first",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "50m"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    int large = 300;\n    char c1 = large;\n    // char c2{large};  // Will this compile?\n    \n    std::cout << static_cast<int>(c1) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Line with `char c2{large}` fails<br>Prints: `44` (or impl-def)\n\n**Explanation:** Brace-init prevents narrowing; value wraps/truncates based on char range\n\n**Key Concept:** #narrowing_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error on char c2{large}\nPrints: 44 (or implementation-defined)\n```\n\n**Explanation:**\n- `char c1 = large` where large is 300 (exceeds char range)\n- Copy-initialization allows narrowing (data loss)\n- Signed char range: -128 to 127\n- 300 wraps/truncates (implementation-defined behavior)\n- Typical: 300 % 256 = 44 or similar truncation\n- `char c2{large}` uses brace-initialization\n- Brace-init detects narrowing at compile time, errors out\n- Prevents silent data loss from out-of-range values\n- **Key Concept:** Brace-initialization prevents narrowing; catches out-of-range conversions at compile time",
           "code": "#include <iostream>\n\nint main() {\n    int large = 300;\n    char c1 = large;\n    // char c2{large};  // Will this compile?\n    \n    std::cout << static_cast<int>(c1) << \"\\n\";\n}",
+          "answer": "Compilation error on char c2{large}\nPrints: 44 (or implementation-defined)",
+          "explanation": "- `char c1 = large` where large is 300 (exceeds char range)\n- Copy-initialization allows narrowing (data loss)\n- Signed char range: -128 to 127\n- 300 wraps/truncates (implementation-defined behavior)\n- Typical: 300 % 256 = 44 or similar truncation\n- `char c2{large}` uses brace-initialization\n- Brace-init detects narrowing at compile time, errors out\n- Prevents silent data loss from out-of-range values\n- **Key Concept:** Brace-initialization prevents narrowing; catches out-of-range conversions at compile time",
+          "key_concept": "Brace-initialization prevents narrowing; catches out-of-range conversions at compile time",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error on char c2{large}\nPrints: 44 (or implementation-defined)"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid process(int&) { std::cout << \"lvalue\\n\"; }\nvoid process(int&&) { std::cout << \"rvalue\\n\"; }\n\nint main() {\n    int x = 10;\n    auto&& r1 = x;\n    auto&& r2 = 20;\n    \n    process(r1);\n    process(r2);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `lvalue`<br>`lvalue`\n\n**Explanation:** Both r1 and r2 are lvalues (named variables), regardless of what they bind to\n\n**Key Concept:** #value_category\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nlvalue\nlvalue\n```\n\n**Explanation:**\n- `auto&& r1 = x` where x is lvalue\n- r1 collapses to int& (lvalue reference)\n- `auto&& r2 = 20` where 20 is rvalue\n- r2 stays as int&& (rvalue reference)\n- BUT both r1 and r2 are named variables\n- Named variables are always lvalues (regardless of type)\n- `process(r1)` passes lvalue → calls process(int&)\n- `process(r2)` passes lvalue (r2 has name!) → calls process(int&)\n- To pass r2 as rvalue: need std::move(r2)\n- **Key Concept:** Value category determined by expression, not type; named rvalue references are lvalues",
           "code": "#include <iostream>\n\nvoid process(int&) { std::cout << \"lvalue\\n\"; }\nvoid process(int&&) { std::cout << \"rvalue\\n\"; }\n\nint main() {\n    int x = 10;\n    auto&& r1 = x;\n    auto&& r2 = 20;\n    \n    process(r1);\n    process(r2);\n}",
+          "answer": "lvalue\nlvalue",
+          "explanation": "- `auto&& r1 = x` where x is lvalue\n- r1 collapses to int& (lvalue reference)\n- `auto&& r2 = 20` where 20 is rvalue\n- r2 stays as int&& (rvalue reference)\n- BUT both r1 and r2 are named variables\n- Named variables are always lvalues (regardless of type)\n- `process(r1)` passes lvalue → calls process(int&)\n- `process(r2)` passes lvalue (r2 has name!) → calls process(int&)\n- To pass r2 as rvalue: need std::move(r2)\n- **Key Concept:** Value category determined by expression, not type; named rvalue references are lvalues",
+          "key_concept": "Value category determined by expression, not type; named rvalue references are lvalues",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "lvalue\nlvalue"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Number {\n    operator int() const { return 42; }\n    operator double() const { return 3.14; }\n};\n\nvoid calculate(int x) { std::cout << \"int: \" << x << \"\\n\"; }\nvoid calculate(double x) { std::cout << \"double: \" << x << \"\\n\"; }\n\nint main() {\n    Number n;\n    calculate(n);  // Will this compile?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation fails\n\n**Explanation:** Ambiguous: both operator int() and operator double() are equally valid\n\n**Key Concept:** #conversion_operator #ambiguity\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error: ambiguous conversion\n```\n\n**Explanation:**\n- Number has two conversion operators: operator int() and operator double()\n- `calculate(n)` has two overloads: calculate(int) and calculate(double)\n- Compiler considers conversions: n → int or n → double\n- Both conversions are user-defined, equally ranked\n- No preference between them (ambiguous)\n- Overload resolution fails, compilation error\n- **Fix:** Explicit conversion: `calculate(static_cast<int>(n))`\n- Or explicit call: `calculate(n.operator int())`\n- **Key Concept:** Multiple conversion operators can cause ambiguity; prefer explicit conversions",
           "code": "#include <iostream>\n\nstruct Number {\n    operator int() const { return 42; }\n    operator double() const { return 3.14; }\n};\n\nvoid calculate(int x) { std::cout << \"int: \" << x << \"\\n\"; }\nvoid calculate(double x) { std::cout << \"double: \" << x << \"\\n\"; }\n\nint main() {\n    Number n;\n    calculate(n);  // Will this compile?\n}",
+          "answer": "Compilation error: ambiguous conversion",
+          "explanation": "- Number has two conversion operators: operator int() and operator double()\n- `calculate(n)` has two overloads: calculate(int) and calculate(double)\n- Compiler considers conversions: n → int or n → double\n- Both conversions are user-defined, equally ranked\n- No preference between them (ambiguous)\n- Overload resolution fails, compilation error\n- **Fix:** Explicit conversion: `calculate(static_cast<int>(n))`\n- Or explicit call: `calculate(n.operator int())`\n- **Key Concept:** Multiple conversion operators can cause ambiguity; prefer explicit conversions",
+          "key_concept": "Multiple conversion operators can cause ambiguity; prefer explicit conversions",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error: ambiguous conversion"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    const int x = 50;\n    int* p = const_cast<int*>(&x);\n    *p = 100;\n    \n    std::cout << x << \" \" << *p << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior<br>Typical: `50 100` or `100 100`\n\n**Explanation:** Modifying truly const object via const_cast is UB; compiler may optimize\n\n**Key Concept:** #const_cast #undefined_behavior\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior\nTypical output: 50 100 or 100 100\n```\n\n**Explanation:**\n- `const int x = 50` creates truly const object\n- `const_cast<int*>(&x)` removes const from pointer\n- `*p = 100` modifies through non-const pointer\n- Modifying originally const object is undefined behavior\n- Compiler may optimize assuming x never changes\n- May print \"50 100\" (compiler cached x value)\n- May print \"100 100\" (modification actually occurred)\n- Both valid UB outcomes\n- const_cast only safe for originally non-const objects temporarily made const\n- **Key Concept:** const_cast to modify truly const objects is UB; only use to remove const added elsewhere\n\n---\n\n\n## TOPIC: Type Conversions and Type Deduction in C++",
           "code": "#include <iostream>\n\nint main() {\n    const int x = 50;\n    int* p = const_cast<int*>(&x);\n    *p = 100;\n    \n    std::cout << x << \" \" << *p << \"\\n\";\n}",
+          "answer": "Undefined behavior\nTypical output: 50 100 or 100 100",
+          "explanation": "- `const int x = 50` creates truly const object\n- `const_cast<int*>(&x)` removes const from pointer\n- `*p = 100` modifies through non-const pointer\n- Modifying originally const object is undefined behavior\n- Compiler may optimize assuming x never changes\n- May print \"50 100\" (compiler cached x value)\n- May print \"100 100\" (modification actually occurred)\n- Both valid UB outcomes\n- const_cast only safe for originally non-const objects temporarily made const\n- **Key Concept:** const_cast to modify truly const objects is UB; only use to remove const added elsewhere",
+          "key_concept": "const_cast to modify truly const objects is UB; only use to remove const added elsewhere",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior\nTypical output: 50 100 or 100 100"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `A(42)`<br>`test(A)` | Implicit conversion from int to A via conversion constructor | #conversion_constructor |\n| 2 | Prints: `int` | short promotes to int, which is preferred over standard conversion to double | #promotion |\n| 3 | Line with `b = 300` fails to compile<br>Prints: `100 200` | `b` is `const int&`, cannot be modified; `a` is mutable copy | #auto_keyword #const_correctness |\n| 4 | Prints: `8 12` (typical 64-bit) | `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes) | #array_decay |\n| 5 | First assignment fails, second succeeds<br>Prints: `200` | `getVal()` returns by value, `getRef()` returns reference due to parentheses | #decltype_auto |\n| 6 | First call fails, second succeeds | explicit constructor prevents implicit conversion; direct construction works | #explicit_keyword |\n| 7 | Prints: `int: 65`<br>`double: 2.5` | char promotes to int; float promotes to double | #promotion |\n| 8 | Prints: `3`<br>`1 2 3` | auto deduces `std::initializer_list<int>` which has size() method | #initializer_list |\n| 9 | Line with `int b{pi}` fails | Brace-initialization prevents narrowing conversions (double to int) | #narrowing_conversion |\n| 10 | Prints: `Derived(1.5)` | Base→double (user-defined) then double→Derived (user-defined) is allowed | #conversion_chain |\n| 11 | Both assignments fail | `a` is `const int`, `b` is `const int&`; both are immutable | #decltype |\n| 12 | Prints: `int`<br>`long`<br>`double` | Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion) | #overload_resolution |\n| 13 | Prints: `50 200` | `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent) | #forwarding_reference |\n| 14 | Only first assignment succeeds<br>Prints: `111` | `v1` is copy (mutable), `v2` and `v3` are const references | #auto_keyword #const_correctness |\n| 15 | Prints: `String(Hello)`<br>`String(World)` | Implicit conversion from `const char*` to String via conversion constructor | #conversion_constructor |\n| 16 | Prints: `50m` | char (50) promotes to int, then int→Meters via conversion constructor | #promotion #conversion_chain |\n| 17 | Line with `char c2{large}` fails<br>Prints: `44` (or impl-def) | Brace-init prevents narrowing; value wraps/truncates based on char range | #narrowing_conversion |\n| 18 | Prints: `lvalue`<br>`lvalue` | Both r1 and r2 are lvalues (named variables), regardless of what they bind to | #value_category |\n| 19 | Compilation fails | Ambiguous: both operator int() and operator double() are equally valid | #conversion_operator #ambiguity |\n| 20 | Undefined behavior<br>Typical: `50 100` or `100 100` | Modifying truly const object via const_cast is UB; compiler may optimize | #const_cast #undefined_behavior |\n\n#### Type Deduction Rules Summary\n\n| Syntax | const Behavior | Reference Behavior | Use Case |\n|--------|----------------|-------------------|----------|\n| `auto` | Strips top-level const | Strips references | Default value semantics |\n| `auto&` | Preserves const from initializer | Creates reference | Non-const reference binding |\n| `const auto` | Explicitly adds const | Strips references | Const value semantics |\n| `const auto&` | Always const reference | Creates reference | Read-only universal binding |\n| `auto&&` | Preserves const | Forwarding reference | Perfect forwarding, binds to anything |\n| `decltype(var)` | Preserves exact type | Preserves references | Exact type preservation |\n| `decltype((var))` | Preserves const | Deduces reference if lvalue | Expression type with value category |\n| `decltype(auto)` | Preserves everything | Preserves everything | Perfect return type forwarding |\n\n#### Conversion Ranking in Overload Resolution\n\n| Rank | Conversion Type | Example | Notes |\n|------|----------------|---------|-------|\n| 1 | Exact match | `int` → `int` | Includes lvalue-to-rvalue, array-to-pointer, function-to-pointer |\n| 2 | Promotion | `char` → `int`, `float` → `double` | Safe, lossless widening |\n| 3 | Standard conversion | `int` → `double`, `double` → `int` | May lose precision |\n| 4 | User-defined conversion | `int` → `MyClass` via constructor | Max one user-defined in chain |\n| 5 | Ellipsis | Any → `...` | Last resort for variadic functions |\n\n#### Promotion Rules\n\n| From Type | To Type | Safe? | Notes |\n|-----------|---------|-------|-------|\n| `char`, `signed char`, `unsigned char` | `int` | ✅ | If int can represent all values |\n| `short`, `unsigned short` | `int` | ✅ | If int can represent all values |\n| `char16_t`, `char32_t` | `int`, `unsigned int` | ✅ | Depends on size |\n| `float` | `double` | ✅ | Always lossless |\n| `bool` | `int` | ✅ | false→0, true→1 |\n\n#### Common auto Pitfalls\n\n| Code Pattern | Deduced Type | Potential Issue |\n|--------------|--------------|-----------------|\n| `auto v = getConst Vector();` | `std::vector<T>` (copy) | Expensive copy instead of const reference |\n| `auto x = {1, 2, 3};` | `std::initializer_list<int>` | Not an array, different semantics |\n| `auto proxy = vec[0];` | Proxy type (for `vector<bool>`) | May not behave like actual value |\n| `auto x = y.begin();` | Iterator type | Verbose type becomes invisible |\n| `auto ptr = arr;` | Pointer type | Array decays to pointer, loses size info |\n\n#### Narrowing Conversion Detection\n\n| Initialization Style | Detects Narrowing? | Example |\n|---------------------|-------------------|---------|\n| Copy initialization | ❌ No | `int x = 3.14;` (allowed) |\n| Direct initialization | ❌ No | `int x(3.14);` (allowed) |\n| Brace initialization | ✅ Yes | `int x{3.14};` (error) |\n| Copy-list initialization | ✅ Yes | `int x = {3.14};` (error) |\n\n#### Explicit Keyword Behavior\n\n| Initialization Form | With `explicit` | Without `explicit` |\n|--------------------|----------------|-------------------|\n| Copy-initialization: `T x = value;` | ❌ Error | ✅ Allowed |\n| Direct-initialization: `T x(value);` | ✅ Allowed | ✅ Allowed |\n| Direct-list-init: `T x{value};` | ✅ Allowed | ✅ Allowed |\n| Copy-list-init: `T x = {value};` | ✅ Allowed (C++11+) | ✅ Allowed |\n| Function arg: `func(value);` | ❌ Error | ✅ Allowed |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `A(42)`<br>`test(A)` | Implicit conversion from int to A via conversion constructor | #conversion_constructor |\n| 2 | Prints: `int` | short promotes to int, which is preferred over standard conversion to double | #promotion |\n| 3 | Line with `b = 300` fails to compile<br>Prints: `100 200` | `b` is `const int&`, cannot be modified; `a` is mutable copy | #auto_keyword #const_correctness |\n| 4 | Prints: `8 12` (typical 64-bit) | `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes) | #array_decay |\n| 5 | First assignment fails, second succeeds<br>Prints: `200` | `getVal()` returns by value, `getRef()` returns reference due to parentheses | #decltype_auto |\n| 6 | First call fails, second succeeds | explicit constructor prevents implicit conversion; direct construction works | #explicit_keyword |\n| 7 | Prints: `int: 65`<br>`double: 2.5` | char promotes to int; float promotes to double | #promotion |\n| 8 | Prints: `3`<br>`1 2 3` | auto deduces `std::initializer_list<int>` which has size() method | #initializer_list |\n| 9 | Line with `int b{pi}` fails | Brace-initialization prevents narrowing conversions (double to int) | #narrowing_conversion |\n| 10 | Prints: `Derived(1.5)` | Base→double (user-defined) then double→Derived (user-defined) is allowed | #conversion_chain |\n| 11 | Both assignments fail | `a` is `const int`, `b` is `const int&`; both are immutable | #decltype |\n| 12 | Prints: `int`<br>`long`<br>`double` | Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion) | #overload_resolution |\n| 13 | Prints: `50 200` | `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent) | #forwarding_reference |\n| 14 | Only first assignment succeeds<br>Prints: `111` | `v1` is copy (mutable), `v2` and `v3` are const references | #auto_keyword #const_correctness |\n| 15 | Prints: `String(Hello)`<br>`String(World)` | Implicit conversion from `const char*` to String via conversion constructor | #conversion_constructor |\n| 16 | Prints: `50m` | char (50) promotes to int, then int→Meters via conversion constructor | #promotion #conversion_chain |\n| 17 | Line with `char c2{large}` fails<br>Prints: `44` (or impl-def) | Brace-init prevents narrowing; value wraps/truncates based on char range | #narrowing_conversion |\n| 18 | Prints: `lvalue`<br>`lvalue` | Both r1 and r2 are lvalues (named variables), regardless of what they bind to | #value_category |\n| 19 | Compilation fails | Ambiguous: both operator int() and operator double() are equally valid | #conversion_operator #ambiguity |\n| 20 | Undefined behavior<br>Typical: `50 100` or `100 100` | Modifying truly const object via const_cast is UB; compiler may optimize | #const_cast #undefined_behavior |\n\n#### Type Deduction Rules Summary\n\n| Syntax | const Behavior | Reference Behavior | Use Case |\n|--------|----------------|-------------------|----------|\n| `auto` | Strips top-level const | Strips references | Default value semantics |\n| `auto&` | Preserves const from initializer | Creates reference | Non-const reference binding |\n| `const auto` | Explicitly adds const | Strips references | Const value semantics |\n| `const auto&` | Always const reference | Creates reference | Read-only universal binding |\n| `auto&&` | Preserves const | Forwarding reference | Perfect forwarding, binds to anything |\n| `decltype(var)` | Preserves exact type | Preserves references | Exact type preservation |\n| `decltype((var))` | Preserves const | Deduces reference if lvalue | Expression type with value category |\n| `decltype(auto)` | Preserves everything | Preserves everything | Perfect return type forwarding |\n\n#### Conversion Ranking in Overload Resolution\n\n| Rank | Conversion Type | Example | Notes |\n|------|----------------|---------|-------|\n| 1 | Exact match | `int` → `int` | Includes lvalue-to-rvalue, array-to-pointer, function-to-pointer |\n| 2 | Promotion | `char` → `int`, `float` → `double` | Safe, lossless widening |\n| 3 | Standard conversion | `int` → `double`, `double` → `int` | May lose precision |\n| 4 | User-defined conversion | `int` → `MyClass` via constructor | Max one user-defined in chain |\n| 5 | Ellipsis | Any → `...` | Last resort for variadic functions |\n\n#### Promotion Rules\n\n| From Type | To Type | Safe? | Notes |\n|-----------|---------|-------|-------|\n| `char`, `signed char`, `unsigned char` | `int` | ✅ | If int can represent all values |\n| `short`, `unsigned short` | `int` | ✅ | If int can represent all values |\n| `char16_t`, `char32_t` | `int`, `unsigned int` | ✅ | Depends on size |\n| `float` | `double` | ✅ | Always lossless |\n| `bool` | `int` | ✅ | false→0, true→1 |\n\n#### Common auto Pitfalls\n\n| Code Pattern | Deduced Type | Potential Issue |\n|--------------|--------------|-----------------|\n| `auto v = getConst Vector();` | `std::vector<T>` (copy) | Expensive copy instead of const reference |\n| `auto x = {1, 2, 3};` | `std::initializer_list<int>` | Not an array, different semantics |\n| `auto proxy = vec[0];` | Proxy type (for `vector<bool>`) | May not behave like actual value |\n| `auto x = y.begin();` | Iterator type | Verbose type becomes invisible |\n| `auto ptr = arr;` | Pointer type | Array decays to pointer, loses size info |\n\n#### Narrowing Conversion Detection\n\n| Initialization Style | Detects Narrowing? | Example |\n|---------------------|-------------------|---------|\n| Copy initialization | ❌ No | `int x = 3.14;` (allowed) |\n| Direct initialization | ❌ No | `int x(3.14);` (allowed) |\n| Brace initialization | ✅ Yes | `int x{3.14};` (error) |\n| Copy-list initialization | ✅ Yes | `int x = {3.14};` (error) |\n\n#### Explicit Keyword Behavior\n\n| Initialization Form | With `explicit` | Without `explicit` |\n|--------------------|----------------|-------------------|\n| Copy-initialization: `T x = value;` | ❌ Error | ✅ Allowed |\n| Direct-initialization: `T x(value);` | ✅ Allowed | ✅ Allowed |\n| Direct-list-init: `T x{value};` | ✅ Allowed | ✅ Allowed |\n| Copy-list-init: `T x = {value};` | ✅ Allowed (C++11+) | ✅ Allowed |\n| Function arg: `func(value);` | ❌ Error | ✅ Allowed |\n\n\n## TOPIC: Type Conversions and Type Deduction in C++",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `A(42)`<br>`test(A)` | Implicit conversion from int to A via conversion constructor | #conversion_constructor |\n| 2 | Prints: `int` | short promotes to int, which is preferred over standard conversion to double | #promotion |\n| 3 | Line with `b = 300` fails to compile<br>Prints: `100 200` | `b` is `const int&`, cannot be modified; `a` is mutable copy | #auto_keyword #const_correctness |\n| 4 | Prints: `8 12` (typical 64-bit) | `x` is pointer (8 bytes), `y` is array reference (3 × 4 = 12 bytes) | #array_decay |\n| 5 | First assignment fails, second succeeds<br>Prints: `200` | `getVal()` returns by value, `getRef()` returns reference due to parentheses | #decltype_auto |\n| 6 | First call fails, second succeeds | explicit constructor prevents implicit conversion; direct construction works | #explicit_keyword |\n| 7 | Prints: `int: 65`<br>`double: 2.5` | char promotes to int; float promotes to double | #promotion |\n| 8 | Prints: `3`<br>`1 2 3` | auto deduces `std::initializer_list<int>` which has size() method | #initializer_list |\n| 9 | Line with `int b{pi}` fails | Brace-initialization prevents narrowing conversions (double to int) | #narrowing_conversion |\n| 10 | Prints: `Derived(1.5)` | Base→double (user-defined) then double→Derived (user-defined) is allowed | #conversion_chain |\n| 11 | Both assignments fail | `a` is `const int`, `b` is `const int&`; both are immutable | #decltype |\n| 12 | Prints: `int`<br>`long`<br>`double` | Exact matches: 'Z'→int (promotion), 100L→long, 3.14f→double (promotion) | #overload_resolution |\n| 13 | Prints: `50 200` | `r1` is lvalue ref to x (modifies x), `r2` is rvalue ref (independent) | #forwarding_reference |\n| 14 | Only first assignment succeeds<br>Prints: `111` | `v1` is copy (mutable), `v2` and `v3` are const references | #auto_keyword #const_correctness |\n| 15 | Prints: `String(Hello)`<br>`String(World)` | Implicit conversion from `const char*` to String via conversion constructor | #conversion_constructor |\n| 16 | Prints: `50m` | char (50) promotes to int, then int→Meters via conversion constructor | #promotion #conversion_chain |\n| 17 | Line with `char c2{large}` fails<br>Prints: `44` (or impl-def) | Brace-init prevents narrowing; value wraps/truncates based on char range | #narrowing_conversion |\n| 18 | Prints: `lvalue`<br>`lvalue` | Both r1 and r2 are lvalues (named variables), regardless of what they bind to | #value_category |\n| 19 | Compilation fails | Ambiguous: both operator int() and operator double() are equally valid | #conversion_operator #ambiguity |\n| 20 | Undefined behavior<br>Typical: `50 100` or `100 100` | Modifying truly const object via const_cast is UB; compiler may optimize | #const_cast #undefined_behavior |",
           "| Syntax | const Behavior | Reference Behavior | Use Case |\n|--------|----------------|-------------------|----------|\n| `auto` | Strips top-level const | Strips references | Default value semantics |\n| `auto&` | Preserves const from initializer | Creates reference | Non-const reference binding |\n| `const auto` | Explicitly adds const | Strips references | Const value semantics |\n| `const auto&` | Always const reference | Creates reference | Read-only universal binding |\n| `auto&&` | Preserves const | Forwarding reference | Perfect forwarding, binds to anything |\n| `decltype(var)` | Preserves exact type | Preserves references | Exact type preservation |\n| `decltype((var))` | Preserves const | Deduces reference if lvalue | Expression type with value category |\n| `decltype(auto)` | Preserves everything | Preserves everything | Perfect return type forwarding |",
@@ -1009,13 +1129,13 @@
           "| From Type | To Type | Safe? | Notes |\n|-----------|---------|-------|-------|\n| `char`, `signed char`, `unsigned char` | `int` | ✅ | If int can represent all values |\n| `short`, `unsigned short` | `int` | ✅ | If int can represent all values |\n| `char16_t`, `char32_t` | `int`, `unsigned int` | ✅ | Depends on size |\n| `float` | `double` | ✅ | Always lossless |\n| `bool` | `int` | ✅ | false→0, true→1 |",
           "| Code Pattern | Deduced Type | Potential Issue |\n|--------------|--------------|-----------------|\n| `auto v = getConst Vector();` | `std::vector<T>` (copy) | Expensive copy instead of const reference |\n| `auto x = {1, 2, 3};` | `std::initializer_list<int>` | Not an array, different semantics |\n| `auto proxy = vec[0];` | Proxy type (for `vector<bool>`) | May not behave like actual value |\n| `auto x = y.begin();` | Iterator type | Verbose type becomes invisible |\n| `auto ptr = arr;` | Pointer type | Array decays to pointer, loses size info |",
           "| Initialization Style | Detects Narrowing? | Example |\n|---------------------|-------------------|---------|\n| Copy initialization | ❌ No | `int x = 3.14;` (allowed) |\n| Direct initialization | ❌ No | `int x(3.14);` (allowed) |\n| Brace initialization | ✅ Yes | `int x{3.14};` (error) |\n| Copy-list initialization | ✅ Yes | `int x = {3.14};` (error) |",
-          "| Initialization Form | With `explicit` | Without `explicit` |\n|--------------------|----------------|-------------------|\n| Copy-initialization: `T x = value;` | ❌ Error | ✅ Allowed |\n| Direct-initialization: `T x(value);` | ✅ Allowed | ✅ Allowed |\n| Direct-list-init: `T x{value};` | ✅ Allowed | ✅ Allowed |\n| Copy-list-init: `T x = {value};` | ✅ Allowed (C++11+) | ✅ Allowed |"
+          "| Initialization Form | With `explicit` | Without `explicit` |\n|--------------------|----------------|-------------------|\n| Copy-initialization: `T x = value;` | ❌ Error | ✅ Allowed |\n| Direct-initialization: `T x(value);` | ✅ Allowed | ✅ Allowed |\n| Direct-list-init: `T x{value};` | ✅ Allowed | ✅ Allowed |\n| Copy-list-init: `T x = {value};` | ✅ Allowed (C++11+) | ✅ Allowed |\n| Function arg: `func(value);` | ❌ Error | ✅ Allowed |"
         ]
       }
     },
     {
       "topic": "C++ Cast Operators and Type Casting Mechanisms",
-      "filename": "2_cpp_cast_operators.md",
+      "filename": "topic_2.md",
       "theory": {
         "subsections": [
           {
@@ -1710,206 +1830,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Base {\n    virtual ~Base() { }\n    int base_val = 10;\n};\n\nstruct Derived : Base {\n    int derived_val = 20;\n};\n\nint main() {\n    Base* b = new Derived();\n    Derived* d1 = static_cast<Derived*>(b);\n    Derived* d2 = dynamic_cast<Derived*>(b);\n    \n    std::cout << d1->derived_val << \" \" << d2->derived_val << \"\\n\";\n    \n    delete b;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `20 20`\n\n**Explanation:** Both casts succeed; b actually points to Derived object\n\n**Key Concept:** #static_cast #dynamic_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n20 20\n```\n\n**Explanation:**\n- b is Base* pointing to Derived object (polymorphism)\n- `static_cast<Derived*>(b)` performs compile-time downcast\n- static_cast trusts programmer, doesn't check object type at runtime\n- Works because b actually points to Derived\n- `dynamic_cast<Derived*>(b)` performs runtime type check\n- Uses RTTI to verify b points to Derived (succeeds)\n- Both access derived_val safely (20)\n- If b pointed to Base only, static_cast would be dangerous\n- **Key Concept:** static_cast trusts programmer; dynamic_cast verifies at runtime with RTTI",
           "code": "#include <iostream>\n\nstruct Base {\n    virtual ~Base() { }\n    int base_val = 10;\n};\n\nstruct Derived : Base {\n    int derived_val = 20;\n};\n\nint main() {\n    Base* b = new Derived();\n    Derived* d1 = static_cast<Derived*>(b);\n    Derived* d2 = dynamic_cast<Derived*>(b);\n    \n    std::cout << d1->derived_val << \" \" << d2->derived_val << \"\\n\";\n    \n    delete b;\n}",
+          "answer": "20 20",
+          "explanation": "- b is Base* pointing to Derived object (polymorphism)\n- `static_cast<Derived*>(b)` performs compile-time downcast\n- static_cast trusts programmer, doesn't check object type at runtime\n- Works because b actually points to Derived\n- `dynamic_cast<Derived*>(b)` performs runtime type check\n- Uses RTTI to verify b points to Derived (succeeds)\n- Both access derived_val safely (20)\n- If b pointed to Base only, static_cast would be dangerous\n- **Key Concept:** static_cast trusts programmer; dynamic_cast verifies at runtime with RTTI",
+          "key_concept": "static_cast trusts programmer; dynamic_cast verifies at runtime with RTTI",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "20 20"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    const int x = 100;\n    int* p = const_cast<int*>(&x);\n    *p = 200;\n    \n    std::cout << x << \" \" << *p << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior<br>Typical: `100 200` or `200 200`\n\n**Explanation:** Modifying truly const object is UB; compiler may optimize\n\n**Key Concept:** #const_cast #undefined_behavior\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior\nTypical: 100 200 or 200 200\n```\n\n**Explanation:**\n- `const int x = 100` creates truly const object\n- const_cast removes const qualification from pointer\n- `*p = 200` modifies through cast pointer\n- Modifying originally const object is undefined behavior\n- Compiler may optimize assuming x never changes\n- May print \"100 200\" (compiler cached x, p sees 200)\n- May print \"200 200\" (both see modification)\n- Both outcomes valid under UB\n- const_cast only safe for originally mutable objects temporarily made const\n- **Key Concept:** const_cast to modify truly const objects causes UB; only use to remove temporarily added const",
           "code": "#include <iostream>\n\nint main() {\n    const int x = 100;\n    int* p = const_cast<int*>(&x);\n    *p = 200;\n    \n    std::cout << x << \" \" << *p << \"\\n\";\n}",
+          "answer": "Undefined behavior\nTypical: 100 200 or 200 200",
+          "explanation": "- `const int x = 100` creates truly const object\n- const_cast removes const qualification from pointer\n- `*p = 200` modifies through cast pointer\n- Modifying originally const object is undefined behavior\n- Compiler may optimize assuming x never changes\n- May print \"100 200\" (compiler cached x, p sees 200)\n- May print \"200 200\" (both see modification)\n- Both outcomes valid under UB\n- const_cast only safe for originally mutable objects temporarily made const\n- **Key Concept:** const_cast to modify truly const objects causes UB; only use to remove temporarily added const",
+          "key_concept": "const_cast to modify truly const objects causes UB; only use to remove temporarily added const",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior\nTypical: 100 200 or 200 200"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base* b = new Base();\n    \n    Derived* d1 = static_cast<Derived*>(b);\n    Derived* d2 = dynamic_cast<Derived*>(b);\n    \n    std::cout << (d1 == nullptr) << \" \" << (d2 == nullptr) << \"\\n\";\n    \n    delete b;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `0 1`\n\n**Explanation:** static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr)\n\n**Key Concept:** #static_cast #dynamic_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0 1\n```\n\n**Explanation:**\n- b points to Base object (not Derived)\n- `static_cast<Derived*>(b)` compiles, performs unchecked downcast\n- Returns non-null pointer even though cast is invalid\n- d1 is non-null (0 = false), but dereferencing would be UB\n- `dynamic_cast<Derived*>(b)` performs runtime type check\n- Detects b is not actually Derived, returns nullptr (safe failure)\n- d2 is nullptr (1 = true)\n- dynamic_cast is safer for downcasts with uncertain types\n- **Key Concept:** static_cast unsafe downcast (no runtime check); dynamic_cast safe (returns nullptr on failure)",
           "code": "#include <iostream>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base* b = new Base();\n    \n    Derived* d1 = static_cast<Derived*>(b);\n    Derived* d2 = dynamic_cast<Derived*>(b);\n    \n    std::cout << (d1 == nullptr) << \" \" << (d2 == nullptr) << \"\\n\";\n    \n    delete b;\n}",
+          "answer": "0 1",
+          "explanation": "- b points to Base object (not Derived)\n- `static_cast<Derived*>(b)` compiles, performs unchecked downcast\n- Returns non-null pointer even though cast is invalid\n- d1 is non-null (0 = false), but dereferencing would be UB\n- `dynamic_cast<Derived*>(b)` performs runtime type check\n- Detects b is not actually Derived, returns nullptr (safe failure)\n- d2 is nullptr (1 = true)\n- dynamic_cast is safer for downcasts with uncertain types\n- **Key Concept:** static_cast unsafe downcast (no runtime check); dynamic_cast safe (returns nullptr on failure)",
+          "key_concept": "static_cast unsafe downcast (no runtime check); dynamic_cast safe (returns nullptr on failure)",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0 1"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <cstring>\n\nint main() {\n    float f = 3.14f;\n    int bits;\n    std::memcpy(&bits, &f, sizeof(f));\n    \n    int* fp_bits = reinterpret_cast<int*>(&f);\n    \n    std::cout << (bits == *fp_bits) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `1`\n\n**Explanation:** Both methods read same bits; memcpy avoids strict aliasing issues\n\n**Key Concept:** #memcpy #reinterpret_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n```\n\n**Explanation:**\n- `memcpy(&bits, &f, sizeof(f))` copies float bits to int\n- memcpy is defined behavior for type punning\n- `reinterpret_cast<int*>(&f)` casts float* to int*\n- Dereferencing violates strict aliasing rule (technically UB)\n- But both read same bit pattern\n- Result comparison is true (1)\n- memcpy is standards-compliant way to inspect representation\n- reinterpret_cast + dereference may work but is UB\n- **Key Concept:** memcpy is safe for type punning; reinterpret_cast + dereference violates strict aliasing",
           "code": "#include <iostream>\n#include <cstring>\n\nint main() {\n    float f = 3.14f;\n    int bits;\n    std::memcpy(&bits, &f, sizeof(f));\n    \n    int* fp_bits = reinterpret_cast<int*>(&f);\n    \n    std::cout << (bits == *fp_bits) << \"\\n\";\n}",
+          "answer": "1",
+          "explanation": "- `memcpy(&bits, &f, sizeof(f))` copies float bits to int\n- memcpy is defined behavior for type punning\n- `reinterpret_cast<int*>(&f)` casts float* to int*\n- Dereferencing violates strict aliasing rule (technically UB)\n- But both read same bit pattern\n- Result comparison is true (1)\n- memcpy is standards-compliant way to inspect representation\n- reinterpret_cast + dereference may work but is UB\n- **Key Concept:** memcpy is safe for type punning; reinterpret_cast + dereference violates strict aliasing",
+          "key_concept": "memcpy is safe for type punning; reinterpret_cast + dereference violates strict aliasing",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\ndouble performCalc() {\n    return 3.14159;\n}\n\nint main() {\n    int i1 = performCalc();  // What conversion?\n    int i2 = static_cast<int>(performCalc());  // What conversion?\n    \n    std::cout << i1 << \" \" << i2 << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `3 3`\n\n**Explanation:** Both are implicit narrowing (first) and explicit (second); same result\n\n**Key Concept:** #implicit_conversion #static_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 3\n```\n\n**Explanation:**\n- performCalc() returns double 3.14159\n- `int i1 = performCalc()` uses implicit conversion\n- double → int narrowing conversion (truncates to 3)\n- Implicit narrowing allowed in copy-initialization\n- `static_cast<int>(performCalc())` explicit conversion\n- Same truncation behavior: 3.14159 → 3\n- static_cast makes intent explicit (better style)\n- Both produce identical result\n- Prefer explicit casts for clarity and brace-init safety\n- **Key Concept:** static_cast makes conversions explicit; same behavior as implicit but clearer intent",
           "code": "#include <iostream>\n\ndouble performCalc() {\n    return 3.14159;\n}\n\nint main() {\n    int i1 = performCalc();  // What conversion?\n    int i2 = static_cast<int>(performCalc());  // What conversion?\n    \n    std::cout << i1 << \" \" << i2 << \"\\n\";\n}",
+          "answer": "3 3",
+          "explanation": "- performCalc() returns double 3.14159\n- `int i1 = performCalc()` uses implicit conversion\n- double → int narrowing conversion (truncates to 3)\n- Implicit narrowing allowed in copy-initialization\n- `static_cast<int>(performCalc())` explicit conversion\n- Same truncation behavior: 3.14159 → 3\n- static_cast makes intent explicit (better style)\n- Both produce identical result\n- Prefer explicit casts for clarity and brace-init safety\n- **Key Concept:** static_cast makes conversions explicit; same behavior as implicit but clearer intent",
+          "key_concept": "static_cast makes conversions explicit; same behavior as implicit but clearer intent",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 3"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct A { int a = 1; virtual ~A() { } };\nstruct B { int b = 2; virtual ~B() { } };\nstruct C : A, B { int c = 3; };\n\nint main() {\n    C obj;\n    B* bp = static_cast<B*>(&obj);\n    \n    std::cout << bp->b << \"\\n\";\n    std::cout << (static_cast<void*>(&obj) == static_cast<void*>(bp)) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `2`<br>`0`\n\n**Explanation:** B subobject at different offset due to multiple inheritance\n\n**Key Concept:** #multiple_inheritance #pointer_adjustment\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2\n0\n```\n\n**Explanation:**\n- C inherits from both A and B (multiple inheritance)\n- obj layout: A subobject, then B subobject, then C's own members\n- `static_cast<B*>(&obj)` converts C* to B*\n- Pointer adjustment: adds offset to point to B subobject within C\n- bp points to B subobject, bp->b correctly accesses 2\n- `static_cast<void*>(&obj)` points to start of obj (A subobject)\n- `static_cast<void*>(bp)` points to B subobject (different address)\n- Addresses are different (0 = false)\n- Multiple inheritance requires pointer adjustment\n- **Key Concept:** Multiple inheritance causes subobjects at different offsets; pointer casts adjust address accordingly",
           "code": "#include <iostream>\n\nstruct A { int a = 1; virtual ~A() { } };\nstruct B { int b = 2; virtual ~B() { } };\nstruct C : A, B { int c = 3; };\n\nint main() {\n    C obj;\n    B* bp = static_cast<B*>(&obj);\n    \n    std::cout << bp->b << \"\\n\";\n    std::cout << (static_cast<void*>(&obj) == static_cast<void*>(bp)) << \"\\n\";\n}",
+          "answer": "2\n0",
+          "explanation": "- C inherits from both A and B (multiple inheritance)\n- obj layout: A subobject, then B subobject, then C's own members\n- `static_cast<B*>(&obj)` converts C* to B*\n- Pointer adjustment: adds offset to point to B subobject within C\n- bp points to B subobject, bp->b correctly accesses 2\n- `static_cast<void*>(&obj)` points to start of obj (A subobject)\n- `static_cast<void*>(bp)` points to B subobject (different address)\n- Addresses are different (0 = false)\n- Multiple inheritance requires pointer adjustment\n- **Key Concept:** Multiple inheritance causes subobjects at different offsets; pointer casts adjust address accordingly",
+          "key_concept": "Multiple inheritance causes subobjects at different offsets; pointer casts adjust address accordingly",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2\n0"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    int x = 65;\n    char c = static_cast<char>(x);\n    \n    std::cout << c << \" \" << static_cast<int>(c) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `A 65`\n\n**Explanation:** 65 is ASCII 'A'; conversion preserves value\n\n**Key Concept:** #numeric_conversion #static_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nA 65\n```\n\n**Explanation:**\n- `static_cast<char>(x)` where x is 65\n- int → char narrowing conversion\n- Value 65 fits in char range (-128 to 127 or 0 to 255)\n- Conversion preserves value: 65\n- char 65 is ASCII 'A'\n- `std::cout << c` prints character: A\n- `static_cast<int>(c)` converts back to int: 65\n- Round-trip conversion preserves value in range\n- **Key Concept:** static_cast for numeric conversions; value preserved if in target range",
           "code": "#include <iostream>\n\nint main() {\n    int x = 65;\n    char c = static_cast<char>(x);\n    \n    std::cout << c << \" \" << static_cast<int>(c) << \"\\n\";\n}",
+          "answer": "A 65",
+          "explanation": "- `static_cast<char>(x)` where x is 65\n- int → char narrowing conversion\n- Value 65 fits in char range (-128 to 127 or 0 to 255)\n- Conversion preserves value: 65\n- char 65 is ASCII 'A'\n- `std::cout << c` prints character: A\n- `static_cast<int>(c)` converts back to int: 65\n- Round-trip conversion preserves value in range\n- **Key Concept:** static_cast for numeric conversions; value preserved if in target range",
+          "key_concept": "static_cast for numeric conversions; value preserved if in target range",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "A 65"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <typeinfo>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base b;\n    \n    try {\n        Derived& d = dynamic_cast<Derived&>(b);\n        std::cout << \"Cast succeeded\\n\";\n    } catch (const std::bad_cast& e) {\n        std::cout << \"Cast failed\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `Cast failed`\n\n**Explanation:** Reference dynamic_cast throws std::bad_cast on failure\n\n**Key Concept:** #dynamic_cast #exception\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCast failed\n```\n\n**Explanation:**\n- `dynamic_cast<Derived&>(b)` attempts to cast Base to Derived reference\n- b is Base object (not Derived)\n- Pointer dynamic_cast returns nullptr on failure\n- Reference dynamic_cast cannot return null (references can't be null)\n- Throws std::bad_cast exception on failure instead\n- Runtime type check detects b is not Derived\n- Exception thrown, catch block executes\n- Prints \"Cast failed\"\n- Use reference dynamic_cast when expecting success (exception on error)\n- **Key Concept:** Reference dynamic_cast throws bad_cast on failure; pointer version returns nullptr",
           "code": "#include <iostream>\n#include <typeinfo>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base b;\n    \n    try {\n        Derived& d = dynamic_cast<Derived&>(b);\n        std::cout << \"Cast succeeded\\n\";\n    } catch (const std::bad_cast& e) {\n        std::cout << \"Cast failed\\n\";\n    }\n}",
+          "answer": "Cast failed",
+          "explanation": "- `dynamic_cast<Derived&>(b)` attempts to cast Base to Derived reference\n- b is Base object (not Derived)\n- Pointer dynamic_cast returns nullptr on failure\n- Reference dynamic_cast cannot return null (references can't be null)\n- Throws std::bad_cast exception on failure instead\n- Runtime type check detects b is not Derived\n- Exception thrown, catch block executes\n- Prints \"Cast failed\"\n- Use reference dynamic_cast when expecting success (exception on error)\n- **Key Concept:** Reference dynamic_cast throws bad_cast on failure; pointer version returns nullptr",
+          "key_concept": "Reference dynamic_cast throws bad_cast on failure; pointer version returns nullptr",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Cast failed"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid legacyFunc(char* str) {\n    std::cout << str << \"\\n\";\n}\n\nint main() {\n    const char* message = \"Hello\";\n    legacyFunc(const_cast<char*>(message));  // Safe?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `Hello`\n\n**Explanation:** Safe only if legacyFunc doesn't modify (we assume it doesn't)\n\n**Key Concept:** #const_cast #legacy_api\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nHello\n```\n\n**Explanation:**\n- String literal \"Hello\" is const char*\n- legacyFunc expects char* (non-const)\n- Old C APIs often had char* parameters even for read-only strings\n- `const_cast<char*>(message)` removes const\n- Safe IF legacyFunc only reads, doesn't modify\n- In this case, legacyFunc just prints (read-only) - safe\n- If legacyFunc modified, would be UB (string literals are immutable)\n- const_cast useful for interfacing with legacy APIs\n- Better: fix legacyFunc signature to const char*\n- **Key Concept:** const_cast enables legacy API compatibility; safe only if function doesn't actually modify",
           "code": "#include <iostream>\n\nvoid legacyFunc(char* str) {\n    std::cout << str << \"\\n\";\n}\n\nint main() {\n    const char* message = \"Hello\";\n    legacyFunc(const_cast<char*>(message));  // Safe?\n}",
+          "answer": "Hello",
+          "explanation": "- String literal \"Hello\" is const char*\n- legacyFunc expects char* (non-const)\n- Old C APIs often had char* parameters even for read-only strings\n- `const_cast<char*>(message)` removes const\n- Safe IF legacyFunc only reads, doesn't modify\n- In this case, legacyFunc just prints (read-only) - safe\n- If legacyFunc modified, would be UB (string literals are immutable)\n- const_cast useful for interfacing with legacy APIs\n- Better: fix legacyFunc signature to const char*\n- **Key Concept:** const_cast enables legacy API compatibility; safe only if function doesn't actually modify",
+          "key_concept": "const_cast enables legacy API compatibility; safe only if function doesn't actually modify",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Hello"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct NonPoly {\n    int value = 42;\n};\n\nint main() {\n    NonPoly np;\n    NonPoly* p1 = &np;\n    // NonPoly* p2 = dynamic_cast<NonPoly*>(p1);  // Will this compile?\n    \n    std::cout << p1->value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Commented line fails to compile\n\n**Explanation:** dynamic_cast requires polymorphic type (virtual function)\n\n**Key Concept:** #dynamic_cast #polymorphic\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error on dynamic_cast line\nPrints: 42\n```\n\n**Explanation:**\n- NonPoly has no virtual functions (non-polymorphic)\n- dynamic_cast requires polymorphic type (at least one virtual function)\n- Needs vtable for RTTI (Run-Time Type Information)\n- `dynamic_cast<NonPoly*>(p1)` fails to compile\n- Compiler error: dynamic_cast requires polymorphic class\n- static_cast would work (compile-time, no RTTI needed)\n- Add virtual destructor to enable dynamic_cast\n- **Key Concept:** dynamic_cast requires polymorphic types with vtable; add virtual function to enable RTTI",
           "code": "#include <iostream>\n\nstruct NonPoly {\n    int value = 42;\n};\n\nint main() {\n    NonPoly np;\n    NonPoly* p1 = &np;\n    // NonPoly* p2 = dynamic_cast<NonPoly*>(p1);  // Will this compile?\n    \n    std::cout << p1->value << \"\\n\";\n}",
+          "answer": "Compilation error on dynamic_cast line\nPrints: 42",
+          "explanation": "- NonPoly has no virtual functions (non-polymorphic)\n- dynamic_cast requires polymorphic type (at least one virtual function)\n- Needs vtable for RTTI (Run-Time Type Information)\n- `dynamic_cast<NonPoly*>(p1)` fails to compile\n- Compiler error: dynamic_cast requires polymorphic class\n- static_cast would work (compile-time, no RTTI needed)\n- Add virtual destructor to enable dynamic_cast\n- **Key Concept:** dynamic_cast requires polymorphic types with vtable; add virtual function to enable RTTI",
+          "key_concept": "dynamic_cast requires polymorphic types with vtable; add virtual function to enable RTTI",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error on dynamic_cast line\nPrints: 42"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <cstdint>\n\nint main() {\n    int value = 1000;\n    std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(&value);\n    int* restored = reinterpret_cast<int*>(addr);\n    \n    std::cout << *restored << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `1000`\n\n**Explanation:** Safe pointer→integer→pointer round-trip with uintptr_t\n\n**Key Concept:** #reinterpret_cast #pointer_to_integer\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1000\n```\n\n**Explanation:**\n- `reinterpret_cast<std::uintptr_t>(&value)` converts pointer to integer\n- uintptr_t is integer type guaranteed to hold pointer value\n- Stores pointer address as integer\n- `reinterpret_cast<int*>(addr)` converts back to pointer\n- Round-trip pointer→integer→pointer is safe with uintptr_t\n- restored points to same object as &value\n- `*restored` accesses original int, prints 1000\n- Other integer types may not be large enough (UB)\n- **Key Concept:** reinterpret_cast with uintptr_t for safe pointer-to-integer round-trips; other types may truncate",
           "code": "#include <iostream>\n#include <cstdint>\n\nint main() {\n    int value = 1000;\n    std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(&value);\n    int* restored = reinterpret_cast<int*>(addr);\n    \n    std::cout << *restored << \"\\n\";\n}",
+          "answer": "1000",
+          "explanation": "- `reinterpret_cast<std::uintptr_t>(&value)` converts pointer to integer\n- uintptr_t is integer type guaranteed to hold pointer value\n- Stores pointer address as integer\n- `reinterpret_cast<int*>(addr)` converts back to pointer\n- Round-trip pointer→integer→pointer is safe with uintptr_t\n- restored points to same object as &value\n- `*restored` accesses original int, prints 1000\n- Other integer types may not be large enough (UB)\n- **Key Concept:** reinterpret_cast with uintptr_t for safe pointer-to-integer round-trips; other types may truncate",
+          "key_concept": "reinterpret_cast with uintptr_t for safe pointer-to-integer round-trips; other types may truncate",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1000"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    int* ptr = nullptr;\n    \n    char* c1 = static_cast<char*>(static_cast<void*>(ptr));\n    char* c2 = reinterpret_cast<char*>(ptr);\n    \n    std::cout << (c1 == nullptr) << \" \" << (c2 == nullptr) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `1 1`\n\n**Explanation:** Both produce nullptr; casting nullptr always yields nullptr\n\n**Key Concept:** #nullptr #static_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 1\n```\n\n**Explanation:**\n- ptr is nullptr (null pointer)\n- `static_cast<char*>(static_cast<void*>(ptr))` double cast\n- First: int* → void* (nullptr stays nullptr)\n- Second: void* → char* (nullptr stays nullptr)\n- c1 is nullptr\n- `reinterpret_cast<char*>(ptr)` direct cast int* → char*\n- nullptr remains nullptr through reinterpret_cast\n- c2 is nullptr\n- Both comparisons with nullptr are true (1)\n- nullptr has special handling in all casts\n- **Key Concept:** nullptr preserved through any cast; special-cased in C++ standard",
           "code": "#include <iostream>\n\nint main() {\n    int* ptr = nullptr;\n    \n    char* c1 = static_cast<char*>(static_cast<void*>(ptr));\n    char* c2 = reinterpret_cast<char*>(ptr);\n    \n    std::cout << (c1 == nullptr) << \" \" << (c2 == nullptr) << \"\\n\";\n}",
+          "answer": "1 1",
+          "explanation": "- ptr is nullptr (null pointer)\n- `static_cast<char*>(static_cast<void*>(ptr))` double cast\n- First: int* → void* (nullptr stays nullptr)\n- Second: void* → char* (nullptr stays nullptr)\n- c1 is nullptr\n- `reinterpret_cast<char*>(ptr)` direct cast int* → char*\n- nullptr remains nullptr through reinterpret_cast\n- c2 is nullptr\n- Both comparisons with nullptr are true (1)\n- nullptr has special handling in all casts\n- **Key Concept:** nullptr preserved through any cast; special-cased in C++ standard",
+          "key_concept": "nullptr preserved through any cast; special-cased in C++ standard",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 1"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Base1 { virtual ~Base1() { } };\nstruct Base2 { virtual ~Base2() { } };\nstruct Derived : Base1, Base2 { };\n\nint main() {\n    Derived d;\n    Base1* b1 = &d;\n    \n    Base2* b2 = dynamic_cast<Base2*>(b1);\n    \n    if (b2) {\n        std::cout << \"Cross-cast succeeded\\n\";\n    } else {\n        std::cout << \"Cross-cast failed\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `Cross-cast succeeded`\n\n**Explanation:** dynamic_cast can cross-cast within multiple inheritance hierarchy\n\n**Key Concept:** #cross_cast #dynamic_cast\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCross-cast succeeded\n```\n\n**Explanation:**\n- d is Derived object with Base1 and Base2 subobjects\n- b1 is Base1* pointing to d's Base1 subobject\n- `dynamic_cast<Base2*>(b1)` attempts cross-cast\n- Not upcasting or downcasting - sideways between bases\n- dynamic_cast uses RTTI to traverse inheritance hierarchy\n- Finds that b1 points to Derived, which also has Base2 subobject\n- Returns pointer to Base2 subobject (with address adjustment)\n- b2 is non-null, prints \"Cross-cast succeeded\"\n- Requires polymorphic types and common derived class\n- **Key Concept:** dynamic_cast enables cross-casting in multiple inheritance; uses RTTI to navigate hierarchy",
           "code": "#include <iostream>\n\nstruct Base1 { virtual ~Base1() { } };\nstruct Base2 { virtual ~Base2() { } };\nstruct Derived : Base1, Base2 { };\n\nint main() {\n    Derived d;\n    Base1* b1 = &d;\n    \n    Base2* b2 = dynamic_cast<Base2*>(b1);\n    \n    if (b2) {\n        std::cout << \"Cross-cast succeeded\\n\";\n    } else {\n        std::cout << \"Cross-cast failed\\n\";\n    }\n}",
+          "answer": "Cross-cast succeeded",
+          "explanation": "- d is Derived object with Base1 and Base2 subobjects\n- b1 is Base1* pointing to d's Base1 subobject\n- `dynamic_cast<Base2*>(b1)` attempts cross-cast\n- Not upcasting or downcasting - sideways between bases\n- dynamic_cast uses RTTI to traverse inheritance hierarchy\n- Finds that b1 points to Derived, which also has Base2 subobject\n- Returns pointer to Base2 subobject (with address adjustment)\n- b2 is non-null, prints \"Cross-cast succeeded\"\n- Requires polymorphic types and common derived class\n- **Key Concept:** dynamic_cast enables cross-casting in multiple inheritance; uses RTTI to navigate hierarchy",
+          "key_concept": "dynamic_cast enables cross-casting in multiple inheritance; uses RTTI to navigate hierarchy",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Cross-cast succeeded"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    double large = 1e100;\n    int overflow = static_cast<int>(large);\n    \n    std::cout << overflow << \"\\n\";  // What's the output?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior\n\n**Explanation:** Value exceeds int range; result is implementation-defined\n\n**Key Concept:** #narrowing_conversion #overflow\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (implementation-defined)\n```\n\n**Explanation:**\n- large is 1e100 (10^100, huge double value)\n- Typical int range: -2^31 to 2^31-1 (32-bit)\n- 1e100 vastly exceeds maximum int value\n- `static_cast<int>(large)` attempts narrowing conversion\n- Source value not representable in target type\n- Result is implementation-defined (compiler-dependent)\n- May be INT_MAX, INT_MIN, garbage, or trap\n- static_cast doesn't prevent overflow\n- Check range before casting or use saturating conversion\n- **Key Concept:** static_cast doesn't prevent overflow; out-of-range conversions have implementation-defined behavior",
           "code": "#include <iostream>\n\nint main() {\n    double large = 1e100;\n    int overflow = static_cast<int>(large);\n    \n    std::cout << overflow << \"\\n\";  // What's the output?\n}",
+          "answer": "Undefined behavior (implementation-defined)",
+          "explanation": "- large is 1e100 (10^100, huge double value)\n- Typical int range: -2^31 to 2^31-1 (32-bit)\n- 1e100 vastly exceeds maximum int value\n- `static_cast<int>(large)` attempts narrowing conversion\n- Source value not representable in target type\n- Result is implementation-defined (compiler-dependent)\n- May be INT_MAX, INT_MIN, garbage, or trap\n- static_cast doesn't prevent overflow\n- Check range before casting or use saturating conversion\n- **Key Concept:** static_cast doesn't prevent overflow; out-of-range conversions have implementation-defined behavior",
+          "key_concept": "static_cast doesn't prevent overflow; out-of-range conversions have implementation-defined behavior",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (implementation-defined)"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nvoid modify(const int& ref) {\n    int& mutable_ref = const_cast<int&>(ref);\n    mutable_ref = 999;\n}\n\nint main() {\n    int x = 42;\n    const int& cr = x;\n    modify(cr);\n    \n    std::cout << x << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `999`\n\n**Explanation:** Safe because x wasn't originally const\n\n**Key Concept:** #const_cast #const_correctness\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n999\n```\n\n**Explanation:**\n- x is mutable int (originally non-const)\n- cr is const reference to x (added const)\n- modify() receives const reference\n- `const_cast<int&>(ref)` removes const from reference\n- Safe because underlying object (x) is mutable\n- `mutable_ref = 999` modifies x through non-const reference\n- x was never truly const, just temporarily viewed as const\n- Modification succeeds, x becomes 999\n- const_cast safe when removing temporarily added const\n- **Key Concept:** const_cast safe to remove const added by reference/pointer; unsafe for truly const objects",
           "code": "#include <iostream>\n\nvoid modify(const int& ref) {\n    int& mutable_ref = const_cast<int&>(ref);\n    mutable_ref = 999;\n}\n\nint main() {\n    int x = 42;\n    const int& cr = x;\n    modify(cr);\n    \n    std::cout << x << \"\\n\";\n}",
+          "answer": "999",
+          "explanation": "- x is mutable int (originally non-const)\n- cr is const reference to x (added const)\n- modify() receives const reference\n- `const_cast<int&>(ref)` removes const from reference\n- Safe because underlying object (x) is mutable\n- `mutable_ref = 999` modifies x through non-const reference\n- x was never truly const, just temporarily viewed as const\n- Modification succeeds, x becomes 999\n- const_cast safe when removing temporarily added const\n- **Key Concept:** const_cast safe to remove const added by reference/pointer; unsafe for truly const objects",
+          "key_concept": "const_cast safe to remove const added by reference/pointer; unsafe for truly const objects",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "999"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base* b1 = new Derived();\n    Base* b2 = new Base();\n    \n    std::cout << (dynamic_cast<Derived*>(b1) != nullptr) << \" \";\n    std::cout << (dynamic_cast<Derived*>(b2) != nullptr) << \"\\n\";\n    \n    delete b1;\n    delete b2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `1 0`\n\n**Explanation:** First is actually Derived (succeeds), second is Base only (fails)\n\n**Key Concept:** #dynamic_cast #runtime_check\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 0\n```\n\n**Explanation:**\n- b1 points to Derived object (dynamic type is Derived)\n- b2 points to Base object (dynamic type is Base)\n- `dynamic_cast<Derived*>(b1)` checks runtime type\n- b1's object is actually Derived, cast succeeds\n- Returns non-null pointer (true = 1)\n- `dynamic_cast<Derived*>(b2)` checks runtime type\n- b2's object is only Base, not Derived\n- Cast fails, returns nullptr (false = 0)\n- dynamic_cast performs runtime type checking via RTTI\n- Safe way to check and convert pointer types\n- **Key Concept:** dynamic_cast verifies actual object type at runtime; returns nullptr for incompatible types",
           "code": "#include <iostream>\n\nstruct Base { virtual ~Base() { } };\nstruct Derived : Base { };\n\nint main() {\n    Base* b1 = new Derived();\n    Base* b2 = new Base();\n    \n    std::cout << (dynamic_cast<Derived*>(b1) != nullptr) << \" \";\n    std::cout << (dynamic_cast<Derived*>(b2) != nullptr) << \"\\n\";\n    \n    delete b1;\n    delete b2;\n}",
+          "answer": "1 0",
+          "explanation": "- b1 points to Derived object (dynamic type is Derived)\n- b2 points to Base object (dynamic type is Base)\n- `dynamic_cast<Derived*>(b1)` checks runtime type\n- b1's object is actually Derived, cast succeeds\n- Returns non-null pointer (true = 1)\n- `dynamic_cast<Derived*>(b2)` checks runtime type\n- b2's object is only Base, not Derived\n- Cast fails, returns nullptr (false = 0)\n- dynamic_cast performs runtime type checking via RTTI\n- Safe way to check and convert pointer types\n- **Key Concept:** dynamic_cast verifies actual object type at runtime; returns nullptr for incompatible types",
+          "key_concept": "dynamic_cast verifies actual object type at runtime; returns nullptr for incompatible types",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 0"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nstruct A {\n    int x = 10;\n    virtual ~A() { }\n};\n\nstruct B : A {\n    int y = 20;\n};\n\nint main() {\n    A* a = new B();\n    B* b = static_cast<B*>(a);\n    \n    std::cout << b->x << \" \" << b->y << \"\\n\";\n    \n    delete a;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `10 20`\n\n**Explanation:** Safe downcast; a actually points to B object\n\n**Key Concept:** #static_cast #downcasting\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10 20\n```\n\n**Explanation:**\n- a is A* pointing to B object (polymorphic pointer)\n- `static_cast<B*>(a)` performs downcast A* → B*\n- Compile-time cast, no runtime checking\n- Safe because a actually points to B\n- b accesses both inherited member x (10) and own member y (20)\n- If a pointed to A only, behavior would be undefined\n- static_cast trusts programmer knows actual type\n- Prefer dynamic_cast when type uncertain\n- **Key Concept:** static_cast for downcasts when you're certain of type; faster than dynamic_cast but unsafe if wrong",
           "code": "#include <iostream>\n\nstruct A {\n    int x = 10;\n    virtual ~A() { }\n};\n\nstruct B : A {\n    int y = 20;\n};\n\nint main() {\n    A* a = new B();\n    B* b = static_cast<B*>(a);\n    \n    std::cout << b->x << \" \" << b->y << \"\\n\";\n    \n    delete a;\n}",
+          "answer": "10 20",
+          "explanation": "- a is A* pointing to B object (polymorphic pointer)\n- `static_cast<B*>(a)` performs downcast A* → B*\n- Compile-time cast, no runtime checking\n- Safe because a actually points to B\n- b accesses both inherited member x (10) and own member y (20)\n- If a pointed to A only, behavior would be undefined\n- static_cast trusts programmer knows actual type\n- Prefer dynamic_cast when type uncertain\n- **Key Concept:** static_cast for downcasts when you're certain of type; faster than dynamic_cast but unsafe if wrong",
+          "key_concept": "static_cast for downcasts when you're certain of type; faster than dynamic_cast but unsafe if wrong",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10 20"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint main() {\n    float f = -3.99f;\n    int i = static_cast<int>(f);\n    \n    std::cout << i << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `-3`\n\n**Explanation:** Truncates toward zero: -3.99 becomes -3\n\n**Key Concept:** #static_cast #truncation\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n-3\n```\n\n**Explanation:**\n- f is float -3.99\n- `static_cast<int>(f)` converts float to int\n- Floating-point to integer conversion truncates toward zero\n- Fractional part discarded: -3.99 → -3\n- Not rounding, not floor - truncation\n- Positive: 3.99 → 3, Negative: -3.99 → -3\n- Always moves toward zero\n- Use std::floor, std::ceil, std::round for other rounding modes\n- **Key Concept:** Float-to-int conversion truncates toward zero; discards fractional part without rounding",
           "code": "#include <iostream>\n\nint main() {\n    float f = -3.99f;\n    int i = static_cast<int>(f);\n    \n    std::cout << i << \"\\n\";\n}",
+          "answer": "-3",
+          "explanation": "- f is float -3.99\n- `static_cast<int>(f)` converts float to int\n- Floating-point to integer conversion truncates toward zero\n- Fractional part discarded: -3.99 → -3\n- Not rounding, not floor - truncation\n- Positive: 3.99 → 3, Negative: -3.99 → -3\n- Always moves toward zero\n- Use std::floor, std::ceil, std::round for other rounding modes\n- **Key Concept:** Float-to-int conversion truncates toward zero; discards fractional part without rounding",
+          "key_concept": "Float-to-int conversion truncates toward zero; discards fractional part without rounding",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "-3"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint mutable_int = 50;\n\nvoid test(const int* ptr) {\n    int* p = const_cast<int*>(ptr);\n    *p = 100;\n}\n\nint main() {\n    test(&mutable_int);\n    std::cout << mutable_int << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Prints: `100`\n\n**Explanation:** Safe: mutable_int wasn't originally const\n\n**Key Concept:** #const_cast #mutable_object\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100\n```\n\n**Explanation:**\n- mutable_int is global int (not const)\n- test() receives const int* parameter\n- const qualification added by parameter type\n- `const_cast<int*>(ptr)` removes const from pointer\n- Safe because pointed-to object (mutable_int) is mutable\n- `*p = 100` modifies mutable_int\n- Modification allowed, mutable_int becomes 100\n- Common pattern: const interface parameter, modify if allowed\n- const_cast safe when object wasn't originally const\n- **Key Concept:** const_cast safe for removing temporarily added const; object must be originally mutable",
           "code": "#include <iostream>\n\nint mutable_int = 50;\n\nvoid test(const int* ptr) {\n    int* p = const_cast<int*>(ptr);\n    *p = 100;\n}\n\nint main() {\n    test(&mutable_int);\n    std::cout << mutable_int << \"\\n\";\n}",
+          "answer": "100",
+          "explanation": "- mutable_int is global int (not const)\n- test() receives const int* parameter\n- const qualification added by parameter type\n- `const_cast<int*>(ptr)` removes const from pointer\n- Safe because pointed-to object (mutable_int) is mutable\n- `*p = 100` modifies mutable_int\n- Modification allowed, mutable_int becomes 100\n- Common pattern: const interface parameter, modify if allowed\n- const_cast safe when object wasn't originally const\n- **Key Concept:** const_cast safe for removing temporarily added const; object must be originally mutable",
+          "key_concept": "const_cast safe for removing temporarily added const; object must be originally mutable",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <cstring>\n\nint main() {\n    int x = 42;\n    double d;\n    std::memcpy(&d, &x, sizeof(int));\n    \n    std::cout << d << \"\\n\";  // What happens?\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior\n\n**Explanation:** memcpy copies int bytes into double; interpreting as double is UB\n\n**Key Concept:** #type_punning #undefined_behavior\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior\n```\n\n**Explanation:**\n- memcpy copies 4 bytes from int x to double d\n- d is 8 bytes, only first 4 bytes filled (rest uninitialized)\n- Interpreting incomplete/wrong bit pattern as double is UB\n- d doesn't contain valid double representation\n- Reading d invokes undefined behavior\n- May print garbage, trap, or crash\n- memcpy itself is safe, but incomplete type punning is not\n- Correct: copy matching size types (int↔int, double↔double)\n- For type inspection, use proper size: sizeof(int) only fills partial double\n- **Key Concept:** Type punning with memcpy requires matching sizes; partial copies create invalid representations\n\n---\n\n\n## TOPIC: C++ Cast Operators and Type Casting Mechanisms",
           "code": "#include <iostream>\n#include <cstring>\n\nint main() {\n    int x = 42;\n    double d;\n    std::memcpy(&d, &x, sizeof(int));\n    \n    std::cout << d << \"\\n\";  // What happens?\n}",
+          "answer": "Undefined behavior",
+          "explanation": "- memcpy copies 4 bytes from int x to double d\n- d is 8 bytes, only first 4 bytes filled (rest uninitialized)\n- Interpreting incomplete/wrong bit pattern as double is UB\n- d doesn't contain valid double representation\n- Reading d invokes undefined behavior\n- May print garbage, trap, or crash\n- memcpy itself is safe, but incomplete type punning is not\n- Correct: copy matching size types (int↔int, double↔double)\n- For type inspection, use proper size: sizeof(int) only fills partial double\n- **Key Concept:** Type punning with memcpy requires matching sizes; partial copies create invalid representations",
+          "key_concept": "Type punning with memcpy requires matching sizes; partial copies create invalid representations",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `20 20` | Both casts succeed; b actually points to Derived object | #static_cast #dynamic_cast |\n| 2 | Undefined behavior<br>Typical: `100 200` or `200 200` | Modifying truly const object is UB; compiler may optimize | #const_cast #undefined_behavior |\n| 3 | Prints: `0 1` | static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr) | #static_cast #dynamic_cast |\n| 4 | Prints: `1` | Both methods read same bits; memcpy avoids strict aliasing issues | #memcpy #reinterpret_cast |\n| 5 | Prints: `3 3` | Both are implicit narrowing (first) and explicit (second); same result | #implicit_conversion #static_cast |\n| 6 | Prints: `2`<br>`0` | B subobject at different offset due to multiple inheritance | #multiple_inheritance #pointer_adjustment |\n| 7 | Prints: `A 65` | 65 is ASCII 'A'; conversion preserves value | #numeric_conversion #static_cast |\n| 8 | Prints: `Cast failed` | Reference dynamic_cast throws std::bad_cast on failure | #dynamic_cast #exception |\n| 9 | Prints: `Hello` | Safe only if legacyFunc doesn't modify (we assume it doesn't) | #const_cast #legacy_api |\n| 10 | Commented line fails to compile | dynamic_cast requires polymorphic type (virtual function) | #dynamic_cast #polymorphic |\n| 11 | Prints: `1000` | Safe pointer→integer→pointer round-trip with uintptr_t | #reinterpret_cast #pointer_to_integer |\n| 12 | Prints: `1 1` | Both produce nullptr; casting nullptr always yields nullptr | #nullptr #static_cast |\n| 13 | Prints: `Cross-cast succeeded` | dynamic_cast can cross-cast within multiple inheritance hierarchy | #cross_cast #dynamic_cast |\n| 14 | Undefined behavior | Value exceeds int range; result is implementation-defined | #narrowing_conversion #overflow |\n| 15 | Prints: `999` | Safe because x wasn't originally const | #const_cast #const_correctness |\n| 16 | Prints: `1 0` | First is actually Derived (succeeds), second is Base only (fails) | #dynamic_cast #runtime_check |\n| 17 | Prints: `10 20` | Safe downcast; a actually points to B object | #static_cast #downcasting |\n| 18 | Prints: `-3` | Truncates toward zero: -3.99 becomes -3 | #static_cast #truncation |\n| 19 | Prints: `100` | Safe: mutable_int wasn't originally const | #const_cast #mutable_object |\n| 20 | Undefined behavior | memcpy copies int bytes into double; interpreting as double is UB | #type_punning #undefined_behavior |\n\n#### Cast Operator Comparison\n\n| Cast Type | Use Case | Compile-Time | Runtime Cost | Safety Level | Can Cast Away Const? |\n|-----------|----------|--------------|--------------|--------------|---------------------|\n| `static_cast` | Related type conversions, numeric, inheritance | ✅ Checked | None | Medium | ❌ No |\n| `dynamic_cast` | Safe polymorphic downcasting/cross-casting | ✅ Checked | Small | High | ❌ No |\n| `const_cast` | Add/remove const or volatile | ✅ Syntax only | None | Low | ✅ Yes |\n| `reinterpret_cast` | Low-level bit reinterpretation | ⚠️ Minimal | None | Very Low | ❌ No |\n| C-style cast | Don't use (ambiguous) | ❌ Minimal | Varies | Very Low | ✅ Yes (hidden) |\n\n#### When to Use Each Cast\n\n| Scenario | Recommended Cast | Alternative | Notes |\n|----------|-----------------|-------------|-------|\n| Numeric conversions | `static_cast<int>(double_val)` | Implicit | Make truncation explicit |\n| Upcast in inheritance | Implicit / `static_cast` | None needed | Upcast always safe |\n| Downcast (type certain) | `static_cast<Derived*>` | `dynamic_cast` | Use dynamic_cast if uncertain |\n| Downcast (type uncertain) | `dynamic_cast<Derived*>` | Check & static_cast | Always check result for nullptr |\n| Cross-cast in hierarchy | `dynamic_cast<Sibling*>` | N/A | Only dynamic_cast can cross-cast |\n| Remove const for legacy API | `const_cast<T*>` | Avoid if possible | Ensure object is mutable |\n| Pointer to integer | `reinterpret_cast<uintptr_t>` | N/A | Use uintptr_t for portability |\n| Type punning / bit inspection | `memcpy` or `std::bit_cast` | Never reinterpret_cast | Avoid strict aliasing violations |\n| Function pointer conversion | `reinterpret_cast` | Avoid if possible | Call through original type |\n\n#### dynamic_cast Behavior\n\n| Source Type | Target Type | Success Result | Failure Result |\n|-------------|-------------|----------------|----------------|\n| Pointer | Pointer | Valid pointer | `nullptr` |\n| Reference | Reference | Valid reference | Throws `std::bad_cast` |\n| Upcast | Always succeeds | N/A | N/A |\n| Downcast | If type matches | `nullptr` / exception | |\n| Cross-cast | If valid sibling | `nullptr` / exception | |\n\n#### Common Casting Mistakes\n\n| Mistake | Why It's Wrong | Correct Approach |\n|---------|---------------|------------------|\n| `(Type)value` C-style cast | Ambiguous, hides operations | Use specific C++ cast operators |\n| `static_cast<Derived*>` without type check | No runtime verification, UB if wrong | Use `dynamic_cast` and check result |\n| `const_cast` then modify truly const | Undefined behavior | Only cast const-incorrect APIs |\n| `reinterpret_cast` for type punning | Violates strict aliasing | Use `memcpy` or `std::bit_cast` |\n| `reinterpret_cast` in inheritance | Doesn't adjust pointer offset | Use `static_cast` or `dynamic_cast` |\n| Casting `nullptr` without checking | Dereferencing nullptr crashes | Always check pointer before use |\n| `dynamic_cast` on non-polymorphic | Won't compile | Add virtual function to base |\n| Casting away const then modifying | UB if originally const | Ensure object is mutable |\n\n#### Cast Safety Checklist\n\n| Question | Cast to Use |\n|----------|-------------|\n| Converting between numeric types? | `static_cast` |\n| Need runtime type checking in hierarchy? | `dynamic_cast` |\n| Interfacing with const-incorrect legacy code? | `const_cast` (verify object is mutable) |\n| Converting pointer to integer or vice versa? | `reinterpret_cast` (use `uintptr_t`) |\n| Need to inspect bit pattern safely? | `memcpy` or `std::bit_cast` (C++20) |\n| Uncertain if downcast is valid? | `dynamic_cast` + nullptr check |\n| Navigating complex multiple inheritance? | `dynamic_cast` for safety |\n| Want maximum performance with known type? | `static_cast` (only if type guaranteed) |\n\n#### Undefined Behavior Scenarios\n\n| Code Pattern | Result | Fix |\n|--------------|--------|-----|\n| `const_cast` + modify truly const object | UB | Don't modify; ensure object is mutable |\n| `static_cast<Derived*>` on Base object | UB when accessing derived members | Use `dynamic_cast` with check |\n| `reinterpret_cast` + access through pointer | Violates strict aliasing → UB | Use `memcpy` for type punning |\n| `reinterpret_cast` in inheritance hierarchy | Wrong pointer offset → UB | Use `static_cast` or `dynamic_cast` |\n| Call through wrong function pointer type | UB due to ABI mismatch | Cast back to original type before calling |\n| `static_cast` numeric overflow | Implementation-defined / UB | Check range before casting |\n\n#### C++ Cast vs C-Style Cast Behavior\n\n| Operation | C-Style Cast | C++ Cast Equivalent | Visibility |\n|-----------|--------------|-------------------|-----------|\n| Remove const | `(int*)const_ptr` | `const_cast<int*>` | Hidden vs Explicit |\n| Numeric conversion | `(int)3.14` | `static_cast<int>` | Hidden vs Explicit |\n| Pointer reinterpretation | `(char*)int_ptr` | `reinterpret_cast<char*>` | Hidden vs Explicit |\n| Inheritance downcast | `(Derived*)base` | `static_cast<Derived*>` or `dynamic_cast` | Unsafe vs Checked |\n| Multiple operations | Single cast | Multiple explicit casts | Hidden vs Clear |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `20 20` | Both casts succeed; b actually points to Derived object | #static_cast #dynamic_cast |\n| 2 | Undefined behavior<br>Typical: `100 200` or `200 200` | Modifying truly const object is UB; compiler may optimize | #const_cast #undefined_behavior |\n| 3 | Prints: `0 1` | static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr) | #static_cast #dynamic_cast |\n| 4 | Prints: `1` | Both methods read same bits; memcpy avoids strict aliasing issues | #memcpy #reinterpret_cast |\n| 5 | Prints: `3 3` | Both are implicit narrowing (first) and explicit (second); same result | #implicit_conversion #static_cast |\n| 6 | Prints: `2`<br>`0` | B subobject at different offset due to multiple inheritance | #multiple_inheritance #pointer_adjustment |\n| 7 | Prints: `A 65` | 65 is ASCII 'A'; conversion preserves value | #numeric_conversion #static_cast |\n| 8 | Prints: `Cast failed` | Reference dynamic_cast throws std::bad_cast on failure | #dynamic_cast #exception |\n| 9 | Prints: `Hello` | Safe only if legacyFunc doesn't modify (we assume it doesn't) | #const_cast #legacy_api |\n| 10 | Commented line fails to compile | dynamic_cast requires polymorphic type (virtual function) | #dynamic_cast #polymorphic |\n| 11 | Prints: `1000` | Safe pointer→integer→pointer round-trip with uintptr_t | #reinterpret_cast #pointer_to_integer |\n| 12 | Prints: `1 1` | Both produce nullptr; casting nullptr always yields nullptr | #nullptr #static_cast |\n| 13 | Prints: `Cross-cast succeeded` | dynamic_cast can cross-cast within multiple inheritance hierarchy | #cross_cast #dynamic_cast |\n| 14 | Undefined behavior | Value exceeds int range; result is implementation-defined | #narrowing_conversion #overflow |\n| 15 | Prints: `999` | Safe because x wasn't originally const | #const_cast #const_correctness |\n| 16 | Prints: `1 0` | First is actually Derived (succeeds), second is Base only (fails) | #dynamic_cast #runtime_check |\n| 17 | Prints: `10 20` | Safe downcast; a actually points to B object | #static_cast #downcasting |\n| 18 | Prints: `-3` | Truncates toward zero: -3.99 becomes -3 | #static_cast #truncation |\n| 19 | Prints: `100` | Safe: mutable_int wasn't originally const | #const_cast #mutable_object |\n| 20 | Undefined behavior | memcpy copies int bytes into double; interpreting as double is UB | #type_punning #undefined_behavior |\n\n#### Cast Operator Comparison\n\n| Cast Type | Use Case | Compile-Time | Runtime Cost | Safety Level | Can Cast Away Const? |\n|-----------|----------|--------------|--------------|--------------|---------------------|\n| `static_cast` | Related type conversions, numeric, inheritance | ✅ Checked | None | Medium | ❌ No |\n| `dynamic_cast` | Safe polymorphic downcasting/cross-casting | ✅ Checked | Small | High | ❌ No |\n| `const_cast` | Add/remove const or volatile | ✅ Syntax only | None | Low | ✅ Yes |\n| `reinterpret_cast` | Low-level bit reinterpretation | ⚠️ Minimal | None | Very Low | ❌ No |\n| C-style cast | Don't use (ambiguous) | ❌ Minimal | Varies | Very Low | ✅ Yes (hidden) |\n\n#### When to Use Each Cast\n\n| Scenario | Recommended Cast | Alternative | Notes |\n|----------|-----------------|-------------|-------|\n| Numeric conversions | `static_cast<int>(double_val)` | Implicit | Make truncation explicit |\n| Upcast in inheritance | Implicit / `static_cast` | None needed | Upcast always safe |\n| Downcast (type certain) | `static_cast<Derived*>` | `dynamic_cast` | Use dynamic_cast if uncertain |\n| Downcast (type uncertain) | `dynamic_cast<Derived*>` | Check & static_cast | Always check result for nullptr |\n| Cross-cast in hierarchy | `dynamic_cast<Sibling*>` | N/A | Only dynamic_cast can cross-cast |\n| Remove const for legacy API | `const_cast<T*>` | Avoid if possible | Ensure object is mutable |\n| Pointer to integer | `reinterpret_cast<uintptr_t>` | N/A | Use uintptr_t for portability |\n| Type punning / bit inspection | `memcpy` or `std::bit_cast` | Never reinterpret_cast | Avoid strict aliasing violations |\n| Function pointer conversion | `reinterpret_cast` | Avoid if possible | Call through original type |\n\n#### dynamic_cast Behavior\n\n| Source Type | Target Type | Success Result | Failure Result |\n|-------------|-------------|----------------|----------------|\n| Pointer | Pointer | Valid pointer | `nullptr` |\n| Reference | Reference | Valid reference | Throws `std::bad_cast` |\n| Upcast | Always succeeds | N/A | N/A |\n| Downcast | If type matches | `nullptr` / exception | |\n| Cross-cast | If valid sibling | `nullptr` / exception | |\n\n#### Common Casting Mistakes\n\n| Mistake | Why It's Wrong | Correct Approach |\n|---------|---------------|------------------|\n| `(Type)value` C-style cast | Ambiguous, hides operations | Use specific C++ cast operators |\n| `static_cast<Derived*>` without type check | No runtime verification, UB if wrong | Use `dynamic_cast` and check result |\n| `const_cast` then modify truly const | Undefined behavior | Only cast const-incorrect APIs |\n| `reinterpret_cast` for type punning | Violates strict aliasing | Use `memcpy` or `std::bit_cast` |\n| `reinterpret_cast` in inheritance | Doesn't adjust pointer offset | Use `static_cast` or `dynamic_cast` |\n| Casting `nullptr` without checking | Dereferencing nullptr crashes | Always check pointer before use |\n| `dynamic_cast` on non-polymorphic | Won't compile | Add virtual function to base |\n| Casting away const then modifying | UB if originally const | Ensure object is mutable |\n\n#### Cast Safety Checklist\n\n| Question | Cast to Use |\n|----------|-------------|\n| Converting between numeric types? | `static_cast` |\n| Need runtime type checking in hierarchy? | `dynamic_cast` |\n| Interfacing with const-incorrect legacy code? | `const_cast` (verify object is mutable) |\n| Converting pointer to integer or vice versa? | `reinterpret_cast` (use `uintptr_t`) |\n| Need to inspect bit pattern safely? | `memcpy` or `std::bit_cast` (C++20) |\n| Uncertain if downcast is valid? | `dynamic_cast` + nullptr check |\n| Navigating complex multiple inheritance? | `dynamic_cast` for safety |\n| Want maximum performance with known type? | `static_cast` (only if type guaranteed) |\n\n#### Undefined Behavior Scenarios\n\n| Code Pattern | Result | Fix |\n|--------------|--------|-----|\n| `const_cast` + modify truly const object | UB | Don't modify; ensure object is mutable |\n| `static_cast<Derived*>` on Base object | UB when accessing derived members | Use `dynamic_cast` with check |\n| `reinterpret_cast` + access through pointer | Violates strict aliasing → UB | Use `memcpy` for type punning |\n| `reinterpret_cast` in inheritance hierarchy | Wrong pointer offset → UB | Use `static_cast` or `dynamic_cast` |\n| Call through wrong function pointer type | UB due to ABI mismatch | Cast back to original type before calling |\n| `static_cast` numeric overflow | Implementation-defined / UB | Check range before casting |\n\n#### C++ Cast vs C-Style Cast Behavior\n\n| Operation | C-Style Cast | C++ Cast Equivalent | Visibility |\n|-----------|--------------|-------------------|-----------|\n| Remove const | `(int*)const_ptr` | `const_cast<int*>` | Hidden vs Explicit |\n| Numeric conversion | `(int)3.14` | `static_cast<int>` | Hidden vs Explicit |\n| Pointer reinterpretation | `(char*)int_ptr` | `reinterpret_cast<char*>` | Hidden vs Explicit |\n| Inheritance downcast | `(Derived*)base` | `static_cast<Derived*>` or `dynamic_cast` | Unsafe vs Checked |\n| Multiple operations | Single cast | Multiple explicit casts | Hidden vs Clear |\n\n\n## TOPIC: C++ Cast Operators and Type Casting Mechanisms",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | Prints: `20 20` | Both casts succeed; b actually points to Derived object | #static_cast #dynamic_cast |\n| 2 | Undefined behavior<br>Typical: `100 200` or `200 200` | Modifying truly const object is UB; compiler may optimize | #const_cast #undefined_behavior |\n| 3 | Prints: `0 1` | static_cast doesn't check (not nullptr), dynamic_cast fails safely (nullptr) | #static_cast #dynamic_cast |\n| 4 | Prints: `1` | Both methods read same bits; memcpy avoids strict aliasing issues | #memcpy #reinterpret_cast |\n| 5 | Prints: `3 3` | Both are implicit narrowing (first) and explicit (second); same result | #implicit_conversion #static_cast |\n| 6 | Prints: `2`<br>`0` | B subobject at different offset due to multiple inheritance | #multiple_inheritance #pointer_adjustment |\n| 7 | Prints: `A 65` | 65 is ASCII 'A'; conversion preserves value | #numeric_conversion #static_cast |\n| 8 | Prints: `Cast failed` | Reference dynamic_cast throws std::bad_cast on failure | #dynamic_cast #exception |\n| 9 | Prints: `Hello` | Safe only if legacyFunc doesn't modify (we assume it doesn't) | #const_cast #legacy_api |\n| 10 | Commented line fails to compile | dynamic_cast requires polymorphic type (virtual function) | #dynamic_cast #polymorphic |\n| 11 | Prints: `1000` | Safe pointer→integer→pointer round-trip with uintptr_t | #reinterpret_cast #pointer_to_integer |\n| 12 | Prints: `1 1` | Both produce nullptr; casting nullptr always yields nullptr | #nullptr #static_cast |\n| 13 | Prints: `Cross-cast succeeded` | dynamic_cast can cross-cast within multiple inheritance hierarchy | #cross_cast #dynamic_cast |\n| 14 | Undefined behavior | Value exceeds int range; result is implementation-defined | #narrowing_conversion #overflow |\n| 15 | Prints: `999` | Safe because x wasn't originally const | #const_cast #const_correctness |\n| 16 | Prints: `1 0` | First is actually Derived (succeeds), second is Base only (fails) | #dynamic_cast #runtime_check |\n| 17 | Prints: `10 20` | Safe downcast; a actually points to B object | #static_cast #downcasting |\n| 18 | Prints: `-3` | Truncates toward zero: -3.99 becomes -3 | #static_cast #truncation |\n| 19 | Prints: `100` | Safe: mutable_int wasn't originally const | #const_cast #mutable_object |\n| 20 | Undefined behavior | memcpy copies int bytes into double; interpreting as double is UB | #type_punning #undefined_behavior |",
           "| Cast Type | Use Case | Compile-Time | Runtime Cost | Safety Level | Can Cast Away Const? |\n|-----------|----------|--------------|--------------|--------------|---------------------|\n| `static_cast` | Related type conversions, numeric, inheritance | ✅ Checked | None | Medium | ❌ No |\n| `dynamic_cast` | Safe polymorphic downcasting/cross-casting | ✅ Checked | Small | High | ❌ No |\n| `const_cast` | Add/remove const or volatile | ✅ Syntax only | None | Low | ✅ Yes |\n| `reinterpret_cast` | Low-level bit reinterpretation | ⚠️ Minimal | None | Very Low | ❌ No |\n| C-style cast | Don't use (ambiguous) | ❌ Minimal | Varies | Very Low | ✅ Yes (hidden) |",
@@ -1918,7 +2158,7 @@
           "| Mistake | Why It's Wrong | Correct Approach |\n|---------|---------------|------------------|\n| `(Type)value` C-style cast | Ambiguous, hides operations | Use specific C++ cast operators |\n| `static_cast<Derived*>` without type check | No runtime verification, UB if wrong | Use `dynamic_cast` and check result |\n| `const_cast` then modify truly const | Undefined behavior | Only cast const-incorrect APIs |\n| `reinterpret_cast` for type punning | Violates strict aliasing | Use `memcpy` or `std::bit_cast` |\n| `reinterpret_cast` in inheritance | Doesn't adjust pointer offset | Use `static_cast` or `dynamic_cast` |\n| Casting `nullptr` without checking | Dereferencing nullptr crashes | Always check pointer before use |\n| `dynamic_cast` on non-polymorphic | Won't compile | Add virtual function to base |\n| Casting away const then modifying | UB if originally const | Ensure object is mutable |",
           "| Question | Cast to Use |\n|----------|-------------|\n| Converting between numeric types? | `static_cast` |\n| Need runtime type checking in hierarchy? | `dynamic_cast` |\n| Interfacing with const-incorrect legacy code? | `const_cast` (verify object is mutable) |\n| Converting pointer to integer or vice versa? | `reinterpret_cast` (use `uintptr_t`) |\n| Need to inspect bit pattern safely? | `memcpy` or `std::bit_cast` (C++20) |\n| Uncertain if downcast is valid? | `dynamic_cast` + nullptr check |\n| Navigating complex multiple inheritance? | `dynamic_cast` for safety |\n| Want maximum performance with known type? | `static_cast` (only if type guaranteed) |",
           "| Code Pattern | Result | Fix |\n|--------------|--------|-----|\n| `const_cast` + modify truly const object | UB | Don't modify; ensure object is mutable |\n| `static_cast<Derived*>` on Base object | UB when accessing derived members | Use `dynamic_cast` with check |\n| `reinterpret_cast` + access through pointer | Violates strict aliasing → UB | Use `memcpy` for type punning |\n| `reinterpret_cast` in inheritance hierarchy | Wrong pointer offset → UB | Use `static_cast` or `dynamic_cast` |\n| Call through wrong function pointer type | UB due to ABI mismatch | Cast back to original type before calling |\n| `static_cast` numeric overflow | Implementation-defined / UB | Check range before casting |",
-          "| Operation | C-Style Cast | C++ Cast Equivalent | Visibility |\n|-----------|--------------|-------------------|-----------|\n| Remove const | `(int*)const_ptr` | `const_cast<int*>` | Hidden vs Explicit |\n| Numeric conversion | `(int)3.14` | `static_cast<int>` | Hidden vs Explicit |\n| Pointer reinterpretation | `(char*)int_ptr` | `reinterpret_cast<char*>` | Hidden vs Explicit |\n| Inheritance downcast | `(Derived*)base` | `static_cast<Derived*>` or `dynamic_cast` | Unsafe vs Checked |"
+          "| Operation | C-Style Cast | C++ Cast Equivalent | Visibility |\n|-----------|--------------|-------------------|-----------|\n| Remove const | `(int*)const_ptr` | `const_cast<int*>` | Hidden vs Explicit |\n| Numeric conversion | `(int)3.14` | `static_cast<int>` | Hidden vs Explicit |\n| Pointer reinterpretation | `(char*)int_ptr` | `reinterpret_cast<char*>` | Hidden vs Explicit |\n| Inheritance downcast | `(Derived*)base` | `static_cast<Derived*>` or `dynamic_cast` | Unsafe vs Checked |\n| Multiple operations | Single cast | Multiple explicit casts | Hidden vs Clear |"
         ]
       }
     }

@@ -5,7 +5,7 @@
   "topics": [
     {
       "topic": "Template Fundamentals and Specialization",
-      "filename": "1_cpp_templates_part1_fundamentals.md",
+      "filename": "topic_1.md",
       "theory": {
         "subsections": [
           {
@@ -564,218 +564,338 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nT getValue() { return T(); }\n\nint main() {\n    std::cout << getValue<int>() << \"\\n\";\n    std::cout << getValue<double>() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0`<br>`0`\n\n**Explanation:** `T()` performs value-initialization, giving 0 for numeric types\n\n**Key Concept:** #value_initialization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0\n0\n```\n\n**Explanation:**\n- `getValue<int>()` instantiates template with T=int\n- `return T()` performs value-initialization\n- Value-initialization for int: zero-initialization → 0\n- `getValue<double>()` instantiates with T=double\n- Value-initialization for double: 0.0\n- Value-initialization: T() creates default-initialized object\n- For built-in types: zero\n- For classes: calls default constructor\n- **Key Concept:** T() value-initializes; numeric types become zero, classes call default constructor",
           "code": "template<typename T>\nT getValue() { return T(); }\n\nint main() {\n    std::cout << getValue<int>() << \"\\n\";\n    std::cout << getValue<double>() << \"\\n\";\n}",
+          "answer": "0\n0",
+          "explanation": "- `getValue<int>()` instantiates template with T=int\n- `return T()` performs value-initialization\n- Value-initialization for int: zero-initialization → 0\n- `getValue<double>()` instantiates with T=double\n- Value-initialization for double: 0.0\n- Value-initialization: T() creates default-initialized object\n- For built-in types: zero\n- For classes: calls default constructor\n- **Key Concept:** T() value-initializes; numeric types become zero, classes call default constructor",
+          "key_concept": "T() value-initializes; numeric types become zero, classes call default constructor",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0\n0"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid print(T) { std::cout << \"template\\n\"; }\n\nvoid print(int) { std::cout << \"non-template\\n\"; }\n\nint main() {\n    print(42);\n    print(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `non-template`<br>`template`\n\n**Explanation:** Non-template exact match preferred over template for `int`\n\n**Key Concept:** #overload_resolution\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nnon-template\ntemplate\n```\n\n**Explanation:**\n- Two print functions: template and non-template (int)\n- `print(42)` where 42 is int\n- Overload resolution priority: exact match > template\n- Non-template print(int) is exact match, selected\n- Prints \"non-template\"\n- `print(3.14)` where 3.14 is double\n- Only template version can handle double\n- Template instantiated with T=double\n- Prints \"template\"\n- Templates participate in overload resolution but are less preferred than exact matches\n- **Key Concept:** Non-template functions preferred over templates in overload resolution; exact matches beat template deduction",
           "code": "template<typename T>\nvoid print(T) { std::cout << \"template\\n\"; }\n\nvoid print(int) { std::cout << \"non-template\\n\"; }\n\nint main() {\n    print(42);\n    print(3.14);\n}",
+          "answer": "non-template\ntemplate",
+          "explanation": "- Two print functions: template and non-template (int)\n- `print(42)` where 42 is int\n- Overload resolution priority: exact match > template\n- Non-template print(int) is exact match, selected\n- Prints \"non-template\"\n- `print(3.14)` where 3.14 is double\n- Only template version can handle double\n- Template instantiated with T=double\n- Prints \"template\"\n- Templates participate in overload resolution but are less preferred than exact matches\n- **Key Concept:** Non-template functions preferred over templates in overload resolution; exact matches beat template deduction",
+          "key_concept": "Non-template functions preferred over templates in overload resolution; exact matches beat template deduction",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "non-template\ntemplate"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, typename U>\nstruct Pair {\n    static void show() { std::cout << \"generic\\n\"; }\n};\n\ntemplate<typename T>\nstruct Pair<T, T> {\n    static void show() { std::cout << \"same\\n\"; }\n};\n\nint main() {\n    Pair<int, double>::show();\n    Pair<float, float>::show();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `generic`<br>`same`\n\n**Explanation:** Partial specialization `Pair<T, T>` matches when both types are identical\n\n**Key Concept:** #partial_specialization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\ngeneric\nsame\n```\n\n**Explanation:**\n- Primary template: `Pair<T, U>` for two different type parameters\n- Partial specialization: `Pair<T, T>` when both types are same\n- `Pair<int, double>` has different types (int, double)\n- Matches primary template, prints \"generic\"\n- `Pair<float, float>` has same type for both parameters\n- Matches partial specialization `Pair<T, T>`\n- More specific match preferred, prints \"same\"\n- Partial specialization allows specializing on type patterns\n- **Key Concept:** Partial specialization matches type patterns; more specific matches preferred over generic template",
           "code": "template<typename T, typename U>\nstruct Pair {\n    static void show() { std::cout << \"generic\\n\"; }\n};\n\ntemplate<typename T>\nstruct Pair<T, T> {\n    static void show() { std::cout << \"same\\n\"; }\n};\n\nint main() {\n    Pair<int, double>::show();\n    Pair<float, float>::show();\n}",
+          "answer": "generic\nsame",
+          "explanation": "- Primary template: `Pair<T, U>` for two different type parameters\n- Partial specialization: `Pair<T, T>` when both types are same\n- `Pair<int, double>` has different types (int, double)\n- Matches primary template, prints \"generic\"\n- `Pair<float, float>` has same type for both parameters\n- Matches partial specialization `Pair<T, T>`\n- More specific match preferred, prints \"same\"\n- Partial specialization allows specializing on type patterns\n- **Key Concept:** Partial specialization matches type patterns; more specific matches preferred over generic template",
+          "key_concept": "Partial specialization matches type patterns; more specific matches preferred over generic template",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "generic\nsame"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T = double, typename U>\nstruct Test { };\n\nint main() {\n    Test<int, float> t;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Default template argument must be rightmost; `U` has no default after `T`\n\n**Key Concept:** #default_arguments\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error\n```\n\n**Explanation:**\n- Template parameters: `typename T = double, typename U`\n- T has default (double), U has no default\n- Rule: parameters with defaults must come after those without\n- U has no default but comes after T which has default\n- Violates template parameter ordering rule\n- Compiler error: default argument must be at end\n- **Fix:** Reorder: `typename U, typename T = double`\n- Or give U a default too\n- Similar to function parameters with defaults\n- **Key Concept:** Template default arguments must be rightmost; parameters without defaults come first",
           "code": "template<typename T = double, typename U>\nstruct Test { };\n\nint main() {\n    Test<int, float> t;\n}",
+          "answer": "Compilation error",
+          "explanation": "- Template parameters: `typename T = double, typename U`\n- T has default (double), U has no default\n- Rule: parameters with defaults must come after those without\n- U has no default but comes after T which has default\n- Violates template parameter ordering rule\n- Compiler error: default argument must be at end\n- **Fix:** Reorder: `typename U, typename T = double`\n- Or give U a default too\n- Similar to function parameters with defaults\n- **Key Concept:** Template default arguments must be rightmost; parameters without defaults come first",
+          "key_concept": "Template default arguments must be rightmost; parameters without defaults come first",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct Container {\n    void valid() { std::cout << \"ok\\n\"; }\n    void invalid() { typename T::invalid_type x; }\n};\n\nint main() {\n    Container<int> c;\n    c.valid();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `ok`\n\n**Explanation:** Lazy instantiation: `invalid()` never called, so its error never triggered\n\n**Key Concept:** #lazy_instantiation\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nok\n```\n\n**Explanation:**\n- `Container<int>` instantiates template with T=int\n- Only used members are instantiated (lazy/two-phase instantiation)\n- `valid()` called, instantiated successfully\n- `invalid()` attempts `typename T::invalid_type` where T=int\n- int has no nested type invalid_type (would be error)\n- BUT invalid() never called, never instantiated\n- Error never triggered - compiles successfully\n- Only definition errors in called/referenced members cause compilation failure\n- Unused template members not instantiated\n- **Key Concept:** Template lazy instantiation: only used members compiled; errors in unused members ignored",
           "code": "template<typename T>\nstruct Container {\n    void valid() { std::cout << \"ok\\n\"; }\n    void invalid() { typename T::invalid_type x; }\n};\n\nint main() {\n    Container<int> c;\n    c.valid();\n}",
+          "answer": "ok",
+          "explanation": "- `Container<int>` instantiates template with T=int\n- Only used members are instantiated (lazy/two-phase instantiation)\n- `valid()` called, instantiated successfully\n- `invalid()` attempts `typename T::invalid_type` where T=int\n- int has no nested type invalid_type (would be error)\n- BUT invalid() never called, never instantiated\n- Error never triggered - compiles successfully\n- Only definition errors in called/referenced members cause compilation failure\n- Unused template members not instantiated\n- **Key Concept:** Template lazy instantiation: only used members compiled; errors in unused members ignored",
+          "key_concept": "Template lazy instantiation: only used members compiled; errors in unused members ignored",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "ok"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct IsPointer { static const bool value = false; };\n\ntemplate<typename T>\nstruct IsPointer<T*> { static const bool value = true; };\n\nint main() {\n    std::cout << IsPointer<int>::value << \" \";\n    std::cout << IsPointer<int*>::value << \" \";\n    std::cout << IsPointer<int**>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0 1 1`\n\n**Explanation:** Primary template for `int`, partial specialization matches `int*` and `int**`\n\n**Key Concept:** #partial_specialization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0 1 1\n```\n\n**Explanation:**\n- IsPointer primary template: value = false for all types\n- Partial specialization `IsPointer<T*>` for pointer types: value = true\n- `IsPointer<int>` matches primary (int is not pointer): 0\n- `IsPointer<int*>` matches specialization (int* matches T* pattern): 1\n- `IsPointer<int**>` matches specialization (int** = (int*)* matches T* where T=int*): 1\n- Pattern matching: T* matches any pointer type\n- Type trait pattern for compile-time type checking\n- **Key Concept:** Partial specialization for type patterns (T*); enables compile-time type categorization",
           "code": "template<typename T>\nstruct IsPointer { static const bool value = false; };\n\ntemplate<typename T>\nstruct IsPointer<T*> { static const bool value = true; };\n\nint main() {\n    std::cout << IsPointer<int>::value << \" \";\n    std::cout << IsPointer<int*>::value << \" \";\n    std::cout << IsPointer<int**>::value << \"\\n\";\n}",
+          "answer": "0 1 1",
+          "explanation": "- IsPointer primary template: value = false for all types\n- Partial specialization `IsPointer<T*>` for pointer types: value = true\n- `IsPointer<int>` matches primary (int is not pointer): 0\n- `IsPointer<int*>` matches specialization (int* matches T* pattern): 1\n- `IsPointer<int**>` matches specialization (int** = (int*)* matches T* where T=int*): 1\n- Pattern matching: T* matches any pointer type\n- Type trait pattern for compile-time type checking\n- **Key Concept:** Partial specialization for type patterns (T*); enables compile-time type categorization",
+          "key_concept": "Partial specialization for type patterns (T*); enables compile-time type categorization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0 1 1"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<int N>\nstruct Power2 {\n    static constexpr int value = 2 * Power2<N-1>::value;\n};\n\ntemplate<>\nstruct Power2<0> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Power2<5>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `32`\n\n**Explanation:** Template recursion: 2^5 = 32 computed at compile time\n\n**Key Concept:** #template_metaprogramming\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n32\n```\n\n**Explanation:**\n- Template metaprogramming: computation at compile time\n- `Power2<5>` instantiates recursive template\n- Recursion: Power2<5> = 2 * Power2<4> = 2 * (2 * Power2<3>) ...\n- Base case: Power2<0> = 1 (full specialization)\n- Expansion: 2 * 2 * 2 * 2 * 2 * 1 = 32\n- Computed during compilation, not runtime\n- constexpr allows compile-time evaluation\n- Result is compile-time constant\n- **Key Concept:** Template recursion for compile-time computation; base case specialization terminates recursion",
           "code": "template<int N>\nstruct Power2 {\n    static constexpr int value = 2 * Power2<N-1>::value;\n};\n\ntemplate<>\nstruct Power2<0> { static constexpr int value = 1; };\n\nint main() {\n    std::cout << Power2<5>::value << \"\\n\";\n}",
+          "answer": "32",
+          "explanation": "- Template metaprogramming: computation at compile time\n- `Power2<5>` instantiates recursive template\n- Recursion: Power2<5> = 2 * Power2<4> = 2 * (2 * Power2<3>) ...\n- Base case: Power2<0> = 1 (full specialization)\n- Expansion: 2 * 2 * 2 * 2 * 2 * 1 = 32\n- Computed during compilation, not runtime\n- constexpr allows compile-time evaluation\n- Result is compile-time constant\n- **Key Concept:** Template recursion for compile-time computation; base case specialization terminates recursion",
+          "key_concept": "Template recursion for compile-time computation; base case specialization terminates recursion",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "32"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, size_t N>\nclass Array {\n    T data[N];\npublic:\n    size_t size() const { return N; }\n};\n\nint main() {\n    Array<int, 3> a1;\n    Array<int, 5> a2;\n    std::cout << a1.size() << \" \" << a2.size() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `3 5`\n\n**Explanation:** Non-type parameter `N` creates different types with different sizes\n\n**Key Concept:** #non_type_parameters\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 5\n```\n\n**Explanation:**\n- Template with non-type parameter: `size_t N`\n- `Array<int, 3>` and `Array<int, 5>` are different types\n- N is compile-time constant, part of type signature\n- `T data[N]` uses N to size array at compile time\n- a1 has array of 3 ints, size() returns 3\n- a2 has array of 5 ints, size() returns 5\n- Different N values create incompatible types\n- Cannot assign Array<int, 3> to Array<int, 5>\n- Non-type parameters: integral types, pointers, enums\n- **Key Concept:** Non-type template parameters create distinct types; enable compile-time array sizing",
           "code": "template<typename T, size_t N>\nclass Array {\n    T data[N];\npublic:\n    size_t size() const { return N; }\n};\n\nint main() {\n    Array<int, 3> a1;\n    Array<int, 5> a2;\n    std::cout << a1.size() << \" \" << a2.size() << \"\\n\";\n}",
+          "answer": "3 5",
+          "explanation": "- Template with non-type parameter: `size_t N`\n- `Array<int, 3>` and `Array<int, 5>` are different types\n- N is compile-time constant, part of type signature\n- `T data[N]` uses N to size array at compile time\n- a1 has array of 3 ints, size() returns 3\n- a2 has array of 5 ints, size() returns 5\n- Different N values create incompatible types\n- Cannot assign Array<int, 3> to Array<int, 5>\n- Non-type parameters: integral types, pointers, enums\n- **Key Concept:** Non-type template parameters create distinct types; enable compile-time array sizing",
+          "key_concept": "Non-type template parameters create distinct types; enable compile-time array sizing",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 5"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid func(T val) { std::cout << \"value\\n\"; }\n\ntemplate<typename T>\nvoid func(T* val) { std::cout << \"pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(x);\n    func(&x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `value`<br>`pointer`\n\n**Explanation:** Overload resolution: pointer version selected for `&x`\n\n**Key Concept:** #function_overloading\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nvalue\npointer\n```\n\n**Explanation:**\n- Two template overloads: func(T) and func(T*)\n- `func(x)` where x is int\n- T deduced as int, calls func(T), prints \"value\"\n- `func(&x)` where &x is int*\n- Two possible deductions: T=int* for func(T), or T=int for func(T*)\n- Both viable, but func(T*) is more specific (partial ordering)\n- More specialized template preferred\n- Calls func(T*) with T=int, prints \"pointer\"\n- Template partial ordering resolves ambiguity\n- **Key Concept:** Template overload resolution prefers more specialized templates; func(T*) more specific than func(T)",
           "code": "template<typename T>\nvoid func(T val) { std::cout << \"value\\n\"; }\n\ntemplate<typename T>\nvoid func(T* val) { std::cout << \"pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(x);\n    func(&x);\n}",
+          "answer": "value\npointer",
+          "explanation": "- Two template overloads: func(T) and func(T*)\n- `func(x)` where x is int\n- T deduced as int, calls func(T), prints \"value\"\n- `func(&x)` where &x is int*\n- Two possible deductions: T=int* for func(T), or T=int for func(T*)\n- Both viable, but func(T*) is more specific (partial ordering)\n- More specialized template preferred\n- Calls func(T*) with T=int, prints \"pointer\"\n- Template partial ordering resolves ambiguity\n- **Key Concept:** Template overload resolution prefers more specialized templates; func(T*) more specific than func(T)",
+          "key_concept": "Template overload resolution prefers more specialized templates; func(T*) more specific than func(T)",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "value\npointer"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct Traits {\n    static void print() { std::cout << \"primary\\n\"; }\n};\n\ntemplate<>\nstruct Traits<int> {\n    static void print() { std::cout << \"int\\n\"; }\n};\n\ntemplate<>\nstruct Traits<const int> {\n    static void print() { std::cout << \"const int\\n\"; }\n};\n\nint main() {\n    Traits<int>::print();\n    Traits<const int>::print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `int`<br>`const int`\n\n**Explanation:** Both specializations are distinct; each matches its exact type\n\n**Key Concept:** #full_specialization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint\nconst int\n```\n\n**Explanation:**\n- Primary template: Traits<T> prints \"primary\"\n- Full specialization for int: Traits<int> prints \"int\"\n- Full specialization for const int: Traits<const int> prints \"const int\"\n- `Traits<int>` exact match with int specialization\n- `Traits<const int>` exact match with const int specialization\n- int and const int are distinct types\n- Each has separate full specialization\n- Full specialization provides completely different implementation\n- Not partial specialization (no template parameters left)\n- **Key Concept:** Full specializations for distinct types; const qualifier creates different type requiring separate specialization",
           "code": "template<typename T>\nstruct Traits {\n    static void print() { std::cout << \"primary\\n\"; }\n};\n\ntemplate<>\nstruct Traits<int> {\n    static void print() { std::cout << \"int\\n\"; }\n};\n\ntemplate<>\nstruct Traits<const int> {\n    static void print() { std::cout << \"const int\\n\"; }\n};\n\nint main() {\n    Traits<int>::print();\n    Traits<const int>::print();\n}",
+          "answer": "int\nconst int",
+          "explanation": "- Primary template: Traits<T> prints \"primary\"\n- Full specialization for int: Traits<int> prints \"int\"\n- Full specialization for const int: Traits<const int> prints \"const int\"\n- `Traits<int>` exact match with int specialization\n- `Traits<const int>` exact match with const int specialization\n- int and const int are distinct types\n- Each has separate full specialization\n- Full specialization provides completely different implementation\n- Not partial specialization (no template parameters left)\n- **Key Concept:** Full specializations for distinct types; const qualifier creates different type requiring separate specialization",
+          "key_concept": "Full specializations for distinct types; const qualifier creates different type requiring separate specialization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int\nconst int"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nT add(T a, T b) { return a + b; }\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add<double>(5, 10) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `15`<br>`15`\n\n**Explanation:** First deduces `T=int`, second forces `T=double` with conversion\n\n**Key Concept:** #type_deduction\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n15\n15\n```\n\n**Explanation:**\n- `add(5, 10)` deduces T from arguments\n- Both 5 and 10 are int, T deduced as int\n- Returns 5 + 10 = 15\n- `add<double>(5, 10)` explicitly specifies T=double\n- Template instantiated with T=double\n- Arguments 5 and 10 converted to double\n- Returns 5.0 + 10.0 = 15.0 (printed as 15)\n- Explicit template arguments override deduction\n- Can use explicit specification when deduction fails or needs override\n- **Key Concept:** Template argument deduction infers types; explicit specification overrides deduction",
           "code": "template<typename T>\nT add(T a, T b) { return a + b; }\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add<double>(5, 10) << \"\\n\";\n}",
+          "answer": "15\n15",
+          "explanation": "- `add(5, 10)` deduces T from arguments\n- Both 5 and 10 are int, T deduced as int\n- Returns 5 + 10 = 15\n- `add<double>(5, 10)` explicitly specifies T=double\n- Template instantiated with T=double\n- Arguments 5 and 10 converted to double\n- Returns 5.0 + 10.0 = 15.0 (printed as 15)\n- Explicit template arguments override deduction\n- Can use explicit specification when deduction fails or needs override\n- **Key Concept:** Template argument deduction infers types; explicit specification overrides deduction",
+          "key_concept": "Template argument deduction infers types; explicit specification overrides deduction",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "15\n15"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, typename U = int>\nvoid process(T) { std::cout << sizeof(U) << \"\\n\"; }\n\nint main() {\n    process(42);\n    process<double>(3.14);\n    process<float, long>(1.0f);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `4`<br>`4`<br>`8`\n\n**Explanation:** `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call\n\n**Key Concept:** #default_arguments\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n4\n4\n8\n```\n\n**Explanation:**\n- Template has default argument: `U = int`\n- `process(42)` deduces T=int, U defaults to int\n- sizeof(int) = 4\n- `process<double>(3.14)` explicitly sets T=double, U defaults to int\n- sizeof(int) = 4\n- `process<float, long>(1.0f)` sets T=float, U=long explicitly\n- sizeof(long) = 8\n- Default arguments used when not explicitly provided\n- Can override defaults with explicit specification\n- **Key Concept:** Template default arguments provide fallback types; can be overridden explicitly",
           "code": "template<typename T, typename U = int>\nvoid process(T) { std::cout << sizeof(U) << \"\\n\"; }\n\nint main() {\n    process(42);\n    process<double>(3.14);\n    process<float, long>(1.0f);\n}",
+          "answer": "4\n4\n8",
+          "explanation": "- Template has default argument: `U = int`\n- `process(42)` deduces T=int, U defaults to int\n- sizeof(int) = 4\n- `process<double>(3.14)` explicitly sets T=double, U defaults to int\n- sizeof(int) = 4\n- `process<float, long>(1.0f)` sets T=float, U=long explicitly\n- sizeof(long) = 8\n- Default arguments used when not explicitly provided\n- Can override defaults with explicit specification\n- **Key Concept:** Template default arguments provide fallback types; can be overridden explicitly",
+          "key_concept": "Template default arguments provide fallback types; can be overridden explicitly",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "4\n4\n8"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct Base {\n    void interface() { std::cout << \"Base\\n\"; }\n};\n\ntemplate<>\nstruct Base<int> {\n    void interface() { std::cout << \"Base<int>\\n\"; }\n};\n\nint main() {\n    Base<double> b1;\n    Base<int> b2;\n    b1.interface();\n    b2.interface();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Base`<br>`Base<int>`\n\n**Explanation:** Full specialization for `int` provides different implementation\n\n**Key Concept:** #full_specialization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBase\nBase<int>\n```\n\n**Explanation:**\n- Primary template Base<T> has interface() printing \"Base\"\n- Full specialization Base<int> overrides with different implementation\n- `Base<double> b1` instantiates primary template\n- b1.interface() prints \"Base\"\n- `Base<int> b2` uses full specialization\n- b2.interface() prints \"Base<int>\"\n- Full specialization provides completely custom implementation\n- Not just parameter change, entire class body replaced\n- Common pattern: general behavior + optimized special cases\n- **Key Concept:** Full template specialization provides custom implementation for specific types",
           "code": "template<typename T>\nstruct Base {\n    void interface() { std::cout << \"Base\\n\"; }\n};\n\ntemplate<>\nstruct Base<int> {\n    void interface() { std::cout << \"Base<int>\\n\"; }\n};\n\nint main() {\n    Base<double> b1;\n    Base<int> b2;\n    b1.interface();\n    b2.interface();\n}",
+          "answer": "Base\nBase<int>",
+          "explanation": "- Primary template Base<T> has interface() printing \"Base\"\n- Full specialization Base<int> overrides with different implementation\n- `Base<double> b1` instantiates primary template\n- b1.interface() prints \"Base\"\n- `Base<int> b2` uses full specialization\n- b2.interface() prints \"Base<int>\"\n- Full specialization provides completely custom implementation\n- Not just parameter change, entire class body replaced\n- Common pattern: general behavior + optimized special cases\n- **Key Concept:** Full template specialization provides custom implementation for specific types",
+          "key_concept": "Full template specialization provides custom implementation for specific types",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Base\nBase<int>"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N-1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f = Factorial<4>::value;\n    std::cout << f << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `24`\n\n**Explanation:** 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion\n\n**Key Concept:** #template_metaprogramming\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n24\n```\n\n**Explanation:**\n- Classic template metaprogramming: factorial at compile time\n- `Factorial<4>` recursively expands\n- Factorial<4> = 4 * Factorial<3>\n- Factorial<3> = 3 * Factorial<2>\n- Factorial<2> = 2 * Factorial<1>\n- Factorial<1> = 1 * Factorial<0>\n- Factorial<0> = 1 (base case specialization)\n- Result: 4 * 3 * 2 * 1 * 1 = 24\n- Computed during compilation, constexpr value\n- Used to initialize constexpr variable f\n- **Key Concept:** Template recursion with specialization base case enables compile-time computation",
           "code": "template<int N>\nstruct Factorial {\n    static constexpr int value = N * Factorial<N-1>::value;\n};\n\ntemplate<>\nstruct Factorial<0> {\n    static constexpr int value = 1;\n};\n\nint main() {\n    constexpr int f = Factorial<4>::value;\n    std::cout << f << \"\\n\";\n}",
+          "answer": "24",
+          "explanation": "- Classic template metaprogramming: factorial at compile time\n- `Factorial<4>` recursively expands\n- Factorial<4> = 4 * Factorial<3>\n- Factorial<3> = 3 * Factorial<2>\n- Factorial<2> = 2 * Factorial<1>\n- Factorial<1> = 1 * Factorial<0>\n- Factorial<0> = 1 (base case specialization)\n- Result: 4 * 3 * 2 * 1 * 1 = 24\n- Computed during compilation, constexpr value\n- Used to initialize constexpr variable f\n- **Key Concept:** Template recursion with specialization base case enables compile-time computation",
+          "key_concept": "Template recursion with specialization base case enables compile-time computation",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "24"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T1, typename T2>\nstruct Pair { static void show() { std::cout << \"A\\n\"; } };\n\ntemplate<typename T>\nstruct Pair<T, int> { static void show() { std::cout << \"B\\n\"; } };\n\ntemplate<>\nstruct Pair<double, int> { static void show() { std::cout << \"C\\n\"; } };\n\nint main() {\n    Pair<float, char>::show();\n    Pair<float, int>::show();\n    Pair<double, int>::show();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `A`<br>`B`<br>`C`\n\n**Explanation:** Most specific match selected: primary → partial → full specialization\n\n**Key Concept:** #specialization_priority\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nA\nB\nC\n```\n\n**Explanation:**\n- Three template versions: primary, partial specialization, full specialization\n- `Pair<float, char>` matches only primary template\n- No specializations match, prints \"A\"\n- `Pair<float, int>` matches partial specialization Pair<T, int>\n- More specific than primary, prints \"B\"\n- `Pair<double, int>` matches both partial specialization and full specialization\n- Full specialization Pair<double, int> most specific\n- Specialization priority: full > partial > primary\n- Prints \"C\"\n- Compiler selects most specialized matching template\n- **Key Concept:** Template specialization priority: full specialization > partial specialization > primary template",
           "code": "template<typename T1, typename T2>\nstruct Pair { static void show() { std::cout << \"A\\n\"; } };\n\ntemplate<typename T>\nstruct Pair<T, int> { static void show() { std::cout << \"B\\n\"; } };\n\ntemplate<>\nstruct Pair<double, int> { static void show() { std::cout << \"C\\n\"; } };\n\nint main() {\n    Pair<float, char>::show();\n    Pair<float, int>::show();\n    Pair<double, int>::show();\n}",
+          "answer": "A\nB\nC",
+          "explanation": "- Three template versions: primary, partial specialization, full specialization\n- `Pair<float, char>` matches only primary template\n- No specializations match, prints \"A\"\n- `Pair<float, int>` matches partial specialization Pair<T, int>\n- More specific than primary, prints \"B\"\n- `Pair<double, int>` matches both partial specialization and full specialization\n- Full specialization Pair<double, int> most specific\n- Specialization priority: full > partial > primary\n- Prints \"C\"\n- Compiler selects most specialized matching template\n- **Key Concept:** Template specialization priority: full specialization > partial specialization > primary template",
+          "key_concept": "Template specialization priority: full specialization > partial specialization > primary template",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "A\nB\nC"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid test(T) { std::cout << \"1\\n\"; }\n\ntemplate<typename T>\nvoid test(T&) { std::cout << \"2\\n\"; }\n\nint main() {\n    int x = 42;\n    test(x);\n    test(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `2`<br>`1`\n\n**Explanation:** Lvalue prefers reference overload; rvalue matches value parameter\n\n**Key Concept:** #reference_binding\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2\n1\n```\n\n**Explanation:**\n- Two template overloads: test(T) and test(T&)\n- `test(x)` where x is lvalue int\n- T deduced as int for both overloads\n- test(T&) is more specific (reference binding)\n- Lvalue prefers reference overload, calls test(T&)\n- Prints \"2\"\n- `test(42)` where 42 is rvalue\n- test(T&) cannot bind to rvalue (non-const lvalue ref)\n- Only test(T) viable, T deduced as int\n- Prints \"1\"\n- Template partial ordering: reference version more specialized\n- **Key Concept:** Lvalues prefer reference templates; rvalues bind to value parameter templates",
           "code": "template<typename T>\nvoid test(T) { std::cout << \"1\\n\"; }\n\ntemplate<typename T>\nvoid test(T&) { std::cout << \"2\\n\"; }\n\nint main() {\n    int x = 42;\n    test(x);\n    test(42);\n}",
+          "answer": "2\n1",
+          "explanation": "- Two template overloads: test(T) and test(T&)\n- `test(x)` where x is lvalue int\n- T deduced as int for both overloads\n- test(T&) is more specific (reference binding)\n- Lvalue prefers reference overload, calls test(T&)\n- Prints \"2\"\n- `test(42)` where 42 is rvalue\n- test(T&) cannot bind to rvalue (non-const lvalue ref)\n- Only test(T) viable, T deduced as int\n- Prints \"1\"\n- Template partial ordering: reference version more specialized\n- **Key Concept:** Lvalues prefer reference templates; rvalues bind to value parameter templates",
+          "key_concept": "Lvalues prefer reference templates; rvalues bind to value parameter templates",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2\n1"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\nint main() {\n    RemoveConst<int>::type a = 10;\n    RemoveConst<const int>::type b = 20;\n    std::cout << a << \" \" << b << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `10 20`\n\n**Explanation:** Partial specialization strips `const` qualifier from type\n\n**Key Concept:** #type_traits\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10 20\n```\n\n**Explanation:**\n- Type trait RemoveConst for stripping const\n- Primary template: type = T (no change)\n- Partial specialization for const T: type = T (removes const)\n- `RemoveConst<int>::type` matches primary\n- int has no const, type = int\n- a is int, assigned 10\n- `RemoveConst<const int>::type` matches specialization\n- const int matches pattern const T where T=int\n- type = int (const removed)\n- b is int (not const), assigned 20\n- Similar to std::remove_const in <type_traits>\n- **Key Concept:** Partial specialization patterns enable type transformations; basis for type traits",
           "code": "template<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\nint main() {\n    RemoveConst<int>::type a = 10;\n    RemoveConst<const int>::type b = 20;\n    std::cout << a << \" \" << b << \"\\n\";\n}",
+          "answer": "10 20",
+          "explanation": "- Type trait RemoveConst for stripping const\n- Primary template: type = T (no change)\n- Partial specialization for const T: type = T (removes const)\n- `RemoveConst<int>::type` matches primary\n- int has no const, type = int\n- a is int, assigned 10\n- `RemoveConst<const int>::type` matches specialization\n- const int matches pattern const T where T=int\n- type = int (const removed)\n- b is int (not const), assigned 20\n- Similar to std::remove_const in <type_traits>\n- **Key Concept:** Partial specialization patterns enable type transformations; basis for type traits",
+          "key_concept": "Partial specialization patterns enable type transformations; basis for type traits",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10 20"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<bool B, typename T = void>\nstruct EnableIf { };\n\ntemplate<typename T>\nstruct EnableIf<true, T> { using type = T; };\n\nint main() {\n    EnableIf<true, int>::type x = 42;\n    std::cout << x << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`\n\n**Explanation:** SFINAE-like pattern: only `true` case defines `type` member\n\n**Key Concept:** #enable_if_pattern\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- EnableIf primary template: no type member defined\n- Partial specialization EnableIf<true, T>: defines type = T\n- `EnableIf<true, int>::type` matches specialization\n- true matches bool pattern, T=int\n- type member exists, equals int\n- x is int, assigned 42\n- `EnableIf<false, int>::type` would match primary (no type member - error)\n- SFINAE-like: Substitution Failure Is Not An Error\n- Used to conditionally enable templates\n- Similar to std::enable_if\n- **Key Concept:** Partial specialization on bool enables conditional type definitions; foundational for SFINAE",
           "code": "template<bool B, typename T = void>\nstruct EnableIf { };\n\ntemplate<typename T>\nstruct EnableIf<true, T> { using type = T; };\n\nint main() {\n    EnableIf<true, int>::type x = 42;\n    std::cout << x << \"\\n\";\n}",
+          "answer": "42",
+          "explanation": "- EnableIf primary template: no type member defined\n- Partial specialization EnableIf<true, T>: defines type = T\n- `EnableIf<true, int>::type` matches specialization\n- true matches bool pattern, T=int\n- type member exists, equals int\n- x is int, assigned 42\n- `EnableIf<false, int>::type` would match primary (no type member - error)\n- SFINAE-like: Substitution Failure Is Not An Error\n- Used to conditionally enable templates\n- Similar to std::enable_if\n- **Key Concept:** Partial specialization on bool enables conditional type definitions; foundational for SFINAE",
+          "key_concept": "Partial specialization on bool enables conditional type definitions; foundational for SFINAE",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct Wrapper {\n    static void print() { std::cout << sizeof(T) << \"\\n\"; }\n};\n\nint main() {\n    Wrapper<char>::print();\n    Wrapper<int>::print();\n    Wrapper<double>::print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`4`<br>`8`\n\n**Explanation:** `sizeof` operator returns size of type in bytes (platform-dependent)\n\n**Key Concept:** #sizeof_operator\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n4\n8\n```\n\n**Explanation:**\n- Template uses sizeof(T) to get type size\n- `Wrapper<char>::print()` instantiates with T=char\n- sizeof(char) = 1 byte (always 1 by standard)\n- `Wrapper<int>::print()` with T=int\n- sizeof(int) = 4 bytes (typical, platform-dependent)\n- `Wrapper<double>::print()` with T=double\n- sizeof(double) = 8 bytes (typical)\n- sizeof evaluated at compile time\n- Template instantiation generates different static methods\n- Each prints size of its type parameter\n- **Key Concept:** sizeof works with template parameters; enables compile-time size queries",
           "code": "template<typename T>\nstruct Wrapper {\n    static void print() { std::cout << sizeof(T) << \"\\n\"; }\n};\n\nint main() {\n    Wrapper<char>::print();\n    Wrapper<int>::print();\n    Wrapper<double>::print();\n}",
+          "answer": "1\n4\n8",
+          "explanation": "- Template uses sizeof(T) to get type size\n- `Wrapper<char>::print()` instantiates with T=char\n- sizeof(char) = 1 byte (always 1 by standard)\n- `Wrapper<int>::print()` with T=int\n- sizeof(int) = 4 bytes (typical, platform-dependent)\n- `Wrapper<double>::print()` with T=double\n- sizeof(double) = 8 bytes (typical)\n- sizeof evaluated at compile time\n- Template instantiation generates different static methods\n- Each prints size of its type parameter\n- **Key Concept:** sizeof works with template parameters; enables compile-time size queries",
+          "key_concept": "sizeof works with template parameters; enables compile-time size queries",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1\n4\n8"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, int N>\nstruct Array {\n    T data[N];\n    constexpr int size() const { return N; }\n};\n\nint main() {\n    Array<int, 5> a;\n    constexpr int s = a.size();\n    int arr[s];\n    std::cout << sizeof(arr) / sizeof(int) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `5`\n\n**Explanation:** Non-type parameter used as `constexpr` to size array at compile time\n\n**Key Concept:** #compile_time_constants\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5\n```\n\n**Explanation:**\n- Non-type template parameter N = 5\n- `Array<int, 5>` instantiates with N=5\n- size() is constexpr function, returns N\n- `constexpr int s = a.size()` evaluates at compile time\n- s = 5 (compile-time constant)\n- `int arr[s]` uses s as array size\n- Array size must be compile-time constant\n- sizeof(arr) = 5 * sizeof(int) = 20 bytes\n- 20 / 4 = 5\n- Non-type parameters enable compile-time computation\n- constexpr propagates compile-time constants\n- **Key Concept:** Non-type parameters with constexpr enable compile-time array sizing and computation\n\n---\n\n\n## TOPIC: Template Fundamentals and Specialization",
           "code": "template<typename T, int N>\nstruct Array {\n    T data[N];\n    constexpr int size() const { return N; }\n};\n\nint main() {\n    Array<int, 5> a;\n    constexpr int s = a.size();\n    int arr[s];\n    std::cout << sizeof(arr) / sizeof(int) << \"\\n\";\n}",
+          "answer": "5",
+          "explanation": "- Non-type template parameter N = 5\n- `Array<int, 5>` instantiates with N=5\n- size() is constexpr function, returns N\n- `constexpr int s = a.size()` evaluates at compile time\n- s = 5 (compile-time constant)\n- `int arr[s]` uses s as array size\n- Array size must be compile-time constant\n- sizeof(arr) = 5 * sizeof(int) = 20 bytes\n- 20 / 4 = 5\n- Non-type parameters enable compile-time computation\n- constexpr propagates compile-time constants\n- **Key Concept:** Non-type parameters with constexpr enable compile-time array sizing and computation",
+          "key_concept": "Non-type parameters with constexpr enable compile-time array sizing and computation",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `0`<br>`0` | `T()` performs value-initialization, giving 0 for numeric types | #value_initialization |\n| 2 | `non-template`<br>`template` | Non-template exact match preferred over template for `int` | #overload_resolution |\n| 3 | `generic`<br>`same` | Partial specialization `Pair<T, T>` matches when both types are identical | #partial_specialization |\n| 4 | Compilation error | Default template argument must be rightmost; `U` has no default after `T` | #default_arguments |\n| 5 | `ok` | Lazy instantiation: `invalid()` never called, so its error never triggered | #lazy_instantiation |\n| 6 | `0 1 1` | Primary template for `int`, partial specialization matches `int*` and `int**` | #partial_specialization |\n| 7 | `32` | Template recursion: 2^5 = 32 computed at compile time | #template_metaprogramming |\n| 8 | `3 5` | Non-type parameter `N` creates different types with different sizes | #non_type_parameters |\n| 9 | `value`<br>`pointer` | Overload resolution: pointer version selected for `&x` | #function_overloading |\n| 10 | `int`<br>`const int` | Both specializations are distinct; each matches its exact type | #full_specialization |\n| 11 | `15`<br>`15` | First deduces `T=int`, second forces `T=double` with conversion | #type_deduction |\n| 12 | `4`<br>`4`<br>`8` | `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call | #default_arguments |\n| 13 | `Base`<br>`Base<int>` | Full specialization for `int` provides different implementation | #full_specialization |\n| 14 | `24` | 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion | #template_metaprogramming |\n| 15 | `A`<br>`B`<br>`C` | Most specific match selected: primary → partial → full specialization | #specialization_priority |\n| 16 | `2`<br>`1` | Lvalue prefers reference overload; rvalue matches value parameter | #reference_binding |\n| 17 | `10 20` | Partial specialization strips `const` qualifier from type | #type_traits |\n| 18 | `42` | SFINAE-like pattern: only `true` case defines `type` member | #enable_if_pattern |\n| 19 | `1`<br>`4`<br>`8` | `sizeof` operator returns size of type in bytes (platform-dependent) | #sizeof_operator |\n| 20 | `5` | Non-type parameter used as `constexpr` to size array at compile time | #compile_time_constants |\n\n#### Template Specialization Priority\n\n| Specialization Type | Priority | Pattern Example | Use Case |\n|---------------------|----------|-----------------|----------|\n| Full Specialization | Highest | `template<> struct S<int, double>` | Exact type match customization |\n| Partial Specialization | Medium | `template<typename T> struct S<T, int>` | Pattern-based customization |\n| Primary Template | Lowest | `template<typename T, typename U> struct S` | Default implementation |\n\n#### Template Parameter Types\n\n| Parameter Type | Syntax Example | Allowed Values | Instantiation |\n|----------------|----------------|----------------|---------------|\n| Type Parameter | `typename T` | Any type | `Container<int>` |\n| Non-Type Parameter | `int N` | Compile-time constants | `Array<int, 10>` |\n| Template Template Parameter | `template<typename> class C` | Template names | `Wrapper<std::vector>` |\n\n#### Function vs Class Template Comparison\n\n| Feature | Function Template | Class Template |\n|---------|-------------------|----------------|\n| Argument Deduction | ✅ Automatic from call arguments | ❌ Must specify explicitly (pre-C++17) |\n| Partial Specialization | ❌ Not allowed | ✅ Allowed |\n| Default Arguments in Definition | ❌ Only in declaration | ✅ In definition |\n| Overloading | ✅ Can overload with non-templates | N/A (classes don't overload) |\n\n#### Common Template Patterns\n\n| Pattern | Purpose | Example |\n|---------|---------|---------|\n| Type Traits | Query type properties | `std::is_pointer<T>` |\n| SFINAE | Enable/disable templates conditionally | `enable_if<condition, T>` |\n| Tag Dispatch | Select algorithm via type tags | `iterator_category` |\n| Policy Classes | Inject behavior via template parameters | `Allocator` parameter |\n| Template Recursion | Compile-time computation | `Factorial<N>` |\n| Currying | Bind some template parameters | Partial specialization |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `0`<br>`0` | `T()` performs value-initialization, giving 0 for numeric types | #value_initialization |\n| 2 | `non-template`<br>`template` | Non-template exact match preferred over template for `int` | #overload_resolution |\n| 3 | `generic`<br>`same` | Partial specialization `Pair<T, T>` matches when both types are identical | #partial_specialization |\n| 4 | Compilation error | Default template argument must be rightmost; `U` has no default after `T` | #default_arguments |\n| 5 | `ok` | Lazy instantiation: `invalid()` never called, so its error never triggered | #lazy_instantiation |\n| 6 | `0 1 1` | Primary template for `int`, partial specialization matches `int*` and `int**` | #partial_specialization |\n| 7 | `32` | Template recursion: 2^5 = 32 computed at compile time | #template_metaprogramming |\n| 8 | `3 5` | Non-type parameter `N` creates different types with different sizes | #non_type_parameters |\n| 9 | `value`<br>`pointer` | Overload resolution: pointer version selected for `&x` | #function_overloading |\n| 10 | `int`<br>`const int` | Both specializations are distinct; each matches its exact type | #full_specialization |\n| 11 | `15`<br>`15` | First deduces `T=int`, second forces `T=double` with conversion | #type_deduction |\n| 12 | `4`<br>`4`<br>`8` | `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call | #default_arguments |\n| 13 | `Base`<br>`Base<int>` | Full specialization for `int` provides different implementation | #full_specialization |\n| 14 | `24` | 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion | #template_metaprogramming |\n| 15 | `A`<br>`B`<br>`C` | Most specific match selected: primary → partial → full specialization | #specialization_priority |\n| 16 | `2`<br>`1` | Lvalue prefers reference overload; rvalue matches value parameter | #reference_binding |\n| 17 | `10 20` | Partial specialization strips `const` qualifier from type | #type_traits |\n| 18 | `42` | SFINAE-like pattern: only `true` case defines `type` member | #enable_if_pattern |\n| 19 | `1`<br>`4`<br>`8` | `sizeof` operator returns size of type in bytes (platform-dependent) | #sizeof_operator |\n| 20 | `5` | Non-type parameter used as `constexpr` to size array at compile time | #compile_time_constants |\n\n#### Template Specialization Priority\n\n| Specialization Type | Priority | Pattern Example | Use Case |\n|---------------------|----------|-----------------|----------|\n| Full Specialization | Highest | `template<> struct S<int, double>` | Exact type match customization |\n| Partial Specialization | Medium | `template<typename T> struct S<T, int>` | Pattern-based customization |\n| Primary Template | Lowest | `template<typename T, typename U> struct S` | Default implementation |\n\n#### Template Parameter Types\n\n| Parameter Type | Syntax Example | Allowed Values | Instantiation |\n|----------------|----------------|----------------|---------------|\n| Type Parameter | `typename T` | Any type | `Container<int>` |\n| Non-Type Parameter | `int N` | Compile-time constants | `Array<int, 10>` |\n| Template Template Parameter | `template<typename> class C` | Template names | `Wrapper<std::vector>` |\n\n#### Function vs Class Template Comparison\n\n| Feature | Function Template | Class Template |\n|---------|-------------------|----------------|\n| Argument Deduction | ✅ Automatic from call arguments | ❌ Must specify explicitly (pre-C++17) |\n| Partial Specialization | ❌ Not allowed | ✅ Allowed |\n| Default Arguments in Definition | ❌ Only in declaration | ✅ In definition |\n| Overloading | ✅ Can overload with non-templates | N/A (classes don't overload) |\n\n#### Common Template Patterns\n\n| Pattern | Purpose | Example |\n|---------|---------|---------|\n| Type Traits | Query type properties | `std::is_pointer<T>` |\n| SFINAE | Enable/disable templates conditionally | `enable_if<condition, T>` |\n| Tag Dispatch | Select algorithm via type tags | `iterator_category` |\n| Policy Classes | Inject behavior via template parameters | `Allocator` parameter |\n| Template Recursion | Compile-time computation | `Factorial<N>` |\n| Currying | Bind some template parameters | Partial specialization |\n\n\n## TOPIC: Template Fundamentals and Specialization",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `0`<br>`0` | `T()` performs value-initialization, giving 0 for numeric types | #value_initialization |\n| 2 | `non-template`<br>`template` | Non-template exact match preferred over template for `int` | #overload_resolution |\n| 3 | `generic`<br>`same` | Partial specialization `Pair<T, T>` matches when both types are identical | #partial_specialization |\n| 4 | Compilation error | Default template argument must be rightmost; `U` has no default after `T` | #default_arguments |\n| 5 | `ok` | Lazy instantiation: `invalid()` never called, so its error never triggered | #lazy_instantiation |\n| 6 | `0 1 1` | Primary template for `int`, partial specialization matches `int*` and `int**` | #partial_specialization |\n| 7 | `32` | Template recursion: 2^5 = 32 computed at compile time | #template_metaprogramming |\n| 8 | `3 5` | Non-type parameter `N` creates different types with different sizes | #non_type_parameters |\n| 9 | `value`<br>`pointer` | Overload resolution: pointer version selected for `&x` | #function_overloading |\n| 10 | `int`<br>`const int` | Both specializations are distinct; each matches its exact type | #full_specialization |\n| 11 | `15`<br>`15` | First deduces `T=int`, second forces `T=double` with conversion | #type_deduction |\n| 12 | `4`<br>`4`<br>`8` | `U` defaults to `int` (4 bytes), explicitly set to `long` (8 bytes) in third call | #default_arguments |\n| 13 | `Base`<br>`Base<int>` | Full specialization for `int` provides different implementation | #full_specialization |\n| 14 | `24` | 4! = 4 × 3 × 2 × 1 = 24, computed at compile time via template recursion | #template_metaprogramming |\n| 15 | `A`<br>`B`<br>`C` | Most specific match selected: primary → partial → full specialization | #specialization_priority |\n| 16 | `2`<br>`1` | Lvalue prefers reference overload; rvalue matches value parameter | #reference_binding |\n| 17 | `10 20` | Partial specialization strips `const` qualifier from type | #type_traits |\n| 18 | `42` | SFINAE-like pattern: only `true` case defines `type` member | #enable_if_pattern |\n| 19 | `1`<br>`4`<br>`8` | `sizeof` operator returns size of type in bytes (platform-dependent) | #sizeof_operator |\n| 20 | `5` | Non-type parameter used as `constexpr` to size array at compile time | #compile_time_constants |",
           "| Specialization Type | Priority | Pattern Example | Use Case |\n|---------------------|----------|-----------------|----------|\n| Full Specialization | Highest | `template<> struct S<int, double>` | Exact type match customization |\n| Partial Specialization | Medium | `template<typename T> struct S<T, int>` | Pattern-based customization |\n| Primary Template | Lowest | `template<typename T, typename U> struct S` | Default implementation |",
           "| Parameter Type | Syntax Example | Allowed Values | Instantiation |\n|----------------|----------------|----------------|---------------|\n| Type Parameter | `typename T` | Any type | `Container<int>` |\n| Non-Type Parameter | `int N` | Compile-time constants | `Array<int, 10>` |\n| Template Template Parameter | `template<typename> class C` | Template names | `Wrapper<std::vector>` |",
           "| Feature | Function Template | Class Template |\n|---------|-------------------|----------------|\n| Argument Deduction | ✅ Automatic from call arguments | ❌ Must specify explicitly (pre-C++17) |\n| Partial Specialization | ❌ Not allowed | ✅ Allowed |\n| Default Arguments in Definition | ❌ Only in declaration | ✅ In definition |\n| Overloading | ✅ Can overload with non-templates | N/A (classes don't overload) |",
-          "| Pattern | Purpose | Example |\n|---------|---------|---------|\n| Type Traits | Query type properties | `std::is_pointer<T>` |\n| SFINAE | Enable/disable templates conditionally | `enable_if<condition, T>` |\n| Tag Dispatch | Select algorithm via type tags | `iterator_category` |\n| Policy Classes | Inject behavior via template parameters | `Allocator` parameter |\n| Template Recursion | Compile-time computation | `Factorial<N>` |"
+          "| Pattern | Purpose | Example |\n|---------|---------|---------|\n| Type Traits | Query type properties | `std::is_pointer<T>` |\n| SFINAE | Enable/disable templates conditionally | `enable_if<condition, T>` |\n| Tag Dispatch | Select algorithm via type tags | `iterator_category` |\n| Policy Classes | Inject behavior via template parameters | `Allocator` parameter |\n| Template Recursion | Compile-time computation | `Factorial<N>` |\n| Currying | Bind some template parameters | Partial specialization |"
         ]
       }
     },
     {
       "topic": "Advanced Template Techniques - SFINAE and CRTP",
-      "filename": "2_cpp_templates_part2_sfinae_crtp.md",
+      "filename": "topic_2.md",
       "theory": {
         "subsections": [
           {
@@ -1351,212 +1471,332 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\nint main() {\n    process(42);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `integral`<br>Compilation error\n\n**Explanation:** First call matches integral SFINAE; second fails (no float overload)\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nintegral\nCompilation error on process(3.14)\n```\n\n**Explanation:**\n- `std::enable_if<std::is_integral<T>::value>::type` uses SFINAE\n- enable_if provides nested `type` only if condition is true\n- If condition false, no `type` member (substitution failure)\n- `process(42)` with T=int: is_integral<int> is true, function instantiates\n- Prints \"integral\"\n- `process(3.14)` with T=double: is_integral<double> is false\n- enable_if has no `type` member, substitution fails\n- No other overload available for double\n- Compilation error: no matching function for call to process(double)\n- **Key Concept:** SFINAE with enable_if enables function only when trait is true; substitution failure removes overload from candidate set",
           "code": "template<typename T>\ntypename std::enable_if<std::is_integral<T>::value>::type\nprocess(T val) { std::cout << \"integral\\n\"; }\n\nint main() {\n    process(42);\n    process(3.14);\n}",
+          "answer": "integral\nCompilation error on process(3.14)",
+          "explanation": "- `std::enable_if<std::is_integral<T>::value>::type` uses SFINAE\n- enable_if provides nested `type` only if condition is true\n- If condition false, no `type` member (substitution failure)\n- `process(42)` with T=int: is_integral<int> is true, function instantiates\n- Prints \"integral\"\n- `process(3.14)` with T=double: is_integral<double> is false\n- enable_if has no `type` member, substitution fails\n- No other overload available for double\n- Compilation error: no matching function for call to process(double)\n- **Key Concept:** SFINAE with enable_if enables function only when trait is true; substitution failure removes overload from candidate set",
+          "key_concept": "SFINAE with enable_if enables function only when trait is true; substitution failure removes overload from candidate set",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "integral\nCompilation error on process(3.14)"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nauto hasSize(int) -> decltype(std::declval<T>().size(), std::true_type{});\n\ntemplate<typename T>\nstd::false_type hasSize(...);\n\nint main() {\n    std::cout << decltype(hasSize<std::vector<int>>(0))::value << \"\\n\";\n    std::cout << decltype(hasSize<int>(0))::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`0`\n\n**Explanation:** `std::vector` has `.size()` method; `int` doesn't\n\n**Key Concept:** #expression_sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n0\n```\n\n**Explanation:**\n- Expression SFINAE detects presence of `.size()` method\n- First overload: `decltype(std::declval<T>().size(), std::true_type{})`\n- `std::declval<T>()` creates T without construction (for unevaluated context)\n- Comma operator: evaluates both, returns second (std::true_type)\n- Second overload: `std::false_type hasSize(...)` (variadic, lower priority)\n- `hasSize<std::vector<int>>(0)`: vector has .size(), first overload selected\n- Returns std::true_type, ::value is 1\n- `hasSize<int>(0)`: int has no .size(), first overload SFINAE fails\n- Second overload selected (fallback), returns std::false_type, ::value is 0\n- **Key Concept:** Expression SFINAE with decltype and comma operator detects member functions; variadic overload as fallback",
           "code": "template<typename T>\nauto hasSize(int) -> decltype(std::declval<T>().size(), std::true_type{});\n\ntemplate<typename T>\nstd::false_type hasSize(...);\n\nint main() {\n    std::cout << decltype(hasSize<std::vector<int>>(0))::value << \"\\n\";\n    std::cout << decltype(hasSize<int>(0))::value << \"\\n\";\n}",
+          "answer": "1\n0",
+          "explanation": "- Expression SFINAE detects presence of `.size()` method\n- First overload: `decltype(std::declval<T>().size(), std::true_type{})`\n- `std::declval<T>()` creates T without construction (for unevaluated context)\n- Comma operator: evaluates both, returns second (std::true_type)\n- Second overload: `std::false_type hasSize(...)` (variadic, lower priority)\n- `hasSize<std::vector<int>>(0)`: vector has .size(), first overload selected\n- Returns std::true_type, ::value is 1\n- `hasSize<int>(0)`: int has no .size(), first overload SFINAE fails\n- Second overload selected (fallback), returns std::false_type, ::value is 0\n- **Key Concept:** Expression SFINAE with decltype and comma operator detects member functions; variadic overload as fallback",
+          "key_concept": "Expression SFINAE with decltype and comma operator detects member functions; variadic overload as fallback",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1\n0"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Base {\npublic:\n    void interface() {\n        static_cast<Derived*>(this)->impl();\n    }\n};\n\nclass D : public Base<D> {\npublic:\n    void impl() { std::cout << \"D::impl\\n\"; }\n};\n\nint main() {\n    D d;\n    d.interface();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `D::impl`\n\n**Explanation:** CRTP static dispatch calls derived implementation\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nD::impl\n```\n\n**Explanation:**\n- CRTP (Curiously Recurring Template Pattern): D inherits from Base<D>\n- Base is templated on Derived type (D)\n- `interface()` in Base casts `this` to Derived*: `static_cast<Derived*>(this)`\n- Since D inherits from Base<D>, this points to D object\n- Static cast to D* is safe and legal\n- Calls `impl()` on Derived (D), not Base\n- Static dispatch (compile-time polymorphism), no virtual functions\n- `d.interface()` calls Base::interface(), which calls D::impl()\n- Prints \"D::impl\"\n- **Key Concept:** CRTP enables static polymorphism by casting base this to derived type; avoids virtual function overhead",
           "code": "template<typename Derived>\nclass Base {\npublic:\n    void interface() {\n        static_cast<Derived*>(this)->impl();\n    }\n};\n\nclass D : public Base<D> {\npublic:\n    void impl() { std::cout << \"D::impl\\n\"; }\n};\n\nint main() {\n    D d;\n    d.interface();\n}",
+          "answer": "D::impl",
+          "explanation": "- CRTP (Curiously Recurring Template Pattern): D inherits from Base<D>\n- Base is templated on Derived type (D)\n- `interface()` in Base casts `this` to Derived*: `static_cast<Derived*>(this)`\n- Since D inherits from Base<D>, this points to D object\n- Static cast to D* is safe and legal\n- Calls `impl()` on Derived (D), not Base\n- Static dispatch (compile-time polymorphism), no virtual functions\n- `d.interface()` calls Base::interface(), which calls D::impl()\n- Prints \"D::impl\"\n- **Key Concept:** CRTP enables static polymorphism by casting base this to derived type; avoids virtual function overhead",
+          "key_concept": "CRTP enables static polymorphism by casting base this to derived type; avoids virtual function overhead",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "D::impl"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"pointer\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<!std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"non-pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(&x);\n    func(x);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `pointer`<br>`non-pointer`\n\n**Explanation:** SFINAE selects correct overload based on pointer trait\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\npointer\nnon-pointer\n```\n\n**Explanation:**\n- Two function templates with mutually exclusive enable_if conditions\n- First: enabled when T is pointer type\n- Second: enabled when T is NOT pointer type (!is_pointer)\n- `func(&x)` with T=int*: is_pointer<int*> is true\n- First overload enabled, second disabled (SFINAE), prints \"pointer\"\n- `func(x)` with T=int: is_pointer<int> is false\n- First overload disabled (SFINAE), second enabled, prints \"non-pointer\"\n- enable_if evaluates at compile time during template instantiation\n- Only one overload valid for each call\n- **Key Concept:** Mutually exclusive SFINAE conditions create non-overlapping overload sets; only one candidate per call",
           "code": "template<typename T>\ntypename std::enable_if<std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"pointer\\n\"; }\n\ntemplate<typename T>\ntypename std::enable_if<!std::is_pointer<T>::value>::type\nfunc(T) { std::cout << \"non-pointer\\n\"; }\n\nint main() {\n    int x = 42;\n    func(&x);\n    func(x);\n}",
+          "answer": "pointer\nnon-pointer",
+          "explanation": "- Two function templates with mutually exclusive enable_if conditions\n- First: enabled when T is pointer type\n- Second: enabled when T is NOT pointer type (!is_pointer)\n- `func(&x)` with T=int*: is_pointer<int*> is true\n- First overload enabled, second disabled (SFINAE), prints \"pointer\"\n- `func(x)` with T=int: is_pointer<int> is false\n- First overload disabled (SFINAE), second enabled, prints \"non-pointer\"\n- enable_if evaluates at compile time during template instantiation\n- Only one overload valid for each call\n- **Key Concept:** Mutually exclusive SFINAE conditions create non-overlapping overload sets; only one candidate per call",
+          "key_concept": "Mutually exclusive SFINAE conditions create non-overlapping overload sets; only one candidate per call",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "pointer\nnon-pointer"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Counter {\n    static inline int count = 0;\nprotected:\n    Counter() { ++count; }\npublic:\n    static int getCount() { return count; }\n};\n\nclass Widget : public Counter<Widget> { };\n\nint main() {\n    Widget w1, w2, w3;\n    std::cout << Widget::getCount() << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `3`\n\n**Explanation:** Each `Widget` instance increments static counter in base\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3\n```\n\n**Explanation:**\n- CRTP counter pattern: Counter<Derived> template with static member\n- `static inline int count = 0` (C++17 inline static variable)\n- Each instantiation of Counter<T> has separate static counter\n- Widget inherits from Counter<Widget>\n- All Widget objects share same Counter<Widget>::count\n- Protected constructor increments count when Widget constructed\n- w1, w2, w3 each call Widget constructor\n- Widget constructor calls Counter<Widget> constructor\n- Each increments Counter<Widget>::count: 0→1→2→3\n- `Widget::getCount()` returns Counter<Widget>::count = 3\n- **Key Concept:** CRTP with static members creates per-type counters; each derived type has separate counter",
           "code": "template<typename Derived>\nclass Counter {\n    static inline int count = 0;\nprotected:\n    Counter() { ++count; }\npublic:\n    static int getCount() { return count; }\n};\n\nclass Widget : public Counter<Widget> { };\n\nint main() {\n    Widget w1, w2, w3;\n    std::cout << Widget::getCount() << \"\\n\";\n}",
+          "answer": "3",
+          "explanation": "- CRTP counter pattern: Counter<Derived> template with static member\n- `static inline int count = 0` (C++17 inline static variable)\n- Each instantiation of Counter<T> has separate static counter\n- Widget inherits from Counter<Widget>\n- All Widget objects share same Counter<Widget>::count\n- Protected constructor increments count when Widget constructed\n- w1, w2, w3 each call Widget constructor\n- Widget constructor calls Counter<Widget> constructor\n- Each increments Counter<Widget>::count: 0→1→2→3\n- `Widget::getCount()` returns Counter<Widget>::count = 3\n- **Key Concept:** CRTP with static members creates per-type counters; each derived type has separate counter",
+          "key_concept": "CRTP with static members creates per-type counters; each derived type has separate counter",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid processImpl(T val, std::true_type) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\nvoid processImpl(T val, std::false_type) { std::cout << \"other\\n\"; }\n\ntemplate<typename T>\nvoid process(T val) { processImpl(val, std::is_integral<T>{}); }\n\nint main() {\n    process(10);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `integral`<br>`other`\n\n**Explanation:** Tag dispatch selects overload via `true_type`/`false_type`\n\n**Key Concept:** #tag_dispatch\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nintegral\nother\n```\n\n**Explanation:**\n- Tag dispatch pattern: dispatch based on type tags (true_type/false_type)\n- `process(T val)` wrapper calls `processImpl(val, std::is_integral<T>{})`\n- `std::is_integral<T>{}` constructs true_type or false_type object\n- Not template specialization, just function overloading\n- `process(10)`: is_integral<int> is std::true_type, calls first processImpl\n- Prints \"integral\"\n- `process(3.14)`: is_integral<double> is std::false_type, calls second processImpl\n- Prints \"other\"\n- No SFINAE needed, both overloads always exist\n- Cleaner than enable_if for simple cases\n- **Key Concept:** Tag dispatch uses type objects to select overloads; cleaner alternative to SFINAE for binary choices",
           "code": "template<typename T>\nvoid processImpl(T val, std::true_type) { std::cout << \"integral\\n\"; }\n\ntemplate<typename T>\nvoid processImpl(T val, std::false_type) { std::cout << \"other\\n\"; }\n\ntemplate<typename T>\nvoid process(T val) { processImpl(val, std::is_integral<T>{}); }\n\nint main() {\n    process(10);\n    process(3.14);\n}",
+          "answer": "integral\nother",
+          "explanation": "- Tag dispatch pattern: dispatch based on type tags (true_type/false_type)\n- `process(T val)` wrapper calls `processImpl(val, std::is_integral<T>{})`\n- `std::is_integral<T>{}` constructs true_type or false_type object\n- Not template specialization, just function overloading\n- `process(10)`: is_integral<int> is std::true_type, calls first processImpl\n- Prints \"integral\"\n- `process(3.14)`: is_integral<double> is std::false_type, calls second processImpl\n- Prints \"other\"\n- No SFINAE needed, both overloads always exist\n- Cleaner than enable_if for simple cases\n- **Key Concept:** Tag dispatch uses type objects to select overloads; cleaner alternative to SFINAE for binary choices",
+          "key_concept": "Tag dispatch uses type objects to select overloads; cleaner alternative to SFINAE for binary choices",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "integral\nother"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>\nvoid func(T) { std::cout << \"class\\n\"; }\n\nint main() {\n    struct MyClass { };\n    func(MyClass{});\n    func(42);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `class`<br>Compilation error\n\n**Explanation:** SFINAE only enables for class types; `int` fails\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nclass\nCompilation error on func(42)\n```\n\n**Explanation:**\n- Template with default parameter using enable_if\n- `typename = typename std::enable_if<std::is_class<T>::value>::type`\n- Second template parameter has default value (not used in function signature)\n- SFINAE applied via default parameter, not return type\n- `func(MyClass{})`: is_class<MyClass> is true, enable_if provides type\n- Function instantiates, prints \"class\"\n- `func(42)` with T=int: is_class<int> is false\n- enable_if has no type member, substitution fails\n- No other overload available for int\n- Compilation error: no matching function for call to func(int)\n- **Key Concept:** SFINAE via default template parameters; substitution failure removes overload from candidate set",
           "code": "template<typename T, typename = typename std::enable_if<std::is_class<T>::value>::type>\nvoid func(T) { std::cout << \"class\\n\"; }\n\nint main() {\n    struct MyClass { };\n    func(MyClass{});\n    func(42);\n}",
+          "answer": "class\nCompilation error on func(42)",
+          "explanation": "- Template with default parameter using enable_if\n- `typename = typename std::enable_if<std::is_class<T>::value>::type`\n- Second template parameter has default value (not used in function signature)\n- SFINAE applied via default parameter, not return type\n- `func(MyClass{})`: is_class<MyClass> is true, enable_if provides type\n- Function instantiates, prints \"class\"\n- `func(42)` with T=int: is_class<int> is false\n- enable_if has no type member, substitution fails\n- No other overload available for int\n- Compilation error: no matching function for call to func(int)\n- **Key Concept:** SFINAE via default template parameters; substitution failure removes overload from candidate set",
+          "key_concept": "SFINAE via default template parameters; substitution failure removes overload from candidate set",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "class\nCompilation error on func(42)"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Printable {\npublic:\n    void print() const {\n        std::cout << static_cast<const Derived*>(this)->toString() << \"\\n\";\n    }\n};\n\nclass Data : public Printable<Data> {\npublic:\n    std::string toString() const { return \"Data\"; }\n};\n\nint main() {\n    Data d;\n    d.print();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Data`\n\n**Explanation:** CRTP mixin calls derived `toString()` via static cast\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nData\n```\n\n**Explanation:**\n- CRTP mixin pattern: Printable<Derived> provides interface\n- Data inherits from Printable<Data>\n- Printable::print() casts this to const Derived* (const Data*)\n- Calls toString() on derived class\n- Static dispatch (compile-time resolution), no virtual functions\n- Mixin pattern adds functionality (printing) to derived class\n- Derived must implement toString() method (compile-time contract)\n- `d.print()` calls Printable<Data>::print()\n- Casts to const Data*, calls Data::toString()\n- Returns \"Data\", prints it\n- **Key Concept:** CRTP mixin adds interface to derived class; derived provides implementation via static contract",
           "code": "template<typename Derived>\nclass Printable {\npublic:\n    void print() const {\n        std::cout << static_cast<const Derived*>(this)->toString() << \"\\n\";\n    }\n};\n\nclass Data : public Printable<Data> {\npublic:\n    std::string toString() const { return \"Data\"; }\n};\n\nint main() {\n    Data d;\n    d.print();\n}",
+          "answer": "Data",
+          "explanation": "- CRTP mixin pattern: Printable<Derived> provides interface\n- Data inherits from Printable<Data>\n- Printable::print() casts this to const Derived* (const Data*)\n- Calls toString() on derived class\n- Static dispatch (compile-time resolution), no virtual functions\n- Mixin pattern adds functionality (printing) to derived class\n- Derived must implement toString() method (compile-time contract)\n- `d.print()` calls Printable<Data>::print()\n- Casts to const Data*, calls Data::toString()\n- Returns \"Data\", prints it\n- **Key Concept:** CRTP mixin adds interface to derived class; derived provides implementation via static contract",
+          "key_concept": "CRTP mixin adds interface to derived class; derived provides implementation via static contract",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Data"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nauto callFunc(T& obj) -> decltype(obj.func()) {\n    return obj.func();\n}\n\nstruct HasFunc { int func() { return 42; } };\n\nint main() {\n    HasFunc h;\n    std::cout << callFunc(h) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`\n\n**Explanation:** `decltype` deduces return type from `func()` method\n\n**Key Concept:** #decltype\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- Trailing return type with decltype: `auto callFunc(T& obj) -> decltype(obj.func())`\n- decltype deduces return type from expression obj.func()\n- Must match actual return type of func() method\n- HasFunc::func() returns int\n- decltype(obj.func()) deduces int\n- callFunc return type is int\n- `callFunc(h)` calls h.func(), returns 42\n- Prints 42\n- decltype with expressions (not types) preserves value category\n- Useful for generic code when return type depends on T\n- **Key Concept:** decltype with trailing return type deduces return type from expressions; enables generic return types",
           "code": "template<typename T>\nauto callFunc(T& obj) -> decltype(obj.func()) {\n    return obj.func();\n}\n\nstruct HasFunc { int func() { return 42; } };\n\nint main() {\n    HasFunc h;\n    std::cout << callFunc(h) << \"\\n\";\n}",
+          "answer": "42",
+          "explanation": "- Trailing return type with decltype: `auto callFunc(T& obj) -> decltype(obj.func())`\n- decltype deduces return type from expression obj.func()\n- Must match actual return type of func() method\n- HasFunc::func() returns int\n- decltype(obj.func()) deduces int\n- callFunc return type is int\n- `callFunc(h)` calls h.func(), returns 42\n- Prints 42\n- decltype with expressions (not types) preserves value category\n- Useful for generic code when return type depends on T\n- **Key Concept:** decltype with trailing return type deduces return type from expressions; enables generic return types",
+          "key_concept": "decltype with trailing return type deduces return type from expressions; enables generic return types",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type\nfunc(T) { std::cout << \"arithmetic non-bool\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n    func(true);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error\n\n**Explanation:** Combined SFINAE conditions; `bool` fails both conditions\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\narithmetic non-bool\narithmetic non-bool\nCompilation error on func(true)\n```\n\n**Explanation:**\n- Combined SFINAE conditions with && operator\n- `is_arithmetic<T>::value && !is_same<T, bool>::value`\n- Both conditions must be true for enable_if to provide type\n- Arithmetic types: int, float, double, bool, char, etc.\n- `func(42)` with T=int: is_arithmetic<int> is true, is_same<int,bool> is false\n- Condition: true && true = true, function enabled, prints \"arithmetic non-bool\"\n- `func(3.14)` with T=double: is_arithmetic<double> is true, is_same<double,bool> is false\n- Condition: true && true = true, prints \"arithmetic non-bool\"\n- `func(true)` with T=bool: is_arithmetic<bool> is true, is_same<bool,bool> is true\n- Condition: true && false = false, enable_if has no type, SFINAE fails\n- Compilation error: no matching function for call to func(bool)\n- **Key Concept:** SFINAE with combined trait conditions; can exclude specific types from template sets",
           "code": "template<typename T>\ntypename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type\nfunc(T) { std::cout << \"arithmetic non-bool\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n    func(true);\n}",
+          "answer": "arithmetic non-bool\narithmetic non-bool\nCompilation error on func(true)",
+          "explanation": "- Combined SFINAE conditions with && operator\n- `is_arithmetic<T>::value && !is_same<T, bool>::value`\n- Both conditions must be true for enable_if to provide type\n- Arithmetic types: int, float, double, bool, char, etc.\n- `func(42)` with T=int: is_arithmetic<int> is true, is_same<int,bool> is false\n- Condition: true && true = true, function enabled, prints \"arithmetic non-bool\"\n- `func(3.14)` with T=double: is_arithmetic<double> is true, is_same<double,bool> is false\n- Condition: true && true = true, prints \"arithmetic non-bool\"\n- `func(true)` with T=bool: is_arithmetic<bool> is true, is_same<bool,bool> is true\n- Condition: true && false = false, enable_if has no type, SFINAE fails\n- Compilation error: no matching function for call to func(bool)\n- **Key Concept:** SFINAE with combined trait conditions; can exclude specific types from template sets",
+          "key_concept": "SFINAE with combined trait conditions; can exclude specific types from template sets",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "arithmetic non-bool\narithmetic non-bool\nCompilation error on func(true)"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Base {\npublic:\n    void doWork() { static_cast<Derived*>(this)->impl(); }\n};\n\nclass Incomplete : public Base<Incomplete> {\n    // Missing impl()\n};\n\nint main() {\n    Incomplete obj;\n    obj.doWork();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Missing `impl()` method in derived class\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error\n```\n\n**Explanation:**\n- CRTP contract violation: Base expects Derived to have impl() method\n- Base<Incomplete>::doWork() casts this to Incomplete*\n- Attempts to call impl() on Incomplete\n- Incomplete class has no impl() method (not defined)\n- Compilation error: no member named impl in Incomplete\n- Error occurs during template instantiation of doWork()\n- CRTP requires derived class to satisfy interface contract\n- Unlike virtual functions, no runtime error - compile-time check\n- Must implement all methods that base calls via static_cast\n- **Fix:** Add `void impl() { /* implementation */ }` to Incomplete class\n- **Key Concept:** CRTP requires derived class to implement expected interface; compile-time contract enforcement",
           "code": "template<typename Derived>\nclass Base {\npublic:\n    void doWork() { static_cast<Derived*>(this)->impl(); }\n};\n\nclass Incomplete : public Base<Incomplete> {\n    // Missing impl()\n};\n\nint main() {\n    Incomplete obj;\n    obj.doWork();\n}",
+          "answer": "Compilation error",
+          "explanation": "- CRTP contract violation: Base expects Derived to have impl() method\n- Base<Incomplete>::doWork() casts this to Incomplete*\n- Attempts to call impl() on Incomplete\n- Incomplete class has no impl() method (not defined)\n- Compilation error: no member named impl in Incomplete\n- Error occurs during template instantiation of doWork()\n- CRTP requires derived class to satisfy interface contract\n- Unlike virtual functions, no runtime error - compile-time check\n- Must implement all methods that base calls via static_cast\n- **Fix:** Add `void impl() { /* implementation */ }` to Incomplete class\n- **Key Concept:** CRTP requires derived class to implement expected interface; compile-time contract enforcement",
+          "key_concept": "CRTP requires derived class to implement expected interface; compile-time contract enforcement",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nauto test(int) -> decltype(typename T::value_type{}, std::true_type{});\n\ntemplate<typename T>\nstd::false_type test(...);\n\ntemplate<typename T>\nstruct Container { using value_type = T; };\n\nint main() {\n    std::cout << decltype(test<Container<int>>(0))::value << \"\\n\";\n    std::cout << decltype(test<int>(0))::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1`<br>`0`\n\n**Explanation:** Expression SFINAE detects nested `value_type`\n\n**Key Concept:** #expression_sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1\n0\n```\n\n**Explanation:**\n- Expression SFINAE detects nested type member value_type\n- First overload: `decltype(typename T::value_type{}, std::true_type{})`\n- `typename T::value_type` attempts to access nested type\n- If exists, braced initialization creates instance\n- Comma operator returns second operand (std::true_type)\n- Second overload: variadic fallback with lower priority\n- `test<Container<int>>(0)`: Container has value_type, first overload selected\n- Returns std::true_type, ::value is 1\n- `test<int>(0)`: int has no value_type, first overload SFINAE fails\n- Second overload selected, returns std::false_type, ::value is 0\n- Detects container-like types (vector, list, custom containers)\n- **Key Concept:** Expression SFINAE with typename detects nested types; comma operator for return type",
           "code": "template<typename T>\nauto test(int) -> decltype(typename T::value_type{}, std::true_type{});\n\ntemplate<typename T>\nstd::false_type test(...);\n\ntemplate<typename T>\nstruct Container { using value_type = T; };\n\nint main() {\n    std::cout << decltype(test<Container<int>>(0))::value << \"\\n\";\n    std::cout << decltype(test<int>(0))::value << \"\\n\";\n}",
+          "answer": "1\n0",
+          "explanation": "- Expression SFINAE detects nested type member value_type\n- First overload: `decltype(typename T::value_type{}, std::true_type{})`\n- `typename T::value_type` attempts to access nested type\n- If exists, braced initialization creates instance\n- Comma operator returns second operand (std::true_type)\n- Second overload: variadic fallback with lower priority\n- `test<Container<int>>(0)`: Container has value_type, first overload selected\n- Returns std::true_type, ::value is 1\n- `test<int>(0)`: int has no value_type, first overload SFINAE fails\n- Second overload selected, returns std::false_type, ::value is 0\n- Detects container-like types (vector, list, custom containers)\n- **Key Concept:** Expression SFINAE with typename detects nested types; comma operator for return type",
+          "key_concept": "Expression SFINAE with typename detects nested types; comma operator for return type",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1\n0"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Singleton {\n    static Derived* instance;\nprotected:\n    Singleton() = default;\npublic:\n    static Derived& getInstance() {\n        if (!instance) instance = new Derived();\n        return *instance;\n    }\n};\n\ntemplate<typename T>\nT* Singleton<T>::instance = nullptr;\n\nclass Database : public Singleton<Database> {\n    friend class Singleton<Database>;\nprivate:\n    Database() { std::cout << \"DB created\\n\"; }\n};\n\nint main() {\n    Database& db1 = Database::getInstance();\n    Database& db2 = Database::getInstance();\n    std::cout << (&db1 == &db2) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `DB created`<br>`1`\n\n**Explanation:** Singleton pattern via CRTP; both references point to same instance\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDB created\n1\n```\n\n**Explanation:**\n- CRTP Singleton pattern: Singleton<Derived> provides singleton interface\n- Database inherits from Singleton<Database>\n- Static member `instance` is Database* (per-type singleton)\n- `getInstance()` checks if instance is null, creates if needed\n- First call `Database::getInstance()`: instance is nullptr\n- Creates new Database(), prints \"DB created\"\n- Stores in Singleton<Database>::instance\n- Returns reference to Database\n- Second call: instance already exists, returns same reference\n- `&db1 == &db2` compares addresses, both point to same object, prints 1\n- friend class declaration allows Singleton to access private constructor\n- CRTP enables type-safe singletons without runtime polymorphism\n- **Key Concept:** CRTP singleton provides per-type singleton instances; static member in base template is separate for each derived type",
           "code": "template<typename Derived>\nclass Singleton {\n    static Derived* instance;\nprotected:\n    Singleton() = default;\npublic:\n    static Derived& getInstance() {\n        if (!instance) instance = new Derived();\n        return *instance;\n    }\n};\n\ntemplate<typename T>\nT* Singleton<T>::instance = nullptr;\n\nclass Database : public Singleton<Database> {\n    friend class Singleton<Database>;\nprivate:\n    Database() { std::cout << \"DB created\\n\"; }\n};\n\nint main() {\n    Database& db1 = Database::getInstance();\n    Database& db2 = Database::getInstance();\n    std::cout << (&db1 == &db2) << \"\\n\";\n}",
+          "answer": "DB created\n1",
+          "explanation": "- CRTP Singleton pattern: Singleton<Derived> provides singleton interface\n- Database inherits from Singleton<Database>\n- Static member `instance` is Database* (per-type singleton)\n- `getInstance()` checks if instance is null, creates if needed\n- First call `Database::getInstance()`: instance is nullptr\n- Creates new Database(), prints \"DB created\"\n- Stores in Singleton<Database>::instance\n- Returns reference to Database\n- Second call: instance already exists, returns same reference\n- `&db1 == &db2` compares addresses, both point to same object, prints 1\n- friend class declaration allows Singleton to access private constructor\n- CRTP enables type-safe singletons without runtime polymorphism\n- **Key Concept:** CRTP singleton provides per-type singleton instances; static member in base template is separate for each derived type",
+          "key_concept": "CRTP singleton provides per-type singleton instances; static member in base template is separate for each derived type",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "DB created\n1"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T, \n         typename std::enable_if<std::is_integral<T>::value, int>::type = 0>\nvoid func(T) { std::cout << \"int version\\n\"; }\n\ntemplate<typename T,\n         typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0>\nvoid func(T) { std::cout << \"float version\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `int version`<br>`float version`\n\n**Explanation:** Template parameter SFINAE with different default types\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint version\nfloat version\n```\n\n**Explanation:**\n- SFINAE via non-type template parameter with enable_if\n- First: `typename std::enable_if<std::is_integral<T>::value, int>::type = 0`\n- Second: `typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0`\n- enable_if second parameter (int, long) specifies type when condition true\n- Default value = 0 for both\n- `func(42)` with T=int: is_integral<int> is true\n- First enable_if provides type int, default value 0\n- Second enable_if fails (not floating point), SFINAE removes second overload\n- Prints \"int version\"\n- `func(3.14)` with T=double: is_floating_point<double> is true\n- Second enable_if provides type long, default value 0\n- First enable_if fails (not integral), SFINAE removes first overload\n- Prints \"float version\"\n- **Key Concept:** SFINAE with enable_if second parameter and default values; mutually exclusive type constraints",
           "code": "template<typename T, \n         typename std::enable_if<std::is_integral<T>::value, int>::type = 0>\nvoid func(T) { std::cout << \"int version\\n\"; }\n\ntemplate<typename T,\n         typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0>\nvoid func(T) { std::cout << \"float version\\n\"; }\n\nint main() {\n    func(42);\n    func(3.14);\n}",
+          "answer": "int version\nfloat version",
+          "explanation": "- SFINAE via non-type template parameter with enable_if\n- First: `typename std::enable_if<std::is_integral<T>::value, int>::type = 0`\n- Second: `typename std::enable_if<std::is_floating_point<T>::value, long>::type = 0`\n- enable_if second parameter (int, long) specifies type when condition true\n- Default value = 0 for both\n- `func(42)` with T=int: is_integral<int> is true\n- First enable_if provides type int, default value 0\n- Second enable_if fails (not floating point), SFINAE removes second overload\n- Prints \"int version\"\n- `func(3.14)` with T=double: is_floating_point<double> is true\n- Second enable_if provides type long, default value 0\n- First enable_if fails (not integral), SFINAE removes first overload\n- Prints \"float version\"\n- **Key Concept:** SFINAE with enable_if second parameter and default values; mutually exclusive type constraints",
+          "key_concept": "SFINAE with enable_if second parameter and default values; mutually exclusive type constraints",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int version\nfloat version"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass LogMixin {\npublic:\n    void log(const std::string& msg) {\n        std::cout << \"LOG: \" << msg << \"\\n\";\n        static_cast<Derived*>(this)->extraLog();\n    }\n};\n\nclass MyClass : public LogMixin<MyClass> {\npublic:\n    void extraLog() { std::cout << \"Extra\\n\"; }\n};\n\nint main() {\n    MyClass obj;\n    obj.log(\"test\");\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `LOG: test`<br>`Extra`\n\n**Explanation:** CRTP mixin calls derived `extraLog()` method\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nLOG: test\nExtra\n```\n\n**Explanation:**\n- CRTP mixin pattern: LogMixin<Derived> adds logging functionality\n- MyClass inherits from LogMixin<MyClass>\n- LogMixin::log() prints message, then calls derived extraLog()\n- Casts this to Derived* (MyClass*) via static_cast\n- Static dispatch resolves to MyClass::extraLog()\n- `obj.log(\"test\")` calls LogMixin<MyClass>::log()\n- Prints \"LOG: test\"\n- Casts to MyClass*, calls MyClass::extraLog()\n- Prints \"Extra\"\n- Mixin pattern allows customization hook (extraLog)\n- Derived class can add extra behavior without modifying mixin\n- No virtual functions, compile-time polymorphism\n- **Key Concept:** CRTP mixin provides customizable functionality; derived class extends via static contract methods",
           "code": "template<typename Derived>\nclass LogMixin {\npublic:\n    void log(const std::string& msg) {\n        std::cout << \"LOG: \" << msg << \"\\n\";\n        static_cast<Derived*>(this)->extraLog();\n    }\n};\n\nclass MyClass : public LogMixin<MyClass> {\npublic:\n    void extraLog() { std::cout << \"Extra\\n\"; }\n};\n\nint main() {\n    MyClass obj;\n    obj.log(\"test\");\n}",
+          "answer": "LOG: test\nExtra",
+          "explanation": "- CRTP mixin pattern: LogMixin<Derived> adds logging functionality\n- MyClass inherits from LogMixin<MyClass>\n- LogMixin::log() prints message, then calls derived extraLog()\n- Casts this to Derived* (MyClass*) via static_cast\n- Static dispatch resolves to MyClass::extraLog()\n- `obj.log(\"test\")` calls LogMixin<MyClass>::log()\n- Prints \"LOG: test\"\n- Casts to MyClass*, calls MyClass::extraLog()\n- Prints \"Extra\"\n- Mixin pattern allows customization hook (extraLog)\n- Derived class can add extra behavior without modifying mixin\n- No virtual functions, compile-time polymorphism\n- **Key Concept:** CRTP mixin provides customizable functionality; derived class extends via static contract methods",
+          "key_concept": "CRTP mixin provides customizable functionality; derived class extends via static contract methods",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "LOG: test\nExtra"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\ntypename std::enable_if<sizeof(T) > 4, void>::type\nfunc(T) { std::cout << \"large type\\n\"; }\n\nint main() {\n    func(42L);\n    func('c');\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `large type`<br>Compilation error\n\n**Explanation:** `long` is 8 bytes; `char` is 1 byte (fails SFINAE)\n\n**Key Concept:** #sfinae\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nlarge type\nCompilation error on func('c')\n```\n\n**Explanation:**\n- SFINAE based on sizeof operator (compile-time size check)\n- `std::enable_if<sizeof(T) > 4, void>::type` enabled when type larger than 4 bytes\n- `func(42L)` with T=long: sizeof(long) is typically 8 bytes (platform-dependent)\n- 8 > 4, enable_if provides type void, function instantiates\n- Prints \"large type\"\n- `func('c')` with T=char: sizeof(char) is always 1 byte\n- 1 > 4 is false, enable_if has no type member, SFINAE fails\n- No other overload available for char\n- Compilation error: no matching function for call to func(char)\n- sizeof is compile-time constant expression\n- **Key Concept:** SFINAE with sizeof enables functions based on type size; useful for optimization or specialization by size",
           "code": "template<typename T>\ntypename std::enable_if<sizeof(T) > 4, void>::type\nfunc(T) { std::cout << \"large type\\n\"; }\n\nint main() {\n    func(42L);\n    func('c');\n}",
+          "answer": "large type\nCompilation error on func('c')",
+          "explanation": "- SFINAE based on sizeof operator (compile-time size check)\n- `std::enable_if<sizeof(T) > 4, void>::type` enabled when type larger than 4 bytes\n- `func(42L)` with T=long: sizeof(long) is typically 8 bytes (platform-dependent)\n- 8 > 4, enable_if provides type void, function instantiates\n- Prints \"large type\"\n- `func('c')` with T=char: sizeof(char) is always 1 byte\n- 1 > 4 is false, enable_if has no type member, SFINAE fails\n- No other overload available for char\n- Compilation error: no matching function for call to func(char)\n- sizeof is compile-time constant expression\n- **Key Concept:** SFINAE with sizeof enables functions based on type size; useful for optimization or specialization by size",
+          "key_concept": "SFINAE with sizeof enables functions based on type size; useful for optimization or specialization by size",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "large type\nCompilation error on func('c')"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\ntemplate<typename T>\nauto func(T) -> typename RemoveConst<T>::type {\n    return typename RemoveConst<T>::type{};\n}\n\nint main() {\n    const int x = 42;\n    auto result = func(x);\n    std::cout << std::is_const<decltype(result)>::value << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `0`\n\n**Explanation:** `RemoveConst` strips const qualifier; result is non-const\n\n**Key Concept:** #type_traits\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0\n```\n\n**Explanation:**\n- Type trait implementation: RemoveConst strips const from types\n- Primary template: `RemoveConst<T>` provides type = T (unchanged)\n- Partial specialization: `RemoveConst<const T>` provides type = T (strips const)\n- `func(T)` has trailing return type `typename RemoveConst<T>::type`\n- `func(x)` with const int x: T deduced as const int (by-value, const ignored)\n- Wait - by-value parameters decay: const int → int\n- Actually T is int (not const int), RemoveConst<int> returns int\n- `auto result` deduces int from return type\n- `is_const<decltype(result)>` checks if result is const\n- result is int (non-const), ::value is 0 (false)\n- If parameter was const int&, T would be const int, trait would strip it\n- **Key Concept:** Type trait partial specialization strips type qualifiers; useful for generic programming",
           "code": "template<typename T>\nstruct RemoveConst { using type = T; };\n\ntemplate<typename T>\nstruct RemoveConst<const T> { using type = T; };\n\ntemplate<typename T>\nauto func(T) -> typename RemoveConst<T>::type {\n    return typename RemoveConst<T>::type{};\n}\n\nint main() {\n    const int x = 42;\n    auto result = func(x);\n    std::cout << std::is_const<decltype(result)>::value << \"\\n\";\n}",
+          "answer": "0",
+          "explanation": "- Type trait implementation: RemoveConst strips const from types\n- Primary template: `RemoveConst<T>` provides type = T (unchanged)\n- Partial specialization: `RemoveConst<const T>` provides type = T (strips const)\n- `func(T)` has trailing return type `typename RemoveConst<T>::type`\n- `func(x)` with const int x: T deduced as const int (by-value, const ignored)\n- Wait - by-value parameters decay: const int → int\n- Actually T is int (not const int), RemoveConst<int> returns int\n- `auto result` deduces int from return type\n- `is_const<decltype(result)>` checks if result is const\n- result is int (non-const), ::value is 0 (false)\n- If parameter was const int&, T would be const int, trait would strip it\n- **Key Concept:** Type trait partial specialization strips type qualifiers; useful for generic programming",
+          "key_concept": "Type trait partial specialization strips type qualifiers; useful for generic programming",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename Derived>\nclass Interface {\npublic:\n    void execute() {\n        std::cout << \"Before\\n\";\n        static_cast<Derived*>(this)->doExecute();\n        std::cout << \"After\\n\";\n    }\n};\n\nclass Impl : public Interface<Impl> {\npublic:\n    void doExecute() { std::cout << \"Executing\\n\"; }\n};\n\nint main() {\n    Impl obj;\n    obj.execute();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Before`<br>`Executing`<br>`After`\n\n**Explanation:** CRTP Template Method pattern with static dispatch\n\n**Key Concept:** #crtp\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBefore\nExecuting\nAfter\n```\n\n**Explanation:**\n- CRTP Template Method pattern: Interface defines algorithm skeleton\n- Impl inherits from Interface<Impl>\n- Interface::execute() provides template method structure\n- Prints \"Before\"\n- Casts this to Derived* (Impl*), calls doExecute()\n- Static dispatch to Impl::doExecute(), prints \"Executing\"\n- Returns to execute(), prints \"After\"\n- Template method pattern: base defines flow, derived provides steps\n- Static polymorphism (CRTP) instead of virtual functions\n- Compile-time dispatch, zero overhead\n- Derived must implement doExecute() (compile-time contract)\n- Common pattern for frameworks and extensibility\n- **Key Concept:** CRTP Template Method pattern provides algorithm skeleton with static dispatch; derived fills in steps",
           "code": "template<typename Derived>\nclass Interface {\npublic:\n    void execute() {\n        std::cout << \"Before\\n\";\n        static_cast<Derived*>(this)->doExecute();\n        std::cout << \"After\\n\";\n    }\n};\n\nclass Impl : public Interface<Impl> {\npublic:\n    void doExecute() { std::cout << \"Executing\\n\"; }\n};\n\nint main() {\n    Impl obj;\n    obj.execute();\n}",
+          "answer": "Before\nExecuting\nAfter",
+          "explanation": "- CRTP Template Method pattern: Interface defines algorithm skeleton\n- Impl inherits from Interface<Impl>\n- Interface::execute() provides template method structure\n- Prints \"Before\"\n- Casts this to Derived* (Impl*), calls doExecute()\n- Static dispatch to Impl::doExecute(), prints \"Executing\"\n- Returns to execute(), prints \"After\"\n- Template method pattern: base defines flow, derived provides steps\n- Static polymorphism (CRTP) instead of virtual functions\n- Compile-time dispatch, zero overhead\n- Derived must implement doExecute() (compile-time contract)\n- Common pattern for frameworks and extensibility\n- **Key Concept:** CRTP Template Method pattern provides algorithm skeleton with static dispatch; derived fills in steps",
+          "key_concept": "CRTP Template Method pattern provides algorithm skeleton with static dispatch; derived fills in steps",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Before\nExecuting\nAfter"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid process(T val) {\n    static_assert(std::is_integral<T>::value, \"T must be integral\");\n    std::cout << val << \"\\n\";\n}\n\nint main() {\n    process(42);\n    process(3.14);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42`<br>Compilation error\n\n**Explanation:** `static_assert` enforces integral constraint; double fails\n\n**Key Concept:** #static_assert\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\nCompilation error on process(3.14)\n```\n\n**Explanation:**\n- static_assert provides compile-time assertions\n- `static_assert(std::is_integral<T>::value, \"T must be integral\")`\n- Evaluated during template instantiation\n- If condition false, compilation fails with error message\n- `process(42)` with T=int: is_integral<int> is true\n- static_assert passes, function compiles, prints 42\n- `process(3.14)` with T=double: is_integral<double> is false\n- static_assert fails with message \"T must be integral\"\n- Compilation error with descriptive message\n- Better than SFINAE for mandatory constraints (clear error message)\n- SFINAE removes overload silently, static_assert fails loudly\n- C++11 feature for enforcing requirements\n- **Key Concept:** static_assert enforces template constraints at compile time with clear error messages; better than SFINAE for mandatory requirements",
           "code": "template<typename T>\nvoid process(T val) {\n    static_assert(std::is_integral<T>::value, \"T must be integral\");\n    std::cout << val << \"\\n\";\n}\n\nint main() {\n    process(42);\n    process(3.14);\n}",
+          "answer": "42\nCompilation error on process(3.14)",
+          "explanation": "- static_assert provides compile-time assertions\n- `static_assert(std::is_integral<T>::value, \"T must be integral\")`\n- Evaluated during template instantiation\n- If condition false, compilation fails with error message\n- `process(42)` with T=int: is_integral<int> is true\n- static_assert passes, function compiles, prints 42\n- `process(3.14)` with T=double: is_integral<double> is false\n- static_assert fails with message \"T must be integral\"\n- Compilation error with descriptive message\n- Better than SFINAE for mandatory constraints (clear error message)\n- SFINAE removes overload silently, static_assert fails loudly\n- C++11 feature for enforcing requirements\n- **Key Concept:** static_assert enforces template constraints at compile time with clear error messages; better than SFINAE for mandatory requirements",
+          "key_concept": "static_assert enforces template constraints at compile time with clear error messages; better than SFINAE for mandatory requirements",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42\nCompilation error on process(3.14)"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nauto add(T a, T b) -> decltype(a + b) {\n    return a + b;\n}\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add(3.14, 2.86) << \"\\n\";\n    std::cout << add(std::string(\"Hello\"), std::string(\" World\")) << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `15`<br>`6`<br>`Hello World`\n\n**Explanation:** `decltype(a + b)` deduces result type of addition\n\n**Key Concept:** #decltype\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n15\n6\nHello World\n```\n\n**Explanation:**\n- Trailing return type with decltype: `auto add(T a, T b) -> decltype(a + b)`\n- decltype deduces result type of expression a + b\n- Works with any type that supports operator+\n- `add(5, 10)` with T=int: decltype(int + int) is int\n- Returns 5 + 10 = 15\n- `add(3.14, 2.86)` with T=double: decltype(double + double) is double\n- Returns 6.0, printed as 6 (stream default formatting)\n- `add(string(\"Hello\"), string(\" World\"))`: decltype(string + string) is string\n- string operator+ concatenates, returns \"Hello World\"\n- Generic function works for any addable types\n- decltype preserves exact result type (including references if returned)\n- **Key Concept:** decltype with trailing return type enables generic operations; deduces result type from expression\n\n---\n\n\n## TOPIC: Advanced Template Techniques - SFINAE and CRTP",
           "code": "template<typename T>\nauto add(T a, T b) -> decltype(a + b) {\n    return a + b;\n}\n\nint main() {\n    std::cout << add(5, 10) << \"\\n\";\n    std::cout << add(3.14, 2.86) << \"\\n\";\n    std::cout << add(std::string(\"Hello\"), std::string(\" World\")) << \"\\n\";\n}",
+          "answer": "15\n6\nHello World",
+          "explanation": "- Trailing return type with decltype: `auto add(T a, T b) -> decltype(a + b)`\n- decltype deduces result type of expression a + b\n- Works with any type that supports operator+\n- `add(5, 10)` with T=int: decltype(int + int) is int\n- Returns 5 + 10 = 15\n- `add(3.14, 2.86)` with T=double: decltype(double + double) is double\n- Returns 6.0, printed as 6 (stream default formatting)\n- `add(string(\"Hello\"), string(\" World\"))`: decltype(string + string) is string\n- string operator+ concatenates, returns \"Hello World\"\n- Generic function works for any addable types\n- decltype preserves exact result type (including references if returned)\n- **Key Concept:** decltype with trailing return type enables generic operations; deduces result type from expression",
+          "key_concept": "decltype with trailing return type enables generic operations; deduces result type from expression",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "15\n6\nHello World"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `integral`<br>Compilation error | First call matches integral SFINAE; second fails (no float overload) | #sfinae |\n| 2 | `1`<br>`0` | `std::vector` has `.size()` method; `int` doesn't | #expression_sfinae |\n| 3 | `D::impl` | CRTP static dispatch calls derived implementation | #crtp |\n| 4 | `pointer`<br>`non-pointer` | SFINAE selects correct overload based on pointer trait | #sfinae |\n| 5 | `3` | Each `Widget` instance increments static counter in base | #crtp |\n| 6 | `integral`<br>`other` | Tag dispatch selects overload via `true_type`/`false_type` | #tag_dispatch |\n| 7 | `class`<br>Compilation error | SFINAE only enables for class types; `int` fails | #sfinae |\n| 8 | `Data` | CRTP mixin calls derived `toString()` via static cast | #crtp |\n| 9 | `42` | `decltype` deduces return type from `func()` method | #decltype |\n| 10 | `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error | Combined SFINAE conditions; `bool` fails both conditions | #sfinae |\n| 11 | Compilation error | Missing `impl()` method in derived class | #crtp |\n| 12 | `1`<br>`0` | Expression SFINAE detects nested `value_type` | #expression_sfinae |\n| 13 | `DB created`<br>`1` | Singleton pattern via CRTP; both references point to same instance | #crtp |\n| 14 | `int version`<br>`float version` | Template parameter SFINAE with different default types | #sfinae |\n| 15 | `LOG: test`<br>`Extra` | CRTP mixin calls derived `extraLog()` method | #crtp |\n| 16 | `large type`<br>Compilation error | `long` is 8 bytes; `char` is 1 byte (fails SFINAE) | #sfinae |\n| 17 | `0` | `RemoveConst` strips const qualifier; result is non-const | #type_traits |\n| 18 | `Before`<br>`Executing`<br>`After` | CRTP Template Method pattern with static dispatch | #crtp |\n| 19 | `42`<br>Compilation error | `static_assert` enforces integral constraint; double fails | #static_assert |\n| 20 | `15`<br>`6`<br>`Hello World` | `decltype(a + b)` deduces result type of addition | #decltype |\n\n#### SFINAE Techniques Comparison\n\n| Technique | Syntax | Use Case | Readability |\n|-----------|--------|----------|-------------|\n| Return Type SFINAE | `typename enable_if<cond>::type func()` | Any function | Medium |\n| Template Parameter SFINAE | `template<typename = enable_if<cond>::type>` | Constructors, operators | Low |\n| Expression SFINAE | `auto func() -> decltype(expr)` | Member detection | Low |\n| Tag Dispatch | `func(val, true_type{})` | Simple conditions | High |\n| Concepts (C++20) | `template<Concept T>` | Interface constraints | Very High |\n\n#### CRTP Usage Patterns\n\n| Pattern | Purpose | Example Use Case |\n|---------|---------|------------------|\n| Static Interface | Interface implementation without virtuals | Shape hierarchy |\n| Mixin | Add capabilities via inheritance | Printable, Serializable |\n| Instance Counter | Track object instances per type | Resource management |\n| Singleton | Reusable singleton infrastructure | Database connections |\n| Template Method | Algorithm structure with customization | Sorting algorithms |\n| Policy Class | Compile-time behavior configuration | Allocator policies |\n\n#### SFINAE vs CRTP Decision Matrix\n\n| Need | Use SFINAE | Use CRTP |\n|------|-----------|----------|\n| Conditional instantiation | ✅ Yes | ❌ No |\n| Static polymorphism | ❌ No | ✅ Yes |\n| Member detection | ✅ Yes | ❌ No |\n| Zero-overhead interface | ❌ No | ✅ Yes |\n| Mixins | ❌ No | ✅ Yes |\n| Overload selection | ✅ Yes | ❌ No |\n| Type constraints | ✅ Yes | ❌ No |\n| Derived implementation access | ❌ No | ✅ Yes |\n\n#### Common SFINAE Idioms\n\n| Idiom | Code Pattern | Purpose |\n|-------|--------------|---------|\n| Return Type Enable | `typename enable_if<C>::type func()` | Basic SFINAE |\n| Expression Test | `decltype(expr, true_type{})` | Capability detection |\n| Member Detection | `declval<T>().member()` | Check for members |\n| Logical Combination | `enable_if<C1 && C2>` | Multiple conditions |\n| Overload Priority | `func(..., int)` vs `func(..., long)` | Fallback ordering |\n| Comma Operator | `decltype((expr1, expr2))` | Test + return type |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `integral`<br>Compilation error | First call matches integral SFINAE; second fails (no float overload) | #sfinae |\n| 2 | `1`<br>`0` | `std::vector` has `.size()` method; `int` doesn't | #expression_sfinae |\n| 3 | `D::impl` | CRTP static dispatch calls derived implementation | #crtp |\n| 4 | `pointer`<br>`non-pointer` | SFINAE selects correct overload based on pointer trait | #sfinae |\n| 5 | `3` | Each `Widget` instance increments static counter in base | #crtp |\n| 6 | `integral`<br>`other` | Tag dispatch selects overload via `true_type`/`false_type` | #tag_dispatch |\n| 7 | `class`<br>Compilation error | SFINAE only enables for class types; `int` fails | #sfinae |\n| 8 | `Data` | CRTP mixin calls derived `toString()` via static cast | #crtp |\n| 9 | `42` | `decltype` deduces return type from `func()` method | #decltype |\n| 10 | `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error | Combined SFINAE conditions; `bool` fails both conditions | #sfinae |\n| 11 | Compilation error | Missing `impl()` method in derived class | #crtp |\n| 12 | `1`<br>`0` | Expression SFINAE detects nested `value_type` | #expression_sfinae |\n| 13 | `DB created`<br>`1` | Singleton pattern via CRTP; both references point to same instance | #crtp |\n| 14 | `int version`<br>`float version` | Template parameter SFINAE with different default types | #sfinae |\n| 15 | `LOG: test`<br>`Extra` | CRTP mixin calls derived `extraLog()` method | #crtp |\n| 16 | `large type`<br>Compilation error | `long` is 8 bytes; `char` is 1 byte (fails SFINAE) | #sfinae |\n| 17 | `0` | `RemoveConst` strips const qualifier; result is non-const | #type_traits |\n| 18 | `Before`<br>`Executing`<br>`After` | CRTP Template Method pattern with static dispatch | #crtp |\n| 19 | `42`<br>Compilation error | `static_assert` enforces integral constraint; double fails | #static_assert |\n| 20 | `15`<br>`6`<br>`Hello World` | `decltype(a + b)` deduces result type of addition | #decltype |\n\n#### SFINAE Techniques Comparison\n\n| Technique | Syntax | Use Case | Readability |\n|-----------|--------|----------|-------------|\n| Return Type SFINAE | `typename enable_if<cond>::type func()` | Any function | Medium |\n| Template Parameter SFINAE | `template<typename = enable_if<cond>::type>` | Constructors, operators | Low |\n| Expression SFINAE | `auto func() -> decltype(expr)` | Member detection | Low |\n| Tag Dispatch | `func(val, true_type{})` | Simple conditions | High |\n| Concepts (C++20) | `template<Concept T>` | Interface constraints | Very High |\n\n#### CRTP Usage Patterns\n\n| Pattern | Purpose | Example Use Case |\n|---------|---------|------------------|\n| Static Interface | Interface implementation without virtuals | Shape hierarchy |\n| Mixin | Add capabilities via inheritance | Printable, Serializable |\n| Instance Counter | Track object instances per type | Resource management |\n| Singleton | Reusable singleton infrastructure | Database connections |\n| Template Method | Algorithm structure with customization | Sorting algorithms |\n| Policy Class | Compile-time behavior configuration | Allocator policies |\n\n#### SFINAE vs CRTP Decision Matrix\n\n| Need | Use SFINAE | Use CRTP |\n|------|-----------|----------|\n| Conditional instantiation | ✅ Yes | ❌ No |\n| Static polymorphism | ❌ No | ✅ Yes |\n| Member detection | ✅ Yes | ❌ No |\n| Zero-overhead interface | ❌ No | ✅ Yes |\n| Mixins | ❌ No | ✅ Yes |\n| Overload selection | ✅ Yes | ❌ No |\n| Type constraints | ✅ Yes | ❌ No |\n| Derived implementation access | ❌ No | ✅ Yes |\n\n#### Common SFINAE Idioms\n\n| Idiom | Code Pattern | Purpose |\n|-------|--------------|---------|\n| Return Type Enable | `typename enable_if<C>::type func()` | Basic SFINAE |\n| Expression Test | `decltype(expr, true_type{})` | Capability detection |\n| Member Detection | `declval<T>().member()` | Check for members |\n| Logical Combination | `enable_if<C1 && C2>` | Multiple conditions |\n| Overload Priority | `func(..., int)` vs `func(..., long)` | Fallback ordering |\n| Comma Operator | `decltype((expr1, expr2))` | Test + return type |\n\n\n## TOPIC: Advanced Template Techniques - SFINAE and CRTP",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | `integral`<br>Compilation error | First call matches integral SFINAE; second fails (no float overload) | #sfinae |\n| 2 | `1`<br>`0` | `std::vector` has `.size()` method; `int` doesn't | #expression_sfinae |\n| 3 | `D::impl` | CRTP static dispatch calls derived implementation | #crtp |\n| 4 | `pointer`<br>`non-pointer` | SFINAE selects correct overload based on pointer trait | #sfinae |\n| 5 | `3` | Each `Widget` instance increments static counter in base | #crtp |\n| 6 | `integral`<br>`other` | Tag dispatch selects overload via `true_type`/`false_type` | #tag_dispatch |\n| 7 | `class`<br>Compilation error | SFINAE only enables for class types; `int` fails | #sfinae |\n| 8 | `Data` | CRTP mixin calls derived `toString()` via static cast | #crtp |\n| 9 | `42` | `decltype` deduces return type from `func()` method | #decltype |\n| 10 | `arithmetic non-bool`<br>`arithmetic non-bool`<br>Compilation error | Combined SFINAE conditions; `bool` fails both conditions | #sfinae |\n| 11 | Compilation error | Missing `impl()` method in derived class | #crtp |\n| 12 | `1`<br>`0` | Expression SFINAE detects nested `value_type` | #expression_sfinae |\n| 13 | `DB created`<br>`1` | Singleton pattern via CRTP; both references point to same instance | #crtp |\n| 14 | `int version`<br>`float version` | Template parameter SFINAE with different default types | #sfinae |\n| 15 | `LOG: test`<br>`Extra` | CRTP mixin calls derived `extraLog()` method | #crtp |\n| 16 | `large type`<br>Compilation error | `long` is 8 bytes; `char` is 1 byte (fails SFINAE) | #sfinae |\n| 17 | `0` | `RemoveConst` strips const qualifier; result is non-const | #type_traits |\n| 18 | `Before`<br>`Executing`<br>`After` | CRTP Template Method pattern with static dispatch | #crtp |\n| 19 | `42`<br>Compilation error | `static_assert` enforces integral constraint; double fails | #static_assert |\n| 20 | `15`<br>`6`<br>`Hello World` | `decltype(a + b)` deduces result type of addition | #decltype |",
           "| Technique | Syntax | Use Case | Readability |\n|-----------|--------|----------|-------------|\n| Return Type SFINAE | `typename enable_if<cond>::type func()` | Any function | Medium |\n| Template Parameter SFINAE | `template<typename = enable_if<cond>::type>` | Constructors, operators | Low |\n| Expression SFINAE | `auto func() -> decltype(expr)` | Member detection | Low |\n| Tag Dispatch | `func(val, true_type{})` | Simple conditions | High |\n| Concepts (C++20) | `template<Concept T>` | Interface constraints | Very High |",
           "| Pattern | Purpose | Example Use Case |\n|---------|---------|------------------|\n| Static Interface | Interface implementation without virtuals | Shape hierarchy |\n| Mixin | Add capabilities via inheritance | Printable, Serializable |\n| Instance Counter | Track object instances per type | Resource management |\n| Singleton | Reusable singleton infrastructure | Database connections |\n| Template Method | Algorithm structure with customization | Sorting algorithms |\n| Policy Class | Compile-time behavior configuration | Allocator policies |",
           "| Need | Use SFINAE | Use CRTP |\n|------|-----------|----------|\n| Conditional instantiation | ✅ Yes | ❌ No |\n| Static polymorphism | ❌ No | ✅ Yes |\n| Member detection | ✅ Yes | ❌ No |\n| Zero-overhead interface | ❌ No | ✅ Yes |\n| Mixins | ❌ No | ✅ Yes |\n| Overload selection | ✅ Yes | ❌ No |\n| Type constraints | ✅ Yes | ❌ No |\n| Derived implementation access | ❌ No | ✅ Yes |",
-          "| Idiom | Code Pattern | Purpose |\n|-------|--------------|---------|\n| Return Type Enable | `typename enable_if<C>::type func()` | Basic SFINAE |\n| Expression Test | `decltype(expr, true_type{})` | Capability detection |\n| Member Detection | `declval<T>().member()` | Check for members |\n| Logical Combination | `enable_if<C1 && C2>` | Multiple conditions |\n| Overload Priority | `func(..., int)` vs `func(..., long)` | Fallback ordering |"
+          "| Idiom | Code Pattern | Purpose |\n|-------|--------------|---------|\n| Return Type Enable | `typename enable_if<C>::type func()` | Basic SFINAE |\n| Expression Test | `decltype(expr, true_type{})` | Capability detection |\n| Member Detection | `declval<T>().member()` | Check for members |\n| Logical Combination | `enable_if<C1 && C2>` | Multiple conditions |\n| Overload Priority | `func(..., int)` vs `func(..., long)` | Fallback ordering |\n| Comma Operator | `decltype((expr1, expr2))` | Test + return type |"
         ]
       }
     }

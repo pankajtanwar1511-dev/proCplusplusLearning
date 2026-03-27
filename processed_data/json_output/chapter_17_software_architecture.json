@@ -496,67 +496,91 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n// What's the architecture problem here?\nclass Application {\n    void run() {\n        Database db(\"localhost\");\n        EmailService email(\"smtp.gmail.com\");\n        PaymentGateway payment(\"api.stripe.com\");\n        \n        // 500 lines of business logic...\n    }\n};\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Problem:** Everything created in run() - tight coupling, hard to test, monolithic.\n\n**Issues:**\n1. All dependencies hard-coded\n2. Can't unit test (requires real database, email, payment)\n3. No separation of concerns\n4. Violates Single Responsibility\n\n**Fix:**\n```cpp\nclass Application {\n    IDatabase* db;\n    IEmailService* email;\n    IPaymentGateway* payment;\n    \npublic:\n    Application(IDatabase* d, IEmailService* e, IPaymentGateway* p)\n        : db(d), email(e), payment(p) {}  // Dependency injection\n    \n    void run() {\n        // Business logic using injected dependencies\n    }\n};\n\n// Test with mocks\nMockDatabase mockDb;\nApplication app(&mockDb, &mockEmail, &mockPayment);\n```\n\n**Architecture Principles:**\n- Dependency Injection\n- Inversion of Control\n- Interface-based design\n- Testability\n\n</details>\n\n---",
-          "code": "// What's the architecture problem here?\nclass Application {\n    void run() {\n        Database db(\"localhost\");\n        EmailService email(\"smtp.gmail.com\");\n        PaymentGateway payment(\"api.stripe.com\");\n        \n        // 500 lines of business logic...\n    }\n};",
+          "description": "",
+          "full_content": "**Answer:**\n```\nTight coupling, hard-coded dependencies, untestable monolithic design\n```\n\n**Explanation:**\n- All dependencies created inside `run()` method - hard-coded, not injected\n- Cannot unit test without real database, email server, and payment gateway\n- Violates Single Responsibility Principle - Application does too much\n- No separation of concerns - mixing dependency creation with business logic\n- **Key Concept:** Use Dependency Injection to decouple components and enable testability through interface-based design\n\n**Fixed Version:**\n```cpp\nclass Application {\n    IDatabase* db;\n    IEmailService* email;\n    IPaymentGateway* payment;\n\npublic:\n    Application(IDatabase* d, IEmailService* e, IPaymentGateway* p)\n        : db(d), email(e), payment(p) {}  // Dependency injection\n\n    void run() {\n        // Business logic using injected dependencies\n    }\n};\n\n// Test with mocks\nMockDatabase mockDb;\nMockEmailService mockEmail;\nMockPaymentGateway mockPayment;\nApplication app(&mockDb, &mockEmail, &mockPayment);\n```",
+          "code": "// What's the architecture problem here?\nclass Application {\n    void run() {\n        Database db(\"localhost\");\n        EmailService email(\"smtp.gmail.com\");\n        PaymentGateway payment(\"api.stripe.com\");\n\n        // 500 lines of business logic...\n    }\n};",
+          "answer": "Tight coupling, hard-coded dependencies, untestable monolithic design",
+          "explanation": "- All dependencies created inside `run()` method - hard-coded, not injected\n- Cannot unit test without real database, email server, and payment gateway\n- Violates Single Responsibility Principle - Application does too much\n- No separation of concerns - mixing dependency creation with business logic\n- **Key Concept:** Use Dependency Injection to decouple components and enable testability through interface-based design",
+          "key_concept": "Use Dependency Injection to decouple components and enable testability through interface-based design",
+          "fixed_version": "class Application {\n    IDatabase* db;\n    IEmailService* email;\n    IPaymentGateway* payment;\n\npublic:\n    Application(IDatabase* d, IEmailService* e, IPaymentGateway* p)\n        : db(d), email(e), payment(p) {}  // Dependency injection\n\n    void run() {\n        // Business logic using injected dependencies\n    }\n};\n\n// Test with mocks\nMockDatabase mockDb;\nMockEmailService mockEmail;\nMockPaymentGateway mockPayment;\nApplication app(&mockDb, &mockEmail, &mockPayment);",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "class Application {\n    IDatabase* db;\n    IEmailService* email;\n    IPaymentGateway* payment;\n    \npublic:\n    Application(IDatabase* d, IEmailService* e, IPaymentGateway* p)\n        : db(d), email(e), payment(p) {}  // Dependency injection\n    \n    void run() {\n        // Business logic using injected dependencies\n    }\n};\n\n// Test with mocks\nMockDatabase mockDb;\nApplication app(&mockDb, &mockEmail, &mockPayment);"
+            "Tight coupling, hard-coded dependencies, untestable monolithic design"
           ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n// Is this good architecture?\nclass UI {\n    void onButtonClick() {\n        std::string sql = \"INSERT INTO users VALUES (...)\";\n        executeSQL(sql);  // UI directly accessing database!\n    }\n};\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Problem:** UI layer directly accessing data layer - violates layered architecture!\n\n**Issues:**\n1. Tight coupling (UI knows about SQL)\n2. No business logic layer\n3. Can't reuse logic (tied to UI)\n4. Hard to change database\n\n**Fix (Layered Architecture):**\n```cpp\n// Layer 3: UI\nclass UI {\n    BusinessLogic* logic;\n    \n    void onButtonClick() {\n        logic->createUser(\"John\", \"john@example.com\");  // Call business layer\n    }\n};\n\n// Layer 2: Business Logic\nclass BusinessLogic {\n    IRepository* repo;\n    \npublic:\n    void createUser(const std::string& name, const std::string& email) {\n        // Validation\n        if (name.empty()) throw invalid_argument(\"Name required\");\n        \n        User user{name, email};\n        repo->save(user);  // Call data layer\n    }\n};\n\n// Layer 1: Data\nclass IRepository {\npublic:\n    virtual void save(const User& user) = 0;\n};\n```\n\n**Key Principle:** Each layer only talks to layer below, never skips layers.\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBad architecture - violates layered architecture principles\n```\n\n**Explanation:**\n- UI layer directly accessing data layer - skips business logic layer entirely\n- Tight coupling: UI knows about SQL implementation details\n- Cannot reuse business logic - tied to UI trigger\n- Cannot change database without modifying UI code\n- **Key Concept:** Layered architecture enforces separation where each layer only communicates with adjacent layer below\n\n**Fixed Version (Layered Architecture):**\n```cpp\n// Layer 3: UI (Presentation)\nclass UI {\n    BusinessLogic* logic;\n\n    void onButtonClick() {\n        logic->createUser(\"John\", \"john@example.com\");  // Call business layer\n    }\n};\n\n// Layer 2: Business Logic (Domain)\nclass BusinessLogic {\n    IRepository* repo;\n\npublic:\n    void createUser(const std::string& name, const std::string& email) {\n        // Validation\n        if (name.empty()) throw std::invalid_argument(\"Name required\");\n\n        User user{name, email};\n        repo->save(user);  // Call data layer\n    }\n};\n\n// Layer 1: Data (Persistence)\nclass IRepository {\npublic:\n    virtual void save(const User& user) = 0;\n};\n\nclass SQLRepository : public IRepository {\npublic:\n    void save(const User& user) override {\n        std::string sql = \"INSERT INTO users VALUES (...)\";\n        executeSQL(sql);\n    }\n};\n```",
           "code": "// Is this good architecture?\nclass UI {\n    void onButtonClick() {\n        std::string sql = \"INSERT INTO users VALUES (...)\";\n        executeSQL(sql);  // UI directly accessing database!\n    }\n};",
+          "answer": "Bad architecture - violates layered architecture principles",
+          "explanation": "- UI layer directly accessing data layer - skips business logic layer entirely\n- Tight coupling: UI knows about SQL implementation details\n- Cannot reuse business logic - tied to UI trigger\n- Cannot change database without modifying UI code\n- **Key Concept:** Layered architecture enforces separation where each layer only communicates with adjacent layer below\n\n**Fixed Version (Layered Architecture):**\n```cpp\n// Layer 3: UI (Presentation)\nclass UI {\n    BusinessLogic* logic;\n\n    void onButtonClick() {\n        logic->createUser(\"John\", \"john@example.com\");  // Call business layer\n    }\n};\n\n// Layer 2: Business Logic (Domain)\nclass BusinessLogic {\n    IRepository* repo;\n\npublic:\n    void createUser(const std::string& name, const std::string& email) {\n        // Validation\n        if (name.empty()) throw std::invalid_argument(\"Name required\");\n\n        User user{name, email};\n        repo->save(user);  // Call data layer\n    }\n};\n\n// Layer 1: Data (Persistence)\nclass IRepository {\npublic:\n    virtual void save(const User& user) = 0;\n};\n\nclass SQLRepository : public IRepository {\npublic:\n    void save(const User& user) override {\n        std::string sql = \"INSERT INTO users VALUES (...)\";\n        executeSQL(sql);\n    }\n};\n```",
+          "key_concept": "Layered architecture enforces separation where each layer only communicates with adjacent layer below",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "// Layer 3: UI\nclass UI {\n    BusinessLogic* logic;\n    \n    void onButtonClick() {\n        logic->createUser(\"John\", \"john@example.com\");  // Call business layer\n    }\n};\n\n// Layer 2: Business Logic\nclass BusinessLogic {\n    IRepository* repo;\n    \npublic:\n    void createUser(const std::string& name, const std::string& email) {\n        // Validation\n        if (name.empty()) throw invalid_argument(\"Name required\");\n        \n        User user{name, email};\n        repo->save(user);  // Call data layer\n    }\n};\n\n// Layer 1: Data\nclass IRepository {\npublic:\n    virtual void save(const User& user) = 0;\n};"
+            "Bad architecture - violates layered architecture principles",
+            "// Layer 3: UI (Presentation)\nclass UI {\n    BusinessLogic* logic;\n\n    void onButtonClick() {\n        logic->createUser(\"John\", \"john@example.com\");  // Call business layer\n    }\n};\n\n// Layer 2: Business Logic (Domain)\nclass BusinessLogic {\n    IRepository* repo;\n\npublic:\n    void createUser(const std::string& name, const std::string& email) {\n        // Validation\n        if (name.empty()) throw std::invalid_argument(\"Name required\");\n\n        User user{name, email};\n        repo->save(user);  // Call data layer\n    }\n};\n\n// Layer 1: Data (Persistence)\nclass IRepository {\npublic:\n    virtual void save(const User& user) = 0;\n};\n\nclass SQLRepository : public IRepository {\npublic:\n    void save(const User& user) override {\n        std::string sql = \"INSERT INTO users VALUES (...)\";\n        executeSQL(sql);\n    }\n};"
           ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n// Should this be event-driven or direct calls?\nclass Sensor {\n    Planner* planner;\n    Controller* controller;\n    Logger* logger;\n    \npublic:\n    void read() {\n        Data d = readHardware();\n        planner->updateData(d);\n        controller->reactToData(d);\n        logger->logData(d);\n    }\n};\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Problem:** Sensor directly knows about 3 other components - tight coupling!\n\n**Issues:**\n1. Sensor coupled to Planner, Controller, Logger\n2. Can't add new consumers without modifying Sensor\n3. Synchronous - sensor waits for all processing\n\n**Better: Event-Driven**\n```cpp\nclass Sensor {\n    EventBus* bus;\n    \npublic:\n    void read() {\n        Data d = readHardware();\n        bus->publish(Event{EventType::SensorData, d});  // Publish and forget\n    }\n};\n\n// Consumers subscribe independently\nclass Planner {\n    Planner(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            updateData(e.data);\n        });\n    }\n};\n\nclass Controller {\n    Controller(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            reactToData(e.data);\n        });\n    }\n};\n```\n\n**Benefits:**\n- Sensor decoupled from consumers\n- Easy to add new consumers\n- Asynchronous processing\n- Sensor doesn't wait\n\n</details>\n\n---",
-          "code": "// Should this be event-driven or direct calls?\nclass Sensor {\n    Planner* planner;\n    Controller* controller;\n    Logger* logger;\n    \npublic:\n    void read() {\n        Data d = readHardware();\n        planner->updateData(d);\n        controller->reactToData(d);\n        logger->logData(d);\n    }\n};",
+          "description": "",
+          "full_content": "**Answer:**\n```\nEvent-driven architecture would be better - eliminates tight coupling\n```\n\n**Explanation:**\n- Sensor directly coupled to 3 components - adding new consumer requires modifying Sensor\n- Synchronous processing - Sensor waits for all consumers to complete\n- Cannot add/remove consumers dynamically\n- Violates Open/Closed Principle - not open for extension without modification\n- **Key Concept:** Event-driven architecture decouples producers from consumers via publish-subscribe pattern\n\n**Better: Event-Driven Architecture:**\n```cpp\nclass Sensor {\n    EventBus* bus;\n\npublic:\n    void read() {\n        Data d = readHardware();\n        bus->publish(Event{EventType::SensorData, d});  // Publish and forget\n    }\n};\n\n// Consumers subscribe independently\nclass Planner {\npublic:\n    Planner(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            updateData(e.data);\n        });\n    }\n};\n\nclass Controller {\npublic:\n    Controller(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            reactToData(e.data);\n        });\n    }\n};\n\nclass Logger {\npublic:\n    Logger(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            logData(e.data);\n        });\n    }\n};\n```",
+          "code": "// Should this be event-driven or direct calls?\nclass Sensor {\n    Planner* planner;\n    Controller* controller;\n    Logger* logger;\n\npublic:\n    void read() {\n        Data d = readHardware();\n        planner->updateData(d);\n        controller->reactToData(d);\n        logger->logData(d);\n    }\n};",
+          "answer": "Event-driven architecture would be better - eliminates tight coupling",
+          "explanation": "- Sensor directly coupled to 3 components - adding new consumer requires modifying Sensor\n- Synchronous processing - Sensor waits for all consumers to complete\n- Cannot add/remove consumers dynamically\n- Violates Open/Closed Principle - not open for extension without modification\n- **Key Concept:** Event-driven architecture decouples producers from consumers via publish-subscribe pattern\n\n**Better: Event-Driven Architecture:**\n```cpp\nclass Sensor {\n    EventBus* bus;\n\npublic:\n    void read() {\n        Data d = readHardware();\n        bus->publish(Event{EventType::SensorData, d});  // Publish and forget\n    }\n};\n\n// Consumers subscribe independently\nclass Planner {\npublic:\n    Planner(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            updateData(e.data);\n        });\n    }\n};\n\nclass Controller {\npublic:\n    Controller(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            reactToData(e.data);\n        });\n    }\n};\n\nclass Logger {\npublic:\n    Logger(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            logData(e.data);\n        });\n    }\n};\n```",
+          "key_concept": "Event-driven architecture decouples producers from consumers via publish-subscribe pattern",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "class Sensor {\n    EventBus* bus;\n    \npublic:\n    void read() {\n        Data d = readHardware();\n        bus->publish(Event{EventType::SensorData, d});  // Publish and forget\n    }\n};\n\n// Consumers subscribe independently\nclass Planner {\n    Planner(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            updateData(e.data);\n        });\n    }\n};\n\nclass Controller {\n    Controller(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            reactToData(e.data);\n        });\n    }\n};"
+            "Event-driven architecture would be better - eliminates tight coupling",
+            "class Sensor {\n    EventBus* bus;\n\npublic:\n    void read() {\n        Data d = readHardware();\n        bus->publish(Event{EventType::SensorData, d});  // Publish and forget\n    }\n};\n\n// Consumers subscribe independently\nclass Planner {\npublic:\n    Planner(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            updateData(e.data);\n        });\n    }\n};\n\nclass Controller {\npublic:\n    Controller(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            reactToData(e.data);\n        });\n    }\n};\n\nclass Logger {\npublic:\n    Logger(EventBus* bus) {\n        bus->subscribe(EventType::SensorData, [this](const Event& e) {\n            logData(e.data);\n        });\n    }\n};"
           ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n// What architecture pattern would you use?\n// Requirements: \n// - 50 different sensor types\n// - Each sensor: position, velocity, health, renderable\n// - Need high performance (60fps)\n// - Sensors dynamically added/removed\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Component-Based Architecture (Entity-Component-System)\n\n**Rationale:**\n1. Many entities (50 sensors) → ECS efficient\n2. Varied composition (some have health, some don't) → Components flexible\n3. Performance critical (60fps) → ECS cache-friendly\n4. Dynamic entities → ECS handles well\n\n**Implementation:**\n```cpp\n// Components (data only)\nstruct Position { double x, y; };\nstruct Velocity { double dx, dy; };\nstruct Health { int hp; };\nstruct Renderable { std::string sprite; };\n\n// Systems (logic only)\nclass MovementSystem {\n    void update(ComponentManager<Position>& pos,\n                ComponentManager<Velocity>& vel) {\n        for (auto& [id, velocity] : vel.getAll()) {\n            if (auto* p = pos.get(id)) {\n                p->x += velocity.dx;\n                p->y += velocity.dy;\n            }\n        }\n    }\n};\n\n// Create sensors with different components\nEntity sensor1;\ncomponents.add(sensor1, Position{0, 0});\ncomponents.add(sensor1, Velocity{1, 0});\n// sensor1 has position + velocity (movable)\n\nEntity sensor2;\ncomponents.add(sensor2, Position{10, 10});\ncomponents.add(sensor2, Health{100});\n// sensor2 has position + health (damageable but static)\n```\n\n**Why Not Other Patterns:**\n- Inheritance hierarchy? Too rigid for varied composition\n- Direct objects? Too much memory, pointer chasing\n- Simple classes? Not cache-friendly for 50 entities\n\n</details>\n\n---",
-          "code": "// What architecture pattern would you use?\n// Requirements: \n// - 50 different sensor types\n// - Each sensor: position, velocity, health, renderable\n// - Need high performance (60fps)\n// - Sensors dynamically added/removed",
+          "description": "",
+          "full_content": "**Answer:**\n```\nEntity-Component-System (ECS) architecture\n```\n\n**Explanation:**\n- Many entities (50+ sensors) benefit from data-oriented design\n- Varied composition (some sensors have different component combinations) requires flexibility\n- Performance-critical (60fps) needs cache-friendly memory layout (component arrays)\n- Dynamic entity management (add/remove) is ECS strength\n- **Key Concept:** ECS separates data (Components) from logic (Systems) for performance and flexibility in entity-based systems\n\n**Implementation:**\n```cpp\n// Components (data only - POD types)\nstruct Position { double x, y; };\nstruct Velocity { double dx, dy; };\nstruct Health { int hp; };\nstruct Renderable { std::string sprite; };\n\n// Systems (logic only - operate on components)\nclass MovementSystem {\npublic:\n    void update(ComponentManager<Position>& pos,\n                ComponentManager<Velocity>& vel, double dt) {\n        for (auto& [id, velocity] : vel.getAll()) {\n            if (auto* p = pos.get(id)) {\n                p->x += velocity.dx * dt;\n                p->y += velocity.dy * dt;\n            }\n        }\n    }\n};\n\nclass RenderSystem {\npublic:\n    void render(ComponentManager<Position>& pos,\n                ComponentManager<Renderable>& renderable) {\n        for (auto& [id, render] : renderable.getAll()) {\n            if (auto* p = pos.get(id)) {\n                draw(render.sprite, p->x, p->y);\n            }\n        }\n    }\n};\n\n// Create sensors with different component combinations\nEntity sensor1 = entityManager.create();\ncomponents.add(sensor1, Position{0, 0});\ncomponents.add(sensor1, Velocity{1, 0});\n// sensor1: movable sensor (no health, no rendering)\n\nEntity sensor2 = entityManager.create();\ncomponents.add(sensor2, Position{10, 10});\ncomponents.add(sensor2, Health{100});\ncomponents.add(sensor2, Renderable{\"sensor.png\"});\n// sensor2: static sensor with health and rendering\n```",
+          "code": "// What architecture pattern would you use?\n// Requirements:\n// - 50 different sensor types\n// - Each sensor: position, velocity, health, renderable\n// - Need high performance (60fps)\n// - Sensors dynamically added/removed",
+          "answer": "Entity-Component-System (ECS) architecture",
+          "explanation": "- Many entities (50+ sensors) benefit from data-oriented design\n- Varied composition (some sensors have different component combinations) requires flexibility\n- Performance-critical (60fps) needs cache-friendly memory layout (component arrays)\n- Dynamic entity management (add/remove) is ECS strength\n- **Key Concept:** ECS separates data (Components) from logic (Systems) for performance and flexibility in entity-based systems\n\n**Implementation:**\n```cpp\n// Components (data only - POD types)\nstruct Position { double x, y; };\nstruct Velocity { double dx, dy; };\nstruct Health { int hp; };\nstruct Renderable { std::string sprite; };\n\n// Systems (logic only - operate on components)\nclass MovementSystem {\npublic:\n    void update(ComponentManager<Position>& pos,\n                ComponentManager<Velocity>& vel, double dt) {\n        for (auto& [id, velocity] : vel.getAll()) {\n            if (auto* p = pos.get(id)) {\n                p->x += velocity.dx * dt;\n                p->y += velocity.dy * dt;\n            }\n        }\n    }\n};\n\nclass RenderSystem {\npublic:\n    void render(ComponentManager<Position>& pos,\n                ComponentManager<Renderable>& renderable) {\n        for (auto& [id, render] : renderable.getAll()) {\n            if (auto* p = pos.get(id)) {\n                draw(render.sprite, p->x, p->y);\n            }\n        }\n    }\n};\n\n// Create sensors with different component combinations\nEntity sensor1 = entityManager.create();\ncomponents.add(sensor1, Position{0, 0});\ncomponents.add(sensor1, Velocity{1, 0});\n// sensor1: movable sensor (no health, no rendering)\n\nEntity sensor2 = entityManager.create();\ncomponents.add(sensor2, Position{10, 10});\ncomponents.add(sensor2, Health{100});\ncomponents.add(sensor2, Renderable{\"sensor.png\"});\n// sensor2: static sensor with health and rendering\n```",
+          "key_concept": "ECS separates data (Components) from logic (Systems) for performance and flexibility in entity-based systems",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "// Components (data only)\nstruct Position { double x, y; };\nstruct Velocity { double dx, dy; };\nstruct Health { int hp; };\nstruct Renderable { std::string sprite; };\n\n// Systems (logic only)\nclass MovementSystem {\n    void update(ComponentManager<Position>& pos,\n                ComponentManager<Velocity>& vel) {\n        for (auto& [id, velocity] : vel.getAll()) {\n            if (auto* p = pos.get(id)) {\n                p->x += velocity.dx;\n                p->y += velocity.dy;\n            }\n        }\n    }\n};\n\n// Create sensors with different components\nEntity sensor1;\ncomponents.add(sensor1, Position{0, 0});\ncomponents.add(sensor1, Velocity{1, 0});\n// sensor1 has position + velocity (movable)\n\nEntity sensor2;\ncomponents.add(sensor2, Position{10, 10});\ncomponents.add(sensor2, Health{100});\n// sensor2 has position + health (damageable but static)"
+            "Entity-Component-System (ECS) architecture",
+            "// Components (data only - POD types)\nstruct Position { double x, y; };\nstruct Velocity { double dx, dy; };\nstruct Health { int hp; };\nstruct Renderable { std::string sprite; };\n\n// Systems (logic only - operate on components)\nclass MovementSystem {\npublic:\n    void update(ComponentManager<Position>& pos,\n                ComponentManager<Velocity>& vel, double dt) {\n        for (auto& [id, velocity] : vel.getAll()) {\n            if (auto* p = pos.get(id)) {\n                p->x += velocity.dx * dt;\n                p->y += velocity.dy * dt;\n            }\n        }\n    }\n};\n\nclass RenderSystem {\npublic:\n    void render(ComponentManager<Position>& pos,\n                ComponentManager<Renderable>& renderable) {\n        for (auto& [id, render] : renderable.getAll()) {\n            if (auto* p = pos.get(id)) {\n                draw(render.sprite, p->x, p->y);\n            }\n        }\n    }\n};\n\n// Create sensors with different component combinations\nEntity sensor1 = entityManager.create();\ncomponents.add(sensor1, Position{0, 0});\ncomponents.add(sensor1, Velocity{1, 0});\n// sensor1: movable sensor (no health, no rendering)\n\nEntity sensor2 = entityManager.create();\ncomponents.add(sensor2, Position{10, 10});\ncomponents.add(sensor2, Health{100});\ncomponents.add(sensor2, Renderable{\"sensor.png\"});\n// sensor2: static sensor with health and rendering"
           ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n// Architectural issue?\nvoid processOrder() {\n    try {\n        validateOrder();\n        chargePayment();\n        updateInventory();\n        sendEmail();\n    } catch (const std::exception& e) {\n        // Oops! Payment charged but inventory not updated!\n        // Or inventory updated but email not sent!\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Problem:** No transaction coordination - partial failures leave system inconsistent!\n\n**Issues:**\n1. If chargePayment() succeeds but updateInventory() fails → money charged, inventory wrong!\n2. No compensation mechanism\n3. All-or-nothing not guaranteed\n\n**Solution 1: Database Transaction (if possible)**\n```cpp\nvoid processOrder() {\n    db.beginTransaction();\n    try {\n        validateOrder(db);\n        chargePayment(db);\n        updateInventory(db);\n        db.commit();\n        sendEmail();  // Outside transaction (best effort)\n    } catch (...) {\n        db.rollback();  // Undo everything\n        throw;\n    }\n}\n```\n\n**Solution 2: Saga Pattern (distributed systems)**\n```cpp\nclass OrderSaga {\n    std::vector<std::function<void()>> compensations;\n    \npublic:\n    void processOrder() {\n        try {\n            chargePayment();\n            compensations.push_back([](){ refundPayment(); });\n            \n            updateInventory();\n            compensations.push_back([](){ restoreInventory(); });\n            \n            sendEmail();\n        } catch (...) {\n            // Compensate in reverse order\n            for (auto it = compensations.rbegin(); it != compensations.rend(); ++it) {\n                (*it)();\n            }\n            throw;\n        }\n    }\n};\n```\n\n**Key Principle:** Ensure consistency - either all steps succeed or all are undone.\n\n</details>\n\n---\n\n#### Additional Practice Tasks 6-20\n\n**Q6:** Analyze this for scalability issues (monolithic architecture)  \n**Q7:** Identify the architectural anti-pattern (God class)  \n**Q8:** Redesign for testability (tight coupling)  \n**Q9:** Choose architecture for real-time game  \n**Q10:** Handle circular dependency between modules  \n**Q11:** Design plugin architecture  \n**Q12:** Implement event sourcing pattern  \n**Q13:** Refactor procedural code to layered architecture  \n**Q14:** Design for high availability (redundancy)  \n**Q15:** Implement circuit breaker pattern  \n**Q16:** Analyze performance bottleneck in architecture  \n**Q17:** Design API gateway pattern  \n**Q18:** Implement retry logic with exponential backoff  \n**Q19:** Design for graceful degradation  \n**Q20:** Create architecture documentation\n\n(Detailed solutions provided in collapsible sections following the same format as Q1-Q5)\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNo transaction coordination - partial failures cause inconsistency\n```\n\n**Explanation:**\n- If `chargePayment()` succeeds but `updateInventory()` fails, money is charged but inventory is wrong\n- No compensation mechanism to undo successful steps\n- Catch block cannot determine which step failed and what to rollback\n- Distributed transaction problem - different systems (payment, inventory, email)\n- **Key Concept:** Use Saga pattern for distributed transactions to ensure consistency through compensation\n\n**Solution 1: Database Transaction (single system):**\n```cpp\nvoid processOrder() {\n    db.beginTransaction();\n    try {\n        validateOrder(db);\n        chargePayment(db);\n        updateInventory(db);\n        db.commit();\n        sendEmail();  // Outside transaction (best effort, can fail)\n    } catch (...) {\n        db.rollback();  // Undo everything atomically\n        throw;\n    }\n}\n```\n\n**Solution 2: Saga Pattern (distributed systems):**\n```cpp\nclass OrderSaga {\n    std::vector<std::function<void()>> compensations;\n\npublic:\n    void processOrder() {\n        try {\n            // Step 1: Charge payment\n            chargePayment();\n            compensations.push_back([this](){ refundPayment(); });\n\n            // Step 2: Update inventory\n            updateInventory();\n            compensations.push_back([this](){ restoreInventory(); });\n\n            // Step 3: Send email (best effort)\n            sendEmail();\n        } catch (...) {\n            // Compensate in reverse order\n            for (auto it = compensations.rbegin(); it != compensations.rend(); ++it) {\n                try {\n                    (*it)();  // Execute compensation\n                } catch (...) {\n                    // Log compensation failure\n                }\n            }\n            throw;\n        }\n    }\n\nprivate:\n    void refundPayment() {\n        // Reverse the payment charge\n    }\n\n    void restoreInventory() {\n        // Restore inventory to previous state\n    }\n};\n```\n\n---\n\n\n## TOPIC: Introduction to Software Architecture & Design Thinking",
           "code": "// Architectural issue?\nvoid processOrder() {\n    try {\n        validateOrder();\n        chargePayment();\n        updateInventory();\n        sendEmail();\n    } catch (const std::exception& e) {\n        // Oops! Payment charged but inventory not updated!\n        // Or inventory updated but email not sent!\n    }\n}",
+          "answer": "No transaction coordination - partial failures cause inconsistency",
+          "explanation": "- If `chargePayment()` succeeds but `updateInventory()` fails, money is charged but inventory is wrong\n- No compensation mechanism to undo successful steps\n- Catch block cannot determine which step failed and what to rollback\n- Distributed transaction problem - different systems (payment, inventory, email)\n- **Key Concept:** Use Saga pattern for distributed transactions to ensure consistency through compensation\n\n**Solution 1: Database Transaction (single system):**\n```cpp\nvoid processOrder() {\n    db.beginTransaction();\n    try {\n        validateOrder(db);\n        chargePayment(db);\n        updateInventory(db);\n        db.commit();\n        sendEmail();  // Outside transaction (best effort, can fail)\n    } catch (...) {\n        db.rollback();  // Undo everything atomically\n        throw;\n    }\n}\n```\n\n**Solution 2: Saga Pattern (distributed systems):**\n```cpp\nclass OrderSaga {\n    std::vector<std::function<void()>> compensations;\n\npublic:\n    void processOrder() {\n        try {\n            // Step 1: Charge payment\n            chargePayment();\n            compensations.push_back([this](){ refundPayment(); });\n\n            // Step 2: Update inventory\n            updateInventory();\n            compensations.push_back([this](){ restoreInventory(); });\n\n            // Step 3: Send email (best effort)\n            sendEmail();\n        } catch (...) {\n            // Compensate in reverse order\n            for (auto it = compensations.rbegin(); it != compensations.rend(); ++it) {\n                try {\n                    (*it)();  // Execute compensation\n                } catch (...) {\n                    // Log compensation failure\n                }\n            }\n            throw;\n        }\n    }\n\nprivate:\n    void refundPayment() {\n        // Reverse the payment charge\n    }\n\n    void restoreInventory() {\n        // Restore inventory to previous state\n    }\n};\n```",
+          "key_concept": "Use Saga pattern for distributed transactions to ensure consistency through compensation",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "void processOrder() {\n    db.beginTransaction();\n    try {\n        validateOrder(db);\n        chargePayment(db);\n        updateInventory(db);\n        db.commit();\n        sendEmail();  // Outside transaction (best effort)\n    } catch (...) {\n        db.rollback();  // Undo everything\n        throw;\n    }\n}",
-            "class OrderSaga {\n    std::vector<std::function<void()>> compensations;\n    \npublic:\n    void processOrder() {\n        try {\n            chargePayment();\n            compensations.push_back([](){ refundPayment(); });\n            \n            updateInventory();\n            compensations.push_back([](){ restoreInventory(); });\n            \n            sendEmail();\n        } catch (...) {\n            // Compensate in reverse order\n            for (auto it = compensations.rbegin(); it != compensations.rend(); ++it) {\n                (*it)();\n            }\n            throw;\n        }\n    }\n};"
+            "No transaction coordination - partial failures cause inconsistency",
+            "void processOrder() {\n    db.beginTransaction();\n    try {\n        validateOrder(db);\n        chargePayment(db);\n        updateInventory(db);\n        db.commit();\n        sendEmail();  // Outside transaction (best effort, can fail)\n    } catch (...) {\n        db.rollback();  // Undo everything atomically\n        throw;\n    }\n}",
+            "class OrderSaga {\n    std::vector<std::function<void()>> compensations;\n\npublic:\n    void processOrder() {\n        try {\n            // Step 1: Charge payment\n            chargePayment();\n            compensations.push_back([this](){ refundPayment(); });\n\n            // Step 2: Update inventory\n            updateInventory();\n            compensations.push_back([this](){ restoreInventory(); });\n\n            // Step 3: Send email (best effort)\n            sendEmail();\n        } catch (...) {\n            // Compensate in reverse order\n            for (auto it = compensations.rbegin(); it != compensations.rend(); ++it) {\n                try {\n                    (*it)();  // Execute compensation\n                } catch (...) {\n                    // Log compensation failure\n                }\n            }\n            throw;\n        }\n    }\n\nprivate:\n    void refundPayment() {\n        // Reverse the payment charge\n    }\n\n    void restoreInventory() {\n        // Restore inventory to previous state\n    }\n};"
           ]
         }
       ],
       "quick_reference": {
-        "content": "#### Architecture Pattern Selection Guide\n\n| Your Main Need | Recommended Pattern | Why |\n|----------------|---------------------|-----|\n| Clean separation of concerns | **Layered (3-Tier)** | Clear boundaries (UI, Logic, Data) |\n| Real-time responsiveness | **Event-Driven** | Async, decoupled, reactive |\n| High performance + flexibility | **Component-Based (ECS)** | Cache-friendly, data-oriented |\n| Decouple many components | **Publisher-Subscriber** | Many-to-many communication |\n| Process data through stages | **Pipeline** | Stream processing, filters |\n| Multiple teams, independent deploy | **Microservices** | Team autonomy |\n| GUI application | **MVC/MVVM** | Separate UI from logic |\n| Concurrent processing | **Actor Model** | Isolated state |\n\n#### Trade-off Matrix\n\n| Characteristic | Monolith | Microservices | Layered | Event-Driven | ECS |\n|----------------|----------|---------------|---------|--------------|-----|\n| **Simplicity** | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐ |\n| **Performance** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |\n| **Scalability** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |\n| **Maintainability** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |\n| **Testability** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |\n| **Flexibility** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |\n\n#### The 5-Step Architecture Decision Process\n\n```\n1. REQUIREMENTS\n   ↓\n   Ask: What must it DO? How FAST? How BIG?\n   \n2. KEY CHARACTERISTICS (Pick top 3)\n   ↓\n   [ ] Performance\n   [ ] Scalability  \n   [ ] Maintainability\n   [ ] Testability\n   [ ] Reliability\n   [ ] Security\n   [ ] Simplicity\n   [ ] Flexibility\n   \n3. CONSTRAINTS\n   ↓\n   Technical, Resource, Time, Team, Legacy, Regulatory\n   \n4. TRADE-OFFS\n   ↓\n   No perfect solution - what are you willing to sacrifice?\n   \n5. VALIDATE\n   ↓\n   Build prototype, measure, iterate\n```\n\n#### Common Mistakes to Avoid\n\n| Mistake | Why It's Bad | Solution |\n|---------|--------------|----------|\n| **Over-Engineering** | Complexity without benefit | Start simple, add complexity when needed |\n| **Analysis Paralysis** | Never finish design | Prototype early, 80/20 rule |\n| **Resume-Driven** | Wrong tool for problem | Choose based on requirements, not hype |\n| **Ignoring Constraints** | Unrealistic design | Work within constraints creatively |\n| **No Validation** | Wrong assumptions | Always prototype critical paths |\n| **Premature Optimization** | Optimize before knowing bottleneck | Measure first, optimize bottlenecks only |\n\n#### Key Principles Summary\n\n| Principle | What It Means | Example |\n|-----------|---------------|---------|\n| **YAGNI** | You Aren't Gonna Need It | Don't build for imagined future |\n| **KISS** | Keep It Simple Stupid | Simplest solution that works |\n| **DRY** | Don't Repeat Yourself | Reuse, don't duplicate |\n| **SOLID** | 5 design principles | Single Responsibility, Open/Closed, etc. |\n| **Separation of Concerns** | Each module one responsibility | UI separate from business logic |\n| **Loose Coupling** | Minimize dependencies | Use interfaces, events |\n| **High Cohesion** | Related things together | Keep related code in same module |\n\n---\n\n**End of Topic 1: Introduction to Software Architecture & Design Thinking**\n\nThis topic covered:\n✅ What architecture is and why it matters\n✅ How to think about and choose architecture patterns\n✅ Step-by-step decision process\n✅ Common pitfalls and how to avoid them\n✅ 5 comprehensive code examples (simple → complex)\n✅ 6 edge cases with solutions\n✅ 20 interview questions with detailed answers\n✅ 20 practice tasks with solutions\n✅ Quick reference guides and decision matrices\n\n**Next Topic:** Event-Driven Architecture (Deep dive into event-driven systems)",
+        "content": "#### Architecture Pattern Selection Guide\n\n| Your Main Need | Recommended Pattern | Why |\n|----------------|---------------------|-----|\n| Clean separation of concerns | **Layered (3-Tier)** | Clear boundaries (UI, Logic, Data) |\n| Real-time responsiveness | **Event-Driven** | Async, decoupled, reactive |\n| High performance + flexibility | **Component-Based (ECS)** | Cache-friendly, data-oriented |\n| Decouple many components | **Publisher-Subscriber** | Many-to-many communication |\n| Process data through stages | **Pipeline** | Stream processing, filters |\n| Multiple teams, independent deploy | **Microservices** | Team autonomy |\n| GUI application | **MVC/MVVM** | Separate UI from logic |\n| Concurrent processing | **Actor Model** | Isolated state |\n\n#### Trade-off Matrix\n\n| Characteristic | Monolith | Microservices | Layered | Event-Driven | ECS |\n|----------------|----------|---------------|---------|--------------|-----|\n| **Simplicity** | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐ |\n| **Performance** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |\n| **Scalability** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |\n| **Maintainability** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |\n| **Testability** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |\n| **Flexibility** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |\n\n#### The 5-Step Architecture Decision Process\n\n```\n1. REQUIREMENTS\n   ↓\n   Ask: What must it DO? How FAST? How BIG?\n   \n2. KEY CHARACTERISTICS (Pick top 3)\n   ↓\n   [ ] Performance\n   [ ] Scalability  \n   [ ] Maintainability\n   [ ] Testability\n   [ ] Reliability\n   [ ] Security\n   [ ] Simplicity\n   [ ] Flexibility\n   \n3. CONSTRAINTS\n   ↓\n   Technical, Resource, Time, Team, Legacy, Regulatory\n   \n4. TRADE-OFFS\n   ↓\n   No perfect solution - what are you willing to sacrifice?\n   \n5. VALIDATE\n   ↓\n   Build prototype, measure, iterate\n```\n\n#### Common Mistakes to Avoid\n\n| Mistake | Why It's Bad | Solution |\n|---------|--------------|----------|\n| **Over-Engineering** | Complexity without benefit | Start simple, add complexity when needed |\n| **Analysis Paralysis** | Never finish design | Prototype early, 80/20 rule |\n| **Resume-Driven** | Wrong tool for problem | Choose based on requirements, not hype |\n| **Ignoring Constraints** | Unrealistic design | Work within constraints creatively |\n| **No Validation** | Wrong assumptions | Always prototype critical paths |\n| **Premature Optimization** | Optimize before knowing bottleneck | Measure first, optimize bottlenecks only |\n\n#### Key Principles Summary\n\n| Principle | What It Means | Example |\n|-----------|---------------|---------|\n| **YAGNI** | You Aren't Gonna Need It | Don't build for imagined future |\n| **KISS** | Keep It Simple Stupid | Simplest solution that works |\n| **DRY** | Don't Repeat Yourself | Reuse, don't duplicate |\n| **SOLID** | 5 design principles | Single Responsibility, Open/Closed, etc. |\n| **Separation of Concerns** | Each module one responsibility | UI separate from business logic |\n| **Loose Coupling** | Minimize dependencies | Use interfaces, events |\n| **High Cohesion** | Related things together | Keep related code in same module |\n\n---\n\n**End of Topic 1: Introduction to Software Architecture & Design Thinking**\n\nThis topic covered:\n✅ What architecture is and why it matters\n✅ How to think about and choose architecture patterns\n✅ Step-by-step decision process\n✅ Common pitfalls and how to avoid them\n✅ 5 comprehensive code examples (simple → complex)\n✅ 6 edge cases with solutions\n✅ 20 interview questions with detailed answers\n✅ 20 practice tasks with solutions\n✅ Quick reference guides and decision matrices\n\n**Next Topic:** Event-Driven Architecture (Deep dive into event-driven systems)\n\n\n## TOPIC: Introduction to Software Architecture & Design Thinking",
         "tables": [
           "| Your Main Need | Recommended Pattern | Why |\n|----------------|---------------------|-----|\n| Clean separation of concerns | **Layered (3-Tier)** | Clear boundaries (UI, Logic, Data) |\n| Real-time responsiveness | **Event-Driven** | Async, decoupled, reactive |\n| High performance + flexibility | **Component-Based (ECS)** | Cache-friendly, data-oriented |\n| Decouple many components | **Publisher-Subscriber** | Many-to-many communication |\n| Process data through stages | **Pipeline** | Stream processing, filters |\n| Multiple teams, independent deploy | **Microservices** | Team autonomy |\n| GUI application | **MVC/MVVM** | Separate UI from logic |\n| Concurrent processing | **Actor Model** | Isolated state |",
           "| Characteristic | Monolith | Microservices | Layered | Event-Driven | ECS |\n|----------------|----------|---------------|---------|--------------|-----|\n| **Simplicity** | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐ |\n| **Performance** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |\n| **Scalability** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |\n| **Maintainability** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |\n| **Testability** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |\n| **Flexibility** | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |",
@@ -718,18 +742,89 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass EventBus {\n    std::vector<EventHandler> handlers;\npublic:\n    void publish(const Event& e) {\n        for (auto& h : handlers) {\n            h(e);  // What if h() calls unsubscribe()?\n        }\n    }\n    void unsubscribe(EventHandler h) {\n        handlers.erase(/*..*/);  // Modifies vector!\n    }\n};\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Bug:** Iterator invalidation - modifying vector while iterating crashes!\n\n**Fix:** Copy handlers before iterating:\n```cpp\nvoid publish(const Event& e) {\n    auto copy = handlers;  // Snapshot\n    for (auto& h : copy) h(e);  // Safe\n}\n```\n\n</details>\n\n---\n\n#### Additional Practice Tasks 2-20:\n- Fix event loop (infinite recursion)\n- Implement priority queue correctly\n- Add thread safety\n- Handle exceptions in handlers\n- Implement event coalescing\n- Design event sourcing system\n- Create RAII subscription handle\n- And 13 more challenges...\n\n*(Detailed solutions in complete file)*\n\n---",
-          "code": "class EventBus {\n    std::vector<EventHandler> handlers;\npublic:\n    void publish(const Event& e) {\n        for (auto& h : handlers) {\n            h(e);  // What if h() calls unsubscribe()?\n        }\n    }\n    void unsubscribe(EventHandler h) {\n        handlers.erase(/*..*/);  // Modifies vector!\n    }\n};",
+          "description": "",
+          "full_content": "**Answer:**\n```\nIterator invalidation bug - undefined behavior if handler unsubscribes during publish\n```\n\n**Explanation:**\n- Iterating over `handlers` vector while handler callback modifies it (unsubscribe)\n- `unsubscribe()` erases from vector, invalidating iterators currently in use\n- Causes undefined behavior: crash, skip handlers, or call deleted handlers\n- Classic event system bug - handlers modifying subscription list during dispatch\n- **Key Concept:** Never modify container while iterating; use snapshot or deferred operations\n\n**Fixed Version:**\n```cpp\nclass EventBus {\n    std::vector<EventHandler> handlers;\n\npublic:\n    void publish(const Event& e) {\n        // Copy handlers vector to avoid iterator invalidation\n        auto copy = handlers;  // Snapshot at publish time\n        for (auto& h : copy) {\n            h(e);  // Safe - iterating over copy\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        handlers.push_back(h);\n    }\n\n    void unsubscribe(EventHandler h) {\n        // Remove handler (modifies original, not affecting copy in publish)\n        handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n            [&](const EventHandler& handler) {\n                // Compare function pointers (simplified)\n                return handler.target_type() == h.target_type();\n            }), handlers.end());\n    }\n};\n```\n\n**Alternative: Deferred Removal:**\n```cpp\nclass EventBus {\n    std::vector<EventHandler> handlers;\n    std::vector<EventHandler> toRemove;\n    bool publishing = false;\n\npublic:\n    void publish(const Event& e) {\n        publishing = true;\n        for (auto& h : handlers) {\n            h(e);\n        }\n        publishing = false;\n\n        // Process deferred removals\n        for (auto& h : toRemove) {\n            handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n                [&](const EventHandler& handler) {\n                    return handler.target_type() == h.target_type();\n                }), handlers.end());\n        }\n        toRemove.clear();\n    }\n\n    void unsubscribe(EventHandler h) {\n        if (publishing) {\n            toRemove.push_back(h);  // Defer until publish completes\n        } else {\n            handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n                [&](const EventHandler& handler) {\n                    return handler.target_type() == h.target_type();\n                }), handlers.end());\n        }\n    }\n};\n```",
+          "code": "#include <vector>\n#include <functional>\n\nstruct Event {\n    int type;\n    int data;\n};\n\nusing EventHandler = std::function<void(const Event&)>;\n\nclass EventBus {\n    std::vector<EventHandler> handlers;\npublic:\n    void publish(const Event& e) {\n        for (auto& h : handlers) {\n            h(e);  // What if h() calls unsubscribe()?\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        handlers.push_back(h);\n    }\n\n    void unsubscribe(EventHandler h) {\n        handlers.erase(/*..*/);  // Modifies vector during iteration!\n    }\n};",
+          "answer": "Iterator invalidation bug - undefined behavior if handler unsubscribes during publish",
+          "explanation": "- Iterating over `handlers` vector while handler callback modifies it (unsubscribe)\n- `unsubscribe()` erases from vector, invalidating iterators currently in use\n- Causes undefined behavior: crash, skip handlers, or call deleted handlers\n- Classic event system bug - handlers modifying subscription list during dispatch\n- **Key Concept:** Never modify container while iterating; use snapshot or deferred operations",
+          "key_concept": "Never modify container while iterating; use snapshot or deferred operations",
+          "fixed_version": "class EventBus {\n    std::vector<EventHandler> handlers;\n\npublic:\n    void publish(const Event& e) {\n        // Copy handlers vector to avoid iterator invalidation\n        auto copy = handlers;  // Snapshot at publish time\n        for (auto& h : copy) {\n            h(e);  // Safe - iterating over copy\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        handlers.push_back(h);\n    }\n\n    void unsubscribe(EventHandler h) {\n        // Remove handler (modifies original, not affecting copy in publish)\n        handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n            [&](const EventHandler& handler) {\n                // Compare function pointers (simplified)\n                return handler.target_type() == h.target_type();\n            }), handlers.end());\n    }\n};",
           "expected_output": "",
           "solution": "",
           "additional_code": [
-            "void publish(const Event& e) {\n    auto copy = handlers;  // Snapshot\n    for (auto& h : copy) h(e);  // Safe\n}"
+            "Iterator invalidation bug - undefined behavior if handler unsubscribes during publish",
+            "class EventBus {\n    std::vector<EventHandler> handlers;\n    std::vector<EventHandler> toRemove;\n    bool publishing = false;\n\npublic:\n    void publish(const Event& e) {\n        publishing = true;\n        for (auto& h : handlers) {\n            h(e);\n        }\n        publishing = false;\n\n        // Process deferred removals\n        for (auto& h : toRemove) {\n            handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n                [&](const EventHandler& handler) {\n                    return handler.target_type() == h.target_type();\n                }), handlers.end());\n        }\n        toRemove.clear();\n    }\n\n    void unsubscribe(EventHandler h) {\n        if (publishing) {\n            toRemove.push_back(h);  // Defer until publish completes\n        } else {\n            handlers.erase(std::remove_if(handlers.begin(), handlers.end(),\n                [&](const EventHandler& handler) {\n                    return handler.target_type() == h.target_type();\n                }), handlers.end());\n        }\n    }\n};"
+          ]
+        },
+        {
+          "question_number": 2,
+          "title": "Question 2",
+          "description": "",
+          "full_content": "**Answer:**\n```\nInfinite loop if initial event type is 1\n```\n\n**Explanation:**\n- `handleEvent()` for type 1 pushes new event type 2\n- Type 2 event might push another event, creating infinite chain\n- Queue never empties - infinite loop\n- Classic event loop recursion problem\n- **Key Concept:** Limit event recursion depth or use generational processing to prevent infinite event chains\n\n**Fixed Version:**\n```cpp\nclass EventQueue {\n    std::queue<Event> events;\n    int recursionDepth = 0;\n    const int MAX_DEPTH = 10;\n\npublic:\n    void processAll() {\n        while (!events.empty() && recursion Depth < MAX_DEPTH) {\n            Event e = events.front();\n            events.pop();\n\n            recursionDepth++;\n            handleEvent(e);\n            recursionDepth--;\n        }\n\n        if (recursionDepth >= MAX_DEPTH) {\n            std::cerr << \"Warning: Event recursion limit reached\\n\";\n        }\n    }\n};\n```\n\n**Better: Generational Processing:**\n```cpp\nclass EventQueue {\n    std::queue<Event> current;\n    std::queue<Event> next;\n\npublic:\n    void processAll() {\n        while (!current.empty()) {\n            Event e = current.front();\n            current.pop();\n            handleEvent(e);  // Can push to 'next' queue\n        }\n        std::swap(current, next);  // Next generation becomes current\n    }\n\n    void push(const Event& e) {\n        next.push(e);  // New events go to next generation\n    }\n};\n```",
+          "code": "#include <iostream>\n#include <queue>\n#include <functional>\n\nstruct Event {\n    int type;\n    int data;\n};\n\nclass EventQueue {\n    std::queue<Event> events;\n\npublic:\n    void push(const Event& e) {\n        events.push(e);\n    }\n\n    void processAll() {\n        while (!events.empty()) {\n            Event e = events.front();\n            events.pop();\n            handleEvent(e);  // What if handleEvent() pushes new events?\n        }\n    }\n\n    void handleEvent(const Event& e) {\n        if (e.type == 1) {\n            push(Event{2, e.data * 2});  // Recursive event!\n        }\n        std::cout << \"Processed event: \" << e.type << \"\\n\";\n    }\n};",
+          "answer": "Infinite loop if initial event type is 1",
+          "explanation": "- `handleEvent()` for type 1 pushes new event type 2\n- Type 2 event might push another event, creating infinite chain\n- Queue never empties - infinite loop\n- Classic event loop recursion problem\n- **Key Concept:** Limit event recursion depth or use generational processing to prevent infinite event chains",
+          "key_concept": "Limit event recursion depth or use generational processing to prevent infinite event chains",
+          "fixed_version": "class EventQueue {\n    std::queue<Event> events;\n    int recursionDepth = 0;\n    const int MAX_DEPTH = 10;\n\npublic:\n    void processAll() {\n        while (!events.empty() && recursion Depth < MAX_DEPTH) {\n            Event e = events.front();\n            events.pop();\n\n            recursionDepth++;\n            handleEvent(e);\n            recursionDepth--;\n        }\n\n        if (recursionDepth >= MAX_DEPTH) {\n            std::cerr << \"Warning: Event recursion limit reached\\n\";\n        }\n    }\n};",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": [
+            "Infinite loop if initial event type is 1",
+            "class EventQueue {\n    std::queue<Event> current;\n    std::queue<Event> next;\n\npublic:\n    void processAll() {\n        while (!current.empty()) {\n            Event e = current.front();\n            current.pop();\n            handleEvent(e);  // Can push to 'next' queue\n        }\n        std::swap(current, next);  // Next generation becomes current\n    }\n\n    void push(const Event& e) {\n        next.push(e);  // New events go to next generation\n    }\n};"
+          ]
+        },
+        {
+          "question_number": 3,
+          "title": "Question 3",
+          "description": "",
+          "full_content": "**Answer:**\n```\nData race - undefined behavior (likely crash)\n```\n\n**Explanation:**\n- Thread 1 reading `handlers` vector while Thread 2 modifying it\n- `std::vector` is not thread-safe - concurrent read/write causes data race\n- Vector reallocation during `push_back()` invalidates iterators in `publish()`\n- Results: crashes, wrong handlers called, or skipped handlers\n- **Key Concept:** Shared mutable state requires synchronization; use mutex or lock-free data structures\n\n**Fixed Version:**\n```cpp\n#include <mutex>\n\nclass EventBus {\n    std::vector<EventHandler> handlers;\n    mutable std::mutex mtx;\n\npublic:\n    void publish(const Event& e) {\n        std::lock_guard<std::mutex> lock(mtx);\n        for (auto& h : handlers) {\n            h(e);\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        std::lock_guard<std::mutex> lock(mtx);\n        handlers.push_back(h);\n    }\n};\n```",
+          "code": "#include <thread>\n#include <vector>\n\nclass EventBus {\n    std::vector<EventHandler> handlers;\n\npublic:\n    void publish(const Event& e) {\n        for (auto& h : handlers) {\n            h(e);\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        handlers.push_back(h);\n    }\n};\n\nint main() {\n    EventBus bus;\n\n    // Thread 1: publishes events\n    std::thread t1([&]() {\n        for (int i = 0; i < 1000; ++i) {\n            bus.publish(Event{1, i});\n        }\n    });\n\n    // Thread 2: subscribes handlers\n    std::thread t2([&]() {\n        for (int i = 0; i < 10; ++i) {\n            bus.subscribe([](const Event& e) {\n                std::cout << e.data;\n            });\n        }\n    });\n\n    t1.join();\n    t2.join();\n}",
+          "answer": "Data race - undefined behavior (likely crash)",
+          "explanation": "- Thread 1 reading `handlers` vector while Thread 2 modifying it\n- `std::vector` is not thread-safe - concurrent read/write causes data race\n- Vector reallocation during `push_back()` invalidates iterators in `publish()`\n- Results: crashes, wrong handlers called, or skipped handlers\n- **Key Concept:** Shared mutable state requires synchronization; use mutex or lock-free data structures",
+          "key_concept": "Shared mutable state requires synchronization; use mutex or lock-free data structures",
+          "fixed_version": "#include <mutex>\n\nclass EventBus {\n    std::vector<EventHandler> handlers;\n    mutable std::mutex mtx;\n\npublic:\n    void publish(const Event& e) {\n        std::lock_guard<std::mutex> lock(mtx);\n        for (auto& h : handlers) {\n            h(e);\n        }\n    }\n\n    void subscribe(EventHandler h) {\n        std::lock_guard<std::mutex> lock(mtx);\n        handlers.push_back(h);\n    }\n};",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": [
+            "Data race - undefined behavior (likely crash)"
+          ]
+        },
+        {
+          "question_number": 4,
+          "title": "Question 4",
+          "description": "",
+          "full_content": "**Answer:**\n```\nType-based dispatch is efficient, but can be improved with compile-time polymorphism\n```\n\n**Explanation:**\n- Runtime map lookup has overhead (hash computation, bucket search)\n- Better for many event types (100+), but overkill for few types\n- Memory overhead: each event type needs separate vector\n- Alternative: compile-time dispatch with variant or function overloading\n- **Key Concept:** Choose runtime dispatch (map) for dynamic types, compile-time dispatch (templates/overloading) for fixed types\n\n**Better for Fixed Types:**\n```cpp\n#include <variant>\n#include <vector>\n\nstruct SensorEvent { int data; };\nstruct CommandEvent { std::string cmd; };\nstruct ErrorEvent { std::string msg; };\n\nusing Event = std::variant<SensorEvent, CommandEvent, ErrorEvent>;\n\nclass EventBus {\n    std::vector<std::function<void(const SensorEvent&)>> sensorHandlers;\n    std::vector<std::function<void(const CommandEvent&)>> commandHandlers;\n    std::vector<std::function<void(const ErrorEvent&)>> errorHandlers;\n\npublic:\n    void publish(const Event& e) {\n        std::visit([this](const auto& event) {\n            using T = std::decay_t<decltype(event)>;\n\n            if constexpr (std::is_same_v<T, SensorEvent>) {\n                for (auto& h : sensorHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, CommandEvent>) {\n                for (auto& h : commandHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, ErrorEvent>) {\n                for (auto& h : errorHandlers) h(event);\n            }\n        }, e);\n    }\n\n    void subscribe(std::function<void(const SensorEvent&)> h) {\n        sensorHandlers.push_back(h);\n    }\n    // ... other subscribe overloads\n};\n```",
+          "code": "class EventBus {\n    std::unordered_map<int, std::vector<EventHandler>> handlers;\n\npublic:\n    void subscribe(int eventType, EventHandler h) {\n        handlers[eventType].push_back(h);\n    }\n\n    void publish(const Event& e) {\n        if (handlers.count(e.type)) {\n            for (auto& h : handlers[e.type]) {\n                h(e);\n            }\n        }\n    }\n};\n\n// What's more efficient than this approach?",
+          "answer": "Type-based dispatch is efficient, but can be improved with compile-time polymorphism",
+          "explanation": "- Runtime map lookup has overhead (hash computation, bucket search)\n- Better for many event types (100+), but overkill for few types\n- Memory overhead: each event type needs separate vector\n- Alternative: compile-time dispatch with variant or function overloading\n- **Key Concept:** Choose runtime dispatch (map) for dynamic types, compile-time dispatch (templates/overloading) for fixed types\n\n**Better for Fixed Types:**\n```cpp\n#include <variant>\n#include <vector>\n\nstruct SensorEvent { int data; };\nstruct CommandEvent { std::string cmd; };\nstruct ErrorEvent { std::string msg; };\n\nusing Event = std::variant<SensorEvent, CommandEvent, ErrorEvent>;\n\nclass EventBus {\n    std::vector<std::function<void(const SensorEvent&)>> sensorHandlers;\n    std::vector<std::function<void(const CommandEvent&)>> commandHandlers;\n    std::vector<std::function<void(const ErrorEvent&)>> errorHandlers;\n\npublic:\n    void publish(const Event& e) {\n        std::visit([this](const auto& event) {\n            using T = std::decay_t<decltype(event)>;\n\n            if constexpr (std::is_same_v<T, SensorEvent>) {\n                for (auto& h : sensorHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, CommandEvent>) {\n                for (auto& h : commandHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, ErrorEvent>) {\n                for (auto& h : errorHandlers) h(event);\n            }\n        }, e);\n    }\n\n    void subscribe(std::function<void(const SensorEvent&)> h) {\n        sensorHandlers.push_back(h);\n    }\n    // ... other subscribe overloads\n};\n```",
+          "key_concept": "Choose runtime dispatch (map) for dynamic types, compile-time dispatch (templates/overloading) for fixed types",
+          "fixed_version": "",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": [
+            "Type-based dispatch is efficient, but can be improved with compile-time polymorphism",
+            "#include <variant>\n#include <vector>\n\nstruct SensorEvent { int data; };\nstruct CommandEvent { std::string cmd; };\nstruct ErrorEvent { std::string msg; };\n\nusing Event = std::variant<SensorEvent, CommandEvent, ErrorEvent>;\n\nclass EventBus {\n    std::vector<std::function<void(const SensorEvent&)>> sensorHandlers;\n    std::vector<std::function<void(const CommandEvent&)>> commandHandlers;\n    std::vector<std::function<void(const ErrorEvent&)>> errorHandlers;\n\npublic:\n    void publish(const Event& e) {\n        std::visit([this](const auto& event) {\n            using T = std::decay_t<decltype(event)>;\n\n            if constexpr (std::is_same_v<T, SensorEvent>) {\n                for (auto& h : sensorHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, CommandEvent>) {\n                for (auto& h : commandHandlers) h(event);\n            } else if constexpr (std::is_same_v<T, ErrorEvent>) {\n                for (auto& h : errorHandlers) h(event);\n            }\n        }, e);\n    }\n\n    void subscribe(std::function<void(const SensorEvent&)> h) {\n        sensorHandlers.push_back(h);\n    }\n    // ... other subscribe overloads\n};"
+          ]
+        },
+        {
+          "question_number": 5,
+          "title": "Question 5",
+          "description": "",
+          "full_content": "**Answer:**\n```\nMultiple data races - eventQueue and handlers accessed without synchronization\n```\n\n**Explanation:**\n- `publish()` writes to `eventQueue` while worker thread reads it - data race\n- `handlers` vector read by worker, potentially modified by main thread - data race\n- No synchronization between producer (publish) and consumer (worker)\n- Destructor doesn't ensure queue is empty before stopping worker\n- **Key Concept:** Async event processing requires thread-safe queue and proper shutdown synchronization\n\n**Fixed Version:**\n```cpp\n#include <thread>\n#include <queue>\n#include <mutex>\n#include <condition_variable>\n\nclass AsyncEventBus {\n    std::queue<Event> eventQueue;\n    std::vector<EventHandler> handlers;\n    std::mutex queueMtx;\n    std::mutex handlersMtx;\n    std::condition_variable cv;\n    std::thread workerThread;\n    bool running = true;\n\npublic:\n    AsyncEventBus() {\n        workerThread = std::thread([this]() {\n            while (true) {\n                std::unique_lock<std::mutex> lock(queueMtx);\n                cv.wait(lock, [this]() {\n                    return !eventQueue.empty() || !running;\n                });\n\n                if (!running && eventQueue.empty()) break;\n\n                if (!eventQueue.empty()) {\n                    Event e = eventQueue.front();\n                    eventQueue.pop();\n                    lock.unlock();\n\n                    // Process event with handlers\n                    std::lock_guard<std::mutex> hLock(handlersMtx);\n                    for (auto& h : handlers) {\n                        h(e);\n                    }\n                }\n            }\n        });\n    }\n\n    void publish(const Event& e) {\n        {\n            std::lock_guard<std::mutex> lock(queueMtx);\n            eventQueue.push(e);\n        }\n        cv.notify_one();\n    }\n\n    void subscribe(EventHandler h) {\n        std::lock_guard<std::mutex> lock(handlersMtx);\n        handlers.push_back(h);\n    }\n\n    ~AsyncEventBus() {\n        {\n            std::lock_guard<std::mutex> lock(queueMtx);\n            running = false;\n        }\n        cv.notify_one();\n        workerThread.join();\n    }\n};\n```\n\n---\n\n\n## TOPIC: Event-Driven Architecture (Asynchronous Systems)",
+          "code": "class AsyncEventBus {\n    std::queue<Event> eventQueue;\n    std::vector<EventHandler> handlers;\n    std::thread workerThread;\n    bool running = true;\n\npublic:\n    AsyncEventBus() {\n        workerThread = std::thread([this]() {\n            while (running) {\n                if (!eventQueue.empty()) {\n                    Event e = eventQueue.front();\n                    eventQueue.pop();\n\n                    for (auto& h : handlers) {\n                        h(e);  // Process asynchronously\n                    }\n                }\n            }\n        });\n    }\n\n    void publish(const Event& e) {\n        eventQueue.push(e);\n    }\n\n    ~AsyncEventBus() {\n        running = false;\n        workerThread.join();\n    }\n};",
+          "answer": "Multiple data races - eventQueue and handlers accessed without synchronization",
+          "explanation": "- `publish()` writes to `eventQueue` while worker thread reads it - data race\n- `handlers` vector read by worker, potentially modified by main thread - data race\n- No synchronization between producer (publish) and consumer (worker)\n- Destructor doesn't ensure queue is empty before stopping worker\n- **Key Concept:** Async event processing requires thread-safe queue and proper shutdown synchronization",
+          "key_concept": "Async event processing requires thread-safe queue and proper shutdown synchronization",
+          "fixed_version": "#include <thread>\n#include <queue>\n#include <mutex>\n#include <condition_variable>\n\nclass AsyncEventBus {\n    std::queue<Event> eventQueue;\n    std::vector<EventHandler> handlers;\n    std::mutex queueMtx;\n    std::mutex handlersMtx;\n    std::condition_variable cv;\n    std::thread workerThread;\n    bool running = true;\n\npublic:\n    AsyncEventBus() {\n        workerThread = std::thread([this]() {\n            while (true) {\n                std::unique_lock<std::mutex> lock(queueMtx);\n                cv.wait(lock, [this]() {\n                    return !eventQueue.empty() || !running;\n                });\n\n                if (!running && eventQueue.empty()) break;\n\n                if (!eventQueue.empty()) {\n                    Event e = eventQueue.front();\n                    eventQueue.pop();\n                    lock.unlock();\n\n                    // Process event with handlers\n                    std::lock_guard<std::mutex> hLock(handlersMtx);\n                    for (auto& h : handlers) {\n                        h(e);\n                    }\n                }\n            }\n        });\n    }\n\n    void publish(const Event& e) {\n        {\n            std::lock_guard<std::mutex> lock(queueMtx);\n            eventQueue.push(e);\n        }\n        cv.notify_one();\n    }\n\n    void subscribe(EventHandler h) {\n        std::lock_guard<std::mutex> lock(handlersMtx);\n        handlers.push_back(h);\n    }\n\n    ~AsyncEventBus() {\n        {\n            std::lock_guard<std::mutex> lock(queueMtx);\n            running = false;\n        }\n        cv.notify_one();\n        workerThread.join();\n    }\n};",
+          "expected_output": "",
+          "solution": "",
+          "additional_code": [
+            "Multiple data races - eventQueue and handlers accessed without synchronization"
           ]
         }
       ],
       "quick_reference": {
-        "content": "#### Event Delivery Patterns\n\n| Pattern | Use When | Avoid When | Complexity |\n|---------|----------|------------|------------|\n| **Synchronous** | Simple apps, single thread | Long-running handlers | Low |\n| **Queued** | Game loops, batch processing | Need immediate response | Medium |\n| **Priority** | Safety-critical, real-time | All events equal priority | Medium |\n| **Threaded** | Parallel processing | Order matters | High |\n\n#### Synchronous vs Asynchronous Events\n\n| Aspect | Synchronous | Asynchronous |\n|--------|-------------|--------------|\n| **Blocking** | Yes (waits) | No (returns immediately) |\n| **Order** | Guaranteed | May vary |\n| **Debugging** | Easy (call stack) | Harder (delayed) |\n| **Performance** | Slower (sequential) | Faster (parallel possible) |\n| **Use Case** | Simple apps | Real-time, games |\n\n#### Common Patterns\n\n```\nObserver Pattern:\n  Subject ──notify()──▶ Observer1\n                    └──▶ Observer2\n\nPub/Sub Pattern:\n  Publisher ──publish()──▶ Event Bus ──▶ Subscriber1\n                                    └──▶ Subscriber2\n\nEvent Sourcing:\n  Command ──▶ Event Store ──▶ Projections\n                         └──▶ Replay\n```\n\n---\n\n**End of Topic 2: Event-Driven Architecture**\n\nThis topic covered:\n✅ Event-driven fundamentals  \n✅ Core components (event, producer, consumer, bus)\n✅ Sync vs async delivery\n✅ 6 edge cases with solutions\n✅ 8 code examples (simple → advanced)\n✅ 20 interview questions\n✅ 20 practice tasks\n✅ Quick reference guides\n\n**Next Topic:** Component-Based Architecture (ECS) or another architectural pattern!",
+        "content": "#### Event Delivery Patterns\n\n| Pattern | Use When | Avoid When | Complexity |\n|---------|----------|------------|------------|\n| **Synchronous** | Simple apps, single thread | Long-running handlers | Low |\n| **Queued** | Game loops, batch processing | Need immediate response | Medium |\n| **Priority** | Safety-critical, real-time | All events equal priority | Medium |\n| **Threaded** | Parallel processing | Order matters | High |\n\n#### Synchronous vs Asynchronous Events\n\n| Aspect | Synchronous | Asynchronous |\n|--------|-------------|--------------|\n| **Blocking** | Yes (waits) | No (returns immediately) |\n| **Order** | Guaranteed | May vary |\n| **Debugging** | Easy (call stack) | Harder (delayed) |\n| **Performance** | Slower (sequential) | Faster (parallel possible) |\n| **Use Case** | Simple apps | Real-time, games |\n\n#### Common Patterns\n\n```\nObserver Pattern:\n  Subject ──notify()──▶ Observer1\n                    └──▶ Observer2\n\nPub/Sub Pattern:\n  Publisher ──publish()──▶ Event Bus ──▶ Subscriber1\n                                    └──▶ Subscriber2\n\nEvent Sourcing:\n  Command ──▶ Event Store ──▶ Projections\n                         └──▶ Replay\n```\n\n---\n\n**End of Topic 2: Event-Driven Architecture**\n\nThis topic covered:\n✅ Event-driven fundamentals  \n✅ Core components (event, producer, consumer, bus)\n✅ Sync vs async delivery\n✅ 6 edge cases with solutions\n✅ 8 code examples (simple → advanced)\n✅ 20 interview questions\n✅ 20 practice tasks\n✅ Quick reference guides\n\n**Next Topic:** Component-Based Architecture (ECS) or another architectural pattern!\n\n\n## TOPIC: Event-Driven Architecture (Asynchronous Systems)",
         "tables": [
           "| Pattern | Use When | Avoid When | Complexity |\n|---------|----------|------------|------------|\n| **Synchronous** | Simple apps, single thread | Long-running handlers | Low |\n| **Queued** | Game loops, batch processing | Need immediate response | Medium |\n| **Priority** | Safety-critical, real-time | All events equal priority | Medium |\n| **Threaded** | Parallel processing | Order matters | High |",
           "| Aspect | Synchronous | Asynchronous |\n|--------|-------------|--------------|\n| **Blocking** | Yes (waits) | No (returns immediately) |\n| **Order** | Guaranteed | May vary |\n| **Debugging** | Easy (call stack) | Harder (delayed) |\n| **Performance** | Slower (sequential) | Faster (parallel possible) |\n| **Use Case** | Simple apps | Real-time, games |"
@@ -737,7 +832,7 @@
       }
     },
     {
-      "topic": "Component-Based Architecture (Entity-Component-System)",
+      "topic": "topic_3_component_based_ecs",
       "filename": "topic_3_component_based_ecs.md",
       "theory": {
         "subsections": [
@@ -993,101 +1088,141 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "**Goal**: Create an ECS framework with entities, components, and one system.",
-          "full_content": "**Goal**: Create an ECS framework with entities, components, and one system.\n\n**Requirements**:\n1. `EntityManager` to create entity IDs\n2. `ComponentManager` to store components (use `std::unordered_map`)\n3. Two components: `Position {x, y}` and `Velocity {dx, dy}`\n4. `MovementSystem` that updates positions\n5. Test with 3 entities (2 movable, 1 static)\n\n**Expected Output**:\n```\nEntity 0 moved to (1, 0.5)\nEntity 1 moved to (9.5, 10)\nEntity 2: no movement (no Velocity component)\n```\n\n---",
+          "full_content": "**Goal**: Create an ECS framework with entities, components, and one system.\n\n**Requirements**:\n1. `EntityManager` to create entity IDs\n2. `ComponentManager` to store components (use `std::unordered_map`)\n3. Two components: `Position {x, y}` and `Velocity {dx, dy}`\n4. `MovementSystem` that updates positions\n5. Test with 3 entities (2 movable, 1 static)\n\n**Expected Output**:",
           "code": "Entity 0 moved to (1, 0.5)\nEntity 1 moved to (9.5, 10)\nEntity 2: no movement (no Velocity component)",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "**Goal**: Extend Task 1 with health and collision detection.",
-          "full_content": "**Goal**: Extend Task 1 with health and collision detection.\n\n**Requirements**:\n1. Add `HealthComponent {hp}` and `ColliderComponent {radius}`\n2. `CollisionSystem` checks distance between entities\n3. If colliding, reduce both entities' health by 10\n4. `HealthSystem` prints message when HP ≤ 0\n\n**Test Case**:\n- Player at (0, 0), moving right (velocity = 1, 0)\n- Enemy at (5, 0), moving left (velocity = -1, 0)\n- Should collide around frame 3\n\n---",
+          "full_content": "**Goal**: Extend Task 1 with health and collision detection.\n\n**Requirements**:\n1. Add `HealthComponent {hp}` and `ColliderComponent {radius}`\n2. `CollisionSystem` checks distance between entities\n3. If colliding, reduce both entities' health by 10\n4. `HealthSystem` prints message when HP ≤ 0\n\n**Test Case**:\n- Player at (0, 0), moving right (velocity = 1, 0)\n- Enemy at (5, 0), moving left (velocity = -1, 0)\n- Should collide around frame 3\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "**Goal**: Write a generic `getEntitiesWith<Components...>()` function.",
-          "full_content": "**Goal**: Write a generic `getEntitiesWith<Components...>()` function.\n\n**Requirements**:\n1. Template function that accepts multiple component types\n2. Returns vector of entity IDs that have ALL specified components\n3. Use fold expressions or recursion\n\n**Example Usage**:\n```cpp\nauto movableEntities = cm.getEntitiesWith<Position, Velocity>();\nauto damageable = cm.getEntitiesWith<Health, Collider>();\n```\n\n---",
+          "full_content": "**Goal**: Write a generic `getEntitiesWith<Components...>()` function.\n\n**Requirements**:\n1. Template function that accepts multiple component types\n2. Returns vector of entity IDs that have ALL specified components\n3. Use fold expressions or recursion\n\n**Example Usage**:",
           "code": "auto movableEntities = cm.getEntitiesWith<Position, Velocity>();\nauto damageable = cm.getEntitiesWith<Health, Collider>();",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "**Goal**: Safely destroy entities during system iteration.",
-          "full_content": "**Goal**: Safely destroy entities during system iteration.\n\n**Requirements**:\n1. `queueDestroy(EntityID)` adds to destruction queue\n2. `processDestructionQueue()` removes entities at end of frame\n3. Test by iterating over entities and destroying some mid-loop\n\n**Test Case**:\n```cpp\nfor (EntityID e : entities) {\n    if (someCondition(e)) {\n        entityManager.queueDestroy(e);  // Don't destroy immediately\n    }\n}\nentityManager.processDestructionQueue();  // Destroy after loop\n```\n\n---",
+          "full_content": "**Goal**: Safely destroy entities during system iteration.\n\n**Requirements**:\n1. `queueDestroy(EntityID)` adds to destruction queue\n2. `processDestructionQueue()` removes entities at end of frame\n3. Test by iterating over entities and destroying some mid-loop\n\n**Test Case**:",
           "code": "for (EntityID e : entities) {\n    if (someCondition(e)) {\n        entityManager.queueDestroy(e);  // Don't destroy immediately\n    }\n}\nentityManager.processDestructionQueue();  // Destroy after loop",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "**Goal**: Create a system scheduler with priority-based execution.",
-          "full_content": "**Goal**: Create a system scheduler with priority-based execution.\n\n**Requirements**:\n1. `SystemScheduler` class with `addSystem(System*, priority)`\n2. Systems sorted by priority\n3. `update()` runs all systems in order\n\n**Test Case**:\n```cpp\nscheduler.addSystem(&movementSystem, 100);\nscheduler.addSystem(&collisionSystem, 200);\nscheduler.addSystem(&renderSystem, 300);\nscheduler.update();  // Runs in order: movement → collision → render\n```\n\n---",
+          "full_content": "**Goal**: Create a system scheduler with priority-based execution.\n\n**Requirements**:\n1. `SystemScheduler` class with `addSystem(System*, priority)`\n2. Systems sorted by priority\n3. `update()` runs all systems in order\n\n**Test Case**:",
           "code": "scheduler.addSystem(&movementSystem, 100);\nscheduler.addSystem(&collisionSystem, 200);\nscheduler.addSystem(&renderSystem, 300);\nscheduler.update();  // Runs in order: movement → collision → render",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 6,
           "title": "Question 6",
           "description": "**Goal**: Group entities with same components for cache locality.",
-          "full_content": "**Goal**: Group entities with same components for cache locality.\n\n**Requirements**:\n1. `Archetype<Components...>` class stores entities\n2. Components stored in separate contiguous arrays\n3. `addEntity()` and `removeEntity()` methods\n\n**Example**:\n```cpp\nArchetype<Position, Velocity> movable;\nmovable.addEntity(0, Position{0, 0}, Velocity{1, 0});\n```\n\n---",
+          "full_content": "**Goal**: Group entities with same components for cache locality.\n\n**Requirements**:\n1. `Archetype<Components...>` class stores entities\n2. Components stored in separate contiguous arrays\n3. `addEntity()` and `removeEntity()` methods\n\n**Example**:",
           "code": "Archetype<Position, Velocity> movable;\nmovable.addEntity(0, Position{0, 0}, Velocity{1, 0});",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 7,
           "title": "Question 7",
           "description": "**Goal**: Change entity behavior by adding/removing components at runtime.",
-          "full_content": "**Goal**: Change entity behavior by adding/removing components at runtime.\n\n**Requirements**:\n1. `addComponent()` and `removeComponent()` methods\n2. Test with invincibility power-up (temporary component)\n3. After 5 seconds, remove invincibility component\n\n**Test Case**:\n```cpp\naddComponent(player, InvincibleComponent{5.0f});\n// Player takes no damage for 5 seconds\n// After 5 seconds, remove component → player can be damaged again\n```\n\n---",
+          "full_content": "**Goal**: Change entity behavior by adding/removing components at runtime.\n\n**Requirements**:\n1. `addComponent()` and `removeComponent()` methods\n2. Test with invincibility power-up (temporary component)\n3. After 5 seconds, remove invincibility component\n\n**Test Case**:",
           "code": "addComponent(player, InvincibleComponent{5.0f});\n// Player takes no damage for 5 seconds\n// After 5 seconds, remove component → player can be damaged again",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 8,
           "title": "Question 8",
           "description": "**Goal**: Ensure `VelocityComponent` can only be added if `PositionComponent` exists.",
-          "full_content": "**Goal**: Ensure `VelocityComponent` can only be added if `PositionComponent` exists.\n\n**Requirements**:\n1. Check for dependencies when adding components\n2. Throw exception if dependency not met\n\n**Test Case**:\n```cpp\naddComponent(entity, VelocityComponent{1, 0});  // ❌ Error! No Position\naddComponent(entity, PositionComponent{0, 0});\naddComponent(entity, VelocityComponent{1, 0});  // ✅ OK\n```\n\n---",
+          "full_content": "**Goal**: Ensure `VelocityComponent` can only be added if `PositionComponent` exists.\n\n**Requirements**:\n1. Check for dependencies when adding components\n2. Throw exception if dependency not met\n\n**Test Case**:",
           "code": "addComponent(entity, VelocityComponent{1, 0});  // ❌ Error! No Position\naddComponent(entity, PositionComponent{0, 0});\naddComponent(entity, VelocityComponent{1, 0});  // ✅ OK",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 9,
           "title": "Question 9",
           "description": "**Goal**: Prevent use-after-free with versioned entity IDs.",
-          "full_content": "**Goal**: Prevent use-after-free with versioned entity IDs.\n\n**Requirements**:\n1. `EntityID` struct with `{id, generation}`\n2. Increment generation when entity destroyed\n3. `isValid(EntityID)` checks if generation matches\n\n**Test Case**:\n```cpp\nEntityID e1 = createEntity();  // {id: 0, gen: 0}\ndestroyEntity(e1);\nEntityID e2 = createEntity();  // {id: 0, gen: 1} (reused ID!)\nisValid(e1);  // false (gen 0 != gen 1)\nisValid(e2);  // true\n```\n\n---",
+          "full_content": "**Goal**: Prevent use-after-free with versioned entity IDs.\n\n**Requirements**:\n1. `EntityID` struct with `{id, generation}`\n2. Increment generation when entity destroyed\n3. `isValid(EntityID)` checks if generation matches\n\n**Test Case**:",
           "code": "EntityID e1 = createEntity();  // {id: 0, gen: 0}\ndestroyEntity(e1);\nEntityID e2 = createEntity();  // {id: 0, gen: 1} (reused ID!)\nisValid(e1);  // false (gen 0 != gen 1)\nisValid(e2);  // true",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 10,
           "title": "Question 10",
           "description": "**Goal**: Use sparse sets for fast iteration and O(1) add/remove.",
-          "full_content": "**Goal**: Use sparse sets for fast iteration and O(1) add/remove.\n\n**Requirements**:\n1. `SparseSet<T>` class with:\n   - `dense` array (packed components)\n   - `sparse` array (entity ID → dense index mapping)\n2. `add()`, `remove()`, `get()` methods\n\n**Expected Complexity**:\n- Add: O(1)\n- Remove: O(1) (swap with last element)\n- Iteration: O(n) over dense array (cache-friendly)\n\n---\n\n#### Additional Tasks 11-20 (Outlined)\n\n**Task 11**: Implement event system for entity destruction notifications\n\n**Task 12**: Create a serialization system (save/load entities to JSON)\n\n**Task 13**: Implement component groups (pre-filtered entity lists)\n\n**Task 14**: Write a multithreaded system scheduler (systems run in parallel if safe)\n\n**Task 15**: Implement singleton components (global state shared across all entities)\n\n**Task 16**: Create entity prefabs (templates for spawning entities)\n\n**Task 17**: Implement reactive systems (trigger only on component add/remove)\n\n**Task 18**: Write a debugging visualizer (print all entities and their components)\n\n**Task 19**: Implement component pooling (reuse component memory)\n\n**Task 20**: Build a complete mini-game using ECS (player, enemies, bullets, power-ups)\n\n---",
+          "full_content": "**Goal**: Use sparse sets for fast iteration and O(1) add/remove.\n\n**Requirements**:\n1. `SparseSet<T>` class with:\n   - `dense` array (packed components)\n   - `sparse` array (entity ID → dense index mapping)\n2. `add()`, `remove()`, `get()` methods\n\n**Expected Complexity**:\n- Add: O(1)\n- Remove: O(1) (swap with last element)\n- Iteration: O(n) over dense array (cache-friendly)\n\n---\n\n#### Additional Tasks 11-20 (Outlined)\n\n**Task 11**: Implement event system for entity destruction notifications\n\n**Task 12**: Create a serialization system (save/load entities to JSON)\n\n**Task 13**: Implement component groups (pre-filtered entity lists)\n\n**Task 14**: Write a multithreaded system scheduler (systems run in parallel if safe)\n\n**Task 15**: Implement singleton components (global state shared across all entities)\n\n**Task 16**: Create entity prefabs (templates for spawning entities)\n\n**Task 17**: Implement reactive systems (trigger only on component add/remove)\n\n**Task 18**: Write a debugging visualizer (print all entities and their components)\n\n**Task 19**: Implement component pooling (reuse component memory)\n\n**Task 20**: Build a complete mini-game using ECS (player, enemies, bullets, power-ups)\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {
@@ -1103,7 +1238,7 @@
       }
     },
     {
-      "topic": "Layered Architecture (3-Tier / N-Tier)",
+      "topic": "topic_4_layered_architecture",
       "filename": "topic_4_layered_architecture.md",
       "theory": {
         "subsections": [
@@ -1300,53 +1435,73 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "**Goal**: Create a complete 3-tier system for managing Products.",
-          "full_content": "**Goal**: Create a complete 3-tier system for managing Products.\n\n**Requirements**:\n1. **Data Layer**: `ProductRepository` with save(), getById(), getAll(), update(), delete()\n2. **Business Layer**: `ProductService` with business rules:\n   - Price must be > 0\n   - Stock must be >= 0\n   - Name must not be empty\n3. **Presentation Layer**: `ProductController` with UI methods\n\n**Test Cases**:\n- Add valid product\n- Try to add product with negative price (should fail)\n- Update product stock\n- Display all products\n\n---",
+          "full_content": "**Goal**: Create a complete 3-tier system for managing Products.\n\n**Requirements**:\n1. **Data Layer**: `ProductRepository` with save(), getById(), getAll(), update(), delete()\n2. **Business Layer**: `ProductService` with business rules:\n   - Price must be > 0\n   - Stock must be >= 0\n   - Name must not be empty\n3. **Presentation Layer**: `ProductController` with UI methods\n\n**Test Cases**:\n- Add valid product\n- Try to add product with negative price (should fail)\n- Update product stock\n- Display all products\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "**Goal**: Refactor Task 1 to use dependency injection.",
-          "full_content": "**Goal**: Refactor Task 1 to use dependency injection.\n\n**Requirements**:\n1. Create `IProductRepository` interface\n2. `ProductService` depends on `IProductRepository*` (constructor injection)\n3. `ProductController` depends on `ProductService*`\n4. Create a mock `MockProductRepository` for testing\n\n---",
+          "full_content": "**Goal**: Refactor Task 1 to use dependency injection.\n\n**Requirements**:\n1. Create `IProductRepository` interface\n2. `ProductService` depends on `IProductRepository*` (constructor injection)\n3. `ProductController` depends on `ProductService*`\n4. Create a mock `MockProductRepository` for testing\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "**Goal**: Create generic repository base class.",
-          "full_content": "**Goal**: Create generic repository base class.\n\n**Requirements**:\n1. `IRepository<T>` interface with:\n   - `save(T entity)`\n   - `getById(int id)`\n   - `getAll()`\n   - `update(T entity)`\n   - `remove(int id)`\n2. `ProductRepository` implements `IRepository<Product>`\n3. `UserRepository` implements `IRepository<User>`\n\n---",
+          "full_content": "**Goal**: Create generic repository base class.\n\n**Requirements**:\n1. `IRepository<T>` interface with:\n   - `save(T entity)`\n   - `getById(int id)`\n   - `getAll()`\n   - `update(T entity)`\n   - `remove(int id)`\n2. `ProductRepository` implements `IRepository<Product>`\n3. `UserRepository` implements `IRepository<User>`\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "**Goal**: Implement logging decorator for all service methods.",
-          "full_content": "**Goal**: Implement logging decorator for all service methods.\n\n**Requirements**:\n1. `LoggingDecorator<T>` template class\n2. Wraps any service\n3. Logs method calls and results\n4. Test with `ProductService`\n\n**Expected Output**:\n```\n[LOG] ProductService.addProduct() called\n[LOG] ProductService.addProduct() completed successfully\n```\n\n---",
+          "full_content": "**Goal**: Implement logging decorator for all service methods.\n\n**Requirements**:\n1. `LoggingDecorator<T>` template class\n2. Wraps any service\n3. Logs method calls and results\n4. Test with `ProductService`\n\n**Expected Output**:",
           "code": "[LOG] ProductService.addProduct() called\n[LOG] ProductService.addProduct() completed successfully",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "**Goal**: Add compile-time checks to prevent layer violations.",
-          "full_content": "**Goal**: Add compile-time checks to prevent layer violations.\n\n**Requirements**:\n1. Organize code into separate namespaces/modules:\n   - `presentation::`\n   - `business::`\n   - `data::`\n2. Ensure `data::` cannot #include files from `business::` or `presentation::`\n3. Write test that verifies dependencies\n\n---\n\n#### Task 6: Implement 4-Tier Architecture\n\n**Goal**: Add API layer between Presentation and Business.\n\n**Requirements**:\n1. **API Layer**: `ProductAPI` with REST-style methods:\n   - `createProduct(requestBody)` → returns JSON\n   - `getProduct(id)` → returns JSON\n2. **Presentation Layer**: Calls API methods\n3. Test complete flow: UI → API → Business → Data\n\n---\n\n#### Task 7: Add Unit Tests with Mocks\n\n**Goal**: Write unit tests for Business layer using mocks.\n\n**Requirements**:\n1. `MockProductRepository` implements `IProductRepository`\n2. Test `ProductService.addProduct()`:\n   - Test valid product (should call `repo.save()`)\n   - Test invalid price (should NOT call `repo.save()`)\n3. Verify mock was called correctly\n\n---\n\n#### Task 8: Implement Error Handling Across Layers\n\n**Goal**: Handle errors consistently across all layers.\n\n**Requirements**:\n1. Data layer throws `DataException`\n2. Business layer catches `DataException`, throws `BusinessException`\n3. Presentation layer catches `BusinessException`, displays user-friendly message\n\n**Example Flow**:\n```\nData layer: throw DataException(\"Database connection failed\")\n     ↓\nBusiness layer: catch, wrap in BusinessException(\"Unable to save product\")\n     ↓\nPresentation layer: catch, display \"Error: Unable to save product. Try again later.\"\n```\n\n---\n\n#### Task 9: Implement Caching in Service Layer\n\n**Goal**: Add caching to reduce database calls.\n\n**Requirements**:\n1. `ProductService` has `cache` map\n2. `getProductById()` checks cache first\n3. If miss, query database and store in cache\n4. Invalidate cache on `update()` and `delete()`\n\n---\n\n#### Task 10: Implement Transaction Support\n\n**Goal**: Execute multiple database operations atomically.\n\n**Requirements**:\n1. `beginTransaction()`, `commit()`, `rollback()` in repository\n2. Service method that saves multiple entities in one transaction\n3. If any save fails, rollback all changes\n\n**Example**:\n```cpp\nvoid transferMoney(int fromId, int toId, double amount) {\n    accountRepo.beginTransaction();\n    try {\n        accountRepo.deduct(fromId, amount);\n        accountRepo.add(toId, amount);\n        accountRepo.commit();\n    } catch (...) {\n        accountRepo.rollback();\n    }\n}\n```\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement DTO (Data Transfer Object) pattern\n\n**Task 12**: Add authentication middleware\n\n**Task 13**: Implement CQRS (separate read and write models)\n\n**Task 14**: Add pagination to repository queries\n\n**Task 15**: Implement soft delete (mark as deleted, don't actually remove)\n\n**Task 16**: Add validation using Strategy pattern\n\n**Task 17**: Implement audit logging (track who changed what)\n\n**Task 18**: Add authorization (role-based access control)\n\n**Task 19**: Implement connection pooling in Data layer\n\n**Task 20**: Build complete e-commerce system (users, products, orders, payments)\n\n---",
+          "full_content": "**Goal**: Add compile-time checks to prevent layer violations.\n\n**Requirements**:\n1. Organize code into separate namespaces/modules:\n   - `presentation::`\n   - `business::`\n   - `data::`\n2. Ensure `data::` cannot #include files from `business::` or `presentation::`\n3. Write test that verifies dependencies\n\n---\n\n#### Task 6: Implement 4-Tier Architecture\n\n**Goal**: Add API layer between Presentation and Business.\n\n**Requirements**:\n1. **API Layer**: `ProductAPI` with REST-style methods:\n   - `createProduct(requestBody)` → returns JSON\n   - `getProduct(id)` → returns JSON\n2. **Presentation Layer**: Calls API methods\n3. Test complete flow: UI → API → Business → Data\n\n---\n\n#### Task 7: Add Unit Tests with Mocks\n\n**Goal**: Write unit tests for Business layer using mocks.\n\n**Requirements**:\n1. `MockProductRepository` implements `IProductRepository`\n2. Test `ProductService.addProduct()`:\n   - Test valid product (should call `repo.save()`)\n   - Test invalid price (should NOT call `repo.save()`)\n3. Verify mock was called correctly\n\n---\n\n#### Task 8: Implement Error Handling Across Layers\n\n**Goal**: Handle errors consistently across all layers.\n\n**Requirements**:\n1. Data layer throws `DataException`\n2. Business layer catches `DataException`, throws `BusinessException`\n3. Presentation layer catches `BusinessException`, displays user-friendly message\n\n**Example Flow**:\n\n\n---\n\n#### Task 9: Implement Caching in Service Layer\n\n**Goal**: Add caching to reduce database calls.\n\n**Requirements**:\n1. `ProductService` has `cache` map\n2. `getProductById()` checks cache first\n3. If miss, query database and store in cache\n4. Invalidate cache on `update()` and `delete()`\n\n---\n\n#### Task 10: Implement Transaction Support\n\n**Goal**: Execute multiple database operations atomically.\n\n**Requirements**:\n1. `beginTransaction()`, `commit()`, `rollback()` in repository\n2. Service method that saves multiple entities in one transaction\n3. If any save fails, rollback all changes\n\n**Example**:\n```cpp\nvoid transferMoney(int fromId, int toId, double amount) {\n    accountRepo.beginTransaction();\n    try {\n        accountRepo.deduct(fromId, amount);\n        accountRepo.add(toId, amount);\n        accountRepo.commit();\n    } catch (...) {\n        accountRepo.rollback();\n    }\n}\n```\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement DTO (Data Transfer Object) pattern\n\n**Task 12**: Add authentication middleware\n\n**Task 13**: Implement CQRS (separate read and write models)\n\n**Task 14**: Add pagination to repository queries\n\n**Task 15**: Implement soft delete (mark as deleted, don't actually remove)\n\n**Task 16**: Add validation using Strategy pattern\n\n**Task 17**: Implement audit logging (track who changed what)\n\n**Task 18**: Add authorization (role-based access control)\n\n**Task 19**: Implement connection pooling in Data layer\n\n**Task 20**: Build complete e-commerce system (users, products, orders, payments)",
           "code": "Data layer: throw DataException(\"Database connection failed\")\n     ↓\nBusiness layer: catch, wrap in BusinessException(\"Unable to save product\")\n     ↓\nPresentation layer: catch, display \"Error: Unable to save product. Try again later.\"",
           "expected_output": "",
           "solution": "",
           "additional_code": [
             "void transferMoney(int fromId, int toId, double amount) {\n    accountRepo.beginTransaction();\n    try {\n        accountRepo.deduct(fromId, amount);\n        accountRepo.add(toId, amount);\n        accountRepo.commit();\n    } catch (...) {\n        accountRepo.rollback();\n    }\n}"
-          ]
+          ],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {
@@ -1360,7 +1515,7 @@
       }
     },
     {
-      "topic": "MVC / MVVM / MVP Patterns (GUI Architecture)",
+      "topic": "topic_5_mvc_mvvm_patterns",
       "filename": "topic_5_mvc_mvvm_patterns.md",
       "theory": {
         "subsections": [
@@ -1607,51 +1762,71 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "**Goal**: Create MVC pattern for a Counter application.",
-          "full_content": "**Goal**: Create MVC pattern for a Counter application.\n\n**Requirements**:\n1. **Model**: `CounterModel` with `increment()`, `decrement()`, `getValue()`\n2. **View**: `CounterView` displays count, has buttons\n3. **Controller**: `CounterController` handles button clicks\n\n**Test**:\n- Click increment → count goes up\n- Click decrement → count goes down\n- View auto-updates via Observer pattern\n\n---",
+          "full_content": "**Goal**: Create MVC pattern for a Counter application.\n\n**Requirements**:\n1. **Model**: `CounterModel` with `increment()`, `decrement()`, `getValue()`\n2. **View**: `CounterView` displays count, has buttons\n3. **Controller**: `CounterController` handles button clicks\n\n**Test**:\n- Click increment → count goes up\n- Click decrement → count goes down\n- View auto-updates via Observer pattern\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "**Goal**: Create MVVM pattern for a Login form.",
-          "full_content": "**Goal**: Create MVVM pattern for a Login form.\n\n**Requirements**:\n1. **Model**: `AuthModel` with `authenticate(username, password)`\n2. **ViewModel**: `LoginViewModel` with:\n   - `ObservableProperty<string> username`\n   - `ObservableProperty<string> password`\n   - `ObservableProperty<bool> isLoginEnabled`\n   - `loginCommand()`\n3. **View**: Binds to ViewModel properties\n\n**Test**:\n- Username/password empty → login button disabled\n- Fill both → login button enabled\n- Click login → calls `AuthModel.authenticate()`\n\n---",
+          "full_content": "**Goal**: Create MVVM pattern for a Login form.\n\n**Requirements**:\n1. **Model**: `AuthModel` with `authenticate(username, password)`\n2. **ViewModel**: `LoginViewModel` with:\n   - `ObservableProperty<string> username`\n   - `ObservableProperty<string> password`\n   - `ObservableProperty<bool> isLoginEnabled`\n   - `loginCommand()`\n3. **View**: Binds to ViewModel properties\n\n**Test**:\n- Username/password empty → login button disabled\n- Fill both → login button enabled\n- Click login → calls `AuthModel.authenticate()`\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "**Goal**: Create MVP pattern for same Login form.",
-          "full_content": "**Goal**: Create MVP pattern for same Login form.\n\n**Requirements**:\n1. **ILoginView** interface with:\n   - `showError(message)`\n   - `navigateToHome()`\n2. **LoginPresenter** with all logic\n3. **LoginView** implements interface (completely passive)\n\n**Test**:\n- Test Presenter with MockView\n- Verify `showError()` called on invalid credentials\n\n---",
+          "full_content": "**Goal**: Create MVP pattern for same Login form.\n\n**Requirements**:\n1. **ILoginView** interface with:\n   - `showError(message)`\n   - `navigateToHome()`\n2. **LoginPresenter** with all logic\n3. **LoginView** implements interface (completely passive)\n\n**Test**:\n- Test Presenter with MockView\n- Verify `showError()` called on invalid credentials\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "**Goal**: Take Task 1 (MVC Counter) and convert to MVVM.",
-          "full_content": "**Goal**: Take Task 1 (MVC Counter) and convert to MVVM.\n\n**Requirements**:\n- Remove Controller\n- Create `CounterViewModel` with `ObservableProperty<int> count`\n- View binds to ViewModel\n- Implement `incrementCommand()`, `decrementCommand()`\n\n---",
+          "full_content": "**Goal**: Take Task 1 (MVC Counter) and convert to MVVM.\n\n**Requirements**:\n- Remove Controller\n- Create `CounterViewModel` with `ObservableProperty<int> count`\n- View binds to ViewModel\n- Implement `incrementCommand()`, `decrementCommand()`\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "**Goal**: Create generic `ObservableProperty<T>` class for data binding.",
-          "full_content": "**Goal**: Create generic `ObservableProperty<T>` class for data binding.\n\n**Requirements**:\n1. `set(value)` - sets value and notifies listeners\n2. `get()` - returns current value\n3. `onChange(callback)` - registers listener\n\n**Test**:\n```cpp\nObservableProperty<int> count(0);\ncount.onChange([](int newValue) {\n    std::cout << \"Count changed to: \" << newValue << \"\\n\";\n});\ncount.set(5);  // Prints: \"Count changed to: 5\"\n```\n\n---\n\n#### Task 6: Implement Navigation System\n\n**Goal**: Handle navigation between multiple Views.\n\n**Requirements**:\n1. `INavigator` interface with `navigateTo(viewName)`\n2. Multiple Controllers (Login, Home, Profile)\n3. Navigator manages view stack\n\n**Test**:\n- Login success → navigate to Home\n- Click profile button → navigate to Profile\n- Back button → return to previous view\n\n---\n\n#### Task 7: Implement Validation in MVVM\n\n**Goal**: Add form validation to LoginViewModel.\n\n**Requirements**:\n1. Username: min 3 characters\n2. Password: min 8 characters, must have digit\n3. `isFormValid` property updates automatically\n4. Save button enabled only when form valid\n\n---\n\n#### Task 8: Test Controller with Mock View\n\n**Goal**: Write unit tests for MVC Controller.\n\n**Requirements**:\n1. Create `IUserView` interface\n2. `MockUserView` implements interface\n3. Test `UserController.updateUser()`\n4. Verify `view.updateNameLabel()` was called\n\n---\n\n#### Task 9: Implement Commands (MVVM)\n\n**Goal**: Create command pattern for ViewModel actions.\n\n**Requirements**:\n1. `ICommand` interface with `execute()`, `canExecute()`\n2. `RelayCommand` implementation\n3. ViewModel exposes commands (saveCommand, cancelCommand)\n4. View binds buttons to commands\n\n---\n\n#### Task 10: Implement Shared State\n\n**Goal**: Share data between multiple ViewModels.\n\n**Requirements**:\n1. `SharedCartModel` (singleton or shared instance)\n2. `ProductListViewModel` adds products\n3. `CheckoutViewModel` displays same products\n4. Both ViewModels observe same Model\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement undo/redo in MVC\n\n**Task 12**: Create MVVM web form with client-side validation\n\n**Task 13**: Implement Model with Repository pattern\n\n**Task 14**: Add loading states to ViewModel (isLoading property)\n\n**Task 15**: Implement error handling across layers\n\n**Task 16**: Create multi-page application with routing\n\n**Task 17**: Implement async operations in ViewModel\n\n**Task 18**: Add dependency injection to Controllers\n\n**Task 19**: Implement observer pattern for Model\n\n**Task 20**: Build complete TODO app with MVC or MVVM\n\n---",
+          "full_content": "**Goal**: Create generic `ObservableProperty<T>` class for data binding.\n\n**Requirements**:\n1. `set(value)` - sets value and notifies listeners\n2. `get()` - returns current value\n3. `onChange(callback)` - registers listener\n\n**Test**:\n\n\n---\n\n#### Task 6: Implement Navigation System\n\n**Goal**: Handle navigation between multiple Views.\n\n**Requirements**:\n1. `INavigator` interface with `navigateTo(viewName)`\n2. Multiple Controllers (Login, Home, Profile)\n3. Navigator manages view stack\n\n**Test**:\n- Login success → navigate to Home\n- Click profile button → navigate to Profile\n- Back button → return to previous view\n\n---\n\n#### Task 7: Implement Validation in MVVM\n\n**Goal**: Add form validation to LoginViewModel.\n\n**Requirements**:\n1. Username: min 3 characters\n2. Password: min 8 characters, must have digit\n3. `isFormValid` property updates automatically\n4. Save button enabled only when form valid\n\n---\n\n#### Task 8: Test Controller with Mock View\n\n**Goal**: Write unit tests for MVC Controller.\n\n**Requirements**:\n1. Create `IUserView` interface\n2. `MockUserView` implements interface\n3. Test `UserController.updateUser()`\n4. Verify `view.updateNameLabel()` was called\n\n---\n\n#### Task 9: Implement Commands (MVVM)\n\n**Goal**: Create command pattern for ViewModel actions.\n\n**Requirements**:\n1. `ICommand` interface with `execute()`, `canExecute()`\n2. `RelayCommand` implementation\n3. ViewModel exposes commands (saveCommand, cancelCommand)\n4. View binds buttons to commands\n\n---\n\n#### Task 10: Implement Shared State\n\n**Goal**: Share data between multiple ViewModels.\n\n**Requirements**:\n1. `SharedCartModel` (singleton or shared instance)\n2. `ProductListViewModel` adds products\n3. `CheckoutViewModel` displays same products\n4. Both ViewModels observe same Model\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement undo/redo in MVC\n\n**Task 12**: Create MVVM web form with client-side validation\n\n**Task 13**: Implement Model with Repository pattern\n\n**Task 14**: Add loading states to ViewModel (isLoading property)\n\n**Task 15**: Implement error handling across layers\n\n**Task 16**: Create multi-page application with routing\n\n**Task 17**: Implement async operations in ViewModel\n\n**Task 18**: Add dependency injection to Controllers\n\n**Task 19**: Implement observer pattern for Model\n\n**Task 20**: Build complete TODO app with MVC or MVVM",
           "code": "ObservableProperty<int> count(0);\ncount.onChange([](int newValue) {\n    std::cout << \"Count changed to: \" << newValue << \"\\n\";\n});\ncount.set(5);  // Prints: \"Count changed to: 5\"",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {
@@ -1664,7 +1839,7 @@
       }
     },
     {
-      "topic": "Microservices Architecture",
+      "topic": "topic_6_microservices_architecture",
       "filename": "topic_6_microservices_architecture.md",
       "theory": {
         "subsections": [
@@ -1856,51 +2031,71 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "**Goal**: Implement a Product Service with CRUD operations.",
-          "full_content": "**Goal**: Implement a Product Service with CRUD operations.\n\n**Requirements**:\n1. `ProductRepository` (in-memory storage)\n2. `ProductService` (business logic)\n3. REST API endpoints:\n   - GET /products → list all\n   - GET /products/:id → get one\n   - POST /products → create\n   - PUT /products/:id → update\n   - DELETE /products/:id → delete\n\n---",
+          "full_content": "**Goal**: Implement a Product Service with CRUD operations.\n\n**Requirements**:\n1. `ProductRepository` (in-memory storage)\n2. `ProductService` (business logic)\n3. REST API endpoints:\n   - GET /products → list all\n   - GET /products/:id → get one\n   - POST /products → create\n   - PUT /products/:id → update\n   - DELETE /products/:id → delete\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "**Goal**: Order Service calls User Service via HTTP.",
-          "full_content": "**Goal**: Order Service calls User Service via HTTP.\n\n**Requirements**:\n1. User Service running on port 8001\n2. Order Service running on port 8002\n3. When creating order, Order Service queries User Service for user data\n4. Handle errors if User Service is down\n\n---",
+          "full_content": "**Goal**: Order Service calls User Service via HTTP.\n\n**Requirements**:\n1. User Service running on port 8001\n2. Order Service running on port 8002\n3. When creating order, Order Service queries User Service for user data\n4. Handle errors if User Service is down\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "**Goal**: Single entry point for multiple services.",
-          "full_content": "**Goal**: Single entry point for multiple services.\n\n**Requirements**:\n1. API Gateway on port 8000\n2. Routes:\n   - /api/users → User Service (8001)\n   - /api/orders → Order Service (8002)\n   - /api/products → Product Service (8003)\n3. Gateway aggregates responses if needed\n\n---",
+          "full_content": "**Goal**: Single entry point for multiple services.\n\n**Requirements**:\n1. API Gateway on port 8000\n2. Routes:\n   - /api/users → User Service (8001)\n   - /api/orders → Order Service (8002)\n   - /api/products → Product Service (8003)\n3. Gateway aggregates responses if needed\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "**Goal**: Protect against cascading failures.",
-          "full_content": "**Goal**: Protect against cascading failures.\n\n**Requirements**:\n1. `CircuitBreaker` class with states (CLOSED, OPEN, HALF_OPEN)\n2. Failure threshold = 5\n3. Timeout = 60 seconds\n4. Test with simulated failing service\n\n---",
+          "full_content": "**Goal**: Protect against cascading failures.\n\n**Requirements**:\n1. `CircuitBreaker` class with states (CLOSED, OPEN, HALF_OPEN)\n2. Failure threshold = 5\n3. Timeout = 60 seconds\n4. Test with simulated failing service\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "**Goal**: Services register/discover each other.",
-          "full_content": "**Goal**: Services register/discover each other.\n\n**Requirements**:\n1. `ServiceRegistry` (in-memory map)\n2. Services register on startup\n3. Services lookup other services by name\n4. Heartbeat mechanism (optional)\n\n---\n\n#### Task 6: Implement SAGA Pattern (Choreography)\n\n**Goal**: Distributed transaction with event-driven compensation.\n\n**Requirements**:\n1. Order creation spans 3 services (Order, Product, Payment)\n2. Each service publishes events\n3. If Payment fails, Product Service releases inventory (compensation)\n\n---\n\n#### Task 7: Implement Distributed Tracing\n\n**Goal**: Track requests across multiple services.\n\n**Requirements**:\n1. Generate `traceId` at API Gateway\n2. Pass `traceId` through all service calls\n3. Log format: `[TraceID: xxx] Service: Message`\n4. Simulate request through 3 services\n\n---\n\n#### Task 8: Implement Asynchronous Communication\n\n**Goal**: Services communicate via message queue.\n\n**Requirements**:\n1. In-memory message queue (pub/sub)\n2. User Service publishes \"UserRegistered\" event\n3. Email Service subscribes and sends welcome email\n4. Analytics Service subscribes and logs event\n\n---\n\n#### Task 9: Implement Database per Service\n\n**Goal**: Each service has its own database (simulated with separate storage).\n\n**Requirements**:\n1. User Service → UserDB (map)\n2. Order Service → OrderDB (separate map)\n3. Order Service caches user data (eventual consistency)\n4. Update cache when User Service publishes event\n\n---\n\n#### Task 10: Implement Health Check Endpoint\n\n**Goal**: Monitor service health.\n\n**Requirements**:\n1. Each service exposes GET /health\n2. Returns: `{\\\"status\\\": \\\"UP\\\", \\\"timestamp\\\": \\\"...\\\"}`\n3. API Gateway polls services, marks unhealthy ones\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement rate limiting per service\n\n**Task 12**: Implement API versioning (v1, v2)\n\n**Task 13**: Implement service mesh basics (sidecar proxy)\n\n**Task 14**: Migrate monolith to microservices (strangler fig)\n\n**Task 15**: Implement shared cache (Redis-like)\n\n**Task 16**: Implement load balancer for services\n\n**Task 17**: Implement saga orchestrator\n\n**Task 18**: Implement authentication with JWT tokens\n\n**Task 19**: Implement monitoring dashboard\n\n**Task 20**: Build complete e-commerce system (5 microservices)\n\n---",
+          "full_content": "**Goal**: Services register/discover each other.\n\n**Requirements**:\n1. `ServiceRegistry` (in-memory map)\n2. Services register on startup\n3. Services lookup other services by name\n4. Heartbeat mechanism (optional)\n\n---\n\n#### Task 6: Implement SAGA Pattern (Choreography)\n\n**Goal**: Distributed transaction with event-driven compensation.\n\n**Requirements**:\n1. Order creation spans 3 services (Order, Product, Payment)\n2. Each service publishes events\n3. If Payment fails, Product Service releases inventory (compensation)\n\n---\n\n#### Task 7: Implement Distributed Tracing\n\n**Goal**: Track requests across multiple services.\n\n**Requirements**:\n1. Generate `traceId` at API Gateway\n2. Pass `traceId` through all service calls\n3. Log format: `[TraceID: xxx] Service: Message`\n4. Simulate request through 3 services\n\n---\n\n#### Task 8: Implement Asynchronous Communication\n\n**Goal**: Services communicate via message queue.\n\n**Requirements**:\n1. In-memory message queue (pub/sub)\n2. User Service publishes \"UserRegistered\" event\n3. Email Service subscribes and sends welcome email\n4. Analytics Service subscribes and logs event\n\n---\n\n#### Task 9: Implement Database per Service\n\n**Goal**: Each service has its own database (simulated with separate storage).\n\n**Requirements**:\n1. User Service → UserDB (map)\n2. Order Service → OrderDB (separate map)\n3. Order Service caches user data (eventual consistency)\n4. Update cache when User Service publishes event\n\n---\n\n#### Task 10: Implement Health Check Endpoint\n\n**Goal**: Monitor service health.\n\n**Requirements**:\n1. Each service exposes GET /health\n2. Returns: `{\\\"status\\\": \\\"UP\\\", \\\"timestamp\\\": \\\"...\\\"}`\n3. API Gateway polls services, marks unhealthy ones\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement rate limiting per service\n\n**Task 12**: Implement API versioning (v1, v2)\n\n**Task 13**: Implement service mesh basics (sidecar proxy)\n\n**Task 14**: Migrate monolith to microservices (strangler fig)\n\n**Task 15**: Implement shared cache (Redis-like)\n\n**Task 16**: Implement load balancer for services\n\n**Task 17**: Implement saga orchestrator\n\n**Task 18**: Implement authentication with JWT tokens\n\n**Task 19**: Implement monitoring dashboard\n\n**Task 20**: Build complete e-commerce system (5 microservices)\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {
@@ -1914,7 +2109,7 @@
       }
     },
     {
-      "topic": "Clean / Hexagonal Architecture (Ports and Adapters)",
+      "topic": "topic_7_clean_hexagonal_architecture",
       "filename": "topic_7_clean_hexagonal_architecture.md",
       "theory": {
         "subsections": [
@@ -2090,51 +2285,71 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "**Goal**: Create User Service with hexagonal architecture.",
-          "full_content": "**Goal**: Create User Service with hexagonal architecture.\n\n**Requirements**:\n1. Domain: `User` class with business logic\n2. Port: `IUserRepository` interface\n3. Core: `UserService` with business rules\n4. Adapter: `InMemoryUserRepository`\n5. Primary Adapter: `UserController` (simulated REST)\n\n---",
+          "full_content": "**Goal**: Create User Service with hexagonal architecture.\n\n**Requirements**:\n1. Domain: `User` class with business logic\n2. Port: `IUserRepository` interface\n3. Core: `UserService` with business rules\n4. Adapter: `InMemoryUserRepository`\n5. Primary Adapter: `UserController` (simulated REST)\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "**Goal**: Implement 3 different repository adapters for same port.",
-          "full_content": "**Goal**: Implement 3 different repository adapters for same port.\n\n**Requirements**:\n1. `IOrderRepository` interface\n2. `InMemoryOrderRepository`\n3. `MySQLOrderRepository` (simulated with map)\n4. `FileOrderRepository` (simulated with map)\n5. Swap adapters at runtime\n\n---",
+          "full_content": "**Goal**: Implement 3 different repository adapters for same port.\n\n**Requirements**:\n1. `IOrderRepository` interface\n2. `InMemoryOrderRepository`\n3. `MySQLOrderRepository` (simulated with map)\n4. `FileOrderRepository` (simulated with map)\n5. Swap adapters at runtime\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "**Goal**: Write unit tests using mock adapters.",
-          "full_content": "**Goal**: Write unit tests using mock adapters.\n\n**Requirements**:\n1. `MockUserRepository` that tracks method calls\n2. Test `UserService.createUser()` without real database\n3. Verify `save()` was called\n4. Verify business rules (age validation, email format)\n\n---",
+          "full_content": "**Goal**: Write unit tests using mock adapters.\n\n**Requirements**:\n1. `MockUserRepository` that tracks method calls\n2. Test `UserService.createUser()` without real database\n3. Verify `save()` was called\n4. Verify business rules (age validation, email format)\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "**Goal**: Move business logic from service to domain model.",
-          "full_content": "**Goal**: Move business logic from service to domain model.\n\n**Requirements**:\n1. Start with anemic `Order` (just data)\n2. Move validation to `Order.validate()`\n3. Move state transitions to `Order.confirm()`, `Order.cancel()`\n4. Service becomes thin coordinator\n\n---",
+          "full_content": "**Goal**: Move business logic from service to domain model.\n\n**Requirements**:\n1. Start with anemic `Order` (just data)\n2. Move validation to `Order.validate()`\n3. Move state transitions to `Order.confirm()`, `Order.cancel()`\n4. Service becomes thin coordinator\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "**Goal**: Implement multiple primary adapters for same core.",
-          "full_content": "**Goal**: Implement multiple primary adapters for same core.\n\n**Requirements**:\n1. Core: `OrderService`\n2. Primary Adapter 1: `RESTController` (simulated HTTP)\n3. Primary Adapter 2: `CLIController` (command-line)\n4. Both use same `OrderService`\n\n---\n\n#### Task 6: Use Case Layer\n\n**Goal**: Separate use cases from domain logic.\n\n**Requirements**:\n1. Use Case: `PlaceOrderUseCase`\n2. Use Case: `CancelOrderUseCase`\n3. Domain: `Order`, `Payment`, `Product`\n4. Use cases orchestrate domain objects\n\n---\n\n#### Task 7: Domain Events\n\n**Goal**: Implement event-driven hexagonal architecture.\n\n**Requirements**:\n1. Domain: `User` publishes `UserRegistered` event\n2. Event Handler: `SendWelcomeEmailHandler`\n3. Event Bus: `IEventBus` interface\n4. In-Memory Event Bus adapter\n\n---\n\n#### Task 8: Separate Domain from Persistence Models\n\n**Goal**: Map between domain and database entities.\n\n**Requirements**:\n1. Domain: `User` (pure business logic)\n2. Persistence: `UserEntity` (ORM annotations)\n3. Mapper: `UserMapper` in repository adapter\n4. `UserRepository` maps between them\n\n---\n\n#### Task 9: Integration Test with Real Adapter\n\n**Goal**: Test with in-memory database adapter (integration-like test).\n\n**Requirements**:\n1. `InMemoryOrderRepository` (full implementation)\n2. Test full flow: create order → retrieve → update → delete\n3. Verify data persists correctly\n\n---\n\n#### Task 10: Cross-Cutting Concerns\n\n**Goal**: Add logging without coupling to core.\n\n**Requirements**:\n1. `LoggingDecorator` wraps `OrderService`\n2. Logs method calls and results\n3. Core remains unaware of logging\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement transaction management\n\n**Task 12**: Add authentication/authorization adapter\n\n**Task 13**: Implement dependency injection container\n\n**Task 14**: Create API Gateway as primary adapter\n\n**Task 15**: Implement CQRS (separate read/write ports)\n\n**Task 16**: Add caching adapter\n\n**Task 17**: Implement saga pattern for distributed transactions\n\n**Task 18**: Create monitoring/metrics adapter\n\n**Task 19**: Implement rate limiting adapter\n\n**Task 20**: Build complete e-commerce system with hexagonal architecture\n\n---",
+          "full_content": "**Goal**: Implement multiple primary adapters for same core.\n\n**Requirements**:\n1. Core: `OrderService`\n2. Primary Adapter 1: `RESTController` (simulated HTTP)\n3. Primary Adapter 2: `CLIController` (command-line)\n4. Both use same `OrderService`\n\n---\n\n#### Task 6: Use Case Layer\n\n**Goal**: Separate use cases from domain logic.\n\n**Requirements**:\n1. Use Case: `PlaceOrderUseCase`\n2. Use Case: `CancelOrderUseCase`\n3. Domain: `Order`, `Payment`, `Product`\n4. Use cases orchestrate domain objects\n\n---\n\n#### Task 7: Domain Events\n\n**Goal**: Implement event-driven hexagonal architecture.\n\n**Requirements**:\n1. Domain: `User` publishes `UserRegistered` event\n2. Event Handler: `SendWelcomeEmailHandler`\n3. Event Bus: `IEventBus` interface\n4. In-Memory Event Bus adapter\n\n---\n\n#### Task 8: Separate Domain from Persistence Models\n\n**Goal**: Map between domain and database entities.\n\n**Requirements**:\n1. Domain: `User` (pure business logic)\n2. Persistence: `UserEntity` (ORM annotations)\n3. Mapper: `UserMapper` in repository adapter\n4. `UserRepository` maps between them\n\n---\n\n#### Task 9: Integration Test with Real Adapter\n\n**Goal**: Test with in-memory database adapter (integration-like test).\n\n**Requirements**:\n1. `InMemoryOrderRepository` (full implementation)\n2. Test full flow: create order → retrieve → update → delete\n3. Verify data persists correctly\n\n---\n\n#### Task 10: Cross-Cutting Concerns\n\n**Goal**: Add logging without coupling to core.\n\n**Requirements**:\n1. `LoggingDecorator` wraps `OrderService`\n2. Logs method calls and results\n3. Core remains unaware of logging\n\n---\n\n#### Task 11-20: Additional Tasks (Outlined)\n\n**Task 11**: Implement transaction management\n\n**Task 12**: Add authentication/authorization adapter\n\n**Task 13**: Implement dependency injection container\n\n**Task 14**: Create API Gateway as primary adapter\n\n**Task 15**: Implement CQRS (separate read/write ports)\n\n**Task 16**: Add caching adapter\n\n**Task 17**: Implement saga pattern for distributed transactions\n\n**Task 18**: Create monitoring/metrics adapter\n\n**Task 19**: Implement rate limiting adapter\n\n**Task 20**: Build complete e-commerce system with hexagonal architecture\n",
           "code": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {

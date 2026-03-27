@@ -5,7 +5,7 @@
   "topics": [
     {
       "topic": "Operator Overloading",
-      "filename": "01_cpp_operator_overloading.md",
+      "filename": "topic_1.md",
       "theory": {
         "subsections": [
           {
@@ -822,206 +822,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Counter {\n    int val;\npublic:\n    Counter(int v) : val(v) {}\n    Counter& operator++() { ++val; return *this; }\n    Counter operator++(int) { Counter t = *this; ++val; return t; }\n    int get() const { return val; }\n};\n\nint main() {\n    Counter c(5);\n    std::cout << (c++).get() << \" \" << (++c).get() << \" \" << c.get();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 5 7 7\n\n**Explanation:** Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7\n\n**Key Concept:** #increment_operators #return_types\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5 7 7\n```\n\n**Explanation:**\n- `c++` calls post-increment: saves copy (val=5), increments c to 6, returns copy with val=5\n- `(c++).get()` prints 5\n- `++c` calls pre-increment: increments c from 6 to 7, returns *this by reference\n- `(++c).get()` prints 7\n- `c.get()` prints final value 7\n- Pre-increment: returns reference, modifies in-place\n- Post-increment: returns value (copy), modifies after returning\n- **Key Concept:** Pre-increment returns reference; post-increment returns by value (old state)",
           "code": "class Counter {\n    int val;\npublic:\n    Counter(int v) : val(v) {}\n    Counter& operator++() { ++val; return *this; }\n    Counter operator++(int) { Counter t = *this; ++val; return t; }\n    int get() const { return val; }\n};\n\nint main() {\n    Counter c(5);\n    std::cout << (c++).get() << \" \" << (++c).get() << \" \" << c.get();\n}",
+          "answer": "5 7 7",
+          "explanation": "- `c++` calls post-increment: saves copy (val=5), increments c to 6, returns copy with val=5\n- `(c++).get()` prints 5\n- `++c` calls pre-increment: increments c from 6 to 7, returns *this by reference\n- `(++c).get()` prints 7\n- `c.get()` prints final value 7\n- Pre-increment: returns reference, modifies in-place\n- Post-increment: returns value (copy), modifies after returning\n- **Key Concept:** Pre-increment returns reference; post-increment returns by value (old state)",
+          "key_concept": "Pre-increment returns reference; post-increment returns by value (old state)",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5 7 7"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass String {\n    char* data;\npublic:\n    String(const char* s) { data = new char[strlen(s)+1]; strcpy(data, s); }\n    ~String() { delete[] data; }\n    \n    String operator+(const String& other) {\n        String result(\"\");\n        delete[] result.data;\n        result.data = new char[strlen(data) + strlen(other.data) + 1];\n        strcpy(result.data, data);\n        strcat(result.data, other.data);\n        return result;\n    }\n};\n\nint main() {\n    String s1(\"Hello\"), s2(\" World\");\n    String s3 = s1 + s2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Double-delete bug and memory leak\n\n**Explanation:** Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory.\n\n**Key Concept:** #rule_of_three #shallow_copy #memory_leak\n\n</details>\n\n---",
-          "code": "class String {\n    char* data;\npublic:\n    String(const char* s) { data = new char[strlen(s)+1]; strcpy(data, s); }\n    ~String() { delete[] data; }\n    \n    String operator+(const String& other) {\n        String result(\"\");\n        delete[] result.data;\n        result.data = new char[strlen(data) + strlen(other.data) + 1];\n        strcpy(result.data, data);\n        strcat(result.data, other.data);\n        return result;\n    }\n};\n\nint main() {\n    String s1(\"Hello\"), s2(\" World\");\n    String s3 = s1 + s2;\n}",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (double delete, shallow copy issues)\n```\n\n**Explanation:**\n- Class has destructor but NO copy constructor or assignment operator\n- Violates Rule of Three - compiler generates shallow copy versions\n- `operator+` returns String by value, triggering copy\n- Compiler-generated copy constructor: shallow copy (copies pointer value)\n- Multiple String objects now point to same data\n- When temporaries destroyed: double delete on same memory\n- **Rule of Three:** If you define destructor, also define copy constructor and assignment\n- **Key Concept:** Raw pointer members require custom copy operations; shallow copy causes double-delete",
+          "code": "class String {\n    char* data;\npublic:\n    String(const char* s) { data = new char[strlen(s)+1]; strcpy(data, s); }\n    ~String() { delete[] data; }\n\n    String operator+(const String& other) {\n        String result(\"\");\n        delete[] result.data;\n        result.data = new char[strlen(data) + strlen(other.data) + 1];\n        strcpy(result.data, data);\n        strcat(result.data, other.data);\n        return result;\n    }\n};\n\nint main() {\n    String s1(\"Hello\"), s2(\" World\");\n    String s3 = s1 + s2;\n}",
+          "answer": "Undefined behavior (double delete, shallow copy issues)",
+          "explanation": "- Class has destructor but NO copy constructor or assignment operator\n- Violates Rule of Three - compiler generates shallow copy versions\n- `operator+` returns String by value, triggering copy\n- Compiler-generated copy constructor: shallow copy (copies pointer value)\n- Multiple String objects now point to same data\n- When temporaries destroyed: double delete on same memory\n- **Rule of Three:** If you define destructor, also define copy constructor and assignment\n- **Key Concept:** Raw pointer members require custom copy operations; shallow copy causes double-delete",
+          "key_concept": "Raw pointer members require custom copy operations; shallow copy causes double-delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (double delete, shallow copy issues)"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass A {\npublic:\n    void* operator new(size_t sz) {\n        std::cout << \"1 \";\n        return ::operator new(sz);\n    }\n    \n    A() { std::cout << \"2 \"; }\n    ~A() { std::cout << \"3 \"; }\n    \n    void operator delete(void* p) {\n        std::cout << \"4 \";\n        ::operator delete(p);\n    }\n};\n\nint main() {\n    A* obj = new A;\n    delete obj;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 2 3 4\n\n**Explanation:** operator new runs before constructor (1 2), destructor runs before operator delete (3 4)\n\n**Key Concept:** #operator_new #object_lifecycle\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 2 3 4\n```\n\n**Explanation:**\n- `new A` calls operator new first: allocates memory, prints \"1\"\n- Then constructor A() called: prints \"2\"\n- Object lifecycle: allocation → construction\n- `delete obj` calls destructor first: prints \"3\"\n- Then operator delete called: deallocates memory, prints \"4\"\n- Destruction lifecycle: destruction → deallocation\n- Custom operator new/delete useful for: memory pools, debugging, tracking\n- **Key Concept:** operator new runs before constructor; destructor runs before operator delete",
           "code": "class A {\npublic:\n    void* operator new(size_t sz) {\n        std::cout << \"1 \";\n        return ::operator new(sz);\n    }\n    \n    A() { std::cout << \"2 \"; }\n    ~A() { std::cout << \"3 \"; }\n    \n    void operator delete(void* p) {\n        std::cout << \"4 \";\n        ::operator delete(p);\n    }\n};\n\nint main() {\n    A* obj = new A;\n    delete obj;\n}",
+          "answer": "1 2 3 4",
+          "explanation": "- `new A` calls operator new first: allocates memory, prints \"1\"\n- Then constructor A() called: prints \"2\"\n- Object lifecycle: allocation → construction\n- `delete obj` calls destructor first: prints \"3\"\n- Then operator delete called: deallocates memory, prints \"4\"\n- Destruction lifecycle: destruction → deallocation\n- Custom operator new/delete useful for: memory pools, debugging, tracking\n- **Key Concept:** operator new runs before constructor; destructor runs before operator delete",
+          "key_concept": "operator new runs before constructor; destructor runs before operator delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 2 3 4"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Bool {\n    bool val;\npublic:\n    Bool(bool v) : val(v) {}\n    Bool operator&&(const Bool& other) {\n        std::cout << \"Called \";\n        return Bool(val && other.val);\n    }\n};\n\nBool expensive() {\n    std::cout << \"Expensive \";\n    return Bool(true);\n}\n\nint main() {\n    Bool a(false);\n    Bool result = a && expensive();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Called Expensive\n\n**Explanation:** Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value\n\n**Key Concept:** #short_circuit #logical_operators\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nExpensive Called\n```\n\n**Explanation:**\n- Built-in && has short-circuit: if left is false, right not evaluated\n- Overloaded operator&& loses short-circuit behavior\n- Acts as normal function: all arguments evaluated before function call\n- `a && expensive()` evaluates both `a` and `expensive()` first\n- expensive() prints \"Expensive\" before function call\n- Then operator&& called, prints \"Called\"\n- **Don't overload:** &&, ||, comma (lose special semantics)\n- **Key Concept:** Overloading logical operators loses short-circuit evaluation; always evaluates both operands",
           "code": "class Bool {\n    bool val;\npublic:\n    Bool(bool v) : val(v) {}\n    Bool operator&&(const Bool& other) {\n        std::cout << \"Called \";\n        return Bool(val && other.val);\n    }\n};\n\nBool expensive() {\n    std::cout << \"Expensive \";\n    return Bool(true);\n}\n\nint main() {\n    Bool a(false);\n    Bool result = a && expensive();\n}",
+          "answer": "Expensive Called",
+          "explanation": "- Built-in && has short-circuit: if left is false, right not evaluated\n- Overloaded operator&& loses short-circuit behavior\n- Acts as normal function: all arguments evaluated before function call\n- `a && expensive()` evaluates both `a` and `expensive()` first\n- expensive() prints \"Expensive\" before function call\n- Then operator&& called, prints \"Called\"\n- **Don't overload:** &&, ||, comma (lose special semantics)\n- **Key Concept:** Overloading logical operators loses short-circuit evaluation; always evaluates both operands",
+          "key_concept": "Overloading logical operators loses short-circuit evaluation; always evaluates both operands",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Expensive Called"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Complex {\n    double real;\npublic:\n    Complex(double r) : real(r) {}\n    Complex operator+(const Complex& other) { return Complex(real + other.real); }\n};\n\nint main() {\n    Complex c1(5.0);\n    Complex c2 = c1 + 3.0;  // Line A\n    Complex c3 = 3.0 + c1;  // Line B\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Line A compiles, Line B fails\n\n**Explanation:** Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex.\n\n**Key Concept:** #member_function #implicit_conversion #symmetry\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nLine A compiles, Line B compilation error\n```\n\n**Explanation:**\n- operator+ is member function: requires left operand to be Complex\n- Line A: `c1 + 3.0` → c1.operator+(3.0)\n- 3.0 implicitly converts to Complex(3.0) via constructor\n- Works because conversion happens on right operand\n- Line B: `3.0 + c1` → 3.0.operator+(c1) (impossible!)\n- 3.0 is double, has no operator+ taking Complex\n- No implicit conversion on left operand for member functions\n- **Fix:** Make operator+ friend or non-member function\n- **Key Concept:** Member operators require left operand to be class type; non-member for symmetry",
           "code": "class Complex {\n    double real;\npublic:\n    Complex(double r) : real(r) {}\n    Complex operator+(const Complex& other) { return Complex(real + other.real); }\n};\n\nint main() {\n    Complex c1(5.0);\n    Complex c2 = c1 + 3.0;  // Line A\n    Complex c3 = 3.0 + c1;  // Line B\n}",
+          "answer": "Line A compiles, Line B compilation error",
+          "explanation": "- operator+ is member function: requires left operand to be Complex\n- Line A: `c1 + 3.0` → c1.operator+(3.0)\n- 3.0 implicitly converts to Complex(3.0) via constructor\n- Works because conversion happens on right operand\n- Line B: `3.0 + c1` → 3.0.operator+(c1) (impossible!)\n- 3.0 is double, has no operator+ taking Complex\n- No implicit conversion on left operand for member functions\n- **Fix:** Make operator+ friend or non-member function\n- **Key Concept:** Member operators require left operand to be class type; non-member for symmetry",
+          "key_concept": "Member operators require left operand to be class type; non-member for symmetry",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Line A compiles, Line B compilation error"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Holder {\n    int val;\npublic:\n    Holder(int v) : val(v) {}\n    \n    Holder operator=(const Holder& other) {\n        val = other.val;\n        return *this;\n    }\n    \n    int get() const { return val; }\n};\n\nint main() {\n    Holder h1(10), h2(20), h3(30);\n    h1 = h2 = h3;\n    std::cout << h1.get() << \" \" << h2.get();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 30 20\n\n**Explanation:** operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged.\n\n**Key Concept:** #assignment_operator #return_types #chaining\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n30 20\n```\n\n**Explanation:**\n- BUG: operator= returns by value, not by reference\n- Assignment is right-associative: evaluates right-to-left\n- `h2 = h3`: copies h3.val (30) to h2.val, returns COPY with val=30\n- `h1 = (copy)`: assigns copy.val (30) to h1.val\n- h2.val remains 20 (wasn't reassigned, temporary copy used)\n- **Correct:** Return `Holder&` not `Holder`\n- Proper: h2 gets 30, then h1 gets 30\n- **Key Concept:** Assignment operator must return reference for proper chaining",
           "code": "class Holder {\n    int val;\npublic:\n    Holder(int v) : val(v) {}\n    \n    Holder operator=(const Holder& other) {\n        val = other.val;\n        return *this;\n    }\n    \n    int get() const { return val; }\n};\n\nint main() {\n    Holder h1(10), h2(20), h3(30);\n    h1 = h2 = h3;\n    std::cout << h1.get() << \" \" << h2.get();\n}",
+          "answer": "30 20",
+          "explanation": "- BUG: operator= returns by value, not by reference\n- Assignment is right-associative: evaluates right-to-left\n- `h2 = h3`: copies h3.val (30) to h2.val, returns COPY with val=30\n- `h1 = (copy)`: assigns copy.val (30) to h1.val\n- h2.val remains 20 (wasn't reassigned, temporary copy used)\n- **Correct:** Return `Holder&` not `Holder`\n- Proper: h2 gets 30, then h1 gets 30\n- **Key Concept:** Assignment operator must return reference for proper chaining",
+          "key_concept": "Assignment operator must return reference for proper chaining",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "30 20"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Array {\n    int data[5];\npublic:\n    int& operator[](int idx) { return data[idx]; }\n    int operator[](int idx) const { return data[idx]; }\n};\n\nvoid test(const Array& arr) {\n    arr[0] = 10;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** No, won't compile\n\n**Explanation:** Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal\n\n**Key Concept:** #const_correctness #subscript_operator #reference_return\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error\n```\n\n**Explanation:**\n- Non-const operator[] returns `int&` (reference, modifiable)\n- Const operator[] returns `int` (value, temporary)\n- `arr[0] = 10` calls const version (arr is const)\n- Returns int by value (temporary)\n- Assigning to temporary rvalue is illegal\n- **Fix:** Const version should return `const int&`\n- Allows reading but prevents modification\n- **Key Concept:** Const subscript operators should return const reference, not value",
           "code": "class Array {\n    int data[5];\npublic:\n    int& operator[](int idx) { return data[idx]; }\n    int operator[](int idx) const { return data[idx]; }\n};\n\nvoid test(const Array& arr) {\n    arr[0] = 10;\n}",
+          "answer": "Compilation error",
+          "explanation": "- Non-const operator[] returns `int&` (reference, modifiable)\n- Const operator[] returns `int` (value, temporary)\n- `arr[0] = 10` calls const version (arr is const)\n- Returns int by value (temporary)\n- Assigning to temporary rvalue is illegal\n- **Fix:** Const version should return `const int&`\n- Allows reading but prevents modification\n- **Key Concept:** Const subscript operators should return const reference, not value",
+          "key_concept": "Const subscript operators should return const reference, not value",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Functor {\n    int x;\npublic:\n    Functor(int v) : x(v) {}\n    int operator()(int a, int b) const { return x + a + b; }\n};\n\nint main() {\n    Functor f(5);\n    std::cout << f(10, 20);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 35\n\n**Explanation:** Functor's operator() adds x (5) + a (10) + b (20) = 35\n\n**Key Concept:** #functor #operator_call\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n35\n```\n\n**Explanation:**\n- Functor is class with operator() overloaded\n- Makes objects callable like functions\n- `f(10, 20)` calls `f.operator()(10, 20)`\n- Calculates: x (5) + a (10) + b (20) = 35\n- Functors can hold state (unlike plain functions)\n- Commonly used with STL algorithms (transform, for_each, etc.)\n- **Key Concept:** operator() makes objects callable; functors store state with behavior",
           "code": "class Functor {\n    int x;\npublic:\n    Functor(int v) : x(v) {}\n    int operator()(int a, int b) const { return x + a + b; }\n};\n\nint main() {\n    Functor f(5);\n    std::cout << f(10, 20);\n}",
+          "answer": "35",
+          "explanation": "- Functor is class with operator() overloaded\n- Makes objects callable like functions\n- `f(10, 20)` calls `f.operator()(10, 20)`\n- Calculates: x (5) + a (10) + b (20) = 35\n- Functors can hold state (unlike plain functions)\n- Commonly used with STL algorithms (transform, for_each, etc.)\n- **Key Concept:** operator() makes objects callable; functors store state with behavior",
+          "key_concept": "operator() makes objects callable; functors store state with behavior",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "35"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Smart {\n    int* ptr;\npublic:\n    Smart(int* p) : ptr(p) {}\n    ~Smart() { delete ptr; }\n    \n    int* operator->() { return ptr; }\n    int& operator*() { return *ptr; }\n};\n\nint main() {\n    Smart sp(new int(42));\n    std::cout << *sp << \" \";\n    *sp = 100;\n    std::cout << *sp;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42 100\n\n**Explanation:** operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100\n\n**Key Concept:** #smart_pointers #operator_overloading\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42 100\n```\n\n**Explanation:**\n- operator* overloaded to return reference to pointed object\n- `*sp` dereferences: returns `*ptr` (reference to int)\n- First `*sp` reads 42, prints it\n- `*sp = 100` modifies through reference\n- Second `*sp` reads 100, prints it\n- operator-> would enable `sp->member` syntax\n- Smart pointer idiom: RAII + operator overloading\n- **Key Concept:** operator* and operator-> enable pointer-like syntax for smart pointers",
           "code": "class Smart {\n    int* ptr;\npublic:\n    Smart(int* p) : ptr(p) {}\n    ~Smart() { delete ptr; }\n    \n    int* operator->() { return ptr; }\n    int& operator*() { return *ptr; }\n};\n\nint main() {\n    Smart sp(new int(42));\n    std::cout << *sp << \" \";\n    *sp = 100;\n    std::cout << *sp;\n}",
+          "answer": "42 100",
+          "explanation": "- operator* overloaded to return reference to pointed object\n- `*sp` dereferences: returns `*ptr` (reference to int)\n- First `*sp` reads 42, prints it\n- `*sp = 100` modifies through reference\n- Second `*sp` reads 100, prints it\n- operator-> would enable `sp->member` syntax\n- Smart pointer idiom: RAII + operator overloading\n- **Key Concept:** operator* and operator-> enable pointer-like syntax for smart pointers",
+          "key_concept": "operator* and operator-> enable pointer-like syntax for smart pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42 100"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Matrix {\npublic:\n    Matrix operator+(const Matrix&) { std::cout << \"+ \"; return *this; }\n    Matrix operator*(const Matrix&) { std::cout << \"* \"; return *this; }\n};\n\nint main() {\n    Matrix a, b, c;\n    Matrix result = a + b * c;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** * +\n\n**Explanation:** Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +.\n\n**Key Concept:** #operator_precedence #evaluation_order\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n* +\n```\n\n**Explanation:**\n- Operator precedence unchanged by overloading\n- Built-in precedence: * higher than +\n- Expression: `a + b * c`\n- Evaluates as: `a + (b * c)` due to precedence\n- `b * c` executes first, prints \"*\"\n- Then `a + result` executes, prints \"+\"\n- Cannot change precedence/associativity via overloading\n- **Key Concept:** Overloading preserves built-in operator precedence and associativity",
           "code": "class Matrix {\npublic:\n    Matrix operator+(const Matrix&) { std::cout << \"+ \"; return *this; }\n    Matrix operator*(const Matrix&) { std::cout << \"* \"; return *this; }\n};\n\nint main() {\n    Matrix a, b, c;\n    Matrix result = a + b * c;\n}",
+          "answer": "* +",
+          "explanation": "- Operator precedence unchanged by overloading\n- Built-in precedence: * higher than +\n- Expression: `a + b * c`\n- Evaluates as: `a + (b * c)` due to precedence\n- `b * c` executes first, prints \"*\"\n- Then `a + result` executes, prints \"+\"\n- Cannot change precedence/associativity via overloading\n- **Key Concept:** Overloading preserves built-in operator precedence and associativity",
+          "key_concept": "Overloading preserves built-in operator precedence and associativity",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "* +"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Point {\n    int x, y;\npublic:\n    Point(int x, int y) : x(x), y(y) {}\n    \n    friend Point operator+(int lhs, const Point& rhs) {\n        return Point(lhs + rhs.x, rhs.y);\n    }\n    \n    Point operator+(int rhs) const {\n        return Point(x + rhs, y);\n    }\n};\n\nint main() {\n    Point p(5, 10);\n    Point p1 = p + 3;   // Line A\n    Point p2 = 3 + p;   // Line B\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Both work\n\n**Explanation:** Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity.\n\n**Key Concept:** #friend_function #symmetry #commutative_operations\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBoth compile and work\n```\n\n**Explanation:**\n- Line A: `p + 3` calls member `p.operator+(3)`\n- Line B: `3 + p` calls friend `operator+(3, p)`\n- Member operator+ handles Point + int\n- Friend operator+ handles int + Point (commutativity)\n- Friend function accesses private members via friendship\n- Friend enables symmetric operations\n- Member functions can't have left operand be non-class type\n- **Key Concept:** Use friend functions for symmetric/commutative operators",
           "code": "class Point {\n    int x, y;\npublic:\n    Point(int x, int y) : x(x), y(y) {}\n    \n    friend Point operator+(int lhs, const Point& rhs) {\n        return Point(lhs + rhs.x, rhs.y);\n    }\n    \n    Point operator+(int rhs) const {\n        return Point(x + rhs, y);\n    }\n};\n\nint main() {\n    Point p(5, 10);\n    Point p1 = p + 3;   // Line A\n    Point p2 = 3 + p;   // Line B\n}",
+          "answer": "Both compile and work",
+          "explanation": "- Line A: `p + 3` calls member `p.operator+(3)`\n- Line B: `3 + p` calls friend `operator+(3, p)`\n- Member operator+ handles Point + int\n- Friend operator+ handles int + Point (commutativity)\n- Friend function accesses private members via friendship\n- Friend enables symmetric operations\n- Member functions can't have left operand be non-class type\n- **Key Concept:** Use friend functions for symmetric/commutative operators",
+          "key_concept": "Use friend functions for symmetric/commutative operators",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Both compile and work"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Widget {\npublic:\n    Widget& operator++() {\n        std::cout << \"Pre \";\n        return *this;\n    }\n    \n    Widget& operator++(int) {\n        std::cout << \"Post \";\n        return *this;\n    }\n};\n\nint main() {\n    Widget w;\n    ++w;\n    w++;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Returns reference to local\n\n**Explanation:** Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment.\n\n**Key Concept:** #increment_operators #return_types #dangling_reference\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nPre Post\n```\n\n**Explanation:**\n- BUG: Post-increment returns reference, should return by value\n- `++w` calls pre-increment, prints \"Pre\"\n- `w++` calls post-increment, prints \"Post\"\n- Post-increment should return copy of old value\n- Returning reference makes it behave like pre-increment\n- **Correct:** `Widget operator++(int) { Widget old = *this; /* increment */; return old; }`\n- **Key Concept:** Post-increment must return by value (old state); pre-increment returns reference",
           "code": "class Widget {\npublic:\n    Widget& operator++() {\n        std::cout << \"Pre \";\n        return *this;\n    }\n    \n    Widget& operator++(int) {\n        std::cout << \"Post \";\n        return *this;\n    }\n};\n\nint main() {\n    Widget w;\n    ++w;\n    w++;\n}",
+          "answer": "Pre Post",
+          "explanation": "- BUG: Post-increment returns reference, should return by value\n- `++w` calls pre-increment, prints \"Pre\"\n- `w++` calls post-increment, prints \"Post\"\n- Post-increment should return copy of old value\n- Returning reference makes it behave like pre-increment\n- **Correct:** `Widget operator++(int) { Widget old = *this; /* increment */; return old; }`\n- **Key Concept:** Post-increment must return by value (old state); pre-increment returns reference",
+          "key_concept": "Post-increment must return by value (old state); pre-increment returns reference",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Pre Post"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Logged {\npublic:\n    void* operator new(size_t sz, const char* msg) {\n        std::cout << msg << \" \";\n        return ::operator new(sz);\n    }\n    \n    Logged() { std::cout << \"Ctor \"; }\n};\n\nint main() {\n    Logged* obj = new (\"Allocating\") Logged();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Allocating Ctor\n\n**Explanation:** Custom operator new with parameters (placement-like) runs first with message, then constructor\n\n**Key Concept:** #placement_new #custom_parameters #operator_new\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nAllocating Ctor\n```\n\n**Explanation:**\n- Custom operator new with extra parameters (placement-style)\n- `new (\"Allocating\") Logged()` syntax\n- Passes \"Allocating\" to custom operator new\n- operator new prints message, allocates memory\n- Then constructor runs, prints \"Ctor\"\n- Useful for: logging, custom allocators, placement new variants\n- **Key Concept:** operator new can take extra parameters for custom allocation strategies",
           "code": "class Logged {\npublic:\n    void* operator new(size_t sz, const char* msg) {\n        std::cout << msg << \" \";\n        return ::operator new(sz);\n    }\n    \n    Logged() { std::cout << \"Ctor \"; }\n};\n\nint main() {\n    Logged* obj = new (\"Allocating\") Logged();\n}",
+          "answer": "Allocating Ctor",
+          "explanation": "- Custom operator new with extra parameters (placement-style)\n- `new (\"Allocating\") Logged()` syntax\n- Passes \"Allocating\" to custom operator new\n- operator new prints message, allocates memory\n- Then constructor runs, prints \"Ctor\"\n- Useful for: logging, custom allocators, placement new variants\n- **Key Concept:** operator new can take extra parameters for custom allocation strategies",
+          "key_concept": "operator new can take extra parameters for custom allocation strategies",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Allocating Ctor"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass X {\npublic:\n    X operator+(const X&) { return *this; }\n};\n\nclass Y : public X {\npublic:\n    Y operator+(const Y&) { return *this; }\n};\n\nint main() {\n    Y y1, y2;\n    X x = y1 + y2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compiles, uses Y::operator+\n\n**Explanation:** Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation.\n\n**Key Concept:** #inheritance #operator_overloading #implicit_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompiles, uses Y::operator+\n```\n\n**Explanation:**\n- Y inherits from X, has own operator+\n- `y1 + y2` calls `Y::operator+(const Y&)`\n- Returns Y object\n- Assignment `X x = result` causes object slicing (Y→X)\n- Y's extra data (if any) sliced off\n- Overloaded operators don't participate in polymorphism (not virtual)\n- **Key Concept:** Derived class operators don't override base; slicing occurs on assignment",
           "code": "class X {\npublic:\n    X operator+(const X&) { return *this; }\n};\n\nclass Y : public X {\npublic:\n    Y operator+(const Y&) { return *this; }\n};\n\nint main() {\n    Y y1, y2;\n    X x = y1 + y2;\n}",
+          "answer": "Compiles, uses Y::operator+",
+          "explanation": "- Y inherits from X, has own operator+\n- `y1 + y2` calls `Y::operator+(const Y&)`\n- Returns Y object\n- Assignment `X x = result` causes object slicing (Y→X)\n- Y's extra data (if any) sliced off\n- Overloaded operators don't participate in polymorphism (not virtual)\n- **Key Concept:** Derived class operators don't override base; slicing occurs on assignment",
+          "key_concept": "Derived class operators don't override base; slicing occurs on assignment",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compiles, uses Y::operator+"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Index {\n    int val;\npublic:\n    Index(int v) : val(v) {}\n    \n    int operator[](int) & { return val; }\n    int operator[](int) && { return val + 100; }\n};\n\nIndex getIndex() { return Index(5); }\n\nint main() {\n    Index idx(10);\n    std::cout << idx[0] << \" \" << getIndex()[0];\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10 105\n\n**Explanation:** lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105)\n\n**Key Concept:** #ref_qualifiers #lvalue_rvalue #operator_overloading\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10 105\n```\n\n**Explanation:**\n- Ref-qualified operators (C++11): & for lvalues, && for rvalues\n- `idx[0]` where idx is lvalue calls & version, returns 10\n- `getIndex()[0]` where getIndex() returns rvalue calls && version\n- Rvalue version calculates: val (5) + 100 = 105\n- Allows different behavior for temporary vs persistent objects\n- Useful for: avoiding copies on temporaries, move-only operations\n- **Key Concept:** Ref qualifiers enable different behavior for lvalue vs rvalue objects",
           "code": "class Index {\n    int val;\npublic:\n    Index(int v) : val(v) {}\n    \n    int operator[](int) & { return val; }\n    int operator[](int) && { return val + 100; }\n};\n\nIndex getIndex() { return Index(5); }\n\nint main() {\n    Index idx(10);\n    std::cout << idx[0] << \" \" << getIndex()[0];\n}",
+          "answer": "10 105",
+          "explanation": "- Ref-qualified operators (C++11): & for lvalues, && for rvalues\n- `idx[0]` where idx is lvalue calls & version, returns 10\n- `getIndex()[0]` where getIndex() returns rvalue calls && version\n- Rvalue version calculates: val (5) + 100 = 105\n- Allows different behavior for temporary vs persistent objects\n- Useful for: avoiding copies on temporaries, move-only operations\n- **Key Concept:** Ref qualifiers enable different behavior for lvalue vs rvalue objects",
+          "key_concept": "Ref qualifiers enable different behavior for lvalue vs rvalue objects",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10 105"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Stream {\npublic:\n    Stream& operator<<(int) { std::cout << \"int \"; return *this; }\n    Stream& operator<<(double) { std::cout << \"double \"; return *this; }\n};\n\nint main() {\n    Stream s;\n    s << 5 << 3.14 << 10;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** int double int\n\n**Explanation:** Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type.\n\n**Key Concept:** #operator_chaining #stream_operators #overload_resolution\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nint double int\n```\n\n**Explanation:**\n- Stream class with operator<< overloaded for int and double\n- `s << 5 << 3.14 << 10` chains left-to-right\n- Evaluates as: `s.operator<<(5).operator<<(3.14).operator<<(10)`\n- First call: `s << 5` matches int overload, prints \"int\", returns s&\n- Second call: `result << 3.14` matches double overload, prints \"double\", returns s&\n- Third call: `result << 10` matches int overload, prints \"int\"\n- Each operator<< returns reference enabling chaining\n- Overload resolution selects based on parameter type\n- **Key Concept:** Operator chaining requires returning reference; overload resolution picks best match per parameter",
           "code": "class Stream {\npublic:\n    Stream& operator<<(int) { std::cout << \"int \"; return *this; }\n    Stream& operator<<(double) { std::cout << \"double \"; return *this; }\n};\n\nint main() {\n    Stream s;\n    s << 5 << 3.14 << 10;\n}",
+          "answer": "int double int",
+          "explanation": "- Stream class with operator<< overloaded for int and double\n- `s << 5 << 3.14 << 10` chains left-to-right\n- Evaluates as: `s.operator<<(5).operator<<(3.14).operator<<(10)`\n- First call: `s << 5` matches int overload, prints \"int\", returns s&\n- Second call: `result << 3.14` matches double overload, prints \"double\", returns s&\n- Third call: `result << 10` matches int overload, prints \"int\"\n- Each operator<< returns reference enabling chaining\n- Overload resolution selects based on parameter type\n- **Key Concept:** Operator chaining requires returning reference; overload resolution picks best match per parameter",
+          "key_concept": "Operator chaining requires returning reference; overload resolution picks best match per parameter",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "int double int"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Base {\npublic:\n    virtual Base& operator=(const Base& other) {\n        std::cout << \"Base= \";\n        return *this;\n    }\n};\n\nclass Derived : public Base {\npublic:\n    Derived& operator=(const Derived& other) {\n        std::cout << \"Derived= \";\n        Base::operator=(other);\n        return *this;\n    }\n};\n\nint main() {\n    Derived d1, d2;\n    Base& b = d1;\n    b = d2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Derived= Base=\n\n**Explanation:** Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly.\n\n**Key Concept:** #virtual_functions #operator_overloading #polymorphism\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDerived= Base=\n```\n\n**Explanation:**\n- Base has virtual operator= (can be overridden)\n- Derived overrides with own operator=\n- `b = d2` where b is Base& referring to Derived object\n- Virtual dispatch: calls Derived::operator= (runtime polymorphism)\n- Derived::operator= prints \"Derived=\", then explicitly calls Base::operator=\n- Base::operator= prints \"Base=\"\n- Virtual assignment operators enable polymorphic assignment\n- Different from non-virtual: would call Base version only\n- **Key Concept:** Virtual assignment operators enable polymorphic behavior; derived version can extend base behavior",
           "code": "class Base {\npublic:\n    virtual Base& operator=(const Base& other) {\n        std::cout << \"Base= \";\n        return *this;\n    }\n};\n\nclass Derived : public Base {\npublic:\n    Derived& operator=(const Derived& other) {\n        std::cout << \"Derived= \";\n        Base::operator=(other);\n        return *this;\n    }\n};\n\nint main() {\n    Derived d1, d2;\n    Base& b = d1;\n    b = d2;\n}",
+          "answer": "Derived= Base=",
+          "explanation": "- Base has virtual operator= (can be overridden)\n- Derived overrides with own operator=\n- `b = d2` where b is Base& referring to Derived object\n- Virtual dispatch: calls Derived::operator= (runtime polymorphism)\n- Derived::operator= prints \"Derived=\", then explicitly calls Base::operator=\n- Base::operator= prints \"Base=\"\n- Virtual assignment operators enable polymorphic assignment\n- Different from non-virtual: would call Base version only\n- **Key Concept:** Virtual assignment operators enable polymorphic behavior; derived version can extend base behavior",
+          "key_concept": "Virtual assignment operators enable polymorphic behavior; derived version can extend base behavior",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Derived= Base="
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Safe {\npublic:\n    explicit operator bool() const { return true; }\n};\n\nint main() {\n    Safe s;\n    if (s) std::cout << \"A \";\n    bool b = s;\n    int x = s + 5;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** \"A\" printed, then compile errors\n\n**Explanation:** if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int)\n\n**Key Concept:** #explicit_conversion #operator_bool #implicit_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n\"A\" printed, then compile errors\n```\n\n**Explanation:**\n- Safe class has explicit operator bool\n- `if (s)` works - contextual conversion to bool allowed (language rule)\n- Contextual conversions: if conditions, loops, \\!, &&, ||\n- `bool b = s` fails - explicit prevents implicit conversion\n- Cannot use in copy-initialization or assignment\n- `int x = s + 5` fails - explicit prevents arithmetic conversion\n- Would first convert to bool, then bool to int (not allowed)\n- Without explicit: dangerous implicit conversions possible\n- **Key Concept:** Explicit conversion operators prevent implicit conversions; only allow contextual conversions",
           "code": "class Safe {\npublic:\n    explicit operator bool() const { return true; }\n};\n\nint main() {\n    Safe s;\n    if (s) std::cout << \"A \";\n    bool b = s;\n    int x = s + 5;\n}",
+          "answer": "\"A\" printed, then compile errors",
+          "explanation": "- Safe class has explicit operator bool\n- `if (s)` works - contextual conversion to bool allowed (language rule)\n- Contextual conversions: if conditions, loops, \\!, &&, ||\n- `bool b = s` fails - explicit prevents implicit conversion\n- Cannot use in copy-initialization or assignment\n- `int x = s + 5` fails - explicit prevents arithmetic conversion\n- Would first convert to bool, then bool to int (not allowed)\n- Without explicit: dangerous implicit conversions possible\n- **Key Concept:** Explicit conversion operators prevent implicit conversions; only allow contextual conversions",
+          "key_concept": "Explicit conversion operators prevent implicit conversions; only allow contextual conversions",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "\"A\" printed, then compile errors"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Mult {\n    int factor;\npublic:\n    Mult(int f) : factor(f) {}\n    int operator()(int x) const { return x * factor; }\n};\n\nint main() {\n    std::vector<int> v = {1, 2, 3, 4};\n    std::transform(v.begin(), v.end(), v.begin(), Mult(3));\n    for (int x : v) std::cout << x << \" \";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 3 6 9 12\n\n**Explanation:** std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12\n\n**Key Concept:** #functor #stl_algorithms #transform\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 6 9 12\n```\n\n**Explanation:**\n- Mult is functor class with operator() overloaded\n- operator() takes int parameter, multiplies by stored factor\n- `Mult(3)` creates temporary functor with factor=3\n- std::transform applies functor to each element in range\n- Transformation: v.begin() to v.end(), result stored back in v\n- For each element: calls `Mult(3).operator()(element)`\n- 1*3=3, 2*3=6, 3*3=9, 4*3=12\n- Functors hold state (factor) unlike plain functions\n- **Key Concept:** Functors combine behavior with state; perfect for STL algorithms needing parameterized operations",
           "code": "class Mult {\n    int factor;\npublic:\n    Mult(int f) : factor(f) {}\n    int operator()(int x) const { return x * factor; }\n};\n\nint main() {\n    std::vector<int> v = {1, 2, 3, 4};\n    std::transform(v.begin(), v.end(), v.begin(), Mult(3));\n    for (int x : v) std::cout << x << \" \";\n}",
+          "answer": "3 6 9 12",
+          "explanation": "- Mult is functor class with operator() overloaded\n- operator() takes int parameter, multiplies by stored factor\n- `Mult(3)` creates temporary functor with factor=3\n- std::transform applies functor to each element in range\n- Transformation: v.begin() to v.end(), result stored back in v\n- For each element: calls `Mult(3).operator()(element)`\n- 1*3=3, 2*3=6, 3*3=9, 4*3=12\n- Functors hold state (factor) unlike plain functions\n- **Key Concept:** Functors combine behavior with state; perfect for STL algorithms needing parameterized operations",
+          "key_concept": "Functors combine behavior with state; perfect for STL algorithms needing parameterized operations",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 6 9 12"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Mystery {\npublic:\n    Mystery operator,(const Mystery& other) {\n        std::cout << \", \";\n        return other;\n    }\n};\n\nint main() {\n    Mystery a, b, c;\n    Mystery result = (a, b, c);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** , ,\n\n**Explanation:** Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,)\n\n**Key Concept:** #comma_operator #sequence_point #operator_overloading\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n, ,\n```\n\n**Explanation:**\n- Mystery class overloads comma operator\n- Built-in comma: evaluates left, discards, evaluates right, returns right\n- Overloaded comma: becomes regular function call (loses special semantics)\n- `(a, b, c)` evaluates as: `(a.operator,(b)).operator,(c)`\n- First: `a, b` calls operator, prints \",\", returns b (as Mystery copy)\n- Second: `result, c` calls operator, prints \",\", returns c\n- Lost sequence point guarantees of built-in comma\n- Evaluation order becomes function call semantics\n- **Don't overload comma** - loses important properties\n- **Key Concept:** Overloading comma operator is anti-pattern; loses sequencing semantics and left-to-right evaluation guarantees\n\n---\n\n\n## TOPIC: Operator Overloading",
           "code": "class Mystery {\npublic:\n    Mystery operator,(const Mystery& other) {\n        std::cout << \", \";\n        return other;\n    }\n};\n\nint main() {\n    Mystery a, b, c;\n    Mystery result = (a, b, c);\n}",
+          "answer": ", ,",
+          "explanation": "- Mystery class overloads comma operator\n- Built-in comma: evaluates left, discards, evaluates right, returns right\n- Overloaded comma: becomes regular function call (loses special semantics)\n- `(a, b, c)` evaluates as: `(a.operator,(b)).operator,(c)`\n- First: `a, b` calls operator, prints \",\", returns b (as Mystery copy)\n- Second: `result, c` calls operator, prints \",\", returns c\n- Lost sequence point guarantees of built-in comma\n- Evaluation order becomes function call semantics\n- **Don't overload comma** - loses important properties\n- **Key Concept:** Overloading comma operator is anti-pattern; loses sequencing semantics and left-to-right evaluation guarantees",
+          "key_concept": "Overloading comma operator is anti-pattern; loses sequencing semantics and left-to-right evaluation guarantees",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            ", ,"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 5 7 7 | Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7 | #increment_operators #return_types |\n| 2 | Double-delete bug and memory leak | Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory. | #rule_of_three #shallow_copy #memory_leak |\n| 3 | 1 2 3 4 | operator new runs before constructor (1 2), destructor runs before operator delete (3 4) | #operator_new #object_lifecycle |\n| 4 | Called Expensive | Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value | #short_circuit #logical_operators |\n| 5 | Line A compiles, Line B fails | Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex. | #member_function #implicit_conversion #symmetry |\n| 6 | 30 20 | operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged. | #assignment_operator #return_types #chaining |\n| 7 | No, won't compile | Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal | #const_correctness #subscript_operator #reference_return |\n| 8 | 35 | Functor's operator() adds x (5) + a (10) + b (20) = 35 | #functor #operator_call |\n| 9 | 42 100 | operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100 | #smart_pointers #operator_overloading |\n| 10 | * + | Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +. | #operator_precedence #evaluation_order |\n| 11 | Both work | Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity. | #friend_function #symmetry #commutative_operations |\n| 12 | Returns reference to local | Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment. | #increment_operators #return_types #dangling_reference |\n| 13 | Allocating Ctor | Custom operator new with parameters (placement-like) runs first with message, then constructor | #placement_new #custom_parameters #operator_new |\n| 14 | Compiles, uses Y::operator+ | Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation. | #inheritance #operator_overloading #implicit_conversion |\n| 15 | 10 105 | lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105) | #ref_qualifiers #lvalue_rvalue #operator_overloading |\n| 16 | int double int | Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type. | #operator_chaining #stream_operators #overload_resolution |\n| 17 | Derived= Base= | Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly. | #virtual_functions #operator_overloading #polymorphism |\n| 18 | \"A\" printed, then compile errors | if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int) | #explicit_conversion #operator_bool #implicit_conversion |\n| 19 | 3 6 9 12 | std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12 | #functor #stl_algorithms #transform |\n| 20 | , , | Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,) | #comma_operator #sequence_point #operator_overloading |\n\n#### Operator Overloading Categories\n\n| Category | Operators | Must Be Member | Common Use |\n|----------|-----------|----------------|------------|\n| Arithmetic | `+`, `-`, `*`, `/`, `%` | No | Math classes, custom types |\n| Comparison | `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>` | No | Sorting, searching |\n| Assignment | `=`, `+=`, `-=`, `*=`, `/=`, etc. | Yes (`=` only) | Resource management |\n| Increment/Decrement | `++`, `--` | No | Iterators, counters |\n| Subscript | `[]` | Yes | Container classes |\n| Function Call | `()` | Yes | Functors, callbacks |\n| Member Access | `->`, `->*` | Yes (`->` only) | Smart pointers, proxies |\n| Stream | `<<`, `>>` | No | I/O operations |\n| Memory | `new`, `delete`, `new[]`, `delete[]` | No | Custom allocators |\n| Conversion | `operator T()` | Yes | Implicit/explicit conversions |\n\n#### Member vs Friend Function Selection Guide\n\n| Scenario | Implementation | Reason |\n|----------|---------------|---------|\n| Left operand always class object | Member function | Simpler, natural access to members |\n| Need symmetric operations (e.g., `int + Complex`) | Friend function | Enables implicit conversion on left operand |\n| Stream operators (`<<`, `>>`) | Friend function | Stream is left operand |\n| Must be member by rule (`=`, `[]`, `()`, `->`) | Member function | Language requirement |\n| Comparison operators | Friend (or member) | Friend enables symmetry if needed |\n| Unary operators | Member (preferred) | Natural use of `this` |\n\n#### Return Type Guidelines\n\n| Operator | Return Type | Reason |\n|----------|-------------|---------|\n| `operator=` | `T&` (reference to `*this`) | Enable chaining, avoid copies |\n| `operator+=`, `-=`, etc. | `T&` (reference to `*this`) | Enable chaining, modify in place |\n| `operator+`, `-`, etc. | `T` (by value) | Return new object, don't modify operands |\n| `operator++()` (pre) | `T&` (reference to `*this`) | Efficient, return modified object |\n| `operator++(int)` (post) | `T` (by value) | Must return old value (copy) |\n| `operator[]` (non-const) | `T&` | Enable modification: `arr[i] = value` |\n| `operator[]` (const) | `const T&` | Read-only access |\n| `operator bool()` | `bool` | Conversion to boolean |\n| `operator<<`, `>>` | `ostream&`/`istream&` | Enable chaining |\n| `operator->` | `T*` or object with `operator->` | Pointer or chainable |\n\n#### Common Operator Overloading Mistakes\n\n| Mistake | Problem | Solution |\n|---------|---------|----------|\n| Returning by value from `operator=` | Breaks chaining, inefficient | Return `*this` by reference |\n| Returning reference from post-increment | Dangling reference | Return by value (old state) |\n| Making `operator<<` a member | Wrong operand order | Make it friend or non-member |\n| Forgetting dummy `int` in post-increment | Ambiguity with pre-increment | Add unused `int` parameter |\n| Overloading `&&` or `||` | Loses short-circuit evaluation | Don't overload these |\n| Not providing both const and non-const `operator[]` | Can't access const objects | Provide both versions |\n| Missing matching `operator delete` for custom `new` | Undefined behavior | Always provide matching pair |\n| Changing precedence/associativity | Impossible in C++ | Design around fixed grammar |\n| Not returning stream by reference | Breaks chaining | Return `ostream&` or `istream&` |\n| Forgetting self-assignment check in `operator=` | Undefined behavior | Check `if (this != &other)` |\n\n#### Performance Considerations\n\n| Operation | Performance Impact | Recommendation |\n|-----------|-------------------|----------------|\n| Pre-increment vs Post-increment | Post requires copy | Prefer `++it` over `it++` |\n| Member vs Friend | Minimal difference | Choose based on design, not performance |\n| Return by value vs reference | Reference faster for large objects | Return by reference for assignment, by value for arithmetic |\n| Functors vs Function pointers | Functors enable inlining | Use functors for STL algorithms |\n| Virtual operator overloading | Vtable lookup overhead | Avoid if performance critical |\n| Operator chaining | Multiple function calls | Acceptable overhead for clarity |\n| Smart pointer operations | Minimal overhead when inlined | Modern compilers optimize well |\n\n#### C++20 Spaceship Operator\n\n| Feature | Pre-C++20 | C++20 with `<=>` |\n|---------|-----------|------------------|\n| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 2 (`<=>`, `==`) |\n| Lines of code | 30-40 lines | 2-3 lines |\n| Consistency | Manual, error-prone | Automatic, guaranteed |\n| Syntax | Multiple function definitions | `auto operator<=>(const T&) const = default;` |\n| Return type | `bool` for each | `std::strong_ordering`, `std::weak_ordering`, or `std::partial_ordering` |",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 5 7 7 | Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7 | #increment_operators #return_types |\n| 2 | Double-delete bug and memory leak | Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory. | #rule_of_three #shallow_copy #memory_leak |\n| 3 | 1 2 3 4 | operator new runs before constructor (1 2), destructor runs before operator delete (3 4) | #operator_new #object_lifecycle |\n| 4 | Called Expensive | Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value | #short_circuit #logical_operators |\n| 5 | Line A compiles, Line B fails | Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex. | #member_function #implicit_conversion #symmetry |\n| 6 | 30 20 | operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged. | #assignment_operator #return_types #chaining |\n| 7 | No, won't compile | Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal | #const_correctness #subscript_operator #reference_return |\n| 8 | 35 | Functor's operator() adds x (5) + a (10) + b (20) = 35 | #functor #operator_call |\n| 9 | 42 100 | operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100 | #smart_pointers #operator_overloading |\n| 10 | * + | Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +. | #operator_precedence #evaluation_order |\n| 11 | Both work | Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity. | #friend_function #symmetry #commutative_operations |\n| 12 | Returns reference to local | Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment. | #increment_operators #return_types #dangling_reference |\n| 13 | Allocating Ctor | Custom operator new with parameters (placement-like) runs first with message, then constructor | #placement_new #custom_parameters #operator_new |\n| 14 | Compiles, uses Y::operator+ | Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation. | #inheritance #operator_overloading #implicit_conversion |\n| 15 | 10 105 | lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105) | #ref_qualifiers #lvalue_rvalue #operator_overloading |\n| 16 | int double int | Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type. | #operator_chaining #stream_operators #overload_resolution |\n| 17 | Derived= Base= | Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly. | #virtual_functions #operator_overloading #polymorphism |\n| 18 | \"A\" printed, then compile errors | if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int) | #explicit_conversion #operator_bool #implicit_conversion |\n| 19 | 3 6 9 12 | std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12 | #functor #stl_algorithms #transform |\n| 20 | , , | Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,) | #comma_operator #sequence_point #operator_overloading |\n\n#### Operator Overloading Categories\n\n| Category | Operators | Must Be Member | Common Use |\n|----------|-----------|----------------|------------|\n| Arithmetic | `+`, `-`, `*`, `/`, `%` | No | Math classes, custom types |\n| Comparison | `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>` | No | Sorting, searching |\n| Assignment | `=`, `+=`, `-=`, `*=`, `/=`, etc. | Yes (`=` only) | Resource management |\n| Increment/Decrement | `++`, `--` | No | Iterators, counters |\n| Subscript | `[]` | Yes | Container classes |\n| Function Call | `()` | Yes | Functors, callbacks |\n| Member Access | `->`, `->*` | Yes (`->` only) | Smart pointers, proxies |\n| Stream | `<<`, `>>` | No | I/O operations |\n| Memory | `new`, `delete`, `new[]`, `delete[]` | No | Custom allocators |\n| Conversion | `operator T()` | Yes | Implicit/explicit conversions |\n\n#### Member vs Friend Function Selection Guide\n\n| Scenario | Implementation | Reason |\n|----------|---------------|---------|\n| Left operand always class object | Member function | Simpler, natural access to members |\n| Need symmetric operations (e.g., `int + Complex`) | Friend function | Enables implicit conversion on left operand |\n| Stream operators (`<<`, `>>`) | Friend function | Stream is left operand |\n| Must be member by rule (`=`, `[]`, `()`, `->`) | Member function | Language requirement |\n| Comparison operators | Friend (or member) | Friend enables symmetry if needed |\n| Unary operators | Member (preferred) | Natural use of `this` |\n\n#### Return Type Guidelines\n\n| Operator | Return Type | Reason |\n|----------|-------------|---------|\n| `operator=` | `T&` (reference to `*this`) | Enable chaining, avoid copies |\n| `operator+=`, `-=`, etc. | `T&` (reference to `*this`) | Enable chaining, modify in place |\n| `operator+`, `-`, etc. | `T` (by value) | Return new object, don't modify operands |\n| `operator++()` (pre) | `T&` (reference to `*this`) | Efficient, return modified object |\n| `operator++(int)` (post) | `T` (by value) | Must return old value (copy) |\n| `operator[]` (non-const) | `T&` | Enable modification: `arr[i] = value` |\n| `operator[]` (const) | `const T&` | Read-only access |\n| `operator bool()` | `bool` | Conversion to boolean |\n| `operator<<`, `>>` | `ostream&`/`istream&` | Enable chaining |\n| `operator->` | `T*` or object with `operator->` | Pointer or chainable |\n\n#### Common Operator Overloading Mistakes\n\n| Mistake | Problem | Solution |\n|---------|---------|----------|\n| Returning by value from `operator=` | Breaks chaining, inefficient | Return `*this` by reference |\n| Returning reference from post-increment | Dangling reference | Return by value (old state) |\n| Making `operator<<` a member | Wrong operand order | Make it friend or non-member |\n| Forgetting dummy `int` in post-increment | Ambiguity with pre-increment | Add unused `int` parameter |\n| Overloading `&&` or `||` | Loses short-circuit evaluation | Don't overload these |\n| Not providing both const and non-const `operator[]` | Can't access const objects | Provide both versions |\n| Missing matching `operator delete` for custom `new` | Undefined behavior | Always provide matching pair |\n| Changing precedence/associativity | Impossible in C++ | Design around fixed grammar |\n| Not returning stream by reference | Breaks chaining | Return `ostream&` or `istream&` |\n| Forgetting self-assignment check in `operator=` | Undefined behavior | Check `if (this != &other)` |\n\n#### Performance Considerations\n\n| Operation | Performance Impact | Recommendation |\n|-----------|-------------------|----------------|\n| Pre-increment vs Post-increment | Post requires copy | Prefer `++it` over `it++` |\n| Member vs Friend | Minimal difference | Choose based on design, not performance |\n| Return by value vs reference | Reference faster for large objects | Return by reference for assignment, by value for arithmetic |\n| Functors vs Function pointers | Functors enable inlining | Use functors for STL algorithms |\n| Virtual operator overloading | Vtable lookup overhead | Avoid if performance critical |\n| Operator chaining | Multiple function calls | Acceptable overhead for clarity |\n| Smart pointer operations | Minimal overhead when inlined | Modern compilers optimize well |\n\n#### C++20 Spaceship Operator\n\n| Feature | Pre-C++20 | C++20 with `<=>` |\n|---------|-----------|------------------|\n| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 2 (`<=>`, `==`) |\n| Lines of code | 30-40 lines | 2-3 lines |\n| Consistency | Manual, error-prone | Automatic, guaranteed |\n| Syntax | Multiple function definitions | `auto operator<=>(const T&) const = default;` |\n| Return type | `bool` for each | `std::strong_ordering`, `std::weak_ordering`, or `std::partial_ordering` |\n\n\n## TOPIC: Operator Overloading",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | 5 7 7 | Post-increment returns old value (5), then pre-increment returns modified value (7), final value is 7 | #increment_operators #return_types |\n| 2 | Double-delete bug and memory leak | Class is missing copy constructor and assignment operator; uses compiler-generated versions causing shallow copy. When temporary is destroyed, it deletes the same memory. | #rule_of_three #shallow_copy #memory_leak |\n| 3 | 1 2 3 4 | operator new runs before constructor (1 2), destructor runs before operator delete (3 4) | #operator_new #object_lifecycle |\n| 4 | Called Expensive | Overloaded && loses short-circuit behavior; both operands are evaluated as function parameters regardless of left operand value | #short_circuit #logical_operators |\n| 5 | Line A compiles, Line B fails | Line A works due to implicit conversion of 3.0 to Complex. Line B fails because operator+ is a member function requiring left operand to be Complex. | #member_function #implicit_conversion #symmetry |\n| 6 | 30 20 | operator= returns by value (creates copy), not by reference. Assignment is right-associative: h2=h3 returns copy with val=30, then h1=copy sets h1.val=30, but h2.val=20 unchanged. | #assignment_operator #return_types #chaining |\n| 7 | No, won't compile | Const version returns by value (int), not reference (int&), so assignment is to a temporary rvalue which is illegal | #const_correctness #subscript_operator #reference_return |\n| 8 | 35 | Functor's operator() adds x (5) + a (10) + b (20) = 35 | #functor #operator_call |\n| 9 | 42 100 | operator* provides dereferencing like a pointer. First prints 42, then modifies to 100, prints 100 | #smart_pointers #operator_overloading |\n| 10 | * + | Operator precedence is unchanged by overloading; * has higher precedence than +, so b*c executes first, then +. | #operator_precedence #evaluation_order |\n| 11 | Both work | Line A uses member operator+(int), Line B uses friend operator+(int, Point). Friend function enables commutativity. | #friend_function #symmetry #commutative_operations |\n| 12 | Returns reference to local | Post-increment should return by value (copy of old state), not by reference. This returns reference to *this after modification, making it behave like pre-increment. | #increment_operators #return_types #dangling_reference |\n| 13 | Allocating Ctor | Custom operator new with parameters (placement-like) runs first with message, then constructor | #placement_new #custom_parameters #operator_new |\n| 14 | Compiles, uses Y::operator+ | Y has its own operator+ that returns Y, which implicitly converts to X. No object slicing during operation. | #inheritance #operator_overloading #implicit_conversion |\n| 15 | 10 105 | lvalue idx calls & version (returns 10), rvalue getIndex() calls && version (returns 5+100=105) | #ref_qualifiers #lvalue_rvalue #operator_overloading |\n| 16 | int double int | Chaining works left-to-right: s.operator<<(5).operator<<(3.14).operator<<(10). Each operator<< selects overload based on parameter type. | #operator_chaining #stream_operators #overload_resolution |\n| 17 | Derived= Base= | Virtual operator= in Base is overridden. Through Base reference, virtual dispatch calls Derived::operator=, which calls Base::operator= explicitly. | #virtual_functions #operator_overloading #polymorphism |\n| 18 | \"A\" printed, then compile errors | if statement works (contextual conversion), bool b = s fails (explicit prevents implicit conversion), int x fails (explicit prevents conversion to int) | #explicit_conversion #operator_bool #implicit_conversion |\n| 19 | 3 6 9 12 | std::transform applies Mult(3) functor to each element: 1*3=3, 2*3=6, 3*3=9, 4*3=12 | #functor #stl_algorithms #transform |\n| 20 | , , | Overloaded comma operator is called as function: a, b returns b (prints ,), then result is assigned c (prints ,) | #comma_operator #sequence_point #operator_overloading |",
           "| Category | Operators | Must Be Member | Common Use |\n|----------|-----------|----------------|------------|\n| Arithmetic | `+`, `-`, `*`, `/`, `%` | No | Math classes, custom types |\n| Comparison | `==`, `!=`, `<`, `>`, `<=`, `>=`, `<=>` | No | Sorting, searching |\n| Assignment | `=`, `+=`, `-=`, `*=`, `/=`, etc. | Yes (`=` only) | Resource management |\n| Increment/Decrement | `++`, `--` | No | Iterators, counters |\n| Subscript | `[]` | Yes | Container classes |\n| Function Call | `()` | Yes | Functors, callbacks |\n| Member Access | `->`, `->*` | Yes (`->` only) | Smart pointers, proxies |\n| Stream | `<<`, `>>` | No | I/O operations |\n| Memory | `new`, `delete`, `new[]`, `delete[]` | No | Custom allocators |\n| Conversion | `operator T()` | Yes | Implicit/explicit conversions |",
@@ -1029,7 +1149,7 @@
           "| Operator | Return Type | Reason |\n|----------|-------------|---------|\n| `operator=` | `T&` (reference to `*this`) | Enable chaining, avoid copies |\n| `operator+=`, `-=`, etc. | `T&` (reference to `*this`) | Enable chaining, modify in place |\n| `operator+`, `-`, etc. | `T` (by value) | Return new object, don't modify operands |\n| `operator++()` (pre) | `T&` (reference to `*this`) | Efficient, return modified object |\n| `operator++(int)` (post) | `T` (by value) | Must return old value (copy) |\n| `operator[]` (non-const) | `T&` | Enable modification: `arr[i] = value` |\n| `operator[]` (const) | `const T&` | Read-only access |\n| `operator bool()` | `bool` | Conversion to boolean |\n| `operator<<`, `>>` | `ostream&`/`istream&` | Enable chaining |\n| `operator->` | `T*` or object with `operator->` | Pointer or chainable |",
           "| Mistake | Problem | Solution |\n|---------|---------|----------|\n| Returning by value from `operator=` | Breaks chaining, inefficient | Return `*this` by reference |\n| Returning reference from post-increment | Dangling reference | Return by value (old state) |\n| Making `operator<<` a member | Wrong operand order | Make it friend or non-member |\n| Forgetting dummy `int` in post-increment | Ambiguity with pre-increment | Add unused `int` parameter |\n| Overloading `&&` or `||` | Loses short-circuit evaluation | Don't overload these |\n| Not providing both const and non-const `operator[]` | Can't access const objects | Provide both versions |\n| Missing matching `operator delete` for custom `new` | Undefined behavior | Always provide matching pair |\n| Changing precedence/associativity | Impossible in C++ | Design around fixed grammar |\n| Not returning stream by reference | Breaks chaining | Return `ostream&` or `istream&` |\n| Forgetting self-assignment check in `operator=` | Undefined behavior | Check `if (this != &other)` |",
           "| Operation | Performance Impact | Recommendation |\n|-----------|-------------------|----------------|\n| Pre-increment vs Post-increment | Post requires copy | Prefer `++it` over `it++` |\n| Member vs Friend | Minimal difference | Choose based on design, not performance |\n| Return by value vs reference | Reference faster for large objects | Return by reference for assignment, by value for arithmetic |\n| Functors vs Function pointers | Functors enable inlining | Use functors for STL algorithms |\n| Virtual operator overloading | Vtable lookup overhead | Avoid if performance critical |\n| Operator chaining | Multiple function calls | Acceptable overhead for clarity |\n| Smart pointer operations | Minimal overhead when inlined | Modern compilers optimize well |",
-          "| Feature | Pre-C++20 | C++20 with `<=>` |\n|---------|-----------|------------------|\n| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 2 (`<=>`, `==`) |\n| Lines of code | 30-40 lines | 2-3 lines |\n| Consistency | Manual, error-prone | Automatic, guaranteed |\n| Syntax | Multiple function definitions | `auto operator<=>(const T&) const = default;` |"
+          "| Feature | Pre-C++20 | C++20 with `<=>` |\n|---------|-----------|------------------|\n| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 2 (`<=>`, `==`) |\n| Lines of code | 30-40 lines | 2-3 lines |\n| Consistency | Manual, error-prone | Automatic, guaranteed |\n| Syntax | Multiple function definitions | `auto operator<=>(const T&) const = default;` |\n| Return type | `bool` for each | `std::strong_ordering`, `std::weak_ordering`, or `std::partial_ordering` |"
         ]
       }
     }

@@ -5,7 +5,7 @@
   "topics": [
     {
       "topic": "RAII Fundamentals & Exception Safety",
-      "filename": "1_RAII_01_Fundamentals_Exception_Safety.md",
+      "filename": "topic_1.md",
       "theory": {
         "subsections": [
           {
@@ -568,152 +568,244 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource() : data(new int[10]) {\n        std::cout << \"Acquired\\n\";\n    }\n    ~Resource() {\n        delete[] data;\n        std::cout << \"Released\\n\";\n    }\n};\n\nvoid test() {\n    Resource r1;\n    Resource r2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Output: `Acquired` `Acquired` `Released` `Released`\n\n**Explanation:** Destructors called in reverse construction order (r2 then r1)\n\n**Key Concept:** #destruction_order\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nAcquired\nAcquired\nReleased\nReleased\n```\n\n**Explanation:**\n- r1 constructed first: prints \"Acquired\"\n- r2 constructed second: prints \"Acquired\"\n- Destructors called in reverse order (LIFO - Last In, First Out)\n- r2 destroyed first: prints \"Released\"\n- r1 destroyed last: prints \"Released\"\n- **RAII principle:** Resources acquired in constructor\n- **Destruction order:** Reverse of construction order\n- **Stack unwinding:** Objects destroyed in reverse order\n- **Key Concept:** Destructor order is reverse of constructor order; ensures proper cleanup",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int[10]) {\n        std::cout << \"Acquired\\n\";\n    }\n    ~Resource() {\n        delete[] data;\n        std::cout << \"Released\\n\";\n    }\n};\n\nvoid test() {\n    Resource r1;\n    Resource r2;\n}",
+          "answer": "Acquired\nAcquired\nReleased\nReleased",
+          "explanation": "- r1 constructed first: prints \"Acquired\"\n- r2 constructed second: prints \"Acquired\"\n- Destructors called in reverse order (LIFO - Last In, First Out)\n- r2 destroyed first: prints \"Released\"\n- r1 destroyed last: prints \"Released\"\n- **RAII principle:** Resources acquired in constructor\n- **Destruction order:** Reverse of construction order\n- **Stack unwinding:** Objects destroyed in reverse order\n- **Key Concept:** Destructor order is reverse of constructor order; ensures proper cleanup",
+          "key_concept": "Destructor order is reverse of constructor order; ensures proper cleanup",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Acquired\nAcquired\nReleased\nReleased"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Logger {\npublic:\n    Logger() { std::cout << \"Logger created\\n\"; }\n    ~Logger() { std::cout << \"Logger destroyed\\n\"; }\n};\n\nLogger globalLogger;\n\nint main() {\n    std::cout << \"Main started\\n\";\n    Logger localLogger;\n    std::cout << \"Main ending\\n\";\n    return 0;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Logger created` `Main started` `Logger created` `Main ending` `Logger destroyed` `Logger destroyed`\n\n**Explanation:** Global constructed before main, destroyed after main; local follows normal scope\n\n**Key Concept:** #static_lifetime\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nLogger created\nMain started\nLogger created\nMain ending\nLogger destroyed\nLogger destroyed\n```\n\n**Explanation:**\n- globalLogger constructed before main() starts\n- First \"Logger created\" before main\n- \"Main started\" prints\n- localLogger constructed: \"Logger created\"\n- \"Main ending\" prints\n- localLogger destroyed (local scope ends): \"Logger destroyed\"\n- globalLogger destroyed after main() exits: \"Logger destroyed\"\n- **Static/global lifetime:** Constructed before main, destroyed after main\n- **Local lifetime:** Constructed when declared, destroyed at scope exit\n- **Key Concept:** Global objects have static lifetime; constructed before main, destroyed after main",
           "code": "class Logger {\npublic:\n    Logger() { std::cout << \"Logger created\\n\"; }\n    ~Logger() { std::cout << \"Logger destroyed\\n\"; }\n};\n\nLogger globalLogger;\n\nint main() {\n    std::cout << \"Main started\\n\";\n    Logger localLogger;\n    std::cout << \"Main ending\\n\";\n    return 0;\n}",
+          "answer": "Logger created\nMain started\nLogger created\nMain ending\nLogger destroyed\nLogger destroyed",
+          "explanation": "- globalLogger constructed before main() starts\n- First \"Logger created\" before main\n- \"Main started\" prints\n- localLogger constructed: \"Logger created\"\n- \"Main ending\" prints\n- localLogger destroyed (local scope ends): \"Logger destroyed\"\n- globalLogger destroyed after main() exits: \"Logger destroyed\"\n- **Static/global lifetime:** Constructed before main, destroyed after main\n- **Local lifetime:** Constructed when declared, destroyed at scope exit\n- **Key Concept:** Global objects have static lifetime; constructed before main, destroyed after main",
+          "key_concept": "Global objects have static lifetime; constructed before main, destroyed after main",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Logger created\nMain started\nLogger created\nMain ending\nLogger destroyed\nLogger destroyed"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass FileHandle {\n    FILE* file;\npublic:\n    FileHandle(const char* name) {\n        file = fopen(name, \"r\");\n        if (!file) throw std::runtime_error(\"Failed\");\n    }\n    ~FileHandle() {\n        if (file) {\n            fclose(file);\n            std::cout << \"File closed\\n\";\n        }\n    }\n};\n\nvoid test() {\n    try {\n        FileHandle f(\"nonexistent.txt\");\n        std::cout << \"File opened\\n\";\n    } catch (const std::exception& e) {\n        std::cout << \"Exception: \" << e.what() << \"\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Output: `Exception: Failed`\n\n**Explanation:** File never opened so destructor never called; no \"File closed\" message\n\n**Key Concept:** #constructor_exception\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nException: Failed\n```\n\n**Explanation:**\n- fopen fails (file doesn't exist), returns nullptr\n- Constructor throws std::runtime_error\n- **Critical:** Object construction never completes\n- Destructor NOT called (object doesn't exist)\n- No \"File closed\" message\n- Exception caught: prints \"Exception: Failed\"\n- **Constructor exception rule:** If constructor throws, destructor never runs\n- **Resource safety:** File handle was never valid (nullptr)\n- **Key Concept:** Constructor exceptions prevent destructor calls; object never fully constructed",
           "code": "class FileHandle {\n    FILE* file;\npublic:\n    FileHandle(const char* name) {\n        file = fopen(name, \"r\");\n        if (!file) throw std::runtime_error(\"Failed\");\n    }\n    ~FileHandle() {\n        if (file) {\n            fclose(file);\n            std::cout << \"File closed\\n\";\n        }\n    }\n};\n\nvoid test() {\n    try {\n        FileHandle f(\"nonexistent.txt\");\n        std::cout << \"File opened\\n\";\n    } catch (const std::exception& e) {\n        std::cout << \"Exception: \" << e.what() << \"\\n\";\n    }\n}",
+          "answer": "Exception: Failed",
+          "explanation": "- fopen fails (file doesn't exist), returns nullptr\n- Constructor throws std::runtime_error\n- **Critical:** Object construction never completes\n- Destructor NOT called (object doesn't exist)\n- No \"File closed\" message\n- Exception caught: prints \"Exception: Failed\"\n- **Constructor exception rule:** If constructor throws, destructor never runs\n- **Resource safety:** File handle was never valid (nullptr)\n- **Key Concept:** Constructor exceptions prevent destructor calls; object never fully constructed",
+          "key_concept": "Constructor exceptions prevent destructor calls; object never fully constructed",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Exception: Failed"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\npublic:\n    Resource() { std::cout << \"Constructed\\n\"; }\n    ~Resource() noexcept(false) {\n        std::cout << \"Destroying\\n\";\n        throw std::runtime_error(\"Destructor throw\");\n    }\n};\n\nvoid test() {\n    Resource r;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Program calls `std::terminate()` and crashes\n\n**Explanation:** Throwing from destructor invokes terminate; never do this\n\n**Key Concept:** #destructor_exception\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nProgram calls std::terminate() and crashes\n```\n\n**Explanation:**\n- Resource constructed: prints \"Constructed\"\n- Scope ends, destructor called\n- Prints \"Destroying\"\n- Destructor throws exception\n- **Fatal error:** Throwing from destructor during stack unwinding\n- C++ calls std::terminate()\n- Program crashes immediately\n- **noexcept(false):** Allows throwing (destructors noexcept by default in C++11+)\n- **Never throw from destructors:** Can cause std::terminate\n- **Key Concept:** Throwing from destructor calls std::terminate; never throw in destructors",
           "code": "class Resource {\npublic:\n    Resource() { std::cout << \"Constructed\\n\"; }\n    ~Resource() noexcept(false) {\n        std::cout << \"Destroying\\n\";\n        throw std::runtime_error(\"Destructor throw\");\n    }\n};\n\nvoid test() {\n    Resource r;\n}",
+          "answer": "Program calls std::terminate() and crashes",
+          "explanation": "- Resource constructed: prints \"Constructed\"\n- Scope ends, destructor called\n- Prints \"Destroying\"\n- Destructor throws exception\n- **Fatal error:** Throwing from destructor during stack unwinding\n- C++ calls std::terminate()\n- Program crashes immediately\n- **noexcept(false):** Allows throwing (destructors noexcept by default in C++11+)\n- **Never throw from destructors:** Can cause std::terminate\n- **Key Concept:** Throwing from destructor calls std::terminate; never throw in destructors",
+          "key_concept": "Throwing from destructor calls std::terminate; never throw in destructors",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Program calls std::terminate() and crashes"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Counter {\n    int* count;\npublic:\n    Counter() : count(new int(0)) {}\n    ~Counter() { delete count; }\n};\n\nvoid test() {\n    Counter c1;\n    Counter c2 = c1;  // Copy\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Double delete / undefined behavior\n\n**Explanation:** Default copy constructor copies pointer; both objects try to delete same memory\n\n**Key Concept:** #shallow_copy_problem\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDouble delete / undefined behavior\n```\n\n**Explanation:**\n- c1 constructed: allocates int, count points to it\n- c2 = c1: Default copy constructor (shallow copy)\n- Both c1.count and c2.count point to SAME memory\n- Scope ends, c2 destroyed first\n- c2 destructor deletes memory\n- c1 destroyed next\n- c1 destructor tries to delete already-freed memory\n- **Double delete:** Undefined behavior, crash\n- **Fix:** Implement copy constructor or delete it\n- **Rule of Three/Five:** If you need destructor, likely need copy constructor\n- **Key Concept:** Default copy constructor does shallow copy; causes double delete with raw pointers",
           "code": "class Counter {\n    int* count;\npublic:\n    Counter() : count(new int(0)) {}\n    ~Counter() { delete count; }\n};\n\nvoid test() {\n    Counter c1;\n    Counter c2 = c1;  // Copy\n}",
+          "answer": "Double delete / undefined behavior",
+          "explanation": "- c1 constructed: allocates int, count points to it\n- c2 = c1: Default copy constructor (shallow copy)\n- Both c1.count and c2.count point to SAME memory\n- Scope ends, c2 destroyed first\n- c2 destructor deletes memory\n- c1 destroyed next\n- c1 destructor tries to delete already-freed memory\n- **Double delete:** Undefined behavior, crash\n- **Fix:** Implement copy constructor or delete it\n- **Rule of Three/Five:** If you need destructor, likely need copy constructor\n- **Key Concept:** Default copy constructor does shallow copy; causes double delete with raw pointers",
+          "key_concept": "Default copy constructor does shallow copy; causes double delete with raw pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Double delete / undefined behavior"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(const Resource&) = delete;\n    Resource(Resource&& other) noexcept : data(other.data) {\n        other.data = nullptr;\n    }\n};\n\nResource createResource() {\n    Resource r;\n    return r;\n}\n\nvoid test() {\n    Resource r = createResource();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Constructor called once, destructor called once\n\n**Explanation:** C++17 RVO eliminates move; single object constructed in caller's stack frame\n\n**Key Concept:** #rvo #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nConstructor called once, destructor called once\n```\n\n**Explanation:**\n- C++17 guaranteed copy elision (RVO)\n- Object constructed directly in test's stack frame\n- No temporary created in createResource\n- No move constructor called\n- Single construction, single destruction\n- **Without RVO:** Would construct, move, destruct temporary\n- **C++17 optimization:** Direct construction at final location\n- **Move semantics:** Available if RVO doesn't apply (C++14 and earlier)\n- **Key Concept:** C++17 RVO eliminates moves; single object construction even with return",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(const Resource&) = delete;\n    Resource(Resource&& other) noexcept : data(other.data) {\n        other.data = nullptr;\n    }\n};\n\nResource createResource() {\n    Resource r;\n    return r;\n}\n\nvoid test() {\n    Resource r = createResource();\n}",
+          "answer": "Constructor called once, destructor called once",
+          "explanation": "- C++17 guaranteed copy elision (RVO)\n- Object constructed directly in test's stack frame\n- No temporary created in createResource\n- No move constructor called\n- Single construction, single destruction\n- **Without RVO:** Would construct, move, destruct temporary\n- **C++17 optimization:** Direct construction at final location\n- **Move semantics:** Available if RVO doesn't apply (C++14 and earlier)\n- **Key Concept:** C++17 RVO eliminates moves; single object construction even with return",
+          "key_concept": "C++17 RVO eliminates moves; single object construction even with return",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Constructor called once, destructor called once"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Lock {\n    std::mutex& mtx;\npublic:\n    Lock(std::mutex& m) : mtx(m) { \n        mtx.lock();\n        std::cout << \"Locked\\n\";\n    }\n    ~Lock() { \n        mtx.unlock();\n        std::cout << \"Unlocked\\n\";\n    }\n};\n\nstd::mutex globalMutex;\n\nvoid function() {\n    Lock lock(globalMutex);\n    std::cout << \"In critical section\\n\";\n    throw std::runtime_error(\"Error\");\n}\n\nint main() {\n    try {\n        function();\n    } catch (...) {\n        std::cout << \"Caught\\n\";\n    }\n    return 0;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Locked` `In critical section` `Unlocked` `Caught`\n\n**Explanation:** Mutex properly unlocked during stack unwinding via RAII lock destructor\n\n**Key Concept:** #exception_safe_locking\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nLocked\nIn critical section\nUnlocked\nCaught\n```\n\n**Explanation:**\n- Lock constructor: acquires mutex, prints \"Locked\"\n- \"In critical section\" prints\n- Exception thrown\n- **Stack unwinding begins**\n- Lock destructor called automatically\n- Mutex unlocked: prints \"Unlocked\"\n- Exception propagates to main\n- Caught: prints \"Caught\"\n- **RAII guarantees:** Mutex unlocked even with exception\n- **Exception safety:** No deadlock, no leaked locks\n- **Pattern:** This is std::lock_guard behavior\n- **Key Concept:** RAII ensures cleanup during exceptions; automatic resource release via stack unwinding",
           "code": "class Lock {\n    std::mutex& mtx;\npublic:\n    Lock(std::mutex& m) : mtx(m) { \n        mtx.lock();\n        std::cout << \"Locked\\n\";\n    }\n    ~Lock() { \n        mtx.unlock();\n        std::cout << \"Unlocked\\n\";\n    }\n};\n\nstd::mutex globalMutex;\n\nvoid function() {\n    Lock lock(globalMutex);\n    std::cout << \"In critical section\\n\";\n    throw std::runtime_error(\"Error\");\n}\n\nint main() {\n    try {\n        function();\n    } catch (...) {\n        std::cout << \"Caught\\n\";\n    }\n    return 0;\n}",
+          "answer": "Locked\nIn critical section\nUnlocked\nCaught",
+          "explanation": "- Lock constructor: acquires mutex, prints \"Locked\"\n- \"In critical section\" prints\n- Exception thrown\n- **Stack unwinding begins**\n- Lock destructor called automatically\n- Mutex unlocked: prints \"Unlocked\"\n- Exception propagates to main\n- Caught: prints \"Caught\"\n- **RAII guarantees:** Mutex unlocked even with exception\n- **Exception safety:** No deadlock, no leaked locks\n- **Pattern:** This is std::lock_guard behavior\n- **Key Concept:** RAII ensures cleanup during exceptions; automatic resource release via stack unwinding",
+          "key_concept": "RAII ensures cleanup during exceptions; automatic resource release via stack unwinding",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Locked\nIn critical section\nUnlocked\nCaught"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource1 {\npublic:\n    Resource1() { std::cout << \"R1 acquired\\n\"; }\n    ~Resource1() { std::cout << \"R1 released\\n\"; }\n};\n\nclass Resource2 {\npublic:\n    Resource2() { std::cout << \"R2 acquired\\n\"; }\n    ~Resource2() { std::cout << \"R2 released\\n\"; }\n};\n\nclass Container {\n    Resource1 r1;\n    Resource2 r2;\npublic:\n    Container() {\n        std::cout << \"Container constructed\\n\";\n        throw std::runtime_error(\"Error\");\n    }\n    ~Container() {\n        std::cout << \"Container destroyed\\n\";\n    }\n};\n\nvoid test() {\n    try {\n        Container c;\n    } catch (...) {\n        std::cout << \"Exception caught\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `R1 acquired` `R2 acquired` `R2 released` `R1 released` `Exception caught`\n\n**Explanation:** Members fully constructed before constructor body throws; their destructors called; Container destructor NOT called\n\n**Key Concept:** #partial_construction\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nR1 acquired\nR2 acquired\nR2 released\nR1 released\nException caught\n```\n\n**Explanation:**\n- Members constructed in declaration order before constructor body\n- r1 constructed: \"R1 acquired\"\n- r2 constructed: \"R2 acquired\"\n- Constructor body executes: \"Container constructed\"\n- Constructor throws exception\n- **Container destructor NOT called** (construction incomplete)\n- **But:** Fully constructed members ARE destroyed\n- r2 destroyed first (reverse order): \"R2 released\"\n- r1 destroyed: \"R1 released\"\n- Exception caught\n- **Key principle:** Members destroyed even if constructor throws\n- **Key Concept:** Constructor exceptions destroy fully-constructed members but not container; partial construction cleanup",
           "code": "class Resource1 {\npublic:\n    Resource1() { std::cout << \"R1 acquired\\n\"; }\n    ~Resource1() { std::cout << \"R1 released\\n\"; }\n};\n\nclass Resource2 {\npublic:\n    Resource2() { std::cout << \"R2 acquired\\n\"; }\n    ~Resource2() { std::cout << \"R2 released\\n\"; }\n};\n\nclass Container {\n    Resource1 r1;\n    Resource2 r2;\npublic:\n    Container() {\n        std::cout << \"Container constructed\\n\";\n        throw std::runtime_error(\"Error\");\n    }\n    ~Container() {\n        std::cout << \"Container destroyed\\n\";\n    }\n};\n\nvoid test() {\n    try {\n        Container c;\n    } catch (...) {\n        std::cout << \"Exception caught\\n\";\n    }\n}",
+          "answer": "R1 acquired\nR2 acquired\nR2 released\nR1 released\nException caught",
+          "explanation": "- Members constructed in declaration order before constructor body\n- r1 constructed: \"R1 acquired\"\n- r2 constructed: \"R2 acquired\"\n- Constructor body executes: \"Container constructed\"\n- Constructor throws exception\n- **Container destructor NOT called** (construction incomplete)\n- **But:** Fully constructed members ARE destroyed\n- r2 destroyed first (reverse order): \"R2 released\"\n- r1 destroyed: \"R1 released\"\n- Exception caught\n- **Key principle:** Members destroyed even if constructor throws\n- **Key Concept:** Constructor exceptions destroy fully-constructed members but not container; partial construction cleanup",
+          "key_concept": "Constructor exceptions destroy fully-constructed members but not container; partial construction cleanup",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "R1 acquired\nR2 acquired\nR2 released\nR1 released\nException caught"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass File {\n    FILE* file;\npublic:\n    File(const char* name) {\n        file = fopen(name, \"r\");\n        if (!file) throw std::runtime_error(\"Open failed\");\n    }\n    ~File() {\n        fclose(file);\n        std::cout << \"File closed\\n\";\n    }\n};\n\nFile* createFile() {\n    return new File(\"test.txt\");\n}\n\nvoid test() {\n    File* f = createFile();\n    // Use file\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Memory leak - file never closed\n\n**Explanation:** Using `new` with RAII bypasses automatic cleanup; must manually delete, risking leaks\n\n**Key Concept:** #new_with_raii\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nMemory leak - file never closed\n```\n\n**Explanation:**\n- File object allocated with new\n- Constructor opens file\n- Pointer returned to test()\n- test() stores pointer but never deletes\n- **No delete called:** Destructor never runs\n- File never closed, memory never freed\n- **RAII defeated:** Using new bypasses automatic cleanup\n- **Should use:** Automatic storage (File f(\"test.txt\"))\n- **Or:** std::unique_ptr<File>\n- **Anti-pattern:** new with RAII classes defeats their purpose\n- **Key Concept:** Using new with RAII bypasses automatic cleanup; prefer stack allocation or smart pointers",
           "code": "class File {\n    FILE* file;\npublic:\n    File(const char* name) {\n        file = fopen(name, \"r\");\n        if (!file) throw std::runtime_error(\"Open failed\");\n    }\n    ~File() {\n        fclose(file);\n        std::cout << \"File closed\\n\";\n    }\n};\n\nFile* createFile() {\n    return new File(\"test.txt\");\n}\n\nvoid test() {\n    File* f = createFile();\n    // Use file\n}",
+          "answer": "Memory leak - file never closed",
+          "explanation": "- File object allocated with new\n- Constructor opens file\n- Pointer returned to test()\n- test() stores pointer but never deletes\n- **No delete called:** Destructor never runs\n- File never closed, memory never freed\n- **RAII defeated:** Using new bypasses automatic cleanup\n- **Should use:** Automatic storage (File f(\"test.txt\"))\n- **Or:** std::unique_ptr<File>\n- **Anti-pattern:** new with RAII classes defeats their purpose\n- **Key Concept:** Using new with RAII bypasses automatic cleanup; prefer stack allocation or smart pointers",
+          "key_concept": "Using new with RAII bypasses automatic cleanup; prefer stack allocation or smart pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Memory leak - file never closed"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Transaction {\n    bool committed = false;\npublic:\n    Transaction() { std::cout << \"BEGIN\\n\"; }\n    ~Transaction() {\n        if (!committed) std::cout << \"ROLLBACK\\n\";\n        else std::cout << \"COMMITTED\\n\";\n    }\n    void commit() { \n        committed = true;\n        std::cout << \"COMMIT\\n\";\n    }\n};\n\nvoid test1() {\n    Transaction t;\n    t.commit();\n}\n\nvoid test2() {\n    Transaction t;\n    throw std::runtime_error(\"Error\");\n    t.commit();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** test1: `BEGIN` `COMMIT` `COMMITTED`<br>test2: `BEGIN` `ROLLBACK`\n\n**Explanation:** Explicit commit changes flag; exception prevents commit reaching, triggers rollback\n\n**Key Concept:** #commit_rollback\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\ntest1: BEGIN COMMIT COMMITTED\ntest2: BEGIN ROLLBACK\n```\n\n**Explanation:**\n- **test1:**\n  - Constructor: \"BEGIN\"\n  - commit() called: committed = true, \"COMMIT\"\n  - Destructor: committed is true, \"COMMITTED\"\n- **test2:**\n  - Constructor: \"BEGIN\"\n  - Exception thrown before commit() reached\n  - Stack unwinding, destructor called\n  - committed still false\n  - Destructor: \"ROLLBACK\"\n- **RAII pattern:** Automatic rollback on exception\n- **Scope-based transaction:** Commit explicit, rollback automatic\n- **Real-world use:** Database transactions, file operations\n- **Key Concept:** RAII enables automatic rollback; commit-or-rollback pattern via destructor",
           "code": "class Transaction {\n    bool committed = false;\npublic:\n    Transaction() { std::cout << \"BEGIN\\n\"; }\n    ~Transaction() {\n        if (!committed) std::cout << \"ROLLBACK\\n\";\n        else std::cout << \"COMMITTED\\n\";\n    }\n    void commit() { \n        committed = true;\n        std::cout << \"COMMIT\\n\";\n    }\n};\n\nvoid test1() {\n    Transaction t;\n    t.commit();\n}\n\nvoid test2() {\n    Transaction t;\n    throw std::runtime_error(\"Error\");\n    t.commit();\n}",
+          "answer": "test1: BEGIN COMMIT COMMITTED\ntest2: BEGIN ROLLBACK",
+          "explanation": "- **test1:**\n  - Constructor: \"BEGIN\"\n  - commit() called: committed = true, \"COMMIT\"\n  - Destructor: committed is true, \"COMMITTED\"\n- **test2:**\n  - Constructor: \"BEGIN\"\n  - Exception thrown before commit() reached\n  - Stack unwinding, destructor called\n  - committed still false\n  - Destructor: \"ROLLBACK\"\n- **RAII pattern:** Automatic rollback on exception\n- **Scope-based transaction:** Commit explicit, rollback automatic\n- **Real-world use:** Database transactions, file operations\n- **Key Concept:** RAII enables automatic rollback; commit-or-rollback pattern via destructor",
+          "key_concept": "RAII enables automatic rollback; commit-or-rollback pattern via destructor",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "test1: BEGIN COMMIT COMMITTED\ntest2: BEGIN ROLLBACK"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\nvoid processFile(const char* filename) {\n    FILE* file = fopen(filename, \"r\");\n    if (!file) return;\n    \n    char buffer[100];\n    if (fgets(buffer, sizeof(buffer), file) == nullptr) {\n        return;\n    }\n    \n    if (buffer[0] == '#') {\n        return;\n    }\n    \n    fclose(file);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** File leaks on all three early returns\n\n**Explanation:** Manual resource management fails with multiple exit points; needs RAII\n\n**Key Concept:** #multiple_exits\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nFile leaks on all three early returns\n```\n\n**Explanation:**\n- fopen succeeds, file opened\n- Three possible early returns:\n  1. fgets fails → return without fclose\n  2. buffer[0] == '#' → return without fclose\n  3. Only last path reaches fclose\n- **Multiple exit points:** Easy to forget cleanup\n- **Manual resource management:** Error-prone\n- **RAII solution:**\n  ```cpp\n  class FileHandle {\n      FILE* f;\n  public:\n      FileHandle(const char* name) : f(fopen(name, \"r\")) {}\n      ~FileHandle() { if (f) fclose(f); }\n  };\n  ```\n- **All exits covered:** Destructor runs on all code paths\n- **Key Concept:** Manual resource management fails with multiple exits; RAII ensures cleanup on all paths",
           "code": "void processFile(const char* filename) {\n    FILE* file = fopen(filename, \"r\");\n    if (!file) return;\n    \n    char buffer[100];\n    if (fgets(buffer, sizeof(buffer), file) == nullptr) {\n        return;\n    }\n    \n    if (buffer[0] == '#') {\n        return;\n    }\n    \n    fclose(file);\n}",
+          "answer": "File leaks on all three early returns",
+          "explanation": "- fopen succeeds, file opened\n- Three possible early returns:\n  1. fgets fails → return without fclose\n  2. buffer[0] == '#' → return without fclose\n  3. Only last path reaches fclose\n- **Multiple exit points:** Easy to forget cleanup\n- **Manual resource management:** Error-prone\n- **RAII solution:**\n  ```cpp\n  class FileHandle {\n      FILE* f;\n  public:\n      FileHandle(const char* name) : f(fopen(name, \"r\")) {}\n      ~FileHandle() { if (f) fclose(f); }\n  };\n  ```\n- **All exits covered:** Destructor runs on all code paths\n- **Key Concept:** Manual resource management fails with multiple exits; RAII ensures cleanup on all paths",
+          "key_concept": "Manual resource management fails with multiple exits; RAII ensures cleanup on all paths",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "File leaks on all three early returns",
+            "class FileHandle {\n      FILE* f;\n  public:\n      FileHandle(const char* name) : f(fopen(name, \"r\")) {}\n      ~FileHandle() { if (f) fclose(f); }\n  };"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Base {\npublic:\n    Base() { std::cout << \"Base()\\n\"; }\n    ~Base() { std::cout << \"~Base()\\n\"; }\n};\n\nclass Derived : public Base {\npublic:\n    Derived() { std::cout << \"Derived()\\n\"; }\n    ~Derived() { std::cout << \"~Derived()\\n\"; }\n};\n\nvoid test() {\n    Derived d;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Base()` `Derived()` `~Derived()` `~Base()`\n\n**Explanation:** Base constructed first, destroyed last; derived constructed last, destroyed first\n\n**Key Concept:** #inheritance_order\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBase()\nDerived()\n~Derived()\n~Base()\n```\n\n**Explanation:**\n- Construction order: Base to Derived (top-down)\n- Base() called first: \"Base()\"\n- Derived() called: \"Derived()\"\n- Destruction order: Derived to Base (bottom-up, reverse)\n- ~Derived() called first: \"~Derived()\"\n- ~Base() called last: \"~Base()\"\n- **Inheritance rule:** Base constructed first, destroyed last\n- **Ensures:** Base fully constructed before Derived uses it\n- **Ensures:** Derived fully destroyed before Base destroyed\n- **Key Concept:** Inheritance construction is base-first; destruction is derived-first (reverse order)",
           "code": "class Base {\npublic:\n    Base() { std::cout << \"Base()\\n\"; }\n    ~Base() { std::cout << \"~Base()\\n\"; }\n};\n\nclass Derived : public Base {\npublic:\n    Derived() { std::cout << \"Derived()\\n\"; }\n    ~Derived() { std::cout << \"~Derived()\\n\"; }\n};\n\nvoid test() {\n    Derived d;\n}",
+          "answer": "Base()\nDerived()\n~Derived()\n~Base()",
+          "explanation": "- Construction order: Base to Derived (top-down)\n- Base() called first: \"Base()\"\n- Derived() called: \"Derived()\"\n- Destruction order: Derived to Base (bottom-up, reverse)\n- ~Derived() called first: \"~Derived()\"\n- ~Base() called last: \"~Base()\"\n- **Inheritance rule:** Base constructed first, destroyed last\n- **Ensures:** Base fully constructed before Derived uses it\n- **Ensures:** Derived fully destroyed before Base destroyed\n- **Key Concept:** Inheritance construction is base-first; destruction is derived-first (reverse order)",
+          "key_concept": "Inheritance construction is base-first; destruction is derived-first (reverse order)",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Base()\nDerived()\n~Derived()\n~Base()"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {\n        std::cout << \"Acquired\\n\";\n        throw std::runtime_error(\"Error during init\");\n    }\n    ~Resource() {\n        delete[] data;\n        std::cout << \"Released\\n\";\n    }\n};\n\nvoid test() {\n    try {\n        Resource r;\n    } catch (...) {\n        std::cout << \"Caught\\n\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Output: `Acquired` `Caught` - Yes, memory leak\n\n**Explanation:** Destructor not called because constructor threw; allocated memory leaks\n\n**Key Concept:** #constructor_throw_leak\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nAcquired\nCaught\n(Memory leak occurs)\n```\n\n**Explanation:**\n- new int[100] succeeds, memory allocated\n- data initialized with pointer\n- \"Acquired\" prints\n- Exception thrown in constructor body\n- **Constructor incomplete:** Object not fully constructed\n- **Destructor NOT called**\n- **Memory never freed:** Leak!\n- \"Caught\" prints\n- **Problem:** Resource acquired but constructor throws\n- **Solution:** Use smart pointers or two-phase construction\n  ```cpp\n  std::unique_ptr<int[]> data{new int[100]};\n  ```\n- **Key Concept:** Constructor exceptions cause leaks if raw resources acquired; use RAII members instead",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {\n        std::cout << \"Acquired\\n\";\n        throw std::runtime_error(\"Error during init\");\n    }\n    ~Resource() {\n        delete[] data;\n        std::cout << \"Released\\n\";\n    }\n};\n\nvoid test() {\n    try {\n        Resource r;\n    } catch (...) {\n        std::cout << \"Caught\\n\";\n    }\n}",
+          "answer": "Acquired\nCaught\n(Memory leak occurs)",
+          "explanation": "- new int[100] succeeds, memory allocated\n- data initialized with pointer\n- \"Acquired\" prints\n- Exception thrown in constructor body\n- **Constructor incomplete:** Object not fully constructed\n- **Destructor NOT called**\n- **Memory never freed:** Leak!\n- \"Caught\" prints\n- **Problem:** Resource acquired but constructor throws\n- **Solution:** Use smart pointers or two-phase construction\n  ```cpp\n  std::unique_ptr<int[]> data{new int[100]};\n  ```\n- **Key Concept:** Constructor exceptions cause leaks if raw resources acquired; use RAII members instead",
+          "key_concept": "Constructor exceptions cause leaks if raw resources acquired; use RAII members instead",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Acquired\nCaught\n(Memory leak occurs)",
+            "std::unique_ptr<int[]> data{new int[100]};"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\nstd::unique_ptr<int> create() {\n    return std::unique_ptr<int>(new int(42));\n}\n\nvoid test() {\n    auto ptr = create();\n    std::cout << *ptr << \"\\n\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** One allocation, one deallocation at end of test()\n\n**Explanation:** `unique_ptr` destructor deallocates when it goes out of scope\n\n**Key Concept:** #unique_ptr_lifetime\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nOne allocation, one deallocation at end of test()\n```\n\n**Explanation:**\n- create() allocates int(42) with new\n- Wraps in unique_ptr (RAII)\n- Returns unique_ptr (move semantics)\n- test() receives unique_ptr\n- Prints 42\n- test() ends, ptr goes out of scope\n- unique_ptr destructor runs\n- Memory automatically freed (delete called)\n- **No manual delete needed**\n- **Exception safe:** Even if exception thrown, memory freed\n- **RAII working:** Automatic resource management\n- **Modern C++:** Use std::make_unique<int>(42) instead\n- **Key Concept:** unique_ptr provides automatic deallocation; RAII for dynamic memory",
           "code": "std::unique_ptr<int> create() {\n    return std::unique_ptr<int>(new int(42));\n}\n\nvoid test() {\n    auto ptr = create();\n    std::cout << *ptr << \"\\n\";\n}",
+          "answer": "One allocation, one deallocation at end of test()",
+          "explanation": "- create() allocates int(42) with new\n- Wraps in unique_ptr (RAII)\n- Returns unique_ptr (move semantics)\n- test() receives unique_ptr\n- Prints 42\n- test() ends, ptr goes out of scope\n- unique_ptr destructor runs\n- Memory automatically freed (delete called)\n- **No manual delete needed**\n- **Exception safe:** Even if exception thrown, memory freed\n- **RAII working:** Automatic resource management\n- **Modern C++:** Use std::make_unique<int>(42) instead\n- **Key Concept:** unique_ptr provides automatic deallocation; RAII for dynamic memory",
+          "key_concept": "unique_ptr provides automatic deallocation; RAII for dynamic memory",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "One allocation, one deallocation at end of test()"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Logger {\npublic:\n    ~Logger() {\n        std::cout << \"Cleanup\\n\";\n    }\n};\n\nint main() {\n    if (true) {\n        Logger log;\n        std::cout << \"Block 1\\n\";\n    }\n    std::cout << \"Outside block\\n\";\n    return 0;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Block 1` `Cleanup` `Outside block`\n\n**Explanation:** Destructor called when Logger goes out of inner block scope\n\n**Key Concept:** #scope_based_destruction\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBlock 1\nCleanup\nOutside block\n```\n\n**Explanation:**\n- Enter if block\n- log constructed\n- \"Block 1\" prints\n- **if block ends:** log goes out of scope\n- Destructor called: \"Cleanup\"\n- Continue to next statement\n- \"Outside block\" prints\n- **Scope-based lifetime:** Object destroyed at closing brace\n- **RAII principle:** Lifetime tied to scope\n- **Deterministic destruction:** Exact point known\n- **Use case:** Scope guards, temporary locks\n- **Key Concept:** Objects destroyed at scope exit; deterministic RAII cleanup tied to braces\n\n---\n\n\n## TOPIC: RAII Fundamentals & Exception Safety",
           "code": "class Logger {\npublic:\n    ~Logger() {\n        std::cout << \"Cleanup\\n\";\n    }\n};\n\nint main() {\n    if (true) {\n        Logger log;\n        std::cout << \"Block 1\\n\";\n    }\n    std::cout << \"Outside block\\n\";\n    return 0;\n}",
+          "answer": "Block 1\nCleanup\nOutside block",
+          "explanation": "- Enter if block\n- log constructed\n- \"Block 1\" prints\n- **if block ends:** log goes out of scope\n- Destructor called: \"Cleanup\"\n- Continue to next statement\n- \"Outside block\" prints\n- **Scope-based lifetime:** Object destroyed at closing brace\n- **RAII principle:** Lifetime tied to scope\n- **Deterministic destruction:** Exact point known\n- **Use case:** Scope guards, temporary locks\n- **Key Concept:** Objects destroyed at scope exit; deterministic RAII cleanup tied to braces",
+          "key_concept": "Objects destroyed at scope exit; deterministic RAII cleanup tied to braces",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Block 1\nCleanup\nOutside block"
+          ]
         }
       ],
       "quick_reference": {
@@ -730,7 +822,7 @@
     },
     {
       "topic": "Custom RAII Wrappers & Advanced Patterns",
-      "filename": "2_RAII_02_Custom_Wrappers_Advanced_Patterns.md",
+      "filename": "topic_2.md",
       "theory": {
         "subsections": [
           {
@@ -1315,152 +1407,245 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource() : data(new int(42)) {}\n    ~Resource() { delete data; }\n};\n\nResource createResource() {\n    return Resource();\n}\n\nvoid test() {\n    Resource r = createResource();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Constructor once, destructor once (C++17 RVO)\n\n**Explanation:** RVO elides move/copy; single object constructed in place\n\n**Key Concept:** #rvo #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nConstructor once, destructor once (C++17 RVO)\n```\n\n**Explanation:**\n- C++17 guaranteed copy elision (Return Value Optimization)\n- Resource() constructed directly in test's r location\n- No temporary object in createResource\n- No move or copy constructor called\n- Single construction, single destruction\n- **Pre-C++17:** Might call move constructor\n- **RVO benefit:** Eliminates overhead of move/copy\n- **Performance:** One object lifetime instead of multiple\n- **Key Concept:** C++17 RVO guarantees elision; single object constructed at final destination",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int(42)) {}\n    ~Resource() { delete data; }\n};\n\nResource createResource() {\n    return Resource();\n}\n\nvoid test() {\n    Resource r = createResource();\n}",
+          "answer": "Constructor once, destructor once (C++17 RVO)",
+          "explanation": "- C++17 guaranteed copy elision (Return Value Optimization)\n- Resource() constructed directly in test's r location\n- No temporary object in createResource\n- No move or copy constructor called\n- Single construction, single destruction\n- **Pre-C++17:** Might call move constructor\n- **RVO benefit:** Eliminates overhead of move/copy\n- **Performance:** One object lifetime instead of multiple\n- **Key Concept:** C++17 RVO guarantees elision; single object constructed at final destination",
+          "key_concept": "C++17 RVO guarantees elision; single object constructed at final destination",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Constructor once, destructor once (C++17 RVO)"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Widget {\n    int* ptr;\npublic:\n    Widget() : ptr(new int(10)) {}\n    ~Widget() { delete ptr; }\n};\n\nvoid test() {\n    Widget w1;\n    Widget w2 = w1;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Double-delete, crash/UB\n\n**Explanation:** Default copy constructor copies pointer; both delete same memory\n\n**Key Concept:** #shallow_copy #double_free\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nDouble-delete, crash/undefined behavior\n```\n\n**Explanation:**\n- w1 constructed: ptr points to new int(10)\n- w2 = w1: Default copy constructor (shallow copy)\n- w2.ptr = w1.ptr (same address!)\n- test() ends, w2 destroyed first\n- w2 destructor: delete ptr (memory freed)\n- w1 destroyed next\n- w1 destructor: delete ptr (same memory, already freed!)\n- **Double delete:** Undefined behavior, likely crash\n- **Fix:** Delete copy constructor or implement deep copy\n- **Rule of Three:** Need custom copy constructor with destructor\n- **Key Concept:** Default copy constructor does shallow copy; leads to double delete with raw pointers",
           "code": "class Widget {\n    int* ptr;\npublic:\n    Widget() : ptr(new int(10)) {}\n    ~Widget() { delete ptr; }\n};\n\nvoid test() {\n    Widget w1;\n    Widget w2 = w1;\n}",
+          "answer": "Double-delete, crash/undefined behavior",
+          "explanation": "- w1 constructed: ptr points to new int(10)\n- w2 = w1: Default copy constructor (shallow copy)\n- w2.ptr = w1.ptr (same address!)\n- test() ends, w2 destroyed first\n- w2 destructor: delete ptr (memory freed)\n- w1 destroyed next\n- w1 destructor: delete ptr (same memory, already freed!)\n- **Double delete:** Undefined behavior, likely crash\n- **Fix:** Delete copy constructor or implement deep copy\n- **Rule of Three:** Need custom copy constructor with destructor\n- **Key Concept:** Default copy constructor does shallow copy; leads to double delete with raw pointers",
+          "key_concept": "Default copy constructor does shallow copy; leads to double delete with raw pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Double-delete, crash/undefined behavior"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass FileHandle {\n    FILE* file;\npublic:\n    FileHandle(const char* name) : file(fopen(name, \"r\")) {}\n    ~FileHandle() { fclose(file); }\n    \n    FileHandle(FileHandle&& other) : file(other.file) {\n        other.file = nullptr;\n    }\n};\n\nvoid test() {\n    FileHandle f1(\"test.txt\");\n    FileHandle f2 = std::move(f1);\n    FileHandle f3 = std::move(f2);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** One file opened, one closed, potential crash on f3\n\n**Explanation:** f2's move leaves f1.file dangling pointer; f3 destructor calls fclose(nullptr)\n\n**Key Concept:** #move_nullptr_bug\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nPotential crash: fclose(nullptr)\n```\n\n**Explanation:**\n- f1 opens \"test.txt\": file valid pointer\n- f2 = move(f1): f2.file = f1.file, f1.file = nullptr\n- f3 = move(f2): f3.file = f2.file, f2.file = nullptr\n- test() ends, destructors called in reverse order\n- f3 destroyed: fclose(valid file) ✓\n- f2 destroyed: fclose(nullptr) → **crash or UB**\n- f1 destroyed: fclose(nullptr) → **crash or UB**\n- **Bug:** Destructor doesn't check for nullptr\n- **Fix:** `if (file) fclose(file);`\n- **Moved-from state:** Must be valid for destruction\n- **Key Concept:** Moved-from objects must be safely destructible; check nullptr before operations",
           "code": "class FileHandle {\n    FILE* file;\npublic:\n    FileHandle(const char* name) : file(fopen(name, \"r\")) {}\n    ~FileHandle() { fclose(file); }\n    \n    FileHandle(FileHandle&& other) : file(other.file) {\n        other.file = nullptr;\n    }\n};\n\nvoid test() {\n    FileHandle f1(\"test.txt\");\n    FileHandle f2 = std::move(f1);\n    FileHandle f3 = std::move(f2);\n}",
+          "answer": "Potential crash: fclose(nullptr)",
+          "explanation": "- f1 opens \"test.txt\": file valid pointer\n- f2 = move(f1): f2.file = f1.file, f1.file = nullptr\n- f3 = move(f2): f3.file = f2.file, f2.file = nullptr\n- test() ends, destructors called in reverse order\n- f3 destroyed: fclose(valid file) ✓\n- f2 destroyed: fclose(nullptr) → **crash or UB**\n- f1 destroyed: fclose(nullptr) → **crash or UB**\n- **Bug:** Destructor doesn't check for nullptr\n- **Fix:** `if (file) fclose(file);`\n- **Moved-from state:** Must be valid for destruction\n- **Key Concept:** Moved-from objects must be safely destructible; check nullptr before operations",
+          "key_concept": "Moved-from objects must be safely destructible; check nullptr before operations",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Potential crash: fclose(nullptr)"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(Resource&& other) : data(other.data) {\n        other.data = nullptr;\n    }\n    \n    Resource& operator=(Resource&& other) {\n        delete[] data;\n        data = other.data;\n        other.data = nullptr;\n        return *this;\n    }\n};\n\nvoid test() {\n    Resource r;\n    r = std::move(r);  // Self-move\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Self-move bug: deletes data before transferring\n\n**Explanation:** Without self-check, deletes data then assigns already-deleted pointer\n\n**Key Concept:** #self_move_assignment\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nSelf-move bug: deletes data before transfer\n```\n\n**Explanation:**\n- r constructed: data allocated\n- r = std::move(r): Self-assignment\n- Move assignment: `delete[] data` (frees r.data)\n- Then: `data = other.data` (but other IS r, already freed!)\n- data now dangling pointer\n- Destructor: delete[] dangling pointer → **crash**\n- **Self-assignment not checked**\n- **Fix:** Check `if (this != &other)` first\n- **Standard library:** std::move handles self-assignment\n- **Best practice:** Always check self-assignment in move assignment\n- **Key Concept:** Move assignment must handle self-assignment; check this != &other",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource() : data(new int[100]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(Resource&& other) : data(other.data) {\n        other.data = nullptr;\n    }\n    \n    Resource& operator=(Resource&& other) {\n        delete[] data;\n        data = other.data;\n        other.data = nullptr;\n        return *this;\n    }\n};\n\nvoid test() {\n    Resource r;\n    r = std::move(r);  // Self-move\n}",
+          "answer": "Self-move bug: deletes data before transfer",
+          "explanation": "- r constructed: data allocated\n- r = std::move(r): Self-assignment\n- Move assignment: `delete[] data` (frees r.data)\n- Then: `data = other.data` (but other IS r, already freed!)\n- data now dangling pointer\n- Destructor: delete[] dangling pointer → **crash**\n- **Self-assignment not checked**\n- **Fix:** Check `if (this != &other)` first\n- **Standard library:** std::move handles self-assignment\n- **Best practice:** Always check self-assignment in move assignment\n- **Key Concept:** Move assignment must handle self-assignment; check this != &other",
+          "key_concept": "Move assignment must handle self-assignment; check this != &other",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Self-move bug: deletes data before transfer"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Base {\n    int* baseData;\npublic:\n    Base() : baseData(new int[10]) {}\n    ~Base() { delete[] baseData; }\n};\n\nclass Derived : public Base {\n    int* derivedData;\npublic:\n    Derived() : derivedData(new int[20]) {}\n    ~Derived() { delete[] derivedData; }\n};\n\nvoid test() {\n    Base* ptr = new Derived();\n    delete ptr;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Non-virtual destructor leaks derivedData\n\n**Explanation:** Only ~Base() called; ~Derived() never runs; derivedData leaked\n\n**Key Concept:** #virtual_destructor\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNon-virtual destructor leaks derivedData\n```\n\n**Explanation:**\n- new Derived(): Both constructors run, both allocations succeed\n- baseData: 10 ints allocated\n- derivedData: 20 ints allocated\n- delete ptr: ptr is Base* pointing to Derived\n- **Only ~Base() called** (destructor not virtual)\n- baseData freed ✓\n- **~Derived() never called**\n- derivedData leaked! (20 ints)\n- **Memory leak:** 20 ints never freed\n- **Fix:** Make Base destructor virtual: `virtual ~Base()`\n- **Rule:** Base class with virtual functions needs virtual destructor\n- **Key Concept:** Non-virtual destructor causes derived class leaks; always make base destructors virtual",
           "code": "class Base {\n    int* baseData;\npublic:\n    Base() : baseData(new int[10]) {}\n    ~Base() { delete[] baseData; }\n};\n\nclass Derived : public Base {\n    int* derivedData;\npublic:\n    Derived() : derivedData(new int[20]) {}\n    ~Derived() { delete[] derivedData; }\n};\n\nvoid test() {\n    Base* ptr = new Derived();\n    delete ptr;\n}",
+          "answer": "Non-virtual destructor leaks derivedData",
+          "explanation": "- new Derived(): Both constructors run, both allocations succeed\n- baseData: 10 ints allocated\n- derivedData: 20 ints allocated\n- delete ptr: ptr is Base* pointing to Derived\n- **Only ~Base() called** (destructor not virtual)\n- baseData freed ✓\n- **~Derived() never called**\n- derivedData leaked! (20 ints)\n- **Memory leak:** 20 ints never freed\n- **Fix:** Make Base destructor virtual: `virtual ~Base()`\n- **Rule:** Base class with virtual functions needs virtual destructor\n- **Key Concept:** Non-virtual destructor causes derived class leaks; always make base destructors virtual",
+          "key_concept": "Non-virtual destructor causes derived class leaks; always make base destructors virtual",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Non-virtual destructor leaks derivedData"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Transaction {\n    bool committed = false;\npublic:\n    Transaction() { std::cout << \"BEGIN\\n\"; }\n    ~Transaction() {\n        if (!committed) std::cout << \"ROLLBACK\\n\";\n    }\n    void commit() {\n        std::cout << \"COMMIT\\n\";\n        committed = true;\n    }\n};\n\nvoid test1() {\n    Transaction t;\n    t.commit();\n    t.commit();\n}\n\nvoid test2() {\n    Transaction t;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** test1: `BEGIN` `COMMIT` `COMMIT` `ROLLBACK`<br>test2: `BEGIN` `ROLLBACK`\n\n**Explanation:** Commit called twice prints twice; test2 never commits so rolls back\n\n**Key Concept:** #transaction_pattern\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\ntest1: BEGIN COMMIT COMMIT ROLLBACK\ntest2: BEGIN ROLLBACK\n```\n\n**Explanation:**\n- **test1:**\n  - Constructor: \"BEGIN\"\n  - First commit(): \"COMMIT\", committed = true\n  - Second commit(): \"COMMIT\" (prints again!)\n  - Destructor: committed = true, but prints \"ROLLBACK\" anyway\n  - **Bug:** Destructor should print \"COMMITTED\" when committed = true\n- **test2:**\n  - Constructor: \"BEGIN\"\n  - Never commits\n  - Destructor: committed = false, \"ROLLBACK\" ✓\n- **Expected test1 destructor:** Should print nothing or \"COMMITTED\"\n- **Issue:** commit() should set committed=true, destructor logic wrong\n- **Key Concept:** Transaction pattern requires correct commit/rollback logic in destructor",
           "code": "class Transaction {\n    bool committed = false;\npublic:\n    Transaction() { std::cout << \"BEGIN\\n\"; }\n    ~Transaction() {\n        if (!committed) std::cout << \"ROLLBACK\\n\";\n    }\n    void commit() {\n        std::cout << \"COMMIT\\n\";\n        committed = true;\n    }\n};\n\nvoid test1() {\n    Transaction t;\n    t.commit();\n    t.commit();\n}\n\nvoid test2() {\n    Transaction t;\n}",
+          "answer": "test1: BEGIN COMMIT COMMIT ROLLBACK\ntest2: BEGIN ROLLBACK",
+          "explanation": "- **test1:**\n  - Constructor: \"BEGIN\"\n  - First commit(): \"COMMIT\", committed = true\n  - Second commit(): \"COMMIT\" (prints again!)\n  - Destructor: committed = true, but prints \"ROLLBACK\" anyway\n  - **Bug:** Destructor should print \"COMMITTED\" when committed = true\n- **test2:**\n  - Constructor: \"BEGIN\"\n  - Never commits\n  - Destructor: committed = false, \"ROLLBACK\" ✓\n- **Expected test1 destructor:** Should print nothing or \"COMMITTED\"\n- **Issue:** commit() should set committed=true, destructor logic wrong\n- **Key Concept:** Transaction pattern requires correct commit/rollback logic in destructor",
+          "key_concept": "Transaction pattern requires correct commit/rollback logic in destructor",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "test1: BEGIN COMMIT COMMIT ROLLBACK\ntest2: BEGIN ROLLBACK"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\npublic:\n    Resource() { std::cout << \"Acquired\\n\"; }\n    ~Resource() { std::cout << \"Released\\n\"; }\n    Resource(const Resource&) { std::cout << \"Copied\\n\"; }\n    Resource(Resource&&) { std::cout << \"Moved\\n\"; }\n};\n\nResource createResource() {\n    Resource r;\n    return r;\n}\n\nvoid test() {\n    Resource r = createResource();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** C++17: `Acquired` `Released`<br>Pre-C++17: `Acquired` `Moved` `Released`\n\n**Explanation:** C++17 guaranteed RVO eliminates move; older standards may move\n\n**Key Concept:** #rvo #copy_elision\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nC++17: Acquired Released\nPre-C++17: Acquired Moved Released Released\n```\n\n**Explanation:**\n- **C++17 (guaranteed copy elision):**\n  - r constructed directly in test's location\n  - \"Acquired\"\n  - test() ends: \"Released\"\n  - No move, no copy\n- **Pre-C++17 (NRVO may apply):**\n  - Local r in createResource: \"Acquired\"\n  - Move to test's r: \"Moved\"\n  - Temporary destroyed: \"Released\"\n  - test's r destroyed: \"Released\"\n- **Compiler-dependent:** Some older compilers still optimize\n- **C++17 benefit:** Guaranteed single construction\n- **Key Concept:** C++17 RVO eliminates moves; pre-C++17 may move or use NRVO",
           "code": "class Resource {\npublic:\n    Resource() { std::cout << \"Acquired\\n\"; }\n    ~Resource() { std::cout << \"Released\\n\"; }\n    Resource(const Resource&) { std::cout << \"Copied\\n\"; }\n    Resource(Resource&&) { std::cout << \"Moved\\n\"; }\n};\n\nResource createResource() {\n    Resource r;\n    return r;\n}\n\nvoid test() {\n    Resource r = createResource();\n}",
+          "answer": "C++17: Acquired Released\nPre-C++17: Acquired Moved Released Released",
+          "explanation": "- **C++17 (guaranteed copy elision):**\n  - r constructed directly in test's location\n  - \"Acquired\"\n  - test() ends: \"Released\"\n  - No move, no copy\n- **Pre-C++17 (NRVO may apply):**\n  - Local r in createResource: \"Acquired\"\n  - Move to test's r: \"Moved\"\n  - Temporary destroyed: \"Released\"\n  - test's r destroyed: \"Released\"\n- **Compiler-dependent:** Some older compilers still optimize\n- **C++17 benefit:** Guaranteed single construction\n- **Key Concept:** C++17 RVO eliminates moves; pre-C++17 may move or use NRVO",
+          "key_concept": "C++17 RVO eliminates moves; pre-C++17 may move or use NRVO",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "C++17: Acquired Released\nPre-C++17: Acquired Moved Released Released"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass LazyResource {\n    mutable int* data = nullptr;\n    \n    void init() const {\n        if (!data) {\n            data = new int[100];\n        }\n    }\n    \npublic:\n    ~LazyResource() { delete[] data; }\n    \n    void use() const {\n        init();\n        // Use data\n    }\n};\n\nvoid test() {\n    const LazyResource r;\n    r.use();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Not thread-safe; multiple threads can init simultaneously\n\n**Explanation:** No mutex protection on init() check; race condition on allocation\n\n**Key Concept:** #lazy_init #thread_safety\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNot thread-safe; race condition possible\n```\n\n**Explanation:**\n- Single-threaded: Works fine\n  - data starts nullptr\n  - First use(): init() allocates\n  - Destructor: frees memory\n- **Multi-threaded problem:**\n  - Thread 1: checks `if (!data)` → true\n  - Thread 2: checks `if (!data)` → true (still null!)\n  - Both threads: allocate new int[100]\n  - One allocation leaked\n  - Possible double-delete\n- **No synchronization:** Race condition on check and allocation\n- **Fix:** Use std::mutex or std::call_once\n  ```cpp\n  std::once_flag initFlag;\n  std::call_once(initFlag, [this]{ data = new int[100]; });\n  ```\n- **Key Concept:** Lazy initialization without synchronization causes race conditions; use std::call_once",
           "code": "class LazyResource {\n    mutable int* data = nullptr;\n    \n    void init() const {\n        if (!data) {\n            data = new int[100];\n        }\n    }\n    \npublic:\n    ~LazyResource() { delete[] data; }\n    \n    void use() const {\n        init();\n        // Use data\n    }\n};\n\nvoid test() {\n    const LazyResource r;\n    r.use();\n}",
+          "answer": "Not thread-safe; race condition possible",
+          "explanation": "- Single-threaded: Works fine\n  - data starts nullptr\n  - First use(): init() allocates\n  - Destructor: frees memory\n- **Multi-threaded problem:**\n  - Thread 1: checks `if (!data)` → true\n  - Thread 2: checks `if (!data)` → true (still null!)\n  - Both threads: allocate new int[100]\n  - One allocation leaked\n  - Possible double-delete\n- **No synchronization:** Race condition on check and allocation\n- **Fix:** Use std::mutex or std::call_once\n  ```cpp\n  std::once_flag initFlag;\n  std::call_once(initFlag, [this]{ data = new int[100]; });\n  ```\n- **Key Concept:** Lazy initialization without synchronization causes race conditions; use std::call_once",
+          "key_concept": "Lazy initialization without synchronization causes race conditions; use std::call_once",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Not thread-safe; race condition possible",
+            "std::once_flag initFlag;\n  std::call_once(initFlag, [this]{ data = new int[100]; });"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass ScopedLock {\n    std::mutex& mtx;\npublic:\n    ScopedLock(std::mutex& m) : mtx(m) { mtx.lock(); }\n    ~ScopedLock() { mtx.unlock(); }\n};\n\nstd::mutex globalMutex;\n\nScopedLock getLock() {\n    return ScopedLock(globalMutex);\n}\n\nvoid test() {\n    auto lock = getLock();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** ScopedLock requires move constructor but is non-movable\n\n**Explanation:** Returning by value tries to move; deleted move constructor causes error\n\n**Key Concept:** #non_movable_return\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error: ScopedLock needs move constructor\n```\n\n**Explanation:**\n- getLock() returns ScopedLock by value\n- Requires move or copy constructor\n- **No move constructor defined**\n- Compiler-generated move constructor deleted (has reference member)\n- Reference members cannot be moved\n- **Cannot return by value**\n- **Fix 1:** Return std::unique_ptr<ScopedLock>\n- **Fix 2:** Use std::lock_guard (standard solution)\n- **Design issue:** Lock objects shouldn't be movable\n- **Real solution:** Don't return lock objects\n- **Key Concept:** RAII lock wrappers should be non-movable; reference members prevent implicit move",
           "code": "class ScopedLock {\n    std::mutex& mtx;\npublic:\n    ScopedLock(std::mutex& m) : mtx(m) { mtx.lock(); }\n    ~ScopedLock() { mtx.unlock(); }\n};\n\nstd::mutex globalMutex;\n\nScopedLock getLock() {\n    return ScopedLock(globalMutex);\n}\n\nvoid test() {\n    auto lock = getLock();\n}",
+          "answer": "Compilation error: ScopedLock needs move constructor",
+          "explanation": "- getLock() returns ScopedLock by value\n- Requires move or copy constructor\n- **No move constructor defined**\n- Compiler-generated move constructor deleted (has reference member)\n- Reference members cannot be moved\n- **Cannot return by value**\n- **Fix 1:** Return std::unique_ptr<ScopedLock>\n- **Fix 2:** Use std::lock_guard (standard solution)\n- **Design issue:** Lock objects shouldn't be movable\n- **Real solution:** Don't return lock objects\n- **Key Concept:** RAII lock wrappers should be non-movable; reference members prevent implicit move",
+          "key_concept": "RAII lock wrappers should be non-movable; reference members prevent implicit move",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error: ScopedLock needs move constructor"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Resource {\n    int* data;\npublic:\n    Resource(int size) : data(new int[size]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(const Resource& other) = delete;\n    Resource& operator=(const Resource& other) = delete;\n};\n\nstd::vector<Resource> createResources() {\n    std::vector<Resource> vec;\n    vec.push_back(Resource(10));\n    return vec;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** vector requires movable or copyable elements\n\n**Explanation:** Both copy and move deleted; vector can't store or resize elements\n\n**Key Concept:** #vector_requirements\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation error: Resource not movable\n```\n\n**Explanation:**\n- Copy constructor deleted\n- **Move constructor also implicitly deleted** (user-declared copy operations)\n- vector requires movable or copyable elements\n- push_back(Resource(10)) tries to move\n- Return vec tries to move vector (moves elements)\n- **Both operations fail**\n- **Fix:** Add move constructor\n  ```cpp\n  Resource(Resource&& other) : data(other.data) {\n      other.data = nullptr;\n  }\n  ```\n- **Rule of Five:** If you delete copy, implement move\n- **Key Concept:** Vectors require movable elements; deleting copy without implementing move breaks containers",
           "code": "class Resource {\n    int* data;\npublic:\n    Resource(int size) : data(new int[size]) {}\n    ~Resource() { delete[] data; }\n    \n    Resource(const Resource& other) = delete;\n    Resource& operator=(const Resource& other) = delete;\n};\n\nstd::vector<Resource> createResources() {\n    std::vector<Resource> vec;\n    vec.push_back(Resource(10));\n    return vec;\n}",
+          "answer": "Compilation error: Resource not movable",
+          "explanation": "- Copy constructor deleted\n- **Move constructor also implicitly deleted** (user-declared copy operations)\n- vector requires movable or copyable elements\n- push_back(Resource(10)) tries to move\n- Return vec tries to move vector (moves elements)\n- **Both operations fail**\n- **Fix:** Add move constructor\n  ```cpp\n  Resource(Resource&& other) : data(other.data) {\n      other.data = nullptr;\n  }\n  ```\n- **Rule of Five:** If you delete copy, implement move\n- **Key Concept:** Vectors require movable elements; deleting copy without implementing move breaks containers",
+          "key_concept": "Vectors require movable elements; deleting copy without implementing move breaks containers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation error: Resource not movable",
+            "Resource(Resource&& other) : data(other.data) {\n      other.data = nullptr;\n  }"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Widget {\n    std::unique_ptr<int[]> buffer;\n    int* rawPtr;\n    \npublic:\n    Widget(size_t size) \n        : buffer(new int[size])\n        , rawPtr(new int[size])  // Intentional leak if throws\n    {}\n    \n    ~Widget() {\n        delete[] rawPtr;\n    }\n};\n\nvoid test() {\n    Widget w(100);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** rawPtr leaks if second allocation throws\n\n**Explanation:** buffer is RAII-wrapped (safe); rawPtr allocated after might leak\n\n**Key Concept:** #constructor_exception_safety\n\n</details>\n\n---",
-          "code": "class Widget {\n    std::unique_ptr<int[]> buffer;\n    int* rawPtr;\n    \npublic:\n    Widget(size_t size) \n        : buffer(new int[size])\n        , rawPtr(new int[size])  // Intentional leak if throws\n    {}\n    \n    ~Widget() {\n        delete[] rawPtr;\n    }\n};\n\nvoid test() {\n    Widget w(100);\n}",
+          "description": "",
+          "full_content": "**Answer:**\n```\nrawPtr may leak if second allocation throws\n```\n\n**Explanation:**\n- Member initialization order: buffer first, rawPtr second\n- buffer allocation: new int[size] succeeds\n- buffer(ptr): unique_ptr constructor succeeds\n- **If rawPtr allocation throws:**\n  - Exception before rawPtr initialized\n  - Widget constructor incomplete\n  - Widget destructor NOT called\n  - rawPtr member never constructed (indeterminate value)\n  - **But:** buffer IS constructed, its destructor WILL run\n  - buffer memory freed ✓\n  - **No leak from buffer** (RAII working)\n- **Actually safe:** unique_ptr is RAII-wrapped\n- **Problem if:** Second allocation throws, Widget incomplete\n- **Better:** Both as unique_ptr (exception-safe)\n- **Key Concept:** Use RAII for all resources in constructors; partial construction destroys completed members",
+          "code": "class Widget {\n    std::unique_ptr<int[]> buffer;\n    int* rawPtr;\n    \npublic:\n    Widget(size_t size) \n        : buffer(new int[size])\n        , rawPtr(new int[size])\n    {}\n    \n    ~Widget() {\n        delete[] rawPtr;\n    }\n};\n\nvoid test() {\n    Widget w(100);\n}",
+          "answer": "rawPtr may leak if second allocation throws",
+          "explanation": "- Member initialization order: buffer first, rawPtr second\n- buffer allocation: new int[size] succeeds\n- buffer(ptr): unique_ptr constructor succeeds\n- **If rawPtr allocation throws:**\n  - Exception before rawPtr initialized\n  - Widget constructor incomplete\n  - Widget destructor NOT called\n  - rawPtr member never constructed (indeterminate value)\n  - **But:** buffer IS constructed, its destructor WILL run\n  - buffer memory freed ✓\n  - **No leak from buffer** (RAII working)\n- **Actually safe:** unique_ptr is RAII-wrapped\n- **Problem if:** Second allocation throws, Widget incomplete\n- **Better:** Both as unique_ptr (exception-safe)\n- **Key Concept:** Use RAII for all resources in constructors; partial construction destroys completed members",
+          "key_concept": "Use RAII for all resources in constructors; partial construction destroys completed members",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "rawPtr may leak if second allocation throws"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Manager {\n    std::unique_ptr<Resource1> r1;\n    std::unique_ptr<Resource2> r2;\n    \npublic:\n    Manager()\n        : r2(new Resource2())  // Listed first\n        , r1(new Resource1())  // Listed second\n    {\n        // r2 depends on r1\n        r2->setDependency(r1.get());\n    }\n};\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Initialization order mismatch: r1 initialized first despite list order\n\n**Explanation:** Members init in declaration order (r1, r2) not initializer list order\n\n**Key Concept:** #initialization_order\n\n</details>\n\n---",
-          "code": "class Manager {\n    std::unique_ptr<Resource1> r1;\n    std::unique_ptr<Resource2> r2;\n    \npublic:\n    Manager()\n        : r2(new Resource2())  // Listed first\n        , r1(new Resource1())  // Listed second\n    {\n        // r2 depends on r1\n        r2->setDependency(r1.get());\n    }\n};",
+          "description": "",
+          "full_content": "**Answer:**\n```\nInitialization order mismatch: r1 before r2, not r2 then r1\n```\n\n**Explanation:**\n- **Members initialized in declaration order, not initializer list order**\n- Declaration order: r1, then r2\n- Initializer list order: r2, then r1 (ignored!)\n- **Actual execution:**\n  - r1 initialized: Resource1 created\n  - r2 initialized: Resource2 created\n  - Constructor body: r2->setDependency(r1.get()) ✓\n- **Appears to work:** r1 exists when setDependency called\n- **Bug:** Misleading init list order\n- **If order mattered:** Would be wrong\n- **Fix:** Match init list order to declaration order\n- **Compiler warning:** Many compilers warn about this\n- **Key Concept:** Members initialize in declaration order not init list order; match for clarity",
+          "code": "class Manager {\n    std::unique_ptr<Resource1> r1;\n    std::unique_ptr<Resource2> r2;\n    \npublic:\n    Manager()\n        : r2(new Resource2())  // Listed first in init list\n        , r1(new Resource1())  // Listed second\n    {\n        // r2 depends on r1\n        r2->setDependency(r1.get());\n    }\n};",
+          "answer": "Initialization order mismatch: r1 before r2, not r2 then r1",
+          "explanation": "- **Members initialized in declaration order, not initializer list order**\n- Declaration order: r1, then r2\n- Initializer list order: r2, then r1 (ignored!)\n- **Actual execution:**\n  - r1 initialized: Resource1 created\n  - r2 initialized: Resource2 created\n  - Constructor body: r2->setDependency(r1.get()) ✓\n- **Appears to work:** r1 exists when setDependency called\n- **Bug:** Misleading init list order\n- **If order mattered:** Would be wrong\n- **Fix:** Match init list order to declaration order\n- **Compiler warning:** Many compilers warn about this\n- **Key Concept:** Members initialize in declaration order not init list order; match for clarity",
+          "key_concept": "Members initialize in declaration order not init list order; match for clarity",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Initialization order mismatch: r1 before r2, not r2 then r1"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass FileWrapper {\n    FILE* file;\n    bool owns;\n    \npublic:\n    FileWrapper(const char* name)\n        : file(fopen(name, \"r\")), owns(true) {}\n    \n    FileWrapper(FILE* external)\n        : file(external), owns(false) {}\n    \n    ~FileWrapper() {\n        if (file) fclose(file);  // Always closes\n    }\n};\n\nvoid test() {\n    FileWrapper w1(\"file.txt\");\n    FileWrapper w2(stdin);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Always closes file even when it doesn't own (stdin)\n\n**Explanation:** Destructor doesn't check owns flag before fclose; closes stdin\n\n**Key Concept:** #conditional_ownership_bug\n\n</details>\n\n---",
-          "code": "class FileWrapper {\n    FILE* file;\n    bool owns;\n    \npublic:\n    FileWrapper(const char* name)\n        : file(fopen(name, \"r\")), owns(true) {}\n    \n    FileWrapper(FILE* external)\n        : file(external), owns(false) {}\n    \n    ~FileWrapper() {\n        if (file) fclose(file);  // Always closes\n    }\n};\n\nvoid test() {\n    FileWrapper w1(\"file.txt\");\n    FileWrapper w2(stdin);\n}",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBug: closes stdin (doesn't own it)\n```\n\n**Explanation:**\n- w1 opens \"file.txt\": file valid, owns = true\n- w2 wraps stdin: file = stdin, owns = false\n- test() ends, destructors called\n- **w2 destructor:**\n  - Checks if (file) → true (stdin is valid)\n  - Calls fclose(stdin)\n  - **Bug:** Closes stdin even though owns = false\n- **w1 destructor:**\n  - fclose(file) ✓ (should close)\n- **Problem:** Destructor ignores owns flag\n- **Fix:** `if (file && owns) fclose(file);`\n- **Pattern:** Conditional ownership requires flag check\n- **Real-world:** This is what std::shared_ptr deleter does\n- **Key Concept:** Conditional ownership requires checking ownership flag before cleanup",
+          "code": "class FileWrapper {\n    FILE* file;\n    bool owns;\n    \npublic:\n    FileWrapper(const char* name)\n        : file(fopen(name, \"r\")), owns(true) {}\n    \n    FileWrapper(FILE* external)\n        : file(external), owns(false) {}\n    \n    ~FileWrapper() {\n        if (file) fclose(file);  // Bug: ignores owns flag\n    }\n};\n\nvoid test() {\n    FileWrapper w1(\"file.txt\");\n    FileWrapper w2(stdin);\n}",
+          "answer": "Bug: closes stdin (doesn't own it)",
+          "explanation": "- w1 opens \"file.txt\": file valid, owns = true\n- w2 wraps stdin: file = stdin, owns = false\n- test() ends, destructors called\n- **w2 destructor:**\n  - Checks if (file) → true (stdin is valid)\n  - Calls fclose(stdin)\n  - **Bug:** Closes stdin even though owns = false\n- **w1 destructor:**\n  - fclose(file) ✓ (should close)\n- **Problem:** Destructor ignores owns flag\n- **Fix:** `if (file && owns) fclose(file);`\n- **Pattern:** Conditional ownership requires flag check\n- **Real-world:** This is what std::shared_ptr deleter does\n- **Key Concept:** Conditional ownership requires checking ownership flag before cleanup",
+          "key_concept": "Conditional ownership requires checking ownership flag before cleanup",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Bug: closes stdin (doesn't own it)"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nclass Lazy {\n    mutable T* ptr = nullptr;\n    \npublic:\n    ~Lazy() { delete ptr; }\n    \n    T& get() const {\n        if (!ptr) ptr = new T();\n        return *ptr;\n    }\n};\n\nvoid threadFunc(const Lazy<Resource>& lazy) {\n    lazy.get();\n}\n\nvoid test() {\n    Lazy<Resource> resource;\n    std::thread t1(threadFunc, std::ref(resource));\n    std::thread t2(threadFunc, std::ref(resource));\n    t1.join();\n    t2.join();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Race condition: both threads might allocate\n\n**Explanation:** No synchronization on ptr check/initialization; double allocation possible\n\n**Key Concept:** #lazy_thread_safety\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nRace condition: both threads may allocate\n```\n\n**Explanation:**\n- Both threads call get() on same Lazy<Resource>\n- **Race scenario:**\n  - t1: checks `if (!ptr)` → true\n  - t2: checks `if (!ptr)` → true (ptr still null!)\n  - t1: ptr = new T() (allocates)\n  - t2: ptr = new T() (allocates again!)\n  - **First allocation lost:** Memory leak\n  - **Both threads:** Return different objects\n- **Possible crash:** Both try to delete in destructor\n- **No synchronization:** Race on read-modify-write\n- **Fix:** std::call_once\n  ```cpp\n  std::once_flag initFlag;\n  T& get() const {\n      std::call_once(initFlag, [this]{ ptr = new T(); });\n      return *ptr;\n  }\n  ```\n- **Key Concept:** Lazy initialization in multi-threaded code requires synchronization; use std::call_once",
           "code": "template<typename T>\nclass Lazy {\n    mutable T* ptr = nullptr;\n    \npublic:\n    ~Lazy() { delete ptr; }\n    \n    T& get() const {\n        if (!ptr) ptr = new T();\n        return *ptr;\n    }\n};\n\nvoid threadFunc(const Lazy<Resource>& lazy) {\n    lazy.get();\n}\n\nvoid test() {\n    Lazy<Resource> resource;\n    std::thread t1(threadFunc, std::ref(resource));\n    std::thread t2(threadFunc, std::ref(resource));\n    t1.join();\n    t2.join();\n}",
+          "answer": "Race condition: both threads may allocate",
+          "explanation": "- Both threads call get() on same Lazy<Resource>\n- **Race scenario:**\n  - t1: checks `if (!ptr)` → true\n  - t2: checks `if (!ptr)` → true (ptr still null!)\n  - t1: ptr = new T() (allocates)\n  - t2: ptr = new T() (allocates again!)\n  - **First allocation lost:** Memory leak\n  - **Both threads:** Return different objects\n- **Possible crash:** Both try to delete in destructor\n- **No synchronization:** Race on read-modify-write\n- **Fix:** std::call_once\n  ```cpp\n  std::once_flag initFlag;\n  T& get() const {\n      std::call_once(initFlag, [this]{ ptr = new T(); });\n      return *ptr;\n  }\n  ```\n- **Key Concept:** Lazy initialization in multi-threaded code requires synchronization; use std::call_once",
+          "key_concept": "Lazy initialization in multi-threaded code requires synchronization; use std::call_once",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Race condition: both threads may allocate",
+            "std::once_flag initFlag;\n  T& get() const {\n      std::call_once(initFlag, [this]{ ptr = new T(); });\n      return *ptr;\n  }"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\nclass Base {\nprotected:\n    int* data;\npublic:\n    Base() : data(new int[10]) {}\n    ~Base() { delete[] data; }\n};\n\nclass Derived : public Base {\n    int* moreData;\npublic:\n    Derived() : moreData(new int[20]) {}\n    ~Derived() { delete[] moreData; }\n};\n\nvoid test() {\n    Base* ptr = new Derived();\n    delete ptr;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** moreData leaked (20 ints)\n\n**Explanation:** Non-virtual ~Base means ~Derived never called through base pointer\n\n**Key Concept:** #virtual_destructor_leak\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nmoreData leaked (non-virtual destructor)\n```\n\n**Explanation:**\n- new Derived() creates full object:\n  - Base::data allocated (10 ints)\n  - Derived::moreData allocated (20 ints)\n- ptr is Base* pointing to Derived\n- delete ptr with Base having non-virtual destructor\n- **Only ~Base() called:**\n  - delete[] data (10 ints freed) ✓\n  - ~Derived() NEVER called\n  - moreData never freed → **leak (20 ints)**\n- **Static dispatch:** Destructor determined by pointer type (Base*), not object type (Derived)\n- **Fix:** `virtual ~Base() { delete[] data; }`\n- **Virtual destructor:** Ensures ~Derived() called first, then ~Base()\n- **Rule:** Always virtual destructor in polymorphic base classes\n- **Key Concept:** Non-virtual destructor with polymorphic delete causes derived member leaks; use virtual\n\n---\n\n\n## TOPIC: Custom RAII Wrappers & Advanced Patterns",
           "code": "class Base {\nprotected:\n    int* data;\npublic:\n    Base() : data(new int[10]) {}\n    ~Base() { delete[] data; }\n};\n\nclass Derived : public Base {\n    int* moreData;\npublic:\n    Derived() : moreData(new int[20]) {}\n    ~Derived() { delete[] moreData; }\n};\n\nvoid test() {\n    Base* ptr = new Derived();\n    delete ptr;\n}",
+          "answer": "moreData leaked (non-virtual destructor)",
+          "explanation": "- new Derived() creates full object:\n  - Base::data allocated (10 ints)\n  - Derived::moreData allocated (20 ints)\n- ptr is Base* pointing to Derived\n- delete ptr with Base having non-virtual destructor\n- **Only ~Base() called:**\n  - delete[] data (10 ints freed) ✓\n  - ~Derived() NEVER called\n  - moreData never freed → **leak (20 ints)**\n- **Static dispatch:** Destructor determined by pointer type (Base*), not object type (Derived)\n- **Fix:** `virtual ~Base() { delete[] data; }`\n- **Virtual destructor:** Ensures ~Derived() called first, then ~Base()\n- **Rule:** Always virtual destructor in polymorphic base classes\n- **Key Concept:** Non-virtual destructor with polymorphic delete causes derived member leaks; use virtual",
+          "key_concept": "Non-virtual destructor with polymorphic delete causes derived member leaks; use virtual",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "moreData leaked (non-virtual destructor)"
+          ]
         }
       ],
       "quick_reference": {
@@ -1478,7 +1663,7 @@
     },
     {
       "topic": "Smart Pointers as RAII",
-      "filename": "3_smart_pointers_as_raii.md",
+      "filename": "topic_3.md",
       "theory": {
         "subsections": [
           {
@@ -2390,202 +2575,322 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> p1 = std::make_unique<int>(10);\n    std::unique_ptr<int> p2 = std::move(p1);\n    \n    std::cout << (p1 == nullptr) << \" \" << *p2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1 10`\n\n**Explanation:** p1 becomes nullptr after move, p2 owns the int\n\n**Key Concept:** #unique_ptr #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 10\n```\n\n**Explanation:**\n- p1 created: owns int(10)\n- p2 = std::move(p1): Ownership transferred\n- Move semantics: p2 takes ownership\n- p1 becomes nullptr (moved-from state)\n- p1 == nullptr evaluates to 1 (true)\n- *p2 accesses 10\n- **Unique ownership:** Only one unique_ptr can own resource\n- **Move-only:** unique_ptr cannot be copied\n- **Key Concept:** Moving unique_ptr transfers ownership; source becomes nullptr",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> p1 = std::make_unique<int>(10);\n    std::unique_ptr<int> p2 = std::move(p1);\n    \n    std::cout << (p1 == nullptr) << \" \" << *p2;\n}",
+          "answer": "1 10",
+          "explanation": "- p1 created: owns int(10)\n- p2 = std::move(p1): Ownership transferred\n- Move semantics: p2 takes ownership\n- p1 becomes nullptr (moved-from state)\n- p1 == nullptr evaluates to 1 (true)\n- *p2 accesses 10\n- **Unique ownership:** Only one unique_ptr can own resource\n- **Move-only:** unique_ptr cannot be copied\n- **Key Concept:** Moving unique_ptr transfers ownership; source becomes nullptr",
+          "key_concept": "Moving unique_ptr transfers ownership; source becomes nullptr",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 10"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nstruct Node {\n    std::shared_ptr<Node> next;\n    ~Node() { std::cout << \"D\"; }\n};\n\nint main() {\n    auto n1 = std::make_shared<Node>();\n    auto n2 = std::make_shared<Node>();\n    n1->next = n2;\n    n2->next = n1;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** No output\n\n**Explanation:** Circular reference: both nodes leak, destructors never called\n\n**Key Concept:** #shared_ptr #circular_reference #memory_leak\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nNo output (memory leak)\n```\n\n**Explanation:**\n- n1 and n2 created with use_count = 1 each\n- n1->next = n2: n2 use_count becomes 2\n- n2->next = n1: n1 use_count becomes 2\n- main() ends: n1 local goes out of scope, n1's count: 2→1\n- main() ends: n2 local goes out of scope, n2's count: 2→1\n- **Circular reference:** n1 still referenced by n2->next\n- **Circular reference:** n2 still referenced by n1->next\n- Neither count reaches 0\n- **No destructors called:** Memory leaked\n- **Fix:** Use weak_ptr for one direction\n- **Key Concept:** Circular references with shared_ptr cause leaks; use weak_ptr to break cycles",
           "code": "#include <memory>\n#include <iostream>\n\nstruct Node {\n    std::shared_ptr<Node> next;\n    ~Node() { std::cout << \"D\"; }\n};\n\nint main() {\n    auto n1 = std::make_shared<Node>();\n    auto n2 = std::make_shared<Node>();\n    n1->next = n2;\n    n2->next = n1;\n}",
+          "answer": "No output (memory leak)",
+          "explanation": "- n1 and n2 created with use_count = 1 each\n- n1->next = n2: n2 use_count becomes 2\n- n2->next = n1: n1 use_count becomes 2\n- main() ends: n1 local goes out of scope, n1's count: 2→1\n- main() ends: n2 local goes out of scope, n2's count: 2→1\n- **Circular reference:** n1 still referenced by n2->next\n- **Circular reference:** n2 still referenced by n1->next\n- Neither count reaches 0\n- **No destructors called:** Memory leaked\n- **Fix:** Use weak_ptr for one direction\n- **Key Concept:** Circular references with shared_ptr cause leaks; use weak_ptr to break cycles",
+          "key_concept": "Circular references with shared_ptr cause leaks; use weak_ptr to break cycles",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "No output (memory leak)"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(5);\n    std::shared_ptr<int> p2 = p1;\n    std::weak_ptr<int> w = p1;\n    \n    std::cout << p1.use_count() << \" \" << w.expired();\n    \n    p1.reset();\n    p2.reset();\n    \n    std::cout << \" \" << w.expired();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `2 0 1`\n\n**Explanation:** Two shared_ptrs, weak_ptr doesn't count; after reset, object destroyed\n\n**Key Concept:** #shared_ptr #weak_ptr #reference_counting\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n2 0 1\n```\n\n**Explanation:**\n- p1 and p2 share ownership: use_count = 2\n- w is weak reference (doesn't increase count)\n- p1.use_count() returns 2\n- w.expired() returns 0 (false) - object still alive\n- p1.reset(): count 2→1 (p2 still owns)\n- p2.reset(): count 1→0, object destroyed\n- w.expired() returns 1 (true) - object now destroyed\n- **weak_ptr doesn't prevent destruction**\n- **expired() checks if object destroyed**\n- **Key Concept:** weak_ptr observes without owning; expired() checks if object destroyed",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(5);\n    std::shared_ptr<int> p2 = p1;\n    std::weak_ptr<int> w = p1;\n    \n    std::cout << p1.use_count() << \" \" << w.expired();\n    \n    p1.reset();\n    p2.reset();\n    \n    std::cout << \" \" << w.expired();\n}",
+          "answer": "2 0 1",
+          "explanation": "- p1 and p2 share ownership: use_count = 2\n- w is weak reference (doesn't increase count)\n- p1.use_count() returns 2\n- w.expired() returns 0 (false) - object still alive\n- p1.reset(): count 2→1 (p2 still owns)\n- p2.reset(): count 1→0, object destroyed\n- w.expired() returns 1 (true) - object now destroyed\n- **weak_ptr doesn't prevent destruction**\n- **expired() checks if object destroyed**\n- **Key Concept:** weak_ptr observes without owning; expired() checks if object destroyed",
+          "key_concept": "weak_ptr observes without owning; expired() checks if object destroyed",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "2 0 1"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nvoid process(std::unique_ptr<int> ptr) {\n    std::cout << *ptr << \" \";\n}\n\nint main() {\n    auto ptr = std::make_unique<int>(42);\n    process(std::move(ptr));\n    std::cout << (ptr == nullptr);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `42 1`\n\n**Explanation:** Ownership transferred to function, ptr becomes null\n\n**Key Concept:** #unique_ptr #move_semantics #ownership_transfer\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42 1\n```\n\n**Explanation:**\n- ptr owns int(42)\n- process(std::move(ptr)): Ownership transferred to function parameter\n- Inside process: prints \"42 \"\n- process returns: parameter destroyed, int(42) deleted\n- After call: ptr is nullptr (moved-from)\n- Prints 1 (true)\n- **Ownership semantics:** Function takes ownership\n- **Caller loses ownership:** ptr now empty\n- **Use case:** Sink functions that consume resources\n- **Key Concept:** Passing unique_ptr by value transfers ownership; caller's pointer becomes null",
           "code": "#include <memory>\n#include <iostream>\n\nvoid process(std::unique_ptr<int> ptr) {\n    std::cout << *ptr << \" \";\n}\n\nint main() {\n    auto ptr = std::make_unique<int>(42);\n    process(std::move(ptr));\n    std::cout << (ptr == nullptr);\n}",
+          "answer": "42 1",
+          "explanation": "- ptr owns int(42)\n- process(std::move(ptr)): Ownership transferred to function parameter\n- Inside process: prints \"42 \"\n- process returns: parameter destroyed, int(42) deleted\n- After call: ptr is nullptr (moved-from)\n- Prints 1 (true)\n- **Ownership semantics:** Function takes ownership\n- **Caller loses ownership:** ptr now empty\n- **Use case:** Sink functions that consume resources\n- **Key Concept:** Passing unique_ptr by value transfers ownership; caller's pointer becomes null",
+          "key_concept": "Passing unique_ptr by value transfers ownership; caller's pointer becomes null",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42 1"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int[]> arr(new int[3]{1, 2, 3});\n    arr[1] = 10;\n    std::cout << arr[0] << arr[1] << arr[2];\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1103`\n\n**Explanation:** Array specialization allows operator[], arr[1] modified to 10\n\n**Key Concept:** #unique_ptr #arrays #operator_overload\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1103\n```\n\n**Explanation:**\n- unique_ptr<int[]>: Array specialization\n- new int[3]{1, 2, 3}: Initialize array\n- arr[1] = 10: Modify second element\n- Array now: {1, 10, 3}\n- Prints \"1103\" (no spaces)\n- **Array specialization provides operator[]**\n- **Uses delete[] in destructor** (not delete)\n- **Alternative:** std::make_unique<int[]>(3)\n- **Modern C++:** Consider std::array or std::vector\n- **Key Concept:** unique_ptr<T[]> specialization for arrays; provides operator[] and uses delete[]",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int[]> arr(new int[3]{1, 2, 3});\n    arr[1] = 10;\n    std::cout << arr[0] << arr[1] << arr[2];\n}",
+          "answer": "1103",
+          "explanation": "- unique_ptr<int[]>: Array specialization\n- new int[3]{1, 2, 3}: Initialize array\n- arr[1] = 10: Modify second element\n- Array now: {1, 10, 3}\n- Prints \"1103\" (no spaces)\n- **Array specialization provides operator[]**\n- **Uses delete[] in destructor** (not delete)\n- **Alternative:** std::make_unique<int[]>(3)\n- **Modern C++:** Consider std::array or std::vector\n- **Key Concept:** unique_ptr<T[]> specialization for arrays; provides operator[] and uses delete[]",
+          "key_concept": "unique_ptr<T[]> specialization for arrays; provides operator[] and uses delete[]",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1103"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1(new int(10));\n    std::shared_ptr<int> p2(new int(20));\n    \n    p1.swap(p2);\n    \n    std::cout << *p1 << \" \" << *p2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `20 10`\n\n**Explanation:** swap() exchanges the internal pointers\n\n**Key Concept:** #shared_ptr #swap\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n20 10\n```\n\n**Explanation:**\n- p1 owns int(10)\n- p2 owns int(20)\n- p1.swap(p2): Exchanges internal pointers\n- After swap: p1 points to int(20), p2 points to int(10)\n- Prints \"20 10\"\n- **Efficient:** Only swaps pointers, no copying\n- **Use case:** Performance optimization\n- **Also works with:** std::swap(p1, p2)\n- **Key Concept:** swap() efficiently exchanges smart pointer ownership without copying",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1(new int(10));\n    std::shared_ptr<int> p2(new int(20));\n    \n    p1.swap(p2);\n    \n    std::cout << *p1 << \" \" << *p2;\n}",
+          "answer": "20 10",
+          "explanation": "- p1 owns int(10)\n- p2 owns int(20)\n- p1.swap(p2): Exchanges internal pointers\n- After swap: p1 points to int(20), p2 points to int(10)\n- Prints \"20 10\"\n- **Efficient:** Only swaps pointers, no copying\n- **Use case:** Performance optimization\n- **Also works with:** std::swap(p1, p2)\n- **Key Concept:** swap() efficiently exchanges smart pointer ownership without copying",
+          "key_concept": "swap() efficiently exchanges smart pointer ownership without copying",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "20 10"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    auto p1 = std::make_shared<int>(100);\n    std::weak_ptr<int> w = p1;\n    \n    p1.reset();\n    \n    if (auto p2 = w.lock()) {\n        std::cout << *p2;\n    } else {\n        std::cout << \"Empty\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Empty`\n\n**Explanation:** p1.reset() destroys object, w.lock() returns empty shared_ptr\n\n**Key Concept:** #weak_ptr #lock #expired\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nEmpty\n```\n\n**Explanation:**\n- p1 owns int(100), w observes it\n- p1.reset(): Destroys int(100), count 1→0\n- w still exists but object destroyed\n- w.lock() attempts to create shared_ptr\n- **Object destroyed:** lock() returns empty shared_ptr\n- Condition false, else branch executes\n- Prints \"Empty\"\n- **lock() is thread-safe way to access weak_ptr**\n- **Returns empty if expired**\n- **Key Concept:** weak_ptr::lock() safely creates shared_ptr if object alive; returns empty if expired",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    auto p1 = std::make_shared<int>(100);\n    std::weak_ptr<int> w = p1;\n    \n    p1.reset();\n    \n    if (auto p2 = w.lock()) {\n        std::cout << *p2;\n    } else {\n        std::cout << \"Empty\";\n    }\n}",
+          "answer": "Empty",
+          "explanation": "- p1 owns int(100), w observes it\n- p1.reset(): Destroys int(100), count 1→0\n- w still exists but object destroyed\n- w.lock() attempts to create shared_ptr\n- **Object destroyed:** lock() returns empty shared_ptr\n- Condition false, else branch executes\n- Prints \"Empty\"\n- **lock() is thread-safe way to access weak_ptr**\n- **Returns empty if expired**\n- **Key Concept:** weak_ptr::lock() safely creates shared_ptr if object alive; returns empty if expired",
+          "key_concept": "weak_ptr::lock() safely creates shared_ptr if object alive; returns empty if expired",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Empty"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nstruct Resource {\n    Resource() { std::cout << \"C\"; }\n    ~Resource() { std::cout << \"D\"; }\n};\n\nint main() {\n    {\n        std::unique_ptr<Resource> ptr = std::make_unique<Resource>();\n        std::cout << \"M\";\n    }\n    std::cout << \"E\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `CMDE`\n\n**Explanation:** Constructor (C), then middle code (M), destructor (D) at scope exit, then end (E)\n\n**Key Concept:** #raii #destructor #scope\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCMDE\n```\n\n**Explanation:**\n- Inner scope begins\n- make_unique constructs Resource: prints \"C\"\n- std::cout << \"M\": prints \"M\"\n- Inner scope ends: ptr destroyed\n- ptr's destructor calls ~Resource(): prints \"D\"\n- std::cout << \"E\": prints \"E\"\n- **Order:** Construction, Middle, Destruction, End\n- **RAII:** Automatic cleanup at scope exit\n- **Key Concept:** unique_ptr provides automatic cleanup at scope exit; deterministic destruction",
           "code": "#include <memory>\n#include <iostream>\n\nstruct Resource {\n    Resource() { std::cout << \"C\"; }\n    ~Resource() { std::cout << \"D\"; }\n};\n\nint main() {\n    {\n        std::unique_ptr<Resource> ptr = std::make_unique<Resource>();\n        std::cout << \"M\";\n    }\n    std::cout << \"E\";\n}",
+          "answer": "CMDE",
+          "explanation": "- Inner scope begins\n- make_unique constructs Resource: prints \"C\"\n- std::cout << \"M\": prints \"M\"\n- Inner scope ends: ptr destroyed\n- ptr's destructor calls ~Resource(): prints \"D\"\n- std::cout << \"E\": prints \"E\"\n- **Order:** Construction, Middle, Destruction, End\n- **RAII:** Automatic cleanup at scope exit\n- **Key Concept:** unique_ptr provides automatic cleanup at scope exit; deterministic destruction",
+          "key_concept": "unique_ptr provides automatic cleanup at scope exit; deterministic destruction",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "CMDE"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(42);\n    std::shared_ptr<int> p2 = p1;\n    std::shared_ptr<int> p3 = p2;\n    \n    std::cout << p1.use_count() << \" \";\n    \n    p2.reset();\n    \n    std::cout << p1.use_count();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `3 2`\n\n**Explanation:** Three shared_ptrs initially, p2.reset() decrements to 2\n\n**Key Concept:** #shared_ptr #reference_counting #reset\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n3 2\n```\n\n**Explanation:**\n- p1 created: use_count = 1\n- p2 = p1: use_count = 2\n- p3 = p2: use_count = 3\n- First output: prints \"3 \"\n- p2.reset(): Releases p2's ownership\n- use_count: 3→2\n- Second output: prints \"2\"\n- **Reference counting:** Tracks number of owners\n- **reset() decrements count**\n- **Object destroyed when count reaches 0**\n- **Key Concept:** shared_ptr uses reference counting; reset() decrements count",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(42);\n    std::shared_ptr<int> p2 = p1;\n    std::shared_ptr<int> p3 = p2;\n    \n    std::cout << p1.use_count() << \" \";\n    \n    p2.reset();\n    \n    std::cout << p1.use_count();\n}",
+          "answer": "3 2",
+          "explanation": "- p1 created: use_count = 1\n- p2 = p1: use_count = 2\n- p3 = p2: use_count = 3\n- First output: prints \"3 \"\n- p2.reset(): Releases p2's ownership\n- use_count: 3→2\n- Second output: prints \"2\"\n- **Reference counting:** Tracks number of owners\n- **reset() decrements count**\n- **Object destroyed when count reaches 0**\n- **Key Concept:** shared_ptr uses reference counting; reset() decrements count",
+          "key_concept": "shared_ptr uses reference counting; reset() decrements count",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "3 2"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> ptr;\n    \n    std::cout << (ptr == nullptr) << \" \";\n    \n    ptr = std::make_unique<int>(5);\n    \n    std::cout << (ptr != nullptr);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1 1`\n\n**Explanation:** Default constructed unique_ptr is null, then assigned\n\n**Key Concept:** #unique_ptr #nullptr #bool_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 1\n```\n\n**Explanation:**\n- ptr default constructed: nullptr\n- ptr == nullptr: true, prints \"1 \"\n- ptr = make_unique<int>(5): Assigns ownership\n- ptr != nullptr: true, prints \"1\"\n- **Default construction:** Creates empty unique_ptr\n- **Assignment:** Takes ownership of new resource\n- **Boolean conversion:** nullptr == false, non-null == true\n- **Idiomatic checks:** if (ptr) instead of if (ptr != nullptr)\n- **Key Concept:** Default-constructed unique_ptr is null; can check with boolean conversion",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> ptr;\n    \n    std::cout << (ptr == nullptr) << \" \";\n    \n    ptr = std::make_unique<int>(5);\n    \n    std::cout << (ptr != nullptr);\n}",
+          "answer": "1 1",
+          "explanation": "- ptr default constructed: nullptr\n- ptr == nullptr: true, prints \"1 \"\n- ptr = make_unique<int>(5): Assigns ownership\n- ptr != nullptr: true, prints \"1\"\n- **Default construction:** Creates empty unique_ptr\n- **Assignment:** Takes ownership of new resource\n- **Boolean conversion:** nullptr == false, non-null == true\n- **Idiomatic checks:** if (ptr) instead of if (ptr != nullptr)\n- **Key Concept:** Default-constructed unique_ptr is null; can check with boolean conversion",
+          "key_concept": "Default-constructed unique_ptr is null; can check with boolean conversion",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 1"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    auto sp = std::make_shared<int>(100);\n    int* raw = sp.get();\n    \n    std::cout << *raw << \" \";\n    \n    sp.reset();\n    \n    // What happens if we access raw here?\n    // std::cout << *raw;  // Undefined behavior!\n    \n    std::cout << (sp == nullptr);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `100 1`\n\n**Explanation:** raw pointer becomes dangling after reset, accessing it is UB (not shown)\n\n**Key Concept:** #shared_ptr #get #dangling_pointer\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100 1\n```\n\n**Explanation:**\n- sp owns int(100)\n- raw = sp.get(): Extracts raw pointer (no ownership change)\n- Prints \"100 \" through raw\n- sp.reset(): Destroys int(100), sp becomes null\n- **raw now dangling:** Points to freed memory\n- **Accessing *raw would be UB** (commented out)\n- Prints \"1\" (sp == nullptr)\n- **get() doesn't transfer ownership**\n- **Dangerous:** Raw pointer can outlive smart pointer\n- **Key Concept:** get() returns raw pointer without ownership transfer; dangerous if smart pointer destroyed",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    auto sp = std::make_shared<int>(100);\n    int* raw = sp.get();\n    \n    std::cout << *raw << \" \";\n    \n    sp.reset();\n    \n    // What happens if we access raw here?\n    // std::cout << *raw;  // Undefined behavior!\n    \n    std::cout << (sp == nullptr);\n}",
+          "answer": "100 1",
+          "explanation": "- sp owns int(100)\n- raw = sp.get(): Extracts raw pointer (no ownership change)\n- Prints \"100 \" through raw\n- sp.reset(): Destroys int(100), sp becomes null\n- **raw now dangling:** Points to freed memory\n- **Accessing *raw would be UB** (commented out)\n- Prints \"1\" (sp == nullptr)\n- **get() doesn't transfer ownership**\n- **Dangerous:** Raw pointer can outlive smart pointer\n- **Key Concept:** get() returns raw pointer without ownership transfer; dangerous if smart pointer destroyed",
+          "key_concept": "get() returns raw pointer without ownership transfer; dangerous if smart pointer destroyed",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100 1"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nstruct Data {\n    int x = 5;\n    int y = 10;\n};\n\nint main() {\n    auto data = std::make_shared<Data>();\n    std::shared_ptr<int> x_ptr(data, &data->x);\n    \n    data.reset();\n    \n    std::cout << *x_ptr;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `5`\n\n**Explanation:** Aliasing constructor: x_ptr shares ownership of Data, points to x member\n\n**Key Concept:** #shared_ptr #aliasing_constructor\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5\n```\n\n**Explanation:**\n- data owns Data object\n- x_ptr(data, &data->x): **Aliasing constructor**\n- x_ptr shares ownership of Data\n- x_ptr points to x member\n- data.reset(): Releases data's reference\n- **But:** x_ptr still owns Data (use_count ≥ 1)\n- Data not destroyed yet\n- Prints x member value: \"5\"\n- **Aliasing:** Share ownership of one object, point to another\n- **Use case:** Pointing to members while managing whole object\n- **Key Concept:** Aliasing constructor shares ownership of one object while pointing to another; enables member pointers",
           "code": "#include <memory>\n#include <iostream>\n\nstruct Data {\n    int x = 5;\n    int y = 10;\n};\n\nint main() {\n    auto data = std::make_shared<Data>();\n    std::shared_ptr<int> x_ptr(data, &data->x);\n    \n    data.reset();\n    \n    std::cout << *x_ptr;\n}",
+          "answer": "5",
+          "explanation": "- data owns Data object\n- x_ptr(data, &data->x): **Aliasing constructor**\n- x_ptr shares ownership of Data\n- x_ptr points to x member\n- data.reset(): Releases data's reference\n- **But:** x_ptr still owns Data (use_count ≥ 1)\n- Data not destroyed yet\n- Prints x member value: \"5\"\n- **Aliasing:** Share ownership of one object, point to another\n- **Use case:** Pointing to members while managing whole object\n- **Key Concept:** Aliasing constructor shares ownership of one object while pointing to another; enables member pointers",
+          "key_concept": "Aliasing constructor shares ownership of one object while pointing to another; enables member pointers",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nvoid modify(std::unique_ptr<int>& ptr) {\n    ptr.reset(new int(99));\n}\n\nint main() {\n    auto ptr = std::make_unique<int>(42);\n    modify(ptr);\n    std::cout << *ptr;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `99`\n\n**Explanation:** Pass by reference allows modification, reset changes pointer\n\n**Key Concept:** #unique_ptr #reset #reference_parameter\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n99\n```\n\n**Explanation:**\n- ptr owns int(42)\n- modify() takes reference (not move)\n- ptr.reset(new int(99)):\n  - Deletes int(42)\n  - Assigns new int(99)\n- After modify: ptr owns int(99)\n- Prints \"99\"\n- **Pass by reference:** Allows modification without transfer\n- **reset() replaces owned object**\n- **Alternative:** Pass by value would transfer ownership\n- **Key Concept:** Pass unique_ptr by reference to modify; reset() replaces owned object",
           "code": "#include <memory>\n#include <iostream>\n\nvoid modify(std::unique_ptr<int>& ptr) {\n    ptr.reset(new int(99));\n}\n\nint main() {\n    auto ptr = std::make_unique<int>(42);\n    modify(ptr);\n    std::cout << *ptr;\n}",
+          "answer": "99",
+          "explanation": "- ptr owns int(42)\n- modify() takes reference (not move)\n- ptr.reset(new int(99)):\n  - Deletes int(42)\n  - Assigns new int(99)\n- After modify: ptr owns int(99)\n- Prints \"99\"\n- **Pass by reference:** Allows modification without transfer\n- **reset() replaces owned object**\n- **Alternative:** Pass by value would transfer ownership\n- **Key Concept:** Pass unique_ptr by reference to modify; reset() replaces owned object",
+          "key_concept": "Pass unique_ptr by reference to modify; reset() replaces owned object",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "99"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(10);\n    std::weak_ptr<int> w1 = p1;\n    std::weak_ptr<int> w2 = w1;\n    \n    std::cout << p1.use_count() << \" \" << w1.use_count();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1 1`\n\n**Explanation:** use_count() for weak_ptr returns strong ref count, not weak count\n\n**Key Concept:** #shared_ptr #weak_ptr #use_count\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 1\n```\n\n**Explanation:**\n- p1 owns int(10): use_count = 1\n- w1 observes p1: doesn't increase count\n- w2 observes through w1: still doesn't increase count\n- p1.use_count() returns 1 (one shared_ptr)\n- **w1.use_count():** Returns count of shared_ptrs, not weak_ptrs\n- Returns 1 (same as p1.use_count())\n- **weak_ptr doesn't track weak count through use_count()**\n- **Confusing API:** use_count() on weak_ptr returns strong count\n- **Key Concept:** weak_ptr::use_count() returns shared_ptr count not weak_ptr count; weak_ptrs don't contribute",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1 = std::make_shared<int>(10);\n    std::weak_ptr<int> w1 = p1;\n    std::weak_ptr<int> w2 = w1;\n    \n    std::cout << p1.use_count() << \" \" << w1.use_count();\n}",
+          "answer": "1 1",
+          "explanation": "- p1 owns int(10): use_count = 1\n- w1 observes p1: doesn't increase count\n- w2 observes through w1: still doesn't increase count\n- p1.use_count() returns 1 (one shared_ptr)\n- **w1.use_count():** Returns count of shared_ptrs, not weak_ptrs\n- Returns 1 (same as p1.use_count())\n- **weak_ptr doesn't track weak count through use_count()**\n- **Confusing API:** use_count() on weak_ptr returns strong count\n- **Key Concept:** weak_ptr::use_count() returns shared_ptr count not weak_ptr count; weak_ptrs don't contribute",
+          "key_concept": "weak_ptr::use_count() returns shared_ptr count not weak_ptr count; weak_ptrs don't contribute",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 1"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nstd::unique_ptr<int> factory() {\n    return std::make_unique<int>(77);\n}\n\nint main() {\n    auto ptr = factory();\n    std::cout << *ptr;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `77`\n\n**Explanation:** Returning unique_ptr by value uses move semantics, ownership transferred\n\n**Key Concept:** #unique_ptr #return_value #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n77\n```\n\n**Explanation:**\n- factory() creates unique_ptr with int(77)\n- Returns by value: Uses move semantics\n- Ownership transferred to caller\n- main receives ownership\n- Prints \"77\"\n- **Factory pattern:** Common for unique_ptr\n- **Move is automatic:** Compiler handles move\n- **No manual std::move needed on return**\n- **C++17:** Copy elision may eliminate move entirely\n- **Key Concept:** Returning unique_ptr by value transfers ownership via move; factory pattern",
           "code": "#include <memory>\n#include <iostream>\n\nstd::unique_ptr<int> factory() {\n    return std::make_unique<int>(77);\n}\n\nint main() {\n    auto ptr = factory();\n    std::cout << *ptr;\n}",
+          "answer": "77",
+          "explanation": "- factory() creates unique_ptr with int(77)\n- Returns by value: Uses move semantics\n- Ownership transferred to caller\n- main receives ownership\n- Prints \"77\"\n- **Factory pattern:** Common for unique_ptr\n- **Move is automatic:** Compiler handles move\n- **No manual std::move needed on return**\n- **C++17:** Copy elision may eliminate move entirely\n- **Key Concept:** Returning unique_ptr by value transfers ownership via move; factory pattern",
+          "key_concept": "Returning unique_ptr by value transfers ownership via move; factory pattern",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "77"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1(new int(5));\n    std::shared_ptr<int> p2(p1.get());\n    \n    std::cout << p1.use_count() << \" \" << p2.use_count();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1 1`\n\n**Explanation:** DANGER: Two independent control blocks, will cause double-free\n\n**Key Concept:** #shared_ptr #control_block #undefined_behavior\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 1 (then double-delete crash)\n```\n\n**Explanation:**\n- p1 constructed from new int(5): use_count = 1\n- p2 constructed from raw pointer p1.get()\n- **CRITICAL BUG:** p2 creates new control block\n- p1 and p2 have independent control blocks\n- Both think they uniquely own int(5)\n- Both use_count() return 1\n- **Program ends:**\n  - p2 destroyed: deletes int(5)\n  - p1 destroyed: tries to delete already-freed memory\n  - **Double-delete:** Undefined behavior, crash\n- **Never do:** shared_ptr from raw pointer of another shared_ptr\n- **Correct:** p2 = p1 or p2(p1)\n- **Key Concept:** Never create shared_ptr from get(); causes double control blocks and double-delete",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> p1(new int(5));\n    std::shared_ptr<int> p2(p1.get());\n    \n    std::cout << p1.use_count() << \" \" << p2.use_count();\n}",
+          "answer": "1 1 (then double-delete crash)",
+          "explanation": "- p1 constructed from new int(5): use_count = 1\n- p2 constructed from raw pointer p1.get()\n- **CRITICAL BUG:** p2 creates new control block\n- p1 and p2 have independent control blocks\n- Both think they uniquely own int(5)\n- Both use_count() return 1\n- **Program ends:**\n  - p2 destroyed: deletes int(5)\n  - p1 destroyed: tries to delete already-freed memory\n  - **Double-delete:** Undefined behavior, crash\n- **Never do:** shared_ptr from raw pointer of another shared_ptr\n- **Correct:** p2 = p1 or p2(p1)\n- **Key Concept:** Never create shared_ptr from get(); causes double control blocks and double-delete",
+          "key_concept": "Never create shared_ptr from get(); causes double control blocks and double-delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 1 (then double-delete crash)"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    auto deleter = [](int* p) {\n        std::cout << \"Del\";\n        delete p;\n    };\n    \n    {\n        std::unique_ptr<int, decltype(deleter)> ptr(new int(5), deleter);\n        std::cout << *ptr;\n    }\n    std::cout << \"End\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `5DelEnd`\n\n**Explanation:** Custom deleter prints \"Del\" before destruction, then \"End\"\n\n**Key Concept:** #unique_ptr #custom_deleter #lambda\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5DelEnd\n```\n\n**Explanation:**\n- deleter lambda defined\n- ptr created with custom deleter\n- Prints \"5\" (*ptr)\n- Inner scope ends\n- ptr destroyed: calls custom deleter\n- Deleter prints \"Del\", then deletes\n- Outer scope: prints \"End\"\n- **Custom deleter:** Replaces default delete\n- **Use case:** Special cleanup (close file, unlock mutex)\n- **Type includes deleter type** (decltype(deleter))\n- **Key Concept:** unique_ptr supports custom deleters; useful for non-memory resources",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    auto deleter = [](int* p) {\n        std::cout << \"Del\";\n        delete p;\n    };\n    \n    {\n        std::unique_ptr<int, decltype(deleter)> ptr(new int(5), deleter);\n        std::cout << *ptr;\n    }\n    std::cout << \"End\";\n}",
+          "answer": "5DelEnd",
+          "explanation": "- deleter lambda defined\n- ptr created with custom deleter\n- Prints \"5\" (*ptr)\n- Inner scope ends\n- ptr destroyed: calls custom deleter\n- Deleter prints \"Del\", then deletes\n- Outer scope: prints \"End\"\n- **Custom deleter:** Replaces default delete\n- **Use case:** Special cleanup (close file, unlock mutex)\n- **Type includes deleter type** (decltype(deleter))\n- **Key Concept:** unique_ptr supports custom deleters; useful for non-memory resources",
+          "key_concept": "unique_ptr supports custom deleters; useful for non-memory resources",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5DelEnd"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> p1 = std::make_unique<int>(10);\n    std::unique_ptr<int> p2;\n    \n    p2 = std::move(p1);\n    \n    if (!p1 && p2) {\n        std::cout << \"Transferred\";\n    }\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `Transferred`\n\n**Explanation:** Move leaves p1 null, p2 becomes valid\n\n**Key Concept:** #unique_ptr #move_semantics #bool_conversion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nTransferred\n```\n\n**Explanation:**\n- p1 owns int(10), p2 is null\n- p2 = std::move(p1): Ownership moved\n- After move: p1 is null, p2 owns int(10)\n- !p1: true (p1 is null)\n- p2: true (p2 is non-null)\n- Both conditions true: prints \"Transferred\"\n- **Boolean conversion:** null = false, non-null = true\n- **Idiomatic:** if (!ptr) checks for null\n- **Move assignment:** Transfers ownership\n- **Key Concept:** Boolean conversion checks null state; move assignment transfers ownership",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> p1 = std::make_unique<int>(10);\n    std::unique_ptr<int> p2;\n    \n    p2 = std::move(p1);\n    \n    if (!p1 && p2) {\n        std::cout << \"Transferred\";\n    }\n}",
+          "answer": "Transferred",
+          "explanation": "- p1 owns int(10), p2 is null\n- p2 = std::move(p1): Ownership moved\n- After move: p1 is null, p2 owns int(10)\n- !p1: true (p1 is null)\n- p2: true (p2 is non-null)\n- Both conditions true: prints \"Transferred\"\n- **Boolean conversion:** null = false, non-null = true\n- **Idiomatic:** if (!ptr) checks for null\n- **Move assignment:** Transfers ownership\n- **Key Concept:** Boolean conversion checks null state; move assignment transfers ownership",
+          "key_concept": "Boolean conversion checks null state; move assignment transfers ownership",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Transferred"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> sp1 = std::make_shared<int>(20);\n    std::shared_ptr<int> sp2(sp1);\n    \n    sp1.reset(new int(30));\n    \n    std::cout << *sp1 << \" \" << *sp2 << \" \" << sp1.use_count();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `30 20 1`\n\n**Explanation:** sp1 gets new object (count 1), sp2 still holds original (count 1)\n\n**Key Concept:** #shared_ptr #reset #reference_counting\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n30 20 1\n```\n\n**Explanation:**\n- sp1 owns int(20): use_count = 1\n- sp2(sp1): Shares ownership, use_count = 2\n- sp1.reset(new int(30)):\n  - Releases sp1's share of int(20)\n  - int(20) use_count: 2→1 (sp2 still owns)\n  - sp1 now owns new int(30): use_count = 1\n- sp1 points to 30, sp2 points to 20\n- sp1.use_count() = 1 (only owns int(30))\n- **reset(ptr):** Replaces with new object\n- **Separate objects:** sp1 and sp2 now independent\n- **Key Concept:** reset(new_ptr) replaces owned object; original object shared ownership unaffected",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::shared_ptr<int> sp1 = std::make_shared<int>(20);\n    std::shared_ptr<int> sp2(sp1);\n    \n    sp1.reset(new int(30));\n    \n    std::cout << *sp1 << \" \" << *sp2 << \" \" << sp1.use_count();\n}",
+          "answer": "30 20 1",
+          "explanation": "- sp1 owns int(20): use_count = 1\n- sp2(sp1): Shares ownership, use_count = 2\n- sp1.reset(new int(30)):\n  - Releases sp1's share of int(20)\n  - int(20) use_count: 2→1 (sp2 still owns)\n  - sp1 now owns new int(30): use_count = 1\n- sp1 points to 30, sp2 points to 20\n- sp1.use_count() = 1 (only owns int(30))\n- **reset(ptr):** Replaces with new object\n- **Separate objects:** sp1 and sp2 now independent\n- **Key Concept:** reset(new_ptr) replaces owned object; original object shared ownership unaffected",
+          "key_concept": "reset(new_ptr) replaces owned object; original object shared ownership unaffected",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "30 20 1"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> ptr = std::make_unique<int>(100);\n    int* raw = ptr.release();\n    \n    std::cout << (ptr == nullptr) << \" \" << *raw;\n    \n    delete raw;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** `1 100`\n\n**Explanation:** release() gives up ownership, returns raw pointer, caller must delete\n\n**Key Concept:** #unique_ptr #release #manual_deletion\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 100\n```\n\n**Explanation:**\n- ptr owns int(100)\n- raw = ptr.release():\n  - **release() gives up ownership**\n  - Returns raw pointer\n  - ptr becomes null\n  - **No destruction occurs**\n- ptr == nullptr: true, prints \"1 \"\n- *raw: prints \"100\"\n- delete raw: **Manual cleanup required**\n- **Dangerous:** Caller must remember to delete\n- **Use case:** Transferring ownership to legacy code\n- **Prefer:** std::move for unique_ptr-aware code\n- **Key Concept:** release() surrenders ownership without deletion; caller must manually delete\n\n---\n\n\n## TOPIC: Smart Pointers as RAII",
           "code": "#include <memory>\n#include <iostream>\n\nint main() {\n    std::unique_ptr<int> ptr = std::make_unique<int>(100);\n    int* raw = ptr.release();\n    \n    std::cout << (ptr == nullptr) << \" \" << *raw;\n    \n    delete raw;\n}",
+          "answer": "1 100",
+          "explanation": "- ptr owns int(100)\n- raw = ptr.release():\n  - **release() gives up ownership**\n  - Returns raw pointer\n  - ptr becomes null\n  - **No destruction occurs**\n- ptr == nullptr: true, prints \"1 \"\n- *raw: prints \"100\"\n- delete raw: **Manual cleanup required**\n- **Dangerous:** Caller must remember to delete\n- **Use case:** Transferring ownership to legacy code\n- **Prefer:** std::move for unique_ptr-aware code\n- **Key Concept:** release() surrenders ownership without deletion; caller must manually delete",
+          "key_concept": "release() surrenders ownership without deletion; caller must manually delete",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 100"
+          ]
         }
       ],
       "quick_reference": {

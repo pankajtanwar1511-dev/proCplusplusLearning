@@ -270,7 +270,12 @@ class MarkdownParser:
         return questions
 
     def _parse_practice_tasks(self, content: str) -> List[Dict[str, Any]]:
-        """Extract practice tasks - Accepts with or without subtitle."""
+        """Extract practice tasks - Accepts with or without subtitle.
+
+        Supports two formats:
+        1. Classic format: Description, code, expected output, solution
+        2. Bug analysis format: Code with bug, Answer, Explanation (with Key Concept), Fixed Version
+        """
         # Pattern accepts: ### PRACTICE_TASKS or ### PRACTICE_TASKS: Subtitle
         match = re.search(
             r'### PRACTICE_TASKS(?::[^\n]*)?\s*\n(.*?)(?=\n### [A-Z_]+|\Z)',
@@ -285,36 +290,107 @@ class MarkdownParser:
         tasks = []
 
         # STRICT PATTERN: #### QN (exactly 4 hashes, no colon)
-        task_pattern = r'####\s+Q(\d+)\s*\n(.*?)(?=\n####\s+Q|\Z)'
+        task_pattern = r'####\s+Q(\d+)\s*\n(.*?)(?=\n####\s+Q|\n---\n####\s+Q|\Z)'
 
         for task_match in re.finditer(task_pattern, practice_content, re.DOTALL):
             question_num = task_match.group(1)
             body = task_match.group(2).strip()
 
-            # First line is the task description
-            lines = body.split('\n', 1)
-            description = lines[0].strip()
-            rest_body = lines[1] if len(lines) > 1 else ""
+            # Remove trailing separator if present
+            body = re.sub(r'\n---\s*$', '', body)
 
-            # Extract code blocks
+            # Extract code blocks (all of them)
             code_blocks = re.findall(r'```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
 
-            # Extract expected output
-            output_match = re.search(r'(?:Output:|Expected output:|Answer:)\s*```?\s*(.+?)```?', body, re.DOTALL | re.IGNORECASE)
+            # Try to detect format by checking for **Answer:** pattern
+            answer_match = re.search(r'\*\*Answer:\*\*\s*(.*?)(?=\n\*\*|---|\Z)', body, re.DOTALL)
 
-            # Extract solution if provided
-            solution_match = re.search(r'\*\*Solution:\*\*\s*(.*?)(?=\n\*\*|\Z)', rest_body, re.DOTALL)
+            if answer_match:
+                # NEW BUG ANALYSIS FORMAT
+                # Extract Answer (usually in a code block or plain text)
+                answer_text = answer_match.group(1).strip()
+                # Clean up answer - remove code block markers if present
+                answer_clean = re.sub(r'```\s*', '', answer_text).strip()
 
-            tasks.append({
-                "question_number": int(question_num),
-                "title": f"Question {question_num}",
-                "description": description,
-                "full_content": body.strip(),
-                "code": code_blocks[0].strip() if code_blocks else "",
-                "expected_output": output_match.group(1).strip() if output_match else "",
-                "solution": solution_match.group(1).strip() if solution_match else "",
-                "additional_code": [code.strip() for code in code_blocks[1:]]
-            })
+                # Extract Explanation - everything from **Explanation:** until **Fixed Version:** or ---
+                explanation_match = re.search(
+                    r'\*\*Explanation:\*\*\s*\n(.*?)(?=\n\*\*Fixed Version:\*\*|\n---|\Z)',
+                    body,
+                    re.DOTALL
+                )
+                explanation = explanation_match.group(1).strip() if explanation_match else ""
+
+                # Extract Key Concept from within explanation
+                key_concept_match = re.search(r'-\s*\*\*Key Concept:\*\*\s*(.+?)(?=\n|$)', explanation, re.DOTALL)
+                key_concept = key_concept_match.group(1).strip() if key_concept_match else ""
+
+                # Extract Fixed Version (code block after **Fixed Version:**)
+                fixed_match = re.search(r'\*\*Fixed Version:\*\*\s*```(?:cpp|c\+\+)?\n(.*?)```', body, re.DOTALL)
+                fixed_code = fixed_match.group(1).strip() if fixed_match else ""
+
+                # Build description from everything before **Answer:** (excluding code blocks)
+                desc_match = re.search(r'^(.*?)(?=\*\*Answer:\*\*)', body, re.DOTALL)
+                description_raw = desc_match.group(1).strip() if desc_match else ""
+                # Remove code blocks from description to avoid duplication
+                description = re.sub(r'```(?:cpp|c\+\+)?\n.*?```', '', description_raw, flags=re.DOTALL).strip()
+
+                # Build full_content without the question code (since it's already in task.code)
+                # Remove the first code block from body to avoid duplication
+                full_content_no_question = body
+                if code_blocks:
+                    # Find and remove the first code block (handles newline before closing ```)
+                    first_code_pattern = r'```(?:cpp|c\+\+)?\n' + re.escape(code_blocks[0]) + r'\n?```'
+                    full_content_no_question = re.sub(first_code_pattern, '', body, count=1, flags=re.DOTALL).strip()
+
+                tasks.append({
+                    "question_number": int(question_num),
+                    "title": f"Question {question_num}",
+                    "description": description,
+                    "full_content": full_content_no_question,
+                    "code": code_blocks[0].strip() if code_blocks else "",
+                    "answer": answer_clean,
+                    "explanation": explanation,
+                    "key_concept": key_concept,
+                    "fixed_version": fixed_code,
+                    "expected_output": "",
+                    "solution": "",
+                    "additional_code": [code.strip() for code in code_blocks[1:] if code.strip() != fixed_code]
+                })
+            else:
+                # CLASSIC FORMAT: Description, code, output, solution
+                # First line is the task description
+                lines = body.split('\n', 1)
+                description = lines[0].strip()
+                rest_body = lines[1] if len(lines) > 1 else ""
+
+                # Extract expected output
+                output_match = re.search(r'(?:Output:|Expected output:)\s*```?\s*(.+?)```?', body, re.DOTALL | re.IGNORECASE)
+
+                # Extract solution if provided
+                solution_match = re.search(r'\*\*Solution:\*\*\s*(.*?)(?=\n\*\*|\Z)', rest_body, re.DOTALL)
+
+                # Build full_content without the question code (since it's already in task.code)
+                # Remove the first code block from body to avoid duplication
+                full_content_no_question = body
+                if code_blocks:
+                    # Find and remove the first code block (handles newline before closing ```)
+                    first_code_pattern = r'```(?:cpp|c\+\+)?\n' + re.escape(code_blocks[0]) + r'\n?```'
+                    full_content_no_question = re.sub(first_code_pattern, '', body, count=1, flags=re.DOTALL).strip()
+
+                tasks.append({
+                    "question_number": int(question_num),
+                    "title": f"Question {question_num}",
+                    "description": description,
+                    "full_content": full_content_no_question,
+                    "code": code_blocks[0].strip() if code_blocks else "",
+                    "expected_output": output_match.group(1).strip() if output_match else "",
+                    "solution": solution_match.group(1).strip() if solution_match else "",
+                    "additional_code": [code.strip() for code in code_blocks[1:]],
+                    "answer": "",
+                    "explanation": "",
+                    "key_concept": "",
+                    "fixed_version": ""
+                })
 
         return tasks
 
@@ -352,25 +428,129 @@ class MarkdownParser:
         tags = re.findall(r'#(\w+)', tag_string)
         return [tag.lower() for tag in tags]
 
+    def _find_topic_groups(self, chapter_dir: Path) -> List[Dict[str, Any]]:
+        """
+        Group topic files intelligently - handles both:
+        1. New structure: topic_X_theory.md, topic_X_practice.md, topic_X_qa.md (PREFERRED)
+        2. Old structure: topic_X.md (single file)
+
+        Priority: If both split files and single file exist for same topic, USE SPLIT FILES.
+        """
+        all_files = list(chapter_dir.glob("*.md"))
+        topic_groups = {}
+
+        # PASS 1: Process split files FIRST (they have priority)
+        for file in all_files:
+            # Skip backup files
+            if file.name.endswith('.backup'):
+                continue
+
+            # Check if this is a split file (contains _theory, _practice, or _qa)
+            if '_theory.md' in file.name or '_practice.md' in file.name or '_qa.md' in file.name:
+                # Extract base name (e.g., "topic_1" from "topic_1_theory.md")
+                base_name = file.stem.replace('_theory', '').replace('_practice', '').replace('_qa', '')
+
+                if base_name not in topic_groups:
+                    topic_groups[base_name] = {
+                        'base': base_name,
+                        'is_split': True,
+                        'theory': None,
+                        'practice': None,
+                        'qa': None
+                    }
+
+                if '_theory.md' in file.name:
+                    topic_groups[base_name]['theory'] = file
+                elif '_practice.md' in file.name:
+                    topic_groups[base_name]['practice'] = file
+                elif '_qa.md' in file.name:
+                    topic_groups[base_name]['qa'] = file
+
+        # PASS 2: Process single files ONLY if split files don't exist
+        for file in all_files:
+            # Skip backup files
+            if file.name.endswith('.backup'):
+                continue
+
+            # Skip if this is a split file (already processed in Pass 1)
+            if '_theory.md' in file.name or '_practice.md' in file.name or '_qa.md' in file.name:
+                continue
+
+            # Single file structure - ONLY add if split files don't exist
+            base_name = file.stem
+
+            # Don't add if split files already exist for this topic
+            if base_name not in topic_groups:
+                topic_groups[base_name] = {
+                    'base': base_name,
+                    'is_split': False,
+                    'single_file': file
+                }
+
+        return sorted(topic_groups.values(), key=lambda x: x['base'])
+
+    def _combine_split_files(self, theory_file: Path, practice_file: Path, qa_file: Path) -> str:
+        """Combine 3 separate MD files into single content for parsing."""
+        combined_content = ""
+
+        # Read and combine all three files
+        if theory_file and theory_file.exists():
+            with open(theory_file, 'r', encoding='utf-8') as f:
+                combined_content += f.read() + "\n\n"
+
+        if practice_file and practice_file.exists():
+            with open(practice_file, 'r', encoding='utf-8') as f:
+                combined_content += f.read() + "\n\n"
+
+        if qa_file and qa_file.exists():
+            with open(qa_file, 'r', encoding='utf-8') as f:
+                combined_content += f.read() + "\n\n"
+
+        return combined_content.strip()
+
     def process_chapter(self, chapter_dir: Path) -> Dict[str, Any]:
-        """Process all markdown files in a chapter directory."""
+        """Process all markdown files in a chapter directory - supports both split and single-file structures."""
         chapter_name = chapter_dir.name
         print(f"Processing {chapter_name}...")
 
-        topics = []
-        md_files = sorted(chapter_dir.glob("*.md"))
+        topic_groups = self._find_topic_groups(chapter_dir)
 
-        if not md_files:
+        if not topic_groups:
             print(f"  ⚠️  No markdown files found in {chapter_name}")
             return None
 
-        for md_file in md_files:
-            print(f"  📄 Parsing {md_file.name}...")
+        topics = []
+
+        for group in topic_groups:
+            base_name = group['base']
+
             try:
-                topic_data = self.parse_file(md_file)
-                topics.append(topic_data)
+                if group['is_split']:
+                    # New 3-file structure
+                    print(f"  📄 Parsing {base_name} (split structure: theory + practice + qa)...")
+
+                    # Combine the 3 files
+                    combined_content = self._combine_split_files(
+                        group.get('theory'),
+                        group.get('practice'),
+                        group.get('qa')
+                    )
+
+                    # Parse the combined content
+                    # Create a temporary filepath for identification
+                    temp_filepath = chapter_dir / f"{base_name}.md"
+                    topic_data = self._parse_combined_content(combined_content, base_name)
+                    topics.append(topic_data)
+
+                else:
+                    # Old single-file structure
+                    md_file = group['single_file']
+                    print(f"  📄 Parsing {md_file.name} (single file)...")
+                    topic_data = self.parse_file(md_file)
+                    topics.append(topic_data)
+
             except Exception as e:
-                print(f"  ❌ Error parsing {md_file.name}: {e}")
+                print(f"  ❌ Error parsing {base_name}: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
@@ -390,6 +570,40 @@ class MarkdownParser:
         print(f"  ✅ Saved to {output_file} ({len(topics)} topics)\n")
 
         return chapter_data
+
+    def _parse_combined_content(self, content: str, base_name: str) -> Dict[str, Any]:
+        """Parse combined content from 3 separate files."""
+        self.warnings = []
+
+        # Extract topic name from content
+        topic_match = re.search(r'^##?\s*TOPIC:\s*(.+)$', content, re.MULTILINE)
+        if topic_match:
+            topic_name = topic_match.group(1).strip()
+        else:
+            topic_match = re.search(r'^#\s+Topic\s+[\d.]+:\s+(.+)$', content, re.MULTILINE)
+            topic_name = topic_match.group(1).strip() if topic_match else base_name
+
+        # Validate and parse sections
+        self._validate_section_headers(content, f"{base_name} (combined)")
+
+        sections = {
+            "topic": topic_name,
+            "filename": f"{base_name}.md",
+            "theory": self._parse_theory_section(content),
+            "edge_cases": self._parse_edge_cases(content),
+            "code_examples": self._parse_code_examples(content),
+            "interview_qa": self._parse_interview_qa(content),
+            "practice_tasks": self._parse_practice_tasks(content),
+            "quick_reference": self._parse_quick_reference(content)
+        }
+
+        # Print warnings if any
+        if self.warnings:
+            print(f"  ⚠️  Pattern warnings in {base_name}:")
+            for warning in self.warnings:
+                print(f"      {warning}")
+
+        return sections
 
     def _extract_chapter_number(self, chapter_name: str) -> int:
         """Extract chapter number from directory name."""

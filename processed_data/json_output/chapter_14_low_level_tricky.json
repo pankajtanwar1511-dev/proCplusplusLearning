@@ -581,206 +581,326 @@
         {
           "question_number": 1,
           "title": "Question 1",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    int x = 1;\n    virtual void foo() { std::cout << \"A::foo\\n\"; }\n};\nstruct B : A {\n    int y = 2;\n    void foo() override { std::cout << \"B::foo\\n\"; }\n};\nint main() {\n    B b;\n    A a = b;\n    a.foo();\n    std::cout << a.x;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** A::foo<br>1\n\n**Explanation:** Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo.\n\n**Key Concept:** #object_slicing #virtual_functions\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nA::foo\n1\n```\n\n**Explanation:**\n- Object slicing occurs when assigning `B b` to `A a` by value\n- Only the Base (A) part of b is copied; derived member `y` and vptr to B's vtable are lost\n- `a` is a complete A object (not a B), so `a.foo()` calls A::foo (no polymorphism)\n- `a.x` = 1 (copied from b.x which was initialized to 1)\n- **Key Concept:** Value assignment slices derived objects; polymorphism requires pointers/references",
           "code": "#include <iostream>\nstruct A {\n    int x = 1;\n    virtual void foo() { std::cout << \"A::foo\\n\"; }\n};\nstruct B : A {\n    int y = 2;\n    void foo() override { std::cout << \"B::foo\\n\"; }\n};\nint main() {\n    B b;\n    A a = b;\n    a.foo();\n    std::cout << a.x;\n}",
+          "answer": "A::foo\n1",
+          "explanation": "- Object slicing occurs when assigning `B b` to `A a` by value\n- Only the Base (A) part of b is copied; derived member `y` and vptr to B's vtable are lost\n- `a` is a complete A object (not a B), so `a.foo()` calls A::foo (no polymorphism)\n- `a.x` = 1 (copied from b.x which was initialized to 1)\n- **Key Concept:** Value assignment slices derived objects; polymorphism requires pointers/references",
+          "key_concept": "Value assignment slices derived objects; polymorphism requires pointers/references",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "A::foo\n1"
+          ]
         },
         {
           "question_number": 2,
           "title": "Question 2",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    char a;\n    int b;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 12\n\n**Explanation:** Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment.\n\n**Key Concept:** #padding #alignment\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n12\n```\n\n**Explanation:**\n- Struct layout with padding for alignment:\n  - `char a` (1 byte) + 3 padding bytes\n  - `int b` (4 bytes, needs 4-byte alignment)\n  - `char c` (1 byte) + 3 padding bytes\n- Total: 1 + 3 + 4 + 1 + 3 = 12 bytes\n- **Key Concept:** Struct padding ensures proper alignment; reordering members can reduce size",
           "code": "#include <iostream>\nstruct S {\n    char a;\n    int b;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
+          "answer": "12",
+          "explanation": "- Struct layout with padding for alignment:\n  - `char a` (1 byte) + 3 padding bytes\n  - `int b` (4 bytes, needs 4-byte alignment)\n  - `char c` (1 byte) + 3 padding bytes\n- Total: 1 + 3 + 4 + 1 + 3 = 12 bytes\n- **Key Concept:** Struct padding ensures proper alignment; reordering members can reduce size",
+          "key_concept": "Struct padding ensures proper alignment; reordering members can reduce size",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "12"
+          ]
         },
         {
           "question_number": 3,
           "title": "Question 3",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <string>\nconst std::string& foo() {\n    std::string s = \"hello\";\n    return s;\n}\nint main() {\n    const std::string& r = foo();\n    std::cout << r;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior (likely crash or garbage)\n\n**Explanation:** `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB.\n\n**Key Concept:** #dangling_reference #lifetime\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (likely crash or garbage)\n```\n\n**Explanation:**\n- Local variable `s` destroyed when `foo()` returns\n- Returning reference to local variable creates dangling reference\n- `r` references destroyed object (memory may be reused or unmapped)\n- Accessing `r` is undefined behavior - may crash, print garbage, or appear to work\n- **Key Concept:** Never return references to local variables; lifetimes don't extend beyond function scope",
           "code": "#include <iostream>\n#include <string>\nconst std::string& foo() {\n    std::string s = \"hello\";\n    return s;\n}\nint main() {\n    const std::string& r = foo();\n    std::cout << r;\n}",
+          "answer": "Undefined behavior (likely crash or garbage)",
+          "explanation": "- Local variable `s` destroyed when `foo()` returns\n- Returning reference to local variable creates dangling reference\n- `r` references destroyed object (memory may be reused or unmapped)\n- Accessing `r` is undefined behavior - may crash, print garbage, or appear to work\n- **Key Concept:** Never return references to local variables; lifetimes don't extend beyond function scope",
+          "key_concept": "Never return references to local variables; lifetimes don't extend beyond function scope",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (likely crash or garbage)"
+          ]
         },
         {
           "question_number": 4,
           "title": "Question 4",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    int val = 10;\n    void set(int v) const { val = v; }\n};\nint main() {\n    const A a;\n    a.set(20);\n    std::cout << a.val;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error.\n\n**Key Concept:** #const_correctness #const_member_function\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation Error\n```\n\n**Explanation:**\n- `set()` is declared const but attempts to modify member `val`\n- Const member functions promise not to modify object state\n- `val` needs `mutable` qualifier to allow modification in const functions\n- Compiler error: \"cannot assign to non-mutable member in const function\"\n- **Key Concept:** Const member functions cannot modify non-mutable members; enforced at compile time",
           "code": "#include <iostream>\nstruct A {\n    int val = 10;\n    void set(int v) const { val = v; }\n};\nint main() {\n    const A a;\n    a.set(20);\n    std::cout << a.val;\n}",
+          "answer": "Compilation Error",
+          "explanation": "- `set()` is declared const but attempts to modify member `val`\n- Const member functions promise not to modify object state\n- `val` needs `mutable` qualifier to allow modification in const functions\n- Compiler error: \"cannot assign to non-mutable member in const function\"\n- **Key Concept:** Const member functions cannot modify non-mutable members; enforced at compile time",
+          "key_concept": "Const member functions cannot modify non-mutable members; enforced at compile time",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation Error"
+          ]
         },
         {
           "question_number": 5,
           "title": "Question 5",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct B {\n    int* p;\n    B(int v) : p(new int(v)) {}\n    ~B() { delete p; }\n};\nint main() {\n    B b1(5);\n    B b2 = b1;\n    std::cout << *b2.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 5 (but double delete crash at end)\n\n**Explanation:** Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash.\n\n**Key Concept:** #shallow_copy #double_delete\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n5 (but double delete crash at end)\n```\n\n**Explanation:**\n- Default copy constructor performs shallow copy: b2.p = b1.p (same pointer)\n- Prints 5 successfully\n- When destructors run: b2 destructor deletes memory, then b1 destructor tries to delete same memory\n- Double delete causes crash (undefined behavior)\n- **Key Concept:** Shallow copy with heap-allocated members causes double delete; need custom copy constructor",
           "code": "#include <iostream>\nstruct B {\n    int* p;\n    B(int v) : p(new int(v)) {}\n    ~B() { delete p; }\n};\nint main() {\n    B b1(5);\n    B b2 = b1;\n    std::cout << *b2.p;\n}",
+          "answer": "5 (but double delete crash at end)",
+          "explanation": "- Default copy constructor performs shallow copy: b2.p = b1.p (same pointer)\n- Prints 5 successfully\n- When destructors run: b2 destructor deletes memory, then b1 destructor tries to delete same memory\n- Double delete causes crash (undefined behavior)\n- **Key Concept:** Shallow copy with heap-allocated members causes double delete; need custom copy constructor",
+          "key_concept": "Shallow copy with heap-allocated members causes double delete; need custom copy constructor",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "5 (but double delete crash at end)"
+          ]
         },
         {
           "question_number": 6,
           "title": "Question 6",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct VBase { int v; };\nstruct A : virtual VBase { int a; };\nstruct B : virtual VBase { int b; };\nstruct C : A, B { int c; };\nint main() {\n    std::cout << sizeof(C);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 24-32 (platform dependent)\n\n**Explanation:** Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes.\n\n**Key Concept:** #virtual_inheritance #memory_layout\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n24-32 (platform dependent)\n```\n\n**Explanation:**\n- Virtual inheritance adds virtual base table pointers (vbptr) to A and B\n- Typical 64-bit layout: vbptr(8) + a(4) + padding(4) + vbptr(8) + b(4) + c(4) + v(4) + padding ≈ 32 bytes\n- Exact size varies by compiler implementation and platform\n- VBase shared: only one copy of v despite multiple inheritance paths\n- **Key Concept:** Virtual inheritance has overhead (vbptrs) but solves diamond problem by sharing base",
           "code": "#include <iostream>\nstruct VBase { int v; };\nstruct A : virtual VBase { int a; };\nstruct B : virtual VBase { int b; };\nstruct C : A, B { int c; };\nint main() {\n    std::cout << sizeof(C);\n}",
+          "answer": "24-32 (platform dependent)",
+          "explanation": "- Virtual inheritance adds virtual base table pointers (vbptr) to A and B\n- Typical 64-bit layout: vbptr(8) + a(4) + padding(4) + vbptr(8) + b(4) + c(4) + v(4) + padding ≈ 32 bytes\n- Exact size varies by compiler implementation and platform\n- VBase shared: only one copy of v despite multiple inheritance paths\n- **Key Concept:** Virtual inheritance has overhead (vbptrs) but solves diamond problem by sharing base",
+          "key_concept": "Virtual inheritance has overhead (vbptrs) but solves diamond problem by sharing base",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "24-32 (platform dependent)"
+          ]
         },
         {
           "question_number": 7,
           "title": "Question 7",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    Base() { foo(); }\n    virtual void foo() { std::cout << \"Base\\n\"; }\n};\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived\\n\"; }\n};\nint main() {\n    Derived d;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Base\n\n**Explanation:** During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members.\n\n**Key Concept:** #constructor #virtual_functions #vptr\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nBase\n```\n\n**Explanation:**\n- During Base's constructor, vptr still points to Base's vtable (Derived part not yet constructed)\n- `foo()` resolves to Base::foo to prevent accessing uninitialized Derived members\n- After Base constructor completes, vptr updated to Derived's vtable\n- Construction order safety: base before derived\n- **Key Concept:** Virtual functions called in constructors resolve to current class, not most derived",
           "code": "#include <iostream>\nstruct Base {\n    Base() { foo(); }\n    virtual void foo() { std::cout << \"Base\\n\"; }\n};\nstruct Derived : Base {\n    void foo() override { std::cout << \"Derived\\n\"; }\n};\nint main() {\n    Derived d;\n}",
+          "answer": "Base",
+          "explanation": "- During Base's constructor, vptr still points to Base's vtable (Derived part not yet constructed)\n- `foo()` resolves to Base::foo to prevent accessing uninitialized Derived members\n- After Base constructor completes, vptr updated to Derived's vtable\n- Construction order safety: base before derived\n- **Key Concept:** Virtual functions called in constructors resolve to current class, not most derived",
+          "key_concept": "Virtual functions called in constructors resolve to current class, not most derived",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Base"
+          ]
         },
         {
           "question_number": 8,
           "title": "Question 8",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    int b;\n    char a;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 8\n\n**Explanation:** Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes.\n\n**Key Concept:** #padding #memory_optimization\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n8\n```\n\n**Explanation:**\n- Optimized layout by reordering members:\n  - `int b` (4 bytes)\n  - `char a` (1 byte)\n  - `char c` (1 byte)\n  - 2 padding bytes\n- Total: 4 + 1 + 1 + 2 = 8 bytes (better than Q2's 12 bytes)\n- **Key Concept:** Member declaration order affects padding; group small members together to reduce struct size",
           "code": "#include <iostream>\nstruct S {\n    int b;\n    char a;\n    char c;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
+          "answer": "8",
+          "explanation": "- Optimized layout by reordering members:\n  - `int b` (4 bytes)\n  - `char a` (1 byte)\n  - `char c` (1 byte)\n  - 2 padding bytes\n- Total: 4 + 1 + 1 + 2 = 8 bytes (better than Q2's 12 bytes)\n- **Key Concept:** Member declaration order affects padding; group small members together to reduce struct size",
+          "key_concept": "Member declaration order affects padding; group small members together to reduce struct size",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "8"
+          ]
         },
         {
           "question_number": 9,
           "title": "Question 9",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nvoid test() {\n    const int& r = 42;\n    std::cout << r;\n}\nint main() {\n    test();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 42\n\n**Explanation:** Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function.\n\n**Key Concept:** #lifetime_extension #const_reference\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n42\n```\n\n**Explanation:**\n- Temporary literal `42` created\n- Binding const reference to temporary extends temporary's lifetime to reference's scope\n- `r` valid throughout `test()` function - temporary destroyed when r goes out of scope\n- Prints 42 safely\n- **Key Concept:** Const references extend lifetime of temporaries they bind to; safe pattern for initialization",
           "code": "#include <iostream>\nvoid test() {\n    const int& r = 42;\n    std::cout << r;\n}\nint main() {\n    test();\n}",
+          "answer": "42",
+          "explanation": "- Temporary literal `42` created\n- Binding const reference to temporary extends temporary's lifetime to reference's scope\n- `r` valid throughout `test()` function - temporary destroyed when r goes out of scope\n- Prints 42 safely\n- **Key Concept:** Const references extend lifetime of temporaries they bind to; safe pattern for initialization",
+          "key_concept": "Const references extend lifetime of temporaries they bind to; safe pattern for initialization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "42"
+          ]
         },
         {
           "question_number": 10,
           "title": "Question 10",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    mutable int cache = 0;\n    int get() const {\n        cache = 100;\n        return cache;\n    }\n};\nint main() {\n    const A a;\n    std::cout << a.get();\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 100\n\n**Explanation:** `mutable` allows modifying `cache` in const function. Prints 100.\n\n**Key Concept:** #mutable #const_correctness\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n100\n```\n\n**Explanation:**\n- `mutable` keyword allows modification of `cache` even in const member functions\n- Useful for caching, lazy initialization, internal state that doesn't affect logical constness\n- `cache` set to 100 and returned, prints 100\n- No violation of const correctness - `mutable` explicitly marks exceptions\n- **Key Concept:** mutable allows specific members to be modified in const contexts; useful for implementation details",
           "code": "#include <iostream>\nstruct A {\n    mutable int cache = 0;\n    int get() const {\n        cache = 100;\n        return cache;\n    }\n};\nint main() {\n    const A a;\n    std::cout << a.get();\n}",
+          "answer": "100",
+          "explanation": "- `mutable` keyword allows modification of `cache` even in const member functions\n- Useful for caching, lazy initialization, internal state that doesn't affect logical constness\n- `cache` set to 100 and returned, prints 100\n- No violation of const correctness - `mutable` explicitly marks exceptions\n- **Key Concept:** mutable allows specific members to be modified in const contexts; useful for implementation details",
+          "key_concept": "mutable allows specific members to be modified in const contexts; useful for implementation details",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "100"
+          ]
         },
         {
           "question_number": 11,
           "title": "Question 11",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    int* p = nullptr;\n    *p = 5;\n    std::cout << *p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Undefined behavior (likely segfault)\n\n**Explanation:** Dereferencing null pointer is UB, typically causes segmentation fault crash.\n\n**Key Concept:** #null_pointer #undefined_behavior\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nUndefined behavior (likely segmentation fault)\n```\n\n**Explanation:**\n- Dereferencing null pointer is undefined behavior\n- `*p = 5` attempts to write to address 0 (protected memory)\n- Operating system typically generates segmentation fault (SIGSEGV)\n- Program crashes before reaching cout statement\n- **Key Concept:** Null pointer dereference is UB; always check pointers before dereferencing",
           "code": "#include <iostream>\nint main() {\n    int* p = nullptr;\n    *p = 5;\n    std::cout << *p;\n}",
+          "answer": "Undefined behavior (likely segmentation fault)",
+          "explanation": "- Dereferencing null pointer is undefined behavior\n- `*p = 5` attempts to write to address 0 (protected memory)\n- Operating system typically generates segmentation fault (SIGSEGV)\n- Program crashes before reaching cout statement\n- **Key Concept:** Null pointer dereference is UB; always check pointers before dereferencing",
+          "key_concept": "Null pointer dereference is UB; always check pointers before dereferencing",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Undefined behavior (likely segmentation fault)"
+          ]
         },
         {
           "question_number": 12,
           "title": "Question 12",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    unsigned int u = 4294967295u;\n    u = u + 1;\n    std::cout << u;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 0\n\n**Explanation:** Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior.\n\n**Key Concept:** #unsigned_overflow #wrapping\n\n</details>\n\n---",
-          "code": "#include <iostream>\nint main() {\n    unsigned int u = 4294967295u;\n    u = u + 1;\n    std::cout << u;\n}",
+          "description": "",
+          "full_content": "**Answer:**\n```\n0\n```\n\n**Explanation:**\n- Unsigned integer overflow is well-defined behavior (wraps around modulo 2^32)\n- UINT_MAX (4294967295) + 1 = 0 (wraps to 0)\n- Unlike signed overflow (UB), unsigned overflow follows modular arithmetic rules\n- Result: 0\n- **Key Concept:** Unsigned overflow wraps around (well-defined); signed overflow is undefined behavior",
+          "code": "#include <iostream>\nint main() {\n    unsigned int u = 4294967295u;  // UINT_MAX\n    u = u + 1;\n    std::cout << u;\n}",
+          "answer": "0",
+          "explanation": "- Unsigned integer overflow is well-defined behavior (wraps around modulo 2^32)\n- UINT_MAX (4294967295) + 1 = 0 (wraps to 0)\n- Unlike signed overflow (UB), unsigned overflow follows modular arithmetic rules\n- Result: 0\n- **Key Concept:** Unsigned overflow wraps around (well-defined); signed overflow is undefined behavior",
+          "key_concept": "Unsigned overflow wraps around (well-defined); signed overflow is undefined behavior",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "0"
+          ]
         },
         {
           "question_number": 13,
           "title": "Question 13",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    virtual ~Base() = default;\n    int x = 1;\n};\nstruct Derived : Base {\n    int y = 2;\n};\nint main() {\n    Derived* d = new Derived();\n    Base* b = d;\n    delete b;\n    std::cout << \"OK\";\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** OK\n\n**Explanation:** Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs.\n\n**Key Concept:** #virtual_destructor #polymorphism\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nOK\n```\n\n**Explanation:**\n- Virtual destructor ensures correct cleanup when deleting through base pointer\n- `delete b` calls Derived's destructor, then Base's destructor (proper chain)\n- Without virtual destructor, only Base destructor would run (resource leak if Derived had resources)\n- Prints \"OK\" after proper cleanup\n- **Key Concept:** Virtual destructor essential for polymorphic deletion; ensures derived destructors called",
           "code": "#include <iostream>\nstruct Base {\n    virtual ~Base() = default;\n    int x = 1;\n};\nstruct Derived : Base {\n    int y = 2;\n};\nint main() {\n    Derived* d = new Derived();\n    Base* b = d;\n    delete b;\n    std::cout << \"OK\";\n}",
+          "answer": "OK",
+          "explanation": "- Virtual destructor ensures correct cleanup when deleting through base pointer\n- `delete b` calls Derived's destructor, then Base's destructor (proper chain)\n- Without virtual destructor, only Base destructor would run (resource leak if Derived had resources)\n- Prints \"OK\" after proper cleanup\n- **Key Concept:** Virtual destructor essential for polymorphic deletion; ensures derived destructors called",
+          "key_concept": "Virtual destructor essential for polymorphic deletion; ensures derived destructors called",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "OK"
+          ]
         },
         {
           "question_number": 14,
           "title": "Question 14",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct S {\n    char a;\n    double d;\n    char b;\n};\nint main() {\n    std::cout << sizeof(S);\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 24\n\n**Explanation:** Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes.\n\n**Key Concept:** #alignment #padding\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n24\n```\n\n**Explanation:**\n- Struct layout with double's strict alignment requirement:\n  - `char a` (1 byte) + 7 padding bytes\n  - `double d` (8 bytes, needs 8-byte alignment)\n  - `char b` (1 byte) + 7 padding bytes\n- Total: 1 + 7 + 8 + 1 + 7 = 24 bytes\n- **Key Concept:** Larger types (double, long) require stricter alignment; causes more padding",
           "code": "#include <iostream>\nstruct S {\n    char a;\n    double d;\n    char b;\n};\nint main() {\n    std::cout << sizeof(S);\n}",
+          "answer": "24",
+          "explanation": "- Struct layout with double's strict alignment requirement:\n  - `char a` (1 byte) + 7 padding bytes\n  - `double d` (8 bytes, needs 8-byte alignment)\n  - `char b` (1 byte) + 7 padding bytes\n- Total: 1 + 7 + 8 + 1 + 7 = 24 bytes\n- **Key Concept:** Larger types (double, long) require stricter alignment; causes more padding",
+          "key_concept": "Larger types (double, long) require stricter alignment; causes more padding",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "24"
+          ]
         },
         {
           "question_number": 15,
           "title": "Question 15",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <memory>\nstruct A {\n    std::unique_ptr<int> p;\n    A(int v) : p(std::make_unique<int>(v)) {}\n};\nint main() {\n    A a1(10);\n    A a2 = std::move(a1);\n    std::cout << *a2.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 10\n\n**Explanation:** `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely.\n\n**Key Concept:** #unique_ptr #move_semantics\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n10\n```\n\n**Explanation:**\n- `unique_ptr` is move-only (non-copyable)\n- `std::move(a1)` transfers ownership: a1.p set to nullptr, a2.p receives pointer\n- a2.p points to int with value 10, prints 10\n- a1.p now nullptr (accessing it would crash, but we don't)\n- **Key Concept:** unique_ptr ownership transfer via move semantics; source pointer becomes null",
           "code": "#include <iostream>\n#include <memory>\nstruct A {\n    std::unique_ptr<int> p;\n    A(int v) : p(std::make_unique<int>(v)) {}\n};\nint main() {\n    A a1(10);\n    A a2 = std::move(a1);\n    std::cout << *a2.p;\n}",
+          "answer": "10",
+          "explanation": "- `unique_ptr` is move-only (non-copyable)\n- `std::move(a1)` transfers ownership: a1.p set to nullptr, a2.p receives pointer\n- a2.p points to int with value 10, prints 10\n- a1.p now nullptr (accessing it would crash, but we don't)\n- **Key Concept:** unique_ptr ownership transfer via move semantics; source pointer becomes null",
+          "key_concept": "unique_ptr ownership transfer via move semantics; source pointer becomes null",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "10"
+          ]
         },
         {
           "question_number": 16,
           "title": "Question 16",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct VBase {\n    VBase() { std::cout << \"VBase \"; }\n};\nstruct A : virtual VBase {\n    A() { std::cout << \"A \"; }\n};\nstruct B : virtual VBase {\n    B() { std::cout << \"B \"; }\n};\nstruct C : A, B {\n    C() { std::cout << \"C\"; }\n};\nint main() {\n    C c;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** VBase A B C\n\n**Explanation:** Virtual base VBase is constructed once by most derived class C, then A, then B, then C.\n\n**Key Concept:** #virtual_inheritance #constructor_order\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nVBase A B C\n```\n\n**Explanation:**\n- Virtual inheritance: most derived class (C) constructs virtual base first\n- Construction order: VBase (constructed once by C), then A, then B, then C\n- Normal multiple inheritance would construct VBase twice (once via A, once via B)\n- Virtual inheritance ensures single VBase instance shared by A and B\n- **Key Concept:** Virtual base constructed first by most derived class; solves diamond duplication",
           "code": "#include <iostream>\nstruct VBase {\n    VBase() { std::cout << \"VBase \"; }\n};\nstruct A : virtual VBase {\n    A() { std::cout << \"A \"; }\n};\nstruct B : virtual VBase {\n    B() { std::cout << \"B \"; }\n};\nstruct C : A, B {\n    C() { std::cout << \"C\"; }\n};\nint main() {\n    C c;\n}",
+          "answer": "VBase A B C",
+          "explanation": "- Virtual inheritance: most derived class (C) constructs virtual base first\n- Construction order: VBase (constructed once by C), then A, then B, then C\n- Normal multiple inheritance would construct VBase twice (once via A, once via B)\n- Virtual inheritance ensures single VBase instance shared by A and B\n- **Key Concept:** Virtual base constructed first by most derived class; solves diamond duplication",
+          "key_concept": "Virtual base constructed first by most derived class; solves diamond duplication",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "VBase A B C"
+          ]
         },
         {
           "question_number": 17,
           "title": "Question 17",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nint main() {\n    alignas(16) char x = 'A';\n    std::cout << sizeof(x) << \" \" << alignof(decltype(x));\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** 1 16\n\n**Explanation:** `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas).\n\n**Key Concept:** #alignas #alignment\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\n1 16\n```\n\n**Explanation:**\n- `sizeof(char)` always 1 byte (size unchanged)\n- `alignas(16)` changes alignment requirement to 16 bytes\n- `alignof(decltype(x))` reports 16 (alignment, not size)\n- `x` stored at 16-byte aligned address, but still occupies 1 byte\n- **Key Concept:** alignas changes alignment requirement without changing size; useful for SIMD/cache optimization",
           "code": "#include <iostream>\nint main() {\n    alignas(16) char x = 'A';\n    std::cout << sizeof(x) << \" \" << alignof(decltype(x));\n}",
+          "answer": "1 16",
+          "explanation": "- `sizeof(char)` always 1 byte (size unchanged)\n- `alignas(16)` changes alignment requirement to 16 bytes\n- `alignof(decltype(x))` reports 16 (alignment, not size)\n- `x` stored at 16-byte aligned address, but still occupies 1 byte\n- **Key Concept:** alignas changes alignment requirement without changing size; useful for SIMD/cache optimization",
+          "key_concept": "alignas changes alignment requirement without changing size; useful for SIMD/cache optimization",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "1 16"
+          ]
         },
         {
           "question_number": 18,
           "title": "Question 18",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct A {\n    const int* p;\n    A(int v) : p(new int(v)) {}\n    void set(int v) const {\n        *p = v;\n    }\n};\nint main() {\n    const A a(10);\n    a.set(20);\n    std::cout << *a.p;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error\n\n**Explanation:** `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const.\n\n**Key Concept:** #const_pointer #const_correctness\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation Error\n```\n\n**Explanation:**\n- `p` is `const int*` (pointer to const int), not `int* const` (const pointer to int)\n- `const int*` means the pointed-to int is const, cannot be modified\n- `*p = v` attempts to modify const data - compilation error\n- Even though function is const, cannot modify const-qualified pointed-to data\n- **Key Concept:** const int* means pointed-to data is const; different from mutable pointer",
           "code": "#include <iostream>\nstruct A {\n    const int* p;\n    A(int v) : p(new int(v)) {}\n    void set(int v) const {\n        *p = v;\n    }\n};\nint main() {\n    const A a(10);\n    a.set(20);\n    std::cout << *a.p;\n}",
+          "answer": "Compilation Error",
+          "explanation": "- `p` is `const int*` (pointer to const int), not `int* const` (const pointer to int)\n- `const int*` means the pointed-to int is const, cannot be modified\n- `*p = v` attempts to modify const data - compilation error\n- Even though function is const, cannot modify const-qualified pointed-to data\n- **Key Concept:** const int* means pointed-to data is const; different from mutable pointer",
+          "key_concept": "const int* means pointed-to data is const; different from mutable pointer",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation Error"
+          ]
         },
         {
           "question_number": 19,
           "title": "Question 19",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\nstruct Base {\n    int x;\n    virtual void foo() {}\n};\nstruct D1 : Base {};\nstruct D2 : Base {};\nstruct Final : D1, D2 {};\nint main() {\n    Final f;\n    f.x = 10;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** Compilation error (ambiguous)\n\n**Explanation:** Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve.\n\n**Key Concept:** #diamond_problem #ambiguity\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\nCompilation Error (ambiguous)\n```\n\n**Explanation:**\n- Diamond problem without virtual inheritance\n- Final inherits from D1 and D2, each inheriting from Base\n- Final has TWO copies of Base (D1::Base and D2::Base)\n- `f.x` is ambiguous: D1::Base::x or D2::Base::x?\n- **Key Concept:** Diamond inheritance without virtual creates ambiguity; need virtual inheritance or explicit scope",
           "code": "#include <iostream>\nstruct Base {\n    int x;\n    virtual void foo() {}\n};\nstruct D1 : Base {};\nstruct D2 : Base {};\nstruct Final : D1, D2 {};\nint main() {\n    Final f;\n    f.x = 10;\n}",
+          "answer": "Compilation Error (ambiguous)",
+          "explanation": "- Diamond problem without virtual inheritance\n- Final inherits from D1 and D2, each inheriting from Base\n- Final has TWO copies of Base (D1::Base and D2::Base)\n- `f.x` is ambiguous: D1::Base::x or D2::Base::x?\n- **Key Concept:** Diamond inheritance without virtual creates ambiguity; need virtual inheritance or explicit scope",
+          "key_concept": "Diamond inheritance without virtual creates ambiguity; need virtual inheritance or explicit scope",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "Compilation Error (ambiguous)"
+          ]
         },
         {
           "question_number": 20,
           "title": "Question 20",
-          "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n#include <string>\nint main() {\n    std::string s1 = \"test\";\n    std::string s2 = s1;\n    s2[0] = 'b';\n    std::cout << s1 << \" \" << s2;\n}\n```\n\n<details>\n<summary><b>Show Answer</b></summary>\n\n**Answer:** test best\n\n**Explanation:** `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`.\n\n**Key Concept:** #deep_copy #std_string\n\n</details>\n\n---",
+          "description": "",
+          "full_content": "**Answer:**\n```\ntest best\n```\n\n**Explanation:**\n- `std::string` has proper copy constructor performing deep copy\n- s2 gets its own copy of the string data (separate heap allocation)\n- Modifying s2[0] doesn't affect s1 (independent strings)\n- Prints: \"test best\"\n- **Key Concept:** std::string implements Rule of Three/Five correctly; deep copy prevents shared state issues\n\n---\n\n\n## TOPIC: C++ Low-Level Internals and Common Pitfalls",
           "code": "#include <iostream>\n#include <string>\nint main() {\n    std::string s1 = \"test\";\n    std::string s2 = s1;\n    s2[0] = 'b';\n    std::cout << s1 << \" \" << s2;\n}",
+          "answer": "test best",
+          "explanation": "- `std::string` has proper copy constructor performing deep copy\n- s2 gets its own copy of the string data (separate heap allocation)\n- Modifying s2[0] doesn't affect s1 (independent strings)\n- Prints: \"test best\"\n- **Key Concept:** std::string implements Rule of Three/Five correctly; deep copy prevents shared state issues",
+          "key_concept": "std::string implements Rule of Three/Five correctly; deep copy prevents shared state issues",
+          "fixed_version": "",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [
+            "test best"
+          ]
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | A::foo<br>1 | Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo. | #object_slicing #virtual_functions |\n| 2 | 12 | Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment. | #padding #alignment |\n| 3 | Undefined behavior (likely crash or garbage) | `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB. | #dangling_reference #lifetime |\n| 4 | Compilation error | Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error. | #const_correctness #const_member_function |\n| 5 | 5 (but double delete crash at end) | Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash. | #shallow_copy #double_delete |\n| 6 | 24-32 (platform dependent) | Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes. | #virtual_inheritance #memory_layout |\n| 7 | Base | During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members. | #constructor #virtual_functions #vptr |\n| 8 | 8 | Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes. | #padding #memory_optimization |\n| 9 | 42 | Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function. | #lifetime_extension #const_reference |\n| 10 | 100 | `mutable` allows modifying `cache` in const function. Prints 100. | #mutable #const_correctness |\n| 11 | Undefined behavior (likely segfault) | Dereferencing null pointer is UB, typically causes segmentation fault crash. | #null_pointer #undefined_behavior |\n| 12 | 0 | Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior. | #unsigned_overflow #wrapping |\n| 13 | OK | Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs. | #virtual_destructor #polymorphism |\n| 14 | 24 | Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes. | #alignment #padding |\n| 15 | 10 | `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely. | #unique_ptr #move_semantics |\n| 16 | VBase A B C | Virtual base VBase is constructed once by most derived class C, then A, then B, then C. | #virtual_inheritance #constructor_order |\n| 17 | 1 16 | `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas). | #alignas #alignment |\n| 18 | Compilation error | `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const. | #const_pointer #const_correctness |\n| 19 | Compilation error (ambiguous) | Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve. | #diamond_problem #ambiguity |\n| 20 | test best | `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`. | #deep_copy #std_string |\n\n#### Memory Layout Comparison Table\n\n| Scenario | Size (typical) | Contains | Notes |\n|----------|----------------|----------|-------|\n| Plain struct | 4 | int only | No overhead |\n| Struct with virtual function | 16 | vptr + int | 8-byte vptr added |\n| Single inheritance | Base + Derived | vptr + base members + derived members | One vptr shared |\n| Multiple inheritance | Sum of bases + derived | Multiple vptrs possible | One vptr per base with virtuals |\n| Virtual inheritance | Larger | vptr + virtual base pointer + members | Extra pointer for virtual base offset |\n\n#### Const Pointer Quick Reference\n\n| Declaration | Modify `*p`? | Reassign `p`? | Read as |\n|-------------|--------------|---------------|---------|\n| `const int* p` | ❌ No | ✅ Yes | Pointer to const int |\n| `int* const p` | ✅ Yes | ❌ No | Const pointer to int |\n| `const int* const p` | ❌ No | ❌ No | Const pointer to const int |\n\n#### Undefined Behavior Examples\n\n| Category | Example | Result |\n|----------|---------|--------|\n| Null pointer | `int* p = nullptr; *p = 5;` | Segfault or UB |\n| Out of bounds | `int arr[5]; arr[10] = 0;` | Memory corruption or crash |\n| Use after free | `delete p; *p = 5;` | Heap corruption or crash |\n| Signed overflow | `INT_MAX + 1` | UB (unsigned wraps around) |\n| Uninitialized variable | `int x; cout << x;` | Garbage value |\n| Dangling reference | `return local_var;` (by ref) | UB when accessed |\n\n#### Virtual Inheritance Constructor Order\n\n1. **Virtual base classes** (constructed by most derived class)\n2. **Direct base classes** (in declaration order)\n3. **Derived class members**\n4. **Derived class constructor body**\n\nDestruction occurs in reverse order.\n\n#### Rule of Three/Five Summary\n\n| Rule | Components | When Needed |\n|------|-----------|-------------|\n| Rule of Three (C++98) | Destructor, Copy constructor, Copy assignment | Managing resources (memory, handles) |\n| Rule of Five (C++11) | + Move constructor, Move assignment | Optimize with move semantics |\n| Rule of Zero (modern) | None (use smart pointers) | Prefer automatic resource management |\n\n#### Alignment Recommendations\n\n| Use Case | Alignment | Reason |\n|----------|-----------|--------|\n| General structs | Natural alignment | Best balance of size/performance |\n| Cache optimization | `alignas(64)` | Prevent false sharing in multithreading |\n| SIMD operations | `alignas(16)` or `alignas(32)` | Required for vectorized instructions |\n| Memory savings | Reorder members largest-to-smallest | Minimize padding waste |\n\n#### Lifetime Extension Rules\n\n| Scenario | Lifetime Extended? | Example |\n|----------|-------------------|---------|\n| Temp to const ref (same scope) | ✅ Yes | `const int& r = 5;` |\n| Temp to non-const ref | ❌ Illegal | `int& r = 5;` // error |\n| Return ref to temp | ❌ No | `return std::string(\"x\");` by ref |\n| Return ref to local | ❌ No (dangling) | `return local_var;` by ref |\n| Temp to rvalue ref | ✅ Yes | `int&& r = 5;` (C++11+) |\n\n---\n\n**End of Chapter 14: Low-Level & Tricky Topics**\n\nThis comprehensive guide covers the essential low-level C++ concepts that distinguish expert developers. Mastering object memory layout, alignment, lifetime management, const correctness, undefined behavior, copy semantics, and virtual inheritance is crucial for writing robust, efficient, and maintainable C++ code, especially in performance-critical domains like autonomous driving where safety and reliability are paramount.",
+        "content": "#### Answer Key for Practice Questions\n\n| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | A::foo<br>1 | Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo. | #object_slicing #virtual_functions |\n| 2 | 12 | Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment. | #padding #alignment |\n| 3 | Undefined behavior (likely crash or garbage) | `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB. | #dangling_reference #lifetime |\n| 4 | Compilation error | Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error. | #const_correctness #const_member_function |\n| 5 | 5 (but double delete crash at end) | Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash. | #shallow_copy #double_delete |\n| 6 | 24-32 (platform dependent) | Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes. | #virtual_inheritance #memory_layout |\n| 7 | Base | During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members. | #constructor #virtual_functions #vptr |\n| 8 | 8 | Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes. | #padding #memory_optimization |\n| 9 | 42 | Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function. | #lifetime_extension #const_reference |\n| 10 | 100 | `mutable` allows modifying `cache` in const function. Prints 100. | #mutable #const_correctness |\n| 11 | Undefined behavior (likely segfault) | Dereferencing null pointer is UB, typically causes segmentation fault crash. | #null_pointer #undefined_behavior |\n| 12 | 0 | Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior. | #unsigned_overflow #wrapping |\n| 13 | OK | Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs. | #virtual_destructor #polymorphism |\n| 14 | 24 | Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes. | #alignment #padding |\n| 15 | 10 | `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely. | #unique_ptr #move_semantics |\n| 16 | VBase A B C | Virtual base VBase is constructed once by most derived class C, then A, then B, then C. | #virtual_inheritance #constructor_order |\n| 17 | 1 16 | `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas). | #alignas #alignment |\n| 18 | Compilation error | `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const. | #const_pointer #const_correctness |\n| 19 | Compilation error (ambiguous) | Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve. | #diamond_problem #ambiguity |\n| 20 | test best | `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`. | #deep_copy #std_string |\n\n#### Memory Layout Comparison Table\n\n| Scenario | Size (typical) | Contains | Notes |\n|----------|----------------|----------|-------|\n| Plain struct | 4 | int only | No overhead |\n| Struct with virtual function | 16 | vptr + int | 8-byte vptr added |\n| Single inheritance | Base + Derived | vptr + base members + derived members | One vptr shared |\n| Multiple inheritance | Sum of bases + derived | Multiple vptrs possible | One vptr per base with virtuals |\n| Virtual inheritance | Larger | vptr + virtual base pointer + members | Extra pointer for virtual base offset |\n\n#### Const Pointer Quick Reference\n\n| Declaration | Modify `*p`? | Reassign `p`? | Read as |\n|-------------|--------------|---------------|---------|\n| `const int* p` | ❌ No | ✅ Yes | Pointer to const int |\n| `int* const p` | ✅ Yes | ❌ No | Const pointer to int |\n| `const int* const p` | ❌ No | ❌ No | Const pointer to const int |\n\n#### Undefined Behavior Examples\n\n| Category | Example | Result |\n|----------|---------|--------|\n| Null pointer | `int* p = nullptr; *p = 5;` | Segfault or UB |\n| Out of bounds | `int arr[5]; arr[10] = 0;` | Memory corruption or crash |\n| Use after free | `delete p; *p = 5;` | Heap corruption or crash |\n| Signed overflow | `INT_MAX + 1` | UB (unsigned wraps around) |\n| Uninitialized variable | `int x; cout << x;` | Garbage value |\n| Dangling reference | `return local_var;` (by ref) | UB when accessed |\n\n#### Virtual Inheritance Constructor Order\n\n1. **Virtual base classes** (constructed by most derived class)\n2. **Direct base classes** (in declaration order)\n3. **Derived class members**\n4. **Derived class constructor body**\n\nDestruction occurs in reverse order.\n\n#### Rule of Three/Five Summary\n\n| Rule | Components | When Needed |\n|------|-----------|-------------|\n| Rule of Three (C++98) | Destructor, Copy constructor, Copy assignment | Managing resources (memory, handles) |\n| Rule of Five (C++11) | + Move constructor, Move assignment | Optimize with move semantics |\n| Rule of Zero (modern) | None (use smart pointers) | Prefer automatic resource management |\n\n#### Alignment Recommendations\n\n| Use Case | Alignment | Reason |\n|----------|-----------|--------|\n| General structs | Natural alignment | Best balance of size/performance |\n| Cache optimization | `alignas(64)` | Prevent false sharing in multithreading |\n| SIMD operations | `alignas(16)` or `alignas(32)` | Required for vectorized instructions |\n| Memory savings | Reorder members largest-to-smallest | Minimize padding waste |\n\n#### Lifetime Extension Rules\n\n| Scenario | Lifetime Extended? | Example |\n|----------|-------------------|---------|\n| Temp to const ref (same scope) | ✅ Yes | `const int& r = 5;` |\n| Temp to non-const ref | ❌ Illegal | `int& r = 5;` // error |\n| Return ref to temp | ❌ No | `return std::string(\"x\");` by ref |\n| Return ref to local | ❌ No (dangling) | `return local_var;` by ref |\n| Temp to rvalue ref | ✅ Yes | `int&& r = 5;` (C++11+) |\n\n---\n\n**End of Chapter 14: Low-Level & Tricky Topics**\n\nThis comprehensive guide covers the essential low-level C++ concepts that distinguish expert developers. Mastering object memory layout, alignment, lifetime management, const correctness, undefined behavior, copy semantics, and virtual inheritance is crucial for writing robust, efficient, and maintainable C++ code, especially in performance-critical domains like autonomous driving where safety and reliability are paramount.\n\n\n## TOPIC: C++ Low-Level Internals and Common Pitfalls",
         "tables": [
           "| Q# | Answer | Explanation | Key Concept |\n|----|--------|-------------|-------------|\n| 1 | A::foo<br>1 | Object slicing occurs when assigning `B b` to `A a` by value. Only the Base part is copied, losing `y` and the vptr to B's vtable. `a.foo()` calls A::foo. | #object_slicing #virtual_functions |\n| 2 | 12 | Struct layout: `char a` (1 byte) + 3 padding + `int b` (4 bytes) + `char c` (1 byte) + 3 padding = 12 bytes total. Padding ensures proper alignment. | #padding #alignment |\n| 3 | Undefined behavior (likely crash or garbage) | `s` is a local variable destroyed when `foo()` returns. Returning a reference to it creates a dangling reference. Using `r` in main is UB. | #dangling_reference #lifetime |\n| 4 | Compilation error | Attempting to modify `val` in a const member function without `mutable` qualifier is a compile-time error. | #const_correctness #const_member_function |\n| 5 | 5 (but double delete crash at end) | Prints 5, but when `b2` and `b1` destruct, both try to delete the same memory (shallow copy), causing double delete crash. | #shallow_copy #double_delete |\n| 6 | 24-32 (platform dependent) | Virtual inheritance adds virtual base pointers. Typical layout: vptr (8) + a (4) + vptr (8) + b (4) + c (4) + v (4) + padding = ~32 bytes. | #virtual_inheritance #memory_layout |\n| 7 | Base | During Base's constructor, vptr points to Base's vtable, not Derived's. `foo()` call resolves to Base::foo to prevent accessing uninitialized Derived members. | #constructor #virtual_functions #vptr |\n| 8 | 8 | Optimized layout: `int b` (4 bytes) + `char a` (1 byte) + `char c` (1 byte) + 2 padding = 8 bytes. Better than Q2's 12 bytes. | #padding #memory_optimization |\n| 9 | 42 | Binding const reference `r` to temporary `42` extends the temporary's lifetime to `r`'s scope. Safe to use within the function. | #lifetime_extension #const_reference |\n| 10 | 100 | `mutable` allows modifying `cache` in const function. Prints 100. | #mutable #const_correctness |\n| 11 | Undefined behavior (likely segfault) | Dereferencing null pointer is UB, typically causes segmentation fault crash. | #null_pointer #undefined_behavior |\n| 12 | 0 | Unsigned overflow wraps around (modulo 2^32). UINT_MAX + 1 = 0. Well-defined behavior. | #unsigned_overflow #wrapping |\n| 13 | OK | Virtual destructor ensures Derived's destructor is called when deleting through Base pointer. Proper cleanup occurs. | #virtual_destructor #polymorphism |\n| 14 | 24 | Layout: `char a` (1) + 7 padding + `double d` (8, needs 8-byte alignment) + `char b` (1) + 7 padding = 24 bytes. | #alignment #padding |\n| 15 | 10 | `unique_ptr` is move-only. `a1.p` is moved to `a2.p`, leaving `a1.p` as nullptr. Prints 10 safely. | #unique_ptr #move_semantics |\n| 16 | VBase A B C | Virtual base VBase is constructed once by most derived class C, then A, then B, then C. | #virtual_inheritance #constructor_order |\n| 17 | 1 16 | `sizeof(char)` is always 1. `alignof` reports the alignment requirement (16 due to alignas). | #alignas #alignment |\n| 18 | Compilation error | `p` is pointer to const int (`const int*`), so `*p = v` attempts to modify const data. Error even though function is const. | #const_pointer #const_correctness |\n| 19 | Compilation error (ambiguous) | Diamond problem without virtual inheritance. `f.x` is ambiguous (D1::Base::x or D2::Base::x?). Requires virtual inheritance to resolve. | #diamond_problem #ambiguity |\n| 20 | test best | `std::string` has proper copy constructor (deep copy). Modifying `s2` doesn't affect `s1`. | #deep_copy #std_string |",
           "| Scenario | Size (typical) | Contains | Notes |\n|----------|----------------|----------|-------|\n| Plain struct | 4 | int only | No overhead |\n| Struct with virtual function | 16 | vptr + int | 8-byte vptr added |\n| Single inheritance | Base + Derived | vptr + base members + derived members | One vptr shared |\n| Multiple inheritance | Sum of bases + derived | Multiple vptrs possible | One vptr per base with virtuals |\n| Virtual inheritance | Larger | vptr + virtual base pointer + members | Extra pointer for virtual base offset |",
@@ -1097,105 +1217,145 @@
           "question_number": 1,
           "title": "Question 1",
           "description": "```cpp",
-          "full_content": "```cpp\n#include <iostream>\n\nint search(int* arr, int size, int target) {\n    for (int i = 0; i <= size; ++i) {  // Note: <= size\n        if (arr[i] == target) {\n            return i;\n        }\n    }\n    return -1;\n}\n\nint main() {\n    int data[] = {1, 2, 3, 4, 5};\n    std::cout << search(data, 5, 10) << \"\\n\";\n}\n\n// What can the optimizer do to this code?\n```",
+          "full_content": "",
           "code": "#include <iostream>\n\nint search(int* arr, int size, int target) {\n    for (int i = 0; i <= size; ++i) {  // Note: <= size\n        if (arr[i] == target) {\n            return i;\n        }\n    }\n    return -1;\n}\n\nint main() {\n    int data[] = {1, 2, 3, 4, 5};\n    std::cout << search(data, 5, 10) << \"\\n\";\n}\n\n// What can the optimizer do to this code?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 2,
           "title": "Question 2",
           "description": "```cpp",
-          "full_content": "```cpp\nvoid process(int* ptr) {\n    int value = *ptr;\n\n    // ... 100 lines of code using value ...\n\n    if (ptr == nullptr) {\n        std::cerr << \"Error: null pointer\\n\";\n        return;\n    }\n\n    std::cout << \"Value: \" << value << \"\\n\";\n}\n\n// Is the null check effective? Why or why not?\n```",
+          "full_content": "",
           "code": "void process(int* ptr) {\n    int value = *ptr;\n\n    // ... 100 lines of code using value ...\n\n    if (ptr == nullptr) {\n        std::cerr << \"Error: null pointer\\n\";\n        return;\n    }\n\n    std::cout << \"Value: \" << value << \"\\n\";\n}\n\n// Is the null check effective? Why or why not?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 3,
           "title": "Question 3",
           "description": "```cpp",
-          "full_content": "```cpp\nclass Data {\n    std::vector<int> vec;\npublic:\n    Data(Data&& other)\n        : vec(other.vec)  // Move constructor\n    {}\n};\n\n// Does this actually move the vector? Explain.\n```",
+          "full_content": "",
           "code": "class Data {\n    std::vector<int> vec;\npublic:\n    Data(Data&& other)\n        : vec(other.vec)  // Move constructor\n    {}\n};\n\n// Does this actually move the vector? Explain.",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 4,
           "title": "Question 4",
           "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid forward_call(T&& arg) {\n    func(arg);\n}\n\nvoid func(std::vector<int>&& v) {\n    std::cout << \"Rvalue\\n\";\n}\n\nvoid func(const std::vector<int>& v) {\n    std::cout << \"Lvalue\\n\";\n}\n\nint main() {\n    forward_call(std::vector<int>{1, 2, 3});\n}\n\n// What is printed? Why?\n```",
+          "full_content": "",
           "code": "template<typename T>\nvoid forward_call(T&& arg) {\n    func(arg);\n}\n\nvoid func(std::vector<int>&& v) {\n    std::cout << \"Rvalue\\n\";\n}\n\nvoid func(const std::vector<int>& v) {\n    std::cout << \"Lvalue\\n\";\n}\n\nint main() {\n    forward_call(std::vector<int>{1, 2, 3});\n}\n\n// What is printed? Why?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 5,
           "title": "Question 5",
           "description": "```cpp",
-          "full_content": "```cpp\nconstexpr int compute(int x) {\n    return x * x + 10;\n}\n\nconsteval int compute_compile(int x) {\n    return x * x + 10;\n}\n\nint main() {\n    int runtime_value = 5;\n    std::cin >> runtime_value;\n\n    int a = compute(runtime_value);\n    int b = compute_compile(runtime_value);\n\n    std::cout << a << \" \" << b << \"\\n\";\n}\n\n// Does this compile? Which lines have issues?\n```",
+          "full_content": "",
           "code": "constexpr int compute(int x) {\n    return x * x + 10;\n}\n\nconsteval int compute_compile(int x) {\n    return x * x + 10;\n}\n\nint main() {\n    int runtime_value = 5;\n    std::cin >> runtime_value;\n\n    int a = compute(runtime_value);\n    int b = compute_compile(runtime_value);\n\n    std::cout << a << \" \" << b << \"\\n\";\n}\n\n// Does this compile? Which lines have issues?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 6,
           "title": "Question 6",
           "description": "```cpp",
-          "full_content": "```cpp\nbool check_overflow(int x, int y) {\n    int sum = x + y;\n    if (sum < x) {\n        return true;  // Overflow detected\n    }\n    return false;\n}\n\nint main() {\n    std::cout << check_overflow(INT_MAX, 10) << \"\\n\";\n}\n\n// With -O3 optimization, what does this print?\n```",
+          "full_content": "",
           "code": "bool check_overflow(int x, int y) {\n    int sum = x + y;\n    if (sum < x) {\n        return true;  // Overflow detected\n    }\n    return false;\n}\n\nint main() {\n    std::cout << check_overflow(INT_MAX, 10) << \"\\n\";\n}\n\n// With -O3 optimization, what does this print?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 7,
           "title": "Question 7",
           "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nclass Container {\npublic:\n    void process(T&& item) {\n        // Process item\n    }\n};\n\nint main() {\n    Container<int> c;\n    int x = 42;\n    c.process(x);  // Does this compile?\n}\n```",
+          "full_content": "",
           "code": "template<typename T>\nclass Container {\npublic:\n    void process(T&& item) {\n        // Process item\n    }\n};\n\nint main() {\n    Container<int> c;\n    int x = 42;\n    c.process(x);  // Does this compile?\n}",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 8,
           "title": "Question 8",
           "description": "```cpp",
-          "full_content": "```cpp\nconst Widget make_widget() {\n    Widget w;\n    // ... initialize w ...\n    return w;\n}\n\nWidget w = make_widget();\n\n// Is move constructor or copy constructor called for w?\n```",
+          "full_content": "",
           "code": "const Widget make_widget() {\n    Widget w;\n    // ... initialize w ...\n    return w;\n}\n\nWidget w = make_widget();\n\n// Is move constructor or copy constructor called for w?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 9,
           "title": "Question 9",
           "description": "```cpp",
-          "full_content": "```cpp\ntemplate<typename T>\nvoid call_func(T&& arg) {\n    func(std::forward<T>(arg));\n}\n\nvoid func(std::vector<int> v) {\n    std::cout << \"Received: \" << v.size() << \"\\n\";\n}\n\nint main() {\n    call_func({1, 2, 3, 4, 5});\n}\n\n// Does this compile? Why or why not?\n```",
+          "full_content": "",
           "code": "template<typename T>\nvoid call_func(T&& arg) {\n    func(std::forward<T>(arg));\n}\n\nvoid func(std::vector<int> v) {\n    std::cout << \"Received: \" << v.size() << \"\\n\";\n}\n\nint main() {\n    call_func({1, 2, 3, 4, 5});\n}\n\n// Does this compile? Why or why not?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         },
         {
           "question_number": 10,
           "title": "Question 10",
           "description": "```cpp",
-          "full_content": "```cpp\nconstinit int counter = 0;\n\nvoid increment() {\n    counter++;\n}\n\nint main() {\n    increment();\n    std::cout << counter << \"\\n\";\n}\n\n// Is this valid? What guarantees does constinit provide?\n```\n\n---",
+          "full_content": "---\n\n\n## TOPIC: Advanced C++ Pitfalls - Compiler Optimizations, UB, and Modern C++ Traps",
           "code": "constinit int counter = 0;\n\nvoid increment() {\n    counter++;\n}\n\nint main() {\n    increment();\n    std::cout << counter << \"\\n\";\n}\n\n// Is this valid? What guarantees does constinit provide?",
           "expected_output": "",
           "solution": "",
-          "additional_code": []
+          "additional_code": [],
+          "answer": "",
+          "explanation": "",
+          "key_concept": "",
+          "fixed_version": ""
         }
       ],
       "quick_reference": {
-        "content": "#### Answer Key for Practice Tasks\n\n| Task | Answer | Explanation | Key Concept |\n|------|--------|-------------|-------------|\n| 1 | Optimizer can transform to `return -1;` or remove loop | Loop with `i <= size` accesses out of bounds on last iteration (UB), so optimizer assumes loop returns early | #undefined_behavior #array_bounds |\n| 2 | No, check is removed | Dereferencing `*ptr` before null check means if ptr is null, UB already occurred. Optimizer removes \"unreachable\" check. | #null_pointer #optimization |\n| 3 | No, copies the vector | `other.vec` is lvalue expression (named variable). Need `std::move(other.vec)` to actually move. | #move_semantics #named_rvalue |\n| 4 | Prints \"Lvalue\" | `arg` in `forward_call` is lvalue (named parameter). Without `std::forward`, always calls lvalue overload. | #perfect_forwarding #value_category |\n| 5 | No, line with `compute_compile` fails | `runtime_value` is not compile-time constant. `consteval` requires compile-time arguments. | #consteval #compile_time |\n| 6 | Prints `0` (false) | Optimizer removes overflow check because signed overflow is UB, assumes it never happens, so condition is always false. | #integer_overflow #undefined_behavior |\n| 7 | No, compilation error | `T&&` in class template member is rvalue reference (T already known). Cannot bind lvalue `x` to rvalue reference. | #forwarding_reference #class_template |\n| 8 | Copy constructor | Const return value prevents move (move ctor needs non-const rvalue ref). Falls back to copy constructor. | #const_return #move_prevention |\n| 9 | No, compilation error | Braced initializer list cannot be deduced in template. Template deduction fails for `{1,2,3,4,5}`. | #perfect_forwarding #braced_init |\n| 10 | Yes, valid | `constinit` guarantees compile-time initialization but allows runtime modification. Counter can be incremented at runtime. | #constinit #C++20 |\n\n---\n\n#### Undefined Behavior Optimizer Exploits\n\n| UB Type | What Compiler Assumes | Optimization Result | Detection |\n|---------|----------------------|-------------------|-----------|\n| Null pointer dereference | Pointer is never null | Removes null checks after dereference | AddressSanitizer |\n| Signed overflow | Overflow never happens | Removes overflow detection checks | `-fsanitize=signed-integer-overflow` |\n| Array out of bounds | Array access always in bounds | Can remove entire loops or always return | AddressSanitizer |\n| Infinite loop without side effects | Loop must terminate | Removes entire loop | Manual code review |\n| Use after free | Freed memory not accessed | Unpredictable behavior | AddressSanitizer |\n\n---\n\n#### Move Semantics Pitfall Summary\n\n| Situation | Problem | Solution |\n|-----------|---------|----------|\n| Named rvalue reference | `rhs.member` is lvalue | Use `std::move(rhs.member)` |\n| Const rvalue | Binds to copy ctor, not move | Don't return const from functions |\n| Moving in loop | Repeated `std::move` on same object | Only move once, or reset state |\n| Conditional move | Move in if branch, use in else | Always treat moved-from objects as invalid |\n| Base class move | Forgetting to move base | `Base(std::move(other))` in derived move ctor |\n\n---\n\n#### Perfect Forwarding Failure Cases\n\n| Case | Why It Fails | Workaround |\n|------|-------------|-----------|\n| Braced initializers `{1,2,3}` | No type for template deduction | Create variable: `auto x = {1,2,3}; fwd(x);` |\n| Bitfields | Cannot take address | Copy to local variable first |\n| Overloaded function names | Ambiguous without type | Cast to function pointer type |\n| 0 or NULL as nullptr | Deduced as int | Use `nullptr` keyword |\n| Static const integral members | Some compilers require definition | Provide out-of-class definition |\n\n---\n\n#### C++20 const Keywords Comparison\n\n| Feature | `const` | `constexpr` | `consteval` | `constinit` |\n|---------|---------|-------------|-------------|-------------|\n| Compile-time init required? | ❌ | ✅ | N/A (functions) | ✅ |\n| Compile-time execution? | ❌ | Optional | ✅ Always | ❌ |\n| Runtime mutable? | ❌ | ❌ | N/A | ✅ |\n| Use case | Runtime constants | Compile-time constants | Forced compile-time | Init-order-safe static |\n| Example | `const int x = f();` | `constexpr int x = 10;` | `consteval int f(int x)` | `constinit int x = 10;` |\n\n---\n\n#### Autonomous Vehicle Safety Checklist\n\n| Risk | Unsafe Pattern | Safe Pattern |\n|------|---------------|--------------|\n| Null pointer crash | Check after dereference | Check BEFORE dereference |\n| Speed overflow | `new_speed < old_speed` check | Check before: `delta > MAX - speed` |\n| Sensor array bounds | `i <= N` in loop | `i < N` in loop |\n| Large buffer copy | Named rvalue without move | `std::move()` explicitly |\n| Infinite calibration | `while(true) { check(); }` | Add timeout or side effects |\n\n---\n\n#### Compiler Sanitizer Flags\n\n| Sanitizer | Flag | Detects |\n|-----------|------|---------|\n| AddressSanitizer | `-fsanitize=address` | Null deref, out-of-bounds, use-after-free |\n| UndefinedBehaviorSanitizer | `-fsanitize=undefined` | Integer overflow, null pointer, alignment |\n| ThreadSanitizer | `-fsanitize=thread` | Data races, race conditions |\n| MemorySanitizer | `-fsanitize=memory` | Uninitialized memory reads |\n| LeakSanitizer | `-fsanitize=leak` | Memory leaks |\n\n**Recommended Development Flags:**\n```bash\ng++ -Wall -Wextra -Wpedantic -Werror \\\n    -fsanitize=address,undefined \\\n    -fno-omit-frame-pointer \\\n    -g -O1 \\\n    program.cpp\n```\n\n---\n\n**End of Topic: Advanced C++ Pitfalls**\n\nThis comprehensive guide covers the most subtle and dangerous aspects of modern C++: undefined behavior exploited by optimizers, move semantics confusion, perfect forwarding edge cases, and modern C++20 features. Mastering these pitfalls is essential for writing correct, high-performance code in safety-critical systems like autonomous vehicles where bugs can have catastrophic consequences. Understanding what the compiler is allowed to do—not just what you intend it to do—is the hallmark of expert C++ developers.",
+        "content": "#### Answer Key for Practice Tasks\n\n| Task | Answer | Explanation | Key Concept |\n|------|--------|-------------|-------------|\n| 1 | Optimizer can transform to `return -1;` or remove loop | Loop with `i <= size` accesses out of bounds on last iteration (UB), so optimizer assumes loop returns early | #undefined_behavior #array_bounds |\n| 2 | No, check is removed | Dereferencing `*ptr` before null check means if ptr is null, UB already occurred. Optimizer removes \"unreachable\" check. | #null_pointer #optimization |\n| 3 | No, copies the vector | `other.vec` is lvalue expression (named variable). Need `std::move(other.vec)` to actually move. | #move_semantics #named_rvalue |\n| 4 | Prints \"Lvalue\" | `arg` in `forward_call` is lvalue (named parameter). Without `std::forward`, always calls lvalue overload. | #perfect_forwarding #value_category |\n| 5 | No, line with `compute_compile` fails | `runtime_value` is not compile-time constant. `consteval` requires compile-time arguments. | #consteval #compile_time |\n| 6 | Prints `0` (false) | Optimizer removes overflow check because signed overflow is UB, assumes it never happens, so condition is always false. | #integer_overflow #undefined_behavior |\n| 7 | No, compilation error | `T&&` in class template member is rvalue reference (T already known). Cannot bind lvalue `x` to rvalue reference. | #forwarding_reference #class_template |\n| 8 | Copy constructor | Const return value prevents move (move ctor needs non-const rvalue ref). Falls back to copy constructor. | #const_return #move_prevention |\n| 9 | No, compilation error | Braced initializer list cannot be deduced in template. Template deduction fails for `{1,2,3,4,5}`. | #perfect_forwarding #braced_init |\n| 10 | Yes, valid | `constinit` guarantees compile-time initialization but allows runtime modification. Counter can be incremented at runtime. | #constinit #C++20 |\n\n---\n\n#### Undefined Behavior Optimizer Exploits\n\n| UB Type | What Compiler Assumes | Optimization Result | Detection |\n|---------|----------------------|-------------------|-----------|\n| Null pointer dereference | Pointer is never null | Removes null checks after dereference | AddressSanitizer |\n| Signed overflow | Overflow never happens | Removes overflow detection checks | `-fsanitize=signed-integer-overflow` |\n| Array out of bounds | Array access always in bounds | Can remove entire loops or always return | AddressSanitizer |\n| Infinite loop without side effects | Loop must terminate | Removes entire loop | Manual code review |\n| Use after free | Freed memory not accessed | Unpredictable behavior | AddressSanitizer |\n\n---\n\n#### Move Semantics Pitfall Summary\n\n| Situation | Problem | Solution |\n|-----------|---------|----------|\n| Named rvalue reference | `rhs.member` is lvalue | Use `std::move(rhs.member)` |\n| Const rvalue | Binds to copy ctor, not move | Don't return const from functions |\n| Moving in loop | Repeated `std::move` on same object | Only move once, or reset state |\n| Conditional move | Move in if branch, use in else | Always treat moved-from objects as invalid |\n| Base class move | Forgetting to move base | `Base(std::move(other))` in derived move ctor |\n\n---\n\n#### Perfect Forwarding Failure Cases\n\n| Case | Why It Fails | Workaround |\n|------|-------------|-----------|\n| Braced initializers `{1,2,3}` | No type for template deduction | Create variable: `auto x = {1,2,3}; fwd(x);` |\n| Bitfields | Cannot take address | Copy to local variable first |\n| Overloaded function names | Ambiguous without type | Cast to function pointer type |\n| 0 or NULL as nullptr | Deduced as int | Use `nullptr` keyword |\n| Static const integral members | Some compilers require definition | Provide out-of-class definition |\n\n---\n\n#### C++20 const Keywords Comparison\n\n| Feature | `const` | `constexpr` | `consteval` | `constinit` |\n|---------|---------|-------------|-------------|-------------|\n| Compile-time init required? | ❌ | ✅ | N/A (functions) | ✅ |\n| Compile-time execution? | ❌ | Optional | ✅ Always | ❌ |\n| Runtime mutable? | ❌ | ❌ | N/A | ✅ |\n| Use case | Runtime constants | Compile-time constants | Forced compile-time | Init-order-safe static |\n| Example | `const int x = f();` | `constexpr int x = 10;` | `consteval int f(int x)` | `constinit int x = 10;` |\n\n---\n\n#### Autonomous Vehicle Safety Checklist\n\n| Risk | Unsafe Pattern | Safe Pattern |\n|------|---------------|--------------|\n| Null pointer crash | Check after dereference | Check BEFORE dereference |\n| Speed overflow | `new_speed < old_speed` check | Check before: `delta > MAX - speed` |\n| Sensor array bounds | `i <= N` in loop | `i < N` in loop |\n| Large buffer copy | Named rvalue without move | `std::move()` explicitly |\n| Infinite calibration | `while(true) { check(); }` | Add timeout or side effects |\n\n---\n\n#### Compiler Sanitizer Flags\n\n| Sanitizer | Flag | Detects |\n|-----------|------|---------|\n| AddressSanitizer | `-fsanitize=address` | Null deref, out-of-bounds, use-after-free |\n| UndefinedBehaviorSanitizer | `-fsanitize=undefined` | Integer overflow, null pointer, alignment |\n| ThreadSanitizer | `-fsanitize=thread` | Data races, race conditions |\n| MemorySanitizer | `-fsanitize=memory` | Uninitialized memory reads |\n| LeakSanitizer | `-fsanitize=leak` | Memory leaks |\n\n**Recommended Development Flags:**\n```bash\ng++ -Wall -Wextra -Wpedantic -Werror \\\n    -fsanitize=address,undefined \\\n    -fno-omit-frame-pointer \\\n    -g -O1 \\\n    program.cpp\n```\n\n---\n\n**End of Topic: Advanced C++ Pitfalls**\n\nThis comprehensive guide covers the most subtle and dangerous aspects of modern C++: undefined behavior exploited by optimizers, move semantics confusion, perfect forwarding edge cases, and modern C++20 features. Mastering these pitfalls is essential for writing correct, high-performance code in safety-critical systems like autonomous vehicles where bugs can have catastrophic consequences. Understanding what the compiler is allowed to do—not just what you intend it to do—is the hallmark of expert C++ developers.\n\n\n## TOPIC: Advanced C++ Pitfalls - Compiler Optimizations, UB, and Modern C++ Traps",
         "tables": [
           "| Task | Answer | Explanation | Key Concept |\n|------|--------|-------------|-------------|\n| 1 | Optimizer can transform to `return -1;` or remove loop | Loop with `i <= size` accesses out of bounds on last iteration (UB), so optimizer assumes loop returns early | #undefined_behavior #array_bounds |\n| 2 | No, check is removed | Dereferencing `*ptr` before null check means if ptr is null, UB already occurred. Optimizer removes \"unreachable\" check. | #null_pointer #optimization |\n| 3 | No, copies the vector | `other.vec` is lvalue expression (named variable). Need `std::move(other.vec)` to actually move. | #move_semantics #named_rvalue |\n| 4 | Prints \"Lvalue\" | `arg` in `forward_call` is lvalue (named parameter). Without `std::forward`, always calls lvalue overload. | #perfect_forwarding #value_category |\n| 5 | No, line with `compute_compile` fails | `runtime_value` is not compile-time constant. `consteval` requires compile-time arguments. | #consteval #compile_time |\n| 6 | Prints `0` (false) | Optimizer removes overflow check because signed overflow is UB, assumes it never happens, so condition is always false. | #integer_overflow #undefined_behavior |\n| 7 | No, compilation error | `T&&` in class template member is rvalue reference (T already known). Cannot bind lvalue `x` to rvalue reference. | #forwarding_reference #class_template |\n| 8 | Copy constructor | Const return value prevents move (move ctor needs non-const rvalue ref). Falls back to copy constructor. | #const_return #move_prevention |\n| 9 | No, compilation error | Braced initializer list cannot be deduced in template. Template deduction fails for `{1,2,3,4,5}`. | #perfect_forwarding #braced_init |\n| 10 | Yes, valid | `constinit` guarantees compile-time initialization but allows runtime modification. Counter can be incremented at runtime. | #constinit #C++20 |",
           "| UB Type | What Compiler Assumes | Optimization Result | Detection |\n|---------|----------------------|-------------------|-----------|\n| Null pointer dereference | Pointer is never null | Removes null checks after dereference | AddressSanitizer |\n| Signed overflow | Overflow never happens | Removes overflow detection checks | `-fsanitize=signed-integer-overflow` |\n| Array out of bounds | Array access always in bounds | Can remove entire loops or always return | AddressSanitizer |\n| Infinite loop without side effects | Loop must terminate | Removes entire loop | Manual code review |\n| Use after free | Freed memory not accessed | Unpredictable behavior | AddressSanitizer |",
