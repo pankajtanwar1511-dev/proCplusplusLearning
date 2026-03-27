@@ -58,10 +58,6 @@ const TopicDetail = () => {
   };
 
   const backLink = getBackLink();
-  // Include current section in quiz link so we can return to same section after quiz
-  const quizLink = catalog
-    ? `/catalog/${catalog}/quiz/${id}?from=${activeTab}`
-    : `/quiz/${id}?from=${activeTab}`;
 
   const [topic, setTopic] = useState(null);
   const [activeTab, setActiveTab] = useState(urlSection); // Initialize from URL
@@ -310,6 +306,13 @@ const TopicDetail = () => {
     window.history.pushState({}, '', newUrl);
   };
 
+  // Build quiz link dynamically with current section context
+  const getQuizLink = () => {
+    return catalog
+      ? `/catalog/${catalog}/quiz/${id}?from=${activeTab}`
+      : `/quiz/${id}?from=${activeTab}`;
+  };
+
   const tabs = [
     { id: 'theory', label: 'Theory', icon: BookOpen },
     { id: 'edge-cases', label: 'Edge Cases', icon: AlertTriangle },
@@ -420,7 +423,7 @@ const TopicDetail = () => {
                     Mark as Read
                   </button>
                   <Link
-                    to={quizLink}
+                    to={getQuizLink()}
                     className="btn btn-primary"
                   >
                     <Brain size={18} />
@@ -534,7 +537,7 @@ const TopicDetail = () => {
               </div>
 
               <Link
-                to={quizLink}
+                to={getQuizLink()}
                 className="btn btn-primary btn-lg"
               >
                 <Play size={18} />
