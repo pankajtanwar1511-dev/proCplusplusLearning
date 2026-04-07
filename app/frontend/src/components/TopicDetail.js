@@ -478,7 +478,9 @@ const TopicDetail = () => {
                   {example.explanation && (
                     <div className="example-explanation">
                       <h4>Explanation:</h4>
-                      <p>{example.explanation}</p>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                        {typeof example.explanation === 'string' ? example.explanation : ''}
+                      </ReactMarkdown>
                     </div>
                   )}
 
