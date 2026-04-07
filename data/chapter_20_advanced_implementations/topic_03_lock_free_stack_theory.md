@@ -1,122 +1,809 @@
-### THEORY_SECTION: Core Concepts and Foundations
-#### 1. Lock-Free vs Lock-Based Concurrency
+### THEORY_SECTION
 
-#### **Lock-Based (Mutex)**
-```cpp
-void push(T value) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    // Critical section
-}
+#### 1. Lock-Free vs Lock-Based Concurrency - The Fundamental Difference
+
+**Real-World Analogy:**
+
+**Lock-Based (Bathroom Key Model):**
+```
+Kitchen has ONE bathroom key.
+Person A: Grabs key, enters bathroom (locked)
+Person B: Arrives, door locked → WAITS outside (blocked)
+Person C: Arrives, door locked → WAITS in line (blocked)
+Person A: Exits, hands key to B
+Person B: Finally enters
+
+Result: Only 1 person makes progress at a time
+Blocking: B and C waste time waiting
 ```
 
-**Characteristics:**
-- ✅ Simple to reason about
-- ✅ Strong guarantees (mutual exclusion)
-- ❌ Contention causes blocking
-- ❌ Risk of deadlock
-- ❌ Priority inversion issues
-- ❌ Not real-time safe
+**Lock-Free (No-Key Model):**
+```
+Kitchen has bathroom with "occupancy indicator" on door.
+Person A: Checks indicator (0), tries to change to "A" → succeeds, enters
+Person B: Checks indicator ("A"), tries to change to "B" → fails, retries immediately
+Person B: Checks again ("A"), tries again → fails, retries
+Person A: Exits, resets indicator to 0
+Person B: Checks (0), tries to change to "B" → succeeds!
 
-#### **Lock-Free**
-```cpp
-void push(T value) {
-    // No mutex - uses atomic operations
-    do {
-        new_node->next = head.load();
-    } while (!head.compare_exchange_weak(new_node->next, new_node));
-}
+Result: No waiting/blocking - B immediately retries
+Progress: At least one person always making progress
 ```
 
-**Characteristics:**
-- ✅ No blocking - threads always make progress
-- ✅ Better scalability under high contention
-- ✅ Real-time safe (predictable latency)
-- ❌ Complex to implement correctly
-- ❌ ABA problem
-- ❌ Memory reclamation challenges
+**Visual Comparison:**
 
----
+```
+LOCK-BASED (Mutex):                    LOCK-FREE (CAS):
 
-#### 2. Progress Guarantees
+Thread 1: lock() ────────────> ✓      Thread 1: CAS() ────────────> ✓
+Thread 2: lock() ─X─> 💤 BLOCKED      Thread 2: CAS() ─X─> retry ──> ✓
+Thread 3: lock() ─X─> 💤 BLOCKED      Thread 3: CAS() ─X─> retry ─X─> retry ──> ✓
 
-**Wait-Free:**
-- **Strongest guarantee**
-- Every operation completes in bounded steps
-- No thread can prevent another's progress
-- Example: Atomic fetch_add
+Timeline:                              Timeline:
+T1: [━━━━━━ holds lock ━━━━━━]        T1: [CAS]
+T2:  💤💤💤💤💤 [runs]                   T2:  [CAS retry] [CAS retry] [CAS ✓]
+T3:          💤💤💤💤💤💤💤💤               T3:   [CAS retry] [CAS retry] [CAS retry] [CAS ✓]
+
+Throughput: Sequential (1 at a time)   Throughput: Concurrent (overlapped)
+Latency: Variable (wait for unlock)    Latency: Bounded (no waiting)
+```
+
+**Performance Characteristics Table:**
+
+| Metric | Lock-Based | Lock-Free |
+|--------|-----------|-----------|
+| **Single thread** | Fast (~30ns) | Slower (~50ns, atomic overhead) |
+| **2 threads** | 2x slower | ~1.5x faster |
+| **8 threads** | 8-10x slower | 3-4x faster |
+| **Blocking** | Yes (threads sleep) | No (spin-retry) |
+| **Deadlock risk** | YES ☠️ | No |
+| **Priority inversion** | YES | No |
+| **Real-time safe** | NO | YES |
+| **Implementation** | Simple | Complex |
+
+**When to Use Each:**
+
+```
+Use LOCK-BASED when:
+  ✅ Low contention (< 2-3 threads)
+  ✅ Simplicity is priority
+  ✅ Debugging is important
+  ✅ Not performance-critical
+
+Use LOCK-FREE when:
+  ✅ High contention (4+ threads)
+  ✅ Real-time requirements
+  ✅ Predictable latency needed
+  ✅ Deadlock-free guarantee required
+  ✅ Maximum throughput critical
+```
+
+**Real-World Examples:**
+
+**Lock-Based:**
+- `std::vector` with `std::mutex` wrapper
+- Database transactions (ACID properties)
+- File I/O operations
 
 **Lock-Free:**
-- **System makes progress**
-- At least one thread makes progress
-- Individual threads may retry (CAS loop)
-- Example: Lock-free stack (our implementation)
-
-**Obstruction-Free:**
-- **Progress if isolated**
-- Thread makes progress only if no contention
-- Weaker than lock-free
-
-**Blocking:**
-- **Uses mutexes/locks**
-- Threads can block indefinitely
+- High-frequency trading (microsecond latency)
+- Real-time audio processing (no glitches)
+- Game engine job systems (frame deadlines)
+- Memory allocators (per-thread pools)
+- Message passing between threads
 
 ---
 
-#### 3. Atomic Operations
+#### 2. Progress Guarantees - Understanding the Hierarchy
 
-#### **std::atomic<T>**
+**Real-World Analogy:**
 
-Provides lock-free operations on T (if T is trivially copyable and small).
+Imagine 4 people trying to enter a revolving door:
+
+**Wait-Free (Strongest):**
+```
+Everyone guaranteed to enter within fixed time (3 pushes).
+Person A: Push, push, push → IN (3 steps)
+Person B: Push, push, push → IN (3 steps)
+Person C: Push, push, push → IN (3 steps)
+Person D: Push, push, push → IN (3 steps)
+
+Guarantee: Every person enters in bounded time
+Example: Automatic sliding door with guaranteed entry time
+```
+
+**Lock-Free (Our Lock-Free Stack):**
+```
+At least ONE person always making progress.
+Person A: Push → IN ✓
+Person B: Push, retry, push → IN ✓ (2 retries)
+Person C: Push, retry, retry, retry, push → IN ✓ (4 retries)
+Person D: Push, retry, retry, push → IN ✓ (3 retries)
+
+Guarantee: System makes progress (someone always getting through)
+Risk: Person C had to retry 4 times (but didn't block)
+```
+
+**Obstruction-Free (Weakest Non-Blocking):**
+```
+Progress only if alone.
+Person A alone: Push → IN ✓
+Person B arrives, contention: Push, retry, retry, retry... (may never succeed)
+
+Guarantee: Progress only when isolated
+Problem: Contention prevents progress
+```
+
+**Blocking (Mutex-Based):**
+```
+Only one allowed at a time, others SLEEP.
+Person A: Enter → locks door → stays inside → exits
+Person B: Tries → BLOCKED → 💤 sleeps → wakes when A done
+Person C: 💤💤💤 sleeps waiting for B
+Person D: 💤💤💤💤 sleeps waiting for C
+
+Guarantee: NONE (could block forever if A dies inside)
+```
+
+**Visual Hierarchy:**
+
+```
+PROGRESS GUARANTEE STRENGTH:
+┌─────────────────────────────────────────────────┐
+│ WAIT-FREE (Strongest)                           │
+│   Every thread: Bounded steps to completion     │
+│   Example: atomic.fetch_add(1)                  │
+│   Real-time safe: YES                           │
+└─────────────────────────────────────────────────┘
+              ↑ Includes all below
+┌─────────────────────────────────────────────────┐
+│ LOCK-FREE                                       │
+│   System-wide: At least one thread progresses   │
+│   Example: Lock-free stack (CAS loop)           │
+│   Real-time safe: YES (usually)                 │
+└─────────────────────────────────────────────────┘
+              ↑ Includes all below
+┌─────────────────────────────────────────────────┐
+│ OBSTRUCTION-FREE                                │
+│   Progress only if no contention                │
+│   Example: Speculative execution                │
+│   Real-time safe: NO                            │
+└─────────────────────────────────────────────────┘
+              ↑ Includes all below
+┌─────────────────────────────────────────────────┐
+│ BLOCKING (Weakest)                              │
+│   No progress guarantee                         │
+│   Example: Mutex, std::lock_guard               │
+│   Real-time safe: NO                            │
+└─────────────────────────────────────────────────┘
+```
+
+**Concrete Code Examples:**
+
+**Wait-Free Example:**
+```cpp
+std::atomic<int> counter{0};
+
+void increment() {
+    counter.fetch_add(1, std::memory_order_relaxed);
+    // Guaranteed to complete in 1 CPU instruction
+    // No retry possible
+}
+```
+
+**Lock-Free Example (Our Stack):**
+```cpp
+void push(T value) {
+    Node* new_node = new Node(value);
+    do {
+        new_node->next = head.load();
+    } while (!head.compare_exchange_weak(old, new_node));
+    // May retry multiple times, but SYSTEM always progresses
+    // At least one thread succeeds per iteration
+}
+```
+
+**Obstruction-Free Example:**
+```cpp
+void update() {
+    do {
+        old = state.load();
+        new_state = compute(old);
+        if (contention_detected()) {
+            std::this_thread::yield();  // Back off
+            continue;
+        }
+    } while (!state.compare_exchange_weak(old, new_state));
+    // Progress only if no contention
+}
+```
+
+**Blocking Example:**
+```cpp
+std::mutex mutex;
+void update() {
+    std::lock_guard<std::mutex> lock(mutex);
+    // Thread may block here indefinitely
+    state++;
+}
+```
+
+**Performance vs Guarantee Trade-off Table:**
+
+| Guarantee | Implementation Complexity | Performance (Low Contention) | Performance (High Contention) | Starvation Risk |
+|-----------|-------------------------|------------------------------|------------------------------|-----------------|
+| **Wait-Free** | Very Hard | Good | Excellent | NONE |
+| **Lock-Free** | Hard | Good | Very Good | Low (theoretically possible) |
+| **Obstruction-Free** | Medium | Good | Poor (retries) | High |
+| **Blocking** | Easy | Excellent | Poor (context switches) | Possible (priority inversion) |
+
+**When to Use Each:**
+
+```
+Use WAIT-FREE when:
+  ✅ Real-time deadlines (hard real-time)
+  ✅ Per-thread latency guarantees needed
+  ✅ Simple operations (counters, flags)
+  ❌ Complex data structures (too hard)
+
+Use LOCK-FREE when:
+  ✅ High-performance concurrent systems
+  ✅ Predictable latency important
+  ✅ Willing to handle complexity
+  ✅ Multiple threads, high contention
+
+Use OBSTRUCTION-FREE when:
+  ✅ Research/experimental code
+  ✅ Contention expected to be rare
+  ❌ Not recommended for production
+
+Use BLOCKING when:
+  ✅ Low contention (< 2-3 threads)
+  ✅ Simplicity is priority
+  ✅ Debugging is important
+  ✅ Not performance-critical
+```
+
+**Real-World Examples:**
+
+**Wait-Free:**
+- Linux kernel reference counters (`atomic_inc`)
+- Hardware performance counters
+- Simple flags and counters
+
+**Lock-Free:**
+- High-frequency trading (task queues)
+- Real-time audio (lock-free ring buffers)
+- Game engines (message passing)
+- Memory allocators (jemalloc, tcmalloc)
+
+**Blocking:**
+- File I/O operations
+- Database transactions
+- Most application code (99%)
+
+**Key Takeaway:**
+Our lock-free stack is **lock-free** (not wait-free). This means:
+- ✅ System always progresses (no deadlock)
+- ✅ No thread blocks (no sleep/wait)
+- ⚠️ Individual thread may retry many times (but rare in practice)
+- ⚠️ Theoretical starvation possible (but unlikely with exponential backoff)
+
+---
+
+#### 3. Atomic Operations - CPU-Level Indivisible Operations
+
+**What is "Atomic"?**
+
+Imagine you're transferring money between bank accounts:
+
+**Non-Atomic (DANGEROUS):**
+```
+Thread 1:                      Thread 2:
+balance = balance - 100;       balance = balance + 50;
+  ↓                              ↓
+1. Read balance (500)          1. Read balance (500)
+2. Subtract 100 → 400          2. Add 50 → 550
+3. Write 400                   3. Write 550 ← OVERWRITES Thread 1's write!
+
+Final balance: 550 (WRONG! Should be 450)
+Lost update: Thread 1's -100 disappeared
+```
+
+**Atomic (SAFE):**
+```
+Thread 1:                      Thread 2:
+atomic.fetch_sub(100);         atomic.fetch_add(50);
+  ↓                              ↓
+CPU executes ENTIRE operation   CPU waits for Thread 1 to finish
+as single indivisible unit      Then executes as single unit
+
+Final balance: 450 (CORRECT!)
+```
+
+**How std::atomic<T> Works:**
+
+```
+REGULAR VARIABLE:              ATOMIC VARIABLE:
+┌──────────────┐               ┌──────────────┐
+│  int x = 0;  │               │ atomic<int>  │
+└──────────────┘               │   x{0};      │
+                               └──────────────┘
+Read x: 3 instructions         Read x: 1 CPU instruction (LOCK prefix)
+  1. Load from memory           - Atomic load (indivisible)
+  2. Move to register           - Other threads see consistent value
+  3. Read register
+
+Write x: 3 instructions        Write x: 1 CPU instruction
+  1. Write to register           - Atomic store (indivisible)
+  2. Flush cache                 - Memory barrier (ensure visibility)
+  3. Write to memory             - Other threads see immediately
+
+Race condition: POSSIBLE       Race condition: IMPOSSIBLE
+```
+
+**Core Atomic Operations:**
+
+```cpp
+#include <atomic>
+
+std::atomic<int> counter{0};  // Initialize to 0
+
+// 1. LOAD (Read atomic value)
+int value = counter.load(std::memory_order_acquire);
+// Equivalent: int value = counter;
+// CPU: Single instruction, sees most recent write
+
+// 2. STORE (Write atomic value)
+counter.store(42, std::memory_order_release);
+// Equivalent: counter = 42;
+// CPU: Single instruction, all threads will see 42
+
+// 3. FETCH_ADD (Atomic increment/decrement)
+int old_value = counter.fetch_add(1, std::memory_order_relaxed);
+// Returns old value, atomically increments
+// CPU: LOCK XADD instruction (x86)
+
+// 4. COMPARE_EXCHANGE (CAS - Compare-and-Swap)
+int expected = 10;
+bool success = counter.compare_exchange_weak(
+    expected,  // If counter == expected
+    20,        // Set counter = 20
+    std::memory_order_release,
+    std::memory_order_acquire
+);
+// Returns: true if successful, false otherwise
+// On failure: expected updated to counter's actual value
+```
+
+**Visual: Atomic vs Non-Atomic Increment:**
+
+```
+NON-ATOMIC (int x = 0):
+Thread 1:           Thread 2:           Memory
+x++                 x++                 x = 0
+├─ Read x (0)       ├─ Read x (0)         ↓
+├─ Add 1 → 1        ├─ Add 1 → 1          0
+├─ Write 1          ├─ Write 1            1 ← Lost update!
+                                          1 (should be 2)
+
+ATOMIC (atomic<int> x{0}):
+Thread 1:           Thread 2:           Memory
+x.fetch_add(1)      x.fetch_add(1)      x = 0
+├─ LOCK XADD        │ (waits)             ↓
+│  (indivisible)    │                     1
+└─ Complete ✓       ├─ LOCK XADD          ↓
+                    │  (indivisible)       2 ✓ Correct!
+                    └─ Complete ✓
+```
+
+**Complete API Reference:**
+
+```cpp
+std::atomic<int> a{0};
+
+// 1. Arithmetic operations (integer types only)
+a.fetch_add(5);      // Returns old value, adds 5
+a.fetch_sub(3);      // Returns old value, subtracts 3
+a++;                 // Atomic increment
+a--;                 // Atomic decrement
+
+// 2. Bitwise operations (integer types only)
+a.fetch_and(0xFF);   // Atomic AND
+a.fetch_or(0x10);    // Atomic OR
+a.fetch_xor(0x01);   // Atomic XOR
+
+// 3. Comparison operations
+int expected = 10;
+a.compare_exchange_strong(expected, 20);  // Never spuriously fails
+a.compare_exchange_weak(expected, 20);    // May spuriously fail (faster)
+
+// 4. Direct assignment (uses store internally)
+a = 100;             // Equivalent to a.store(100)
+int x = a;           // Equivalent to a.load()
+
+// 5. Check if lock-free (at runtime)
+if (a.is_lock_free()) {
+    // True atomic operations (no mutex internally)
+} else {
+    // Uses mutex internally (fallback for large types)
+}
+```
+
+**Memory Ordering Impact on Performance:**
+
+```cpp
+// FASTEST (no synchronization):
+int val = a.load(std::memory_order_relaxed);
+a.store(42, std::memory_order_relaxed);
+// Use case: Counters where exact order doesn't matter
+
+// MEDIUM (one-way synchronization):
+a.store(42, std::memory_order_release);  // Publish
+int val = a.load(std::memory_order_acquire);  // Subscribe
+// Use case: Producer-consumer, lock-free structures
+
+// SLOWEST (full synchronization barrier):
+a.store(42, std::memory_order_seq_cst);  // Default
+int val = a.load(std::memory_order_seq_cst);
+// Use case: When you need global ordering across all threads
+```
+
+**Performance Benchmark (1M operations):**
+
+| Operation | Time | Relative Speed |
+|-----------|------|----------------|
+| Non-atomic `int x++` | 2ms | 1.0× (baseline) |
+| `atomic.fetch_add(1, relaxed)` | 8ms | 4× slower |
+| `atomic.fetch_add(1, acquire/release)` | 12ms | 6× slower |
+| `atomic.fetch_add(1, seq_cst)` | 18ms | 9× slower |
+| Mutex-protected `x++` | 50ms | 25× slower |
+
+**Type Requirements for std::atomic<T>:**
+
+```cpp
+// ✅ VALID (Trivially Copyable):
+std::atomic<int> a;
+std::atomic<float> b;
+std::atomic<int*> c;
+std::atomic<bool> d;
+
+struct Point { int x, y; };  // Trivially copyable
+std::atomic<Point> e;
+
+// ❌ INVALID (Not Trivially Copyable):
+std::atomic<std::string> f;      // Has destructor
+std::atomic<std::vector<int>> g; // Complex type
+
+// Check at compile time:
+static_assert(std::is_trivially_copyable_v<Point>);
+```
+
+**Real-World Use Cases:**
+
+**1) Reference Counting (std::shared_ptr):**
+```cpp
+class RefCounted {
+    std::atomic<int> ref_count{1};
+public:
+    void add_ref() { ref_count.fetch_add(1, std::memory_order_relaxed); }
+    void release() {
+        if (ref_count.fetch_sub(1, std::memory_order_release) == 1) {
+            delete this;
+        }
+    }
+};
+```
+
+**2) Flag for Thread Communication:**
+```cpp
+std::atomic<bool> ready{false};
+// Thread 1 (producer):
+data = compute();
+ready.store(true, std::memory_order_release);
+
+// Thread 2 (consumer):
+while (!ready.load(std::memory_order_acquire)) {
+    // Wait
+}
+use(data);  // Safe: happens-after relationship established
+```
+
+**3) Lock-Free Counter (Statistics):**
+```cpp
+std::atomic<uint64_t> requests_served{0};
+
+void handle_request() {
+    // ... process request ...
+    requests_served.fetch_add(1, std::memory_order_relaxed);
+}
+```
+
+**Key Takeaways:**
+- ✅ Atomic operations are **indivisible** (all-or-nothing)
+- ✅ Provide **thread-safety** without locks
+- ✅ **Memory ordering** controls visibility (relaxed < acquire/release < seq_cst)
+- ⚠️ **Slower** than non-atomic (but much faster than mutex)
+- ⚠️ Only works with **trivially copyable types**
+- ⚠️ **Lock-free** not guaranteed (check `is_lock_free()`)
+
+---
+
+#### 4. Compare-and-Swap (CAS) - The Heart of Lock-Free Programming
+
+**Real-World Analogy:**
+
+Imagine updating a shared whiteboard with a specific rule:
+
+**Non-Atomic Update (BROKEN):**
+```
+You: Read board ("5") → Calculate 5+1=6 → Write "6"
+Problem: Someone else changed it to "10" while you calculated!
+Result: Board shows "6" (WRONG! Should be 11)
+```
+
+**Compare-and-Swap (SAFE):**
+```
+You: Read board ("5")
+     Calculate 5+1=6
+     Try to write "6" BUT CHECK:
+       - If board STILL says "5" → Write "6" ✓
+       - If board changed to "10" → Don't write! Retry ✗
+```
+
+**CAS API:**
+
+```cpp
+bool compare_exchange_weak(T& expected, T desired);
+
+// What it does (ATOMICALLY):
+// 1. if (atomic == expected) {
+// 2.     atomic = desired;
+// 3.     return true;    // Success!
+// 4. } else {
+// 5.     expected = atomic;  // Update expected to actual value
+// 6.     return false;       // Failure - retry needed
+// 7. }
+
+// KEY: Steps 1-3 happen as SINGLE INDIVISIBLE CPU instruction!
+```
+
+**Step-by-Step Visual:**
+
+```
+SCENARIO: Two threads incrementing atomic<int> counter (initially 5)
+
+Thread 1:                      Thread 2:                      Memory (counter)
+─────────────────────────────────────────────────────────────────────────────
+Load counter (5)                                              5
+expected = 5
+desired = 6
+                               Load counter (5)
+                               expected = 5
+                               desired = 6
+
+CAS(expected=5, desired=6)
+├─ Check: counter == 5? YES   (waiting...)
+├─ Set counter = 6            (waiting...)                    6 ✓
+└─ Return true ✓              (waiting...)
+
+                               CAS(expected=5, desired=6)
+                               ├─ Check: counter == 5? NO! (it's 6)
+                               ├─ Update expected = 6 (actual value)
+                               └─ Return false ✗
+
+                               (RETRY)
+                               expected = 6
+                               desired = 7
+
+                               CAS(expected=6, desired=7)
+                               ├─ Check: counter == 6? YES
+                               ├─ Set counter = 7             7 ✓
+                               └─ Return true ✓
+
+FINAL: counter = 7 (CORRECT!)
+```
+
+**Typical CAS Loop Pattern:**
 
 ```cpp
 std::atomic<int> counter{0};
 
-counter.store(42, std::memory_order_relaxed);
-int val = counter.load(std::memory_order_acquire);
-counter.fetch_add(1, std::memory_order_release);
-```
+void increment() {
+    int expected = counter.load();  // Step 1: Read current value
 
-**Key operations:**
-- `load()`: Read value
-- `store()`: Write value
-- `compare_exchange_weak()`: CAS (compare-and-swap)
-- `compare_exchange_strong()`: CAS without spurious failures
-- `fetch_add()`, `fetch_sub()`: Atomic arithmetic
+    do {
+        int desired = expected + 1;  // Step 2: Compute new value
 
----
+        // Step 3: Try to update (CAS)
+    } while (!counter.compare_exchange_weak(
+        expected,  // If counter == expected
+        desired    // Set counter = desired
+    ));
 
-#### 4. Compare-and-Swap (CAS)
-
-**Core of lock-free algorithms:**
-
-```cpp
-bool compare_exchange_weak(T& expected, T desired)
-```
-
-**Semantics:**
-```cpp
-if (atomic_value == expected) {
-    atomic_value = desired;
-    return true;  // Success
-} else {
-    expected = atomic_value;  // Update expected
-    return false;  // Failure
+    // Loop exits when CAS succeeds
+    // Note: expected updated automatically on failure
 }
 ```
 
-**Entire operation is atomic** - no race conditions.
+**Visual: CAS Loop in Action (3 threads, high contention):**
 
-**Usage pattern:**
-```cpp
-do {
-    T old_val = atomic.load();
-    T new_val = compute(old_val);
-} while (!atomic.compare_exchange_weak(old_val, new_val));
+```
+Iteration 1:
+T1: CAS(0→1) ✓ SUCCESS (counter now 1)
+T2: CAS(0→1) ✗ FAIL (expected updated to 1)
+T3: CAS(0→1) ✗ FAIL (expected updated to 1)
+
+Iteration 2:
+T1: Done
+T2: CAS(1→2) ✓ SUCCESS (counter now 2)
+T3: CAS(1→2) ✗ FAIL (expected updated to 2)
+
+Iteration 3:
+T1: Done
+T2: Done
+T3: CAS(2→3) ✓ SUCCESS (counter now 3)
+
+Result: 3 increments, counter = 3 ✓
+Retries: T2 retried once, T3 retried twice
 ```
 
-**Weak vs Strong:**
-- `weak`: May spuriously fail (use in loops)
-- `strong`: Only fails if value actually changed (slower)
+**Compare-Exchange Variants:**
+
+```cpp
+// 1. compare_exchange_weak() - FASTER, but may spuriously fail
+int expected = 10;
+while (!atomic.compare_exchange_weak(expected, 20)) {
+    // May fail even if atomic == expected (spurious failure)
+    // Use in loops (common pattern)
+}
+
+// 2. compare_exchange_strong() - SLOWER, never spuriously fails
+int expected = 10;
+if (atomic.compare_exchange_strong(expected, 20)) {
+    // Only fails if atomic != expected
+    // Use for single attempts or complex failure handling
+}
+```
+
+**Spurious Failure Explained:**
+
+```
+ARM/PowerPC architectures:
+CAS implemented as LL/SC (Load-Linked/Store-Conditional)
+
+Load-Linked:  Mark memory location
+Store-Cond:   Store only if no writes since mark
+
+Problem: Context switch or cache eviction clears mark
+Result: Store-Cond fails even if value unchanged
+
+Example:
+Thread: LL [counter]    (marks location)
+[CONTEXT SWITCH happens - mark cleared]
+Thread: SC [counter]    FAILS! (mark lost)
+Actual value: Unchanged, but CAS returns false
+
+Solution: Use weak in loops (faster per attempt)
+          Use strong for single attempts
+```
+
+**Memory Ordering in CAS:**
+
+```cpp
+atomic.compare_exchange_weak(
+    expected,
+    desired,
+    std::memory_order_release,  // Success ordering (if CAS succeeds)
+    std::memory_order_acquire   // Failure ordering (if CAS fails)
+);
+
+Why two orderings?
+- Success: Need to publish changes (release)
+- Failure: Need to see why we failed (acquire)
+```
+
+**Real-World Example: Lock-Free Stack Push:**
+
+```cpp
+void push(T value) {
+    Node* new_node = new Node(value);
+    Node* old_head = head.load(std::memory_order_relaxed);
+
+    do {
+        // Link new node to current head
+        new_node->next = old_head;
+
+        // Try to make new_node the new head
+        // If head changed since we loaded it, retry
+    } while (!head.compare_exchange_weak(
+        old_head,    // Expected: old_head
+        new_node,    // Desired: new_node
+        std::memory_order_release,  // Success: publish new head
+        std::memory_order_relaxed   // Failure: just retry
+    ));
+
+    // When loop exits: new_node is head, old_head is linked
+}
+```
+
+**Visual: Lock-Free Stack Push with CAS:**
+
+```
+Initial state:  head → A → B → C
+
+Thread 1 pushes X:
+1. old_head = head  (points to A)
+2. X->next = A      (link X to A)
+3. CAS(head, old_head→X):
+     Check: head == A? YES
+     Set: head = X
+     Result: head → X → A → B → C ✓
+
+Thread 2 pushes Y (concurrent with T1):
+1. old_head = head  (points to A)
+2. Y->next = A      (link Y to A)
+3. CAS(head, old_head→Y):
+     Check: head == A? NO! (T1 changed it to X)
+     Update: old_head = X (actual head)
+     Result: FAIL ✗
+4. RETRY:
+   Y->next = X      (link Y to new head)
+5. CAS(head, old_head→Y):
+     Check: head == X? YES
+     Set: head = Y
+     Result: head → Y → X → A → B → C ✓
+```
+
+**Performance: CAS vs Mutex:**
+
+| Scenario | CAS | Mutex | Winner |
+|----------|-----|-------|--------|
+| **Single thread** | 10ns | 25ns | Mutex (no contention) |
+| **2 threads, low contention** | 30ns | 150ns | CAS (2× faster) |
+| **8 threads, high contention** | 80ns | 600ns | CAS (7.5× faster) |
+| **Retry rate (8 threads)** | ~15% | 0% | Mutex (no retries) |
+
+**When to Use CAS:**
+
+```
+Use CAS when:
+  ✅ High contention (many threads)
+  ✅ Short critical sections (simple updates)
+  ✅ Retry acceptable (usually < 20% retry rate)
+  ✅ Lock-free guarantee important
+
+Avoid CAS when:
+  ❌ Low contention (mutex is faster)
+  ❌ Long operations (retries waste work)
+  ❌ Simplicity priority (CAS loops complex)
+  ❌ Non-atomic data structures (CAS only works on atomics)
+```
+
+**Common CAS Pitfalls:**
+
+```cpp
+// ❌ WRONG: Infinite loop if expected never matches
+int expected = 100;  // Fixed value
+while (!atomic.compare_exchange_weak(expected, 200)) {
+    // BUG: If atomic != 100, expected updated but we reset it!
+    expected = 100;  // ← WRONG! Don't reset expected
+}
+
+// ✅ CORRECT: Let CAS update expected
+int expected = atomic.load();
+while (!atomic.compare_exchange_weak(expected, expected + 1)) {
+    // expected automatically updated to current value on failure
+}
+```
+
+**Key Takeaways:**
+- ✅ CAS is **atomic check-and-update** operation
+- ✅ Returns **old value on failure** (via expected parameter)
+- ✅ Use **weak in loops** (faster), **strong for single attempts**
+- ✅ **Retry on failure** is expected and normal
+- ⚠️ **Spurious failures** happen on weak (but rare)
+- ⚠️ **Live-lock possible** if all threads keep failing (exponential backoff helps)
 
 ---
 
@@ -161,35 +848,283 @@ Thread 1 CAS:         A → B (WRONG! B no longer in list)
 
 ---
 
-#### 6. Memory Ordering
+#### 6. Memory Ordering - Controlling Visibility Across Threads
 
-**std::memory_order** controls visibility of memory operations across threads.
+**The Problem: CPU Reordering**
 
-```cpp
-enum memory_order {
-    memory_order_relaxed,   // No synchronization
-    memory_order_acquire,   // Load: synchronize-with release
-    memory_order_release,   // Store: synchronize-with acquire
-    memory_order_acq_rel,   // Both acquire and release
-    memory_order_seq_cst    // Sequentially consistent (default, strongest)
-};
+Modern CPUs and compilers reorder operations for performance, which can break concurrent code:
+
+```
+Thread 1 writes:                   Thread 2 reads:
+data = 42;          →  Compiler    if (ready) {
+ready = true;          may swap!      use(data);  // May see uninitialized!
+                       ↓           }
+ready = true;
+data = 42;  ← WRONG ORDER!
 ```
 
-**For lock-free stack:**
-- `push()`: Use `release` on head update (publish changes)
-- `pop()`: Use `acquire` on head read (see latest changes)
+**Memory ordering** prevents harmful reorderings by establishing **happens-before** relationships.
 
-**Example:**
+**The 5 Memory Orderings (Weakest → Strongest):**
+
+```
+1. RELAXED     ─  No ordering guarantees (only atomicity)
+2. ACQUIRE     ─  Load + prevent later ops from moving before
+3. RELEASE     ─  Store + prevent earlier ops from moving after
+4. ACQ_REL     ─  Both acquire + release
+5. SEQ_CST     ─  Sequentially consistent (total global order)
+```
+
+**Visual: Memory Ordering Strength**
+
+```
+Performance ←────────────────────────→ Safety
+Fastest                                Slowest
+Least restrictive                      Most restrictive
+
+relaxed < acquire/release < seq_cst
+  ↑           ↑               ↑
+  No          One-way         Full
+  sync        sync            sync
+```
+
+**1. memory_order_relaxed (Fastest, No Synchronization)**
+
 ```cpp
-// Thread 1 (producer):
-data.store(42, std::memory_order_relaxed);
-ready.store(true, std::memory_order_release);  // Publish
+std::atomic<int> counter{0};
 
-// Thread 2 (consumer):
-if (ready.load(std::memory_order_acquire)) {  // Synchronize
-    int val = data.load(std::memory_order_relaxed);  // Sees 42
+void increment() {
+    counter.fetch_add(1, std::memory_order_relaxed);
 }
 ```
+
+**What it guarantees:**
+- ✅ Atomicity (no torn reads/writes)
+- ❌ NO ordering (other threads may see updates in any order)
+- ❌ NO synchronization
+
+**When to use:**
+- Simple counters (statistics, metrics)
+- Order doesn't matter
+- No dependencies on other data
+
+**Example: Statistics Counter**
+```cpp
+std::atomic<uint64_t> requests_served{0};
+
+void handle_request() {
+    // ... process request ...
+    requests_served.fetch_add(1, std::memory_order_relaxed);
+    // Order doesn't matter - just counting
+}
+```
+
+**2. memory_order_acquire (Load Synchronization)**
+
+```cpp
+bool ready = flag.load(std::memory_order_acquire);
+```
+
+**What it guarantees:**
+- ✅ All reads/writes AFTER this load stay AFTER
+- ❌ Operations before may move after
+- ✅ Synchronizes with `release` store
+
+**Visual:**
+```
+Before acquire:
+  [operations can move down]
+────────────────────────────  ← ACQUIRE BARRIER
+After acquire:
+  [operations CANNOT move up]  ← LOCKED IN PLACE
+```
+
+**When to use:**
+- Reading shared data
+- Consuming values from producer thread
+
+**3. memory_order_release (Store Synchronization)**
+
+```cpp
+flag.store(true, std::memory_order_release);
+```
+
+**What it guarantees:**
+- ✅ All reads/writes BEFORE this store stay BEFORE
+- ❌ Operations after may move before
+- ✅ Makes changes visible to `acquire` load
+
+**Visual:**
+```
+Before release:
+  [operations CANNOT move down]  ← LOCKED IN PLACE
+────────────────────────────  ← RELEASE BARRIER
+After release:
+  [operations can move up]
+```
+
+**When to use:**
+- Publishing shared data
+- Producer signaling data ready
+
+**4. Release-Acquire Pattern (Most Common)**
+
+```cpp
+// Thread 1 (Producer):
+data = 42;                                    // Write data
+ready.store(true, std::memory_order_release); // Publish
+
+// Thread 2 (Consumer):
+if (ready.load(std::memory_order_acquire)) {  // Synchronize
+    use(data);                                 // Guaranteed to see 42
+}
+```
+
+**What happens:**
+```
+Timeline:
+Thread 1:
+  ├─ data = 42         (before release barrier)
+  ├─ [RELEASE BARRIER]
+  └─ ready = true      (atomic store with release)
+
+Thread 2:
+  ├─ ready == true?    (atomic load with acquire)
+  ├─ [ACQUIRE BARRIER] ─ Synchronizes with Thread 1's release
+  └─ use(data)         (sees data = 42)
+
+Happens-Before Relationship:
+  data = 42  ──happens-before──>  ready = true  ──synchronizes-with──>  ready load  ──happens-before──>  use(data)
+```
+
+**5. memory_order_seq_cst (Strongest, Default)**
+
+```cpp
+atomic.store(42);  // Defaults to seq_cst
+int val = atomic.load();  // Defaults to seq_cst
+```
+
+**What it guarantees:**
+- ✅ Everything from acquire + release
+- ✅ Total global order across ALL threads
+- ❌ Slowest (full memory fence)
+
+**When to use:**
+- When you need global ordering
+- Default when unsure
+- Debugging (eliminates ordering issues)
+
+**Performance Comparison (Intel x86, 1M operations):**
+
+| Memory Order | Time | CPU Instructions | Use Case |
+|--------------|------|-----------------|----------|
+| **relaxed** | 10ms | MOV (no fence) | Counters |
+| **acquire** | 12ms | MOV + compiler barrier | Consumer loads |
+| **release** | 12ms | MOV + compiler barrier | Producer stores |
+| **acq_rel** | 14ms | XCHG (implicit barrier) | Hybrid |
+| **seq_cst** | 22ms | MFENCE (full barrier) | Default/debugging |
+
+**Lock-Free Stack: Correct Memory Ordering**
+
+```cpp
+// PUSH (Producer):
+void push(T value) {
+    Node* new_node = new Node(value);
+    Node* old_head = head.load(std::memory_order_relaxed);  // Initial load (relaxed OK)
+
+    do {
+        new_node->next = old_head;
+    } while (!head.compare_exchange_weak(
+        old_head,
+        new_node,
+        std::memory_order_release,  // SUCCESS: Publish new node
+        std::memory_order_relaxed   // FAILURE: Just retry (no sync needed)
+    ));
+}
+
+// POP (Consumer):
+std::optional<T> try_pop() {
+    Node* old_head = head.load(std::memory_order_acquire);  // See latest head
+
+    do {
+        if (old_head == nullptr) return std::nullopt;
+    } while (!head.compare_exchange_weak(
+        old_head,
+        old_head->next,
+        std::memory_order_release,  // SUCCESS: Publish head change
+        std::memory_order_acquire   // FAILURE: Reload latest head
+    ));
+
+    T value = std::move(old_head->data);  // Safe: happens-after push's release
+    return value;
+}
+```
+
+**Why This Works:**
+
+```
+Thread 1 (Push):
+  ├─ new_node->data = value    (before release)
+  ├─ new_node->next = old_head (before release)
+  └─ head CAS (release)        ← PUBLISH
+
+Thread 2 (Pop):
+  ├─ head load (acquire)       ← SYNCHRONIZE
+  └─ read old_head->data       (sees value)
+
+Release-Acquire establishes happens-before:
+  Push's writes ─happens-before─> head CAS(release) ─synchronizes-with─> head load(acquire) ─happens-before─> Pop's reads
+```
+
+**Common Mistake: Wrong Ordering**
+
+```cpp
+// ❌ WRONG: Relaxed ordering on CAS success
+void push(T value) {
+    // ...
+    head.compare_exchange_weak(
+        old_head, new_node,
+        std::memory_order_relaxed,  // BUG!
+        std::memory_order_relaxed
+    );
+}
+
+// Pop may not see new_node->data!
+```
+
+**Decision Tree: Which Memory Order?**
+
+```
+Do you need synchronization?
+  │
+  ├─ NO (just counting, order doesn't matter)
+  │    → memory_order_relaxed
+  │
+  └─ YES
+      │
+      ├─ Loading data (consumer)?
+      │    → memory_order_acquire
+      │
+      ├─ Storing data (producer)?
+      │    → memory_order_release
+      │
+      ├─ Both (read-modify-write)?
+      │    → memory_order_acq_rel
+      │
+      └─ Unsure / Need global order?
+           → memory_order_seq_cst (default)
+```
+
+**Key Takeaways:**
+- ✅ **Relaxed**: Fast, no sync (counters only)
+- ✅ **Acquire**: Load synchronization (consumer)
+- ✅ **Release**: Store synchronization (producer)
+- ✅ **Acquire-Release pair**: Most common pattern
+- ✅ **Seq_cst**: Default, safest, slowest
+- ⚠️ **Wrong ordering** → data races, undefined behavior
+- ⚠️ **x86 hides issues** → test on ARM/PowerPC
+
+**Remember:** Lock-free correctness depends critically on correct memory ordering!
 
 ---
 

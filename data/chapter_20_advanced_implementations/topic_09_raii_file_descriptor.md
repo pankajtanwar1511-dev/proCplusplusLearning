@@ -5,23 +5,120 @@
 
 **Principle:** Resource lifetime bound to object lifetime.
 
-**Benefits:**
-- Automatic cleanup (no manual close())
-- Exception-safe
-- No resource leaks
+**Real-World Analogy: Library Book Borrowing**
 
-**Pattern:**
+**WITHOUT RAII (Manual Management):**
+```
+You borrow a library book:
+1. Check out book from librarian (acquire resource)
+2. Read the book
+3. Remember to return book to librarian (release resource)
+
+PROBLEMS:
+- Forget to return → Book lost! (resource leak)
+- Get distracted → Never return (exception interrupts)
+- Move to another city → Book still checked out (early exit)
+```
+
+**WITH RAII (Automatic Management):**
+```
+Library has MAGIC BOOKSHELF:
+1. Take book from shelf (constructor acquires)
+2. Book "remembers" it belongs to library
+3. When you're done reading (leave room)
+   → Book AUTOMATICALLY flies back to shelf! (destructor releases)
+
+BENEFITS:
+- Cannot forget to return ✓
+- Even if you run away, book returns ✓  (exception-safe)
+- No lost books ✓  (no leaks)
+```
+
+**In C++ Code:**
+
+```cpp
+// WITHOUT RAII (Manual - ERROR PRONE):
+int fd = open("file.txt", O_RDONLY);  // Acquire resource
+// ... use fd ...
+close(fd);  // ← Must remember to close!
+            // ← What if exception thrown? LEAK!
+
+// WITH RAII (Automatic - SAFE):
+{
+    FileDescriptor fd("file.txt", O_RDONLY);  // Acquire in constructor
+    // ... use fd ...
+    // Destructor automatically closes, even if exception thrown! ✓
+}
+```
+
+**Visual: RAII Lifecycle**
+
+```
+SCOPE ENTRY:
+┌────────────────────────────────────┐
+│  FileDescriptor fd("file.txt");    │  ← Constructor called
+│         ↓                          │
+│  1. open("file.txt") → fd = 5      │  ← Resource acquired
+│  2. Store fd in member variable    │
+└────────────────────────────────────┘
+
+USING RESOURCE:
+┌────────────────────────────────────┐
+│  fd.read(buffer, 100);             │  ← Use the file descriptor
+│  fd.write(data, 50);               │
+└────────────────────────────────────┘
+
+SCOPE EXIT (Even if exception!):
+┌────────────────────────────────────┐
+│  }  ← Scope ends                   │
+│         ↓                          │
+│  ~FileDescriptor() called          │  ← Destructor GUARANTEED to run
+│         ↓                          │
+│  close(fd_)  ← Resource released   │  ← Automatic cleanup!
+└────────────────────────────────────┘
+```
+
+**Benefits:**
+
+| Benefit | Explanation | Without RAII | With RAII |
+|---------|-------------|--------------|-----------|
+| **No Manual Cleanup** | Destructor handles it | Must call `close()` | Automatic ✓ |
+| **Exception-Safe** | Cleanup even if exception thrown | Easy to leak | Guaranteed cleanup ✓ |
+| **No Leaks** | Resource always released | Forget close() → leak | Impossible to forget ✓ |
+| **Scope-Based** | Resource lifetime = object lifetime | Manual tracking | Automatic ✓ |
+
+**RAII Pattern:**
+
 ```cpp
 class Resource {
-public:
-    Resource() { /* acquire */ }
-    ~Resource() { /* release */ }
-};
+    int handle_;  // OS resource (file descriptor, socket, etc.)
 
-{
-    Resource r;  // Acquired
-    // Use resource
-}  // Auto-released (destructor called)
+public:
+    // Constructor: ACQUIRE resource
+    Resource(const char* name) {
+        handle_ = open(name, O_RDONLY);
+        if (handle_ == -1) {
+            throw std::runtime_error("Failed to open");
+        }
+    }
+
+    // Destructor: RELEASE resource
+    ~Resource() {
+        if (handle_ != -1) {
+            close(handle_);  // Always called, even during exception unwinding
+        }
+    }
+
+    // Prevent copying (would close same fd twice!)
+    Resource(const Resource&) = delete;
+    Resource& operator=(const Resource&) = delete;
+
+    // Allow moving (transfer ownership)
+    Resource(Resource&& other) noexcept {
+        handle_ = other.handle_;
+        other.handle_ = -1;  // Other no longer owns
+    }
+};
 ```
 
 ---

@@ -7,11 +7,76 @@
  ^head          ^tail
 ```
 
-**Operations:**
-- `push(item)`: Write at tail, advance tail
-- `pop()`: Read at head, advance head
+**Real-World Analogy: Conveyor Belt Sushi Restaurant**
 
-**Wrap-around:** Indices mod SIZE
+```
+CONVEYOR BELT (Ring Buffer):
+┌────────────────────────────────────────────────┐
+│         🍣  🍱  🍙  [ ]  [ ]  [ ]              │
+│   ↓←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←               │
+│   Consumer              Producer               │
+│   takes sushi           adds sushi             │
+│   (pop)                 (push)                 │
+└────────────────────────────────────────────────┘
+
+KEY FEATURES:
+- Fixed number of plates (fixed size buffer)
+- Producer adds sushi at one end
+- Consumer takes sushi from other end
+- Belt wraps around (circular/ring)
+- No locks needed - they work on different ends!
+```
+
+**Operations:**
+- `push(item)`: Producer puts new sushi plate on belt (write at tail, advance tail)
+- `pop()`: Consumer takes sushi plate from belt (read at head, advance head)
+- **Wrap-around:** When tail reaches end → wraps back to start (indices mod SIZE)
+
+**Visual: Ring Buffer Structure**
+
+```
+CIRCULAR BUFFER (size = 8):
+
+Initial state:
+   head=0, tail=0 (empty)
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│ [ ]│[ ]│[ ]│[ ]│[ ]│[ ]│[ ]│[ ]│
+└───┴───┴───┴───┴───┴───┴───┴───┘
+ ↑
+ head/tail
+
+After 3 pushes:
+   head=0, tail=3
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│ A │ B │ C │[ ]│[ ]│[ ]│[ ]│[ ]│
+└───┴───┴───┴───┴───┴───┴───┴───┘
+ ↑           ↑
+ head       tail
+
+After 5 more pushes (wraps around):
+   head=0, tail=0 (FULL!)
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│ A │ B │ C │ D │ E │ F │ G │ H │
+└───┴───┴───┴───┴───┴───┴───┴───┘
+ ↑                               ↑
+ head                           tail (wraps to 0)
+
+After 2 pops:
+   head=2, tail=0
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│[ ]│[ ]│ C │ D │ E │ F │ G │ H │
+└───┴───┴───┴───┴───┴───┴───┴───┘
+         ↑                       ↑
+        head                   tail
+
+After 2 more pushes (wraps):
+   head=2, tail=2 (FULL again!)
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│ I │ J │ C │ D │ E │ F │ G │ H │
+└───┴───┴───┴───┴───┴───┴───┴───┘
+         ↑
+       head/tail (full)
+```
 
 ---
 

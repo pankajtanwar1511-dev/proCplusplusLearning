@@ -5,14 +5,57 @@
 
 **Goal:** Fixed-size cache that evicts least recently used items when full.
 
-**Operations:**
-- `get(key)`: Return value, mark as recently used
-- `put(key, value)`: Insert, evict LRU if full
+**Real-World Analogy: Desk Workspace (Limited Space)**
 
-**Use cases:**
-- Web browser cache
-- Database query cache
-- Page replacement in OS
+```
+Your desk has space for 3 documents:
+
+State 1: Work on Doc A
+┌─────────────────────┐
+│  📄 A (most recent) │  ← Top of stack
+└─────────────────────┘
+
+State 2: Work on Doc B (add to top)
+┌─────────────────────┐
+│  📄 B (most recent) │
+│  📄 A               │
+└─────────────────────┘
+
+State 3: Work on Doc C (add to top)
+┌─────────────────────┐
+│  📄 C (most recent) │
+│  📄 B               │
+│  📄 A (least recent)│
+└─────────────────────┘
+
+State 4: Work on Doc D (desk full! Remove LRU = A)
+┌─────────────────────┐
+│  📄 D (most recent) │
+│  📄 C               │
+│  📄 B               │
+└─────────────────────┘
+  ❌ A removed (least recently used)
+
+State 5: Work on Doc B again (move B to top)
+┌─────────────────────┐
+│  📄 B (most recent) │  ← Moved from middle!
+│  📄 D               │
+│  📄 C (least recent)│
+└─────────────────────┘
+```
+
+**Operations:**
+- `get(key)`: Find document, move to top of stack (mark as recently used) - O(1)
+- `put(key, value)`: Add new document to top, remove bottom if full (evict LRU) - O(1)
+
+**Use Cases:**
+
+| Scenario | Why LRU? | Benefit |
+|----------|----------|---------|
+| **Web Browser Cache** | Recent pages likely revisited | Fast page loads |
+| **Database Query Cache** | Popular queries repeated | Avoid expensive DB hits |
+| **OS Page Replacement** | Active pages stay in RAM | Minimize disk I/O |
+| **CDN Cache** | Trending content stays cached | Reduce origin server load |
 
 ---
 

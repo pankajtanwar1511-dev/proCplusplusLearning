@@ -1,4 +1,61 @@
 ### THEORY_SECTION: Core Concepts and Foundations
+
+**Real-World Analogy: Waiting for Bathroom Door to Unlock**
+
+```
+MUTEX (Sleep/Block):
+You: Try door → Locked
+You: Sit down on bench, take nap 😴
+Friend: Finishes, unlocks door, taps your shoulder
+You: Wake up, enter bathroom ✓
+
+Pros: Don't waste energy (CPU cycles)
+Cons: Takes time to fall asleep and wake up (context switch cost)
+
+SPINLOCK (Busy-Wait):
+You: Try door → Locked
+You: Stand at door, keep trying handle every millisecond
+      "Locked? Try again. Locked? Try again. Locked? Try again..."
+Friend: Finishes, unlocks door
+You: Instantly enter (already at door!) ✓
+
+Pros: Instant response when unlocked
+Cons: Waste energy standing there (CPU cycles burned)
+```
+
+**Visual Comparison:**
+
+```
+MUTEX (Blocking):
+Thread A holds lock
+    ↓
+Thread B arrives → Tries lock → FAILS → Sleep 😴
+    ↓                                       ↓
+Thread A releases lock                     ↓
+    ↓                                       ↓
+OS wakes Thread B (1-10μs) → Thread B acquires lock
+    ↓
+Thread B enters critical section
+
+Timeline: ~~~~~[Context Switch]~~~~~[Run]
+Cost: HIGH (context switch overhead)
+
+SPINLOCK (Busy-Wait):
+Thread A holds lock
+    ↓
+Thread B arrives → Tries lock → FAILS → Spin (loop checking)
+    ↓                                       ↓
+    ↓                             while (locked) { /* burn CPU */ }
+Thread A releases lock                     ↓
+    ↓                                       ↓
+Thread B immediately detects → Acquires lock (< 1μs)
+    ↓
+Thread B enters critical section
+
+Timeline: [SpinSpinSpinSpin][Run]
+Cost: LOW latency, but wastes CPU if spins long
+```
+
 #### 1. Mutex (Blocking Lock)
 
 **Behavior:** Thread sleeps while waiting.
@@ -14,10 +71,10 @@ mtx.unlock();
 **When lock contended:**
 1. Thread tries to acquire
 2. Fails → **yields to OS scheduler**
-3. OS puts thread to sleep
-4. Woken when lock available
+3. OS puts thread to sleep (context switch ~1-10 μs)
+4. Woken when lock available (another context switch)
 
-**Cost:** Context switch (~1-10 μs)
+**Cost:** 2 context switches (~2-20 μs total)
 
 ---
 
