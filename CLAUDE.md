@@ -50,21 +50,28 @@ proCplusplus/
 
 ### **MANDATORY Workflow**
 
+Use the single entry point `./manage.sh` (from the repo root) — it delegates to
+the underlying worker scripts so you never have to remember paths or `cd` around:
+
 ```bash
 # 1. Make changes to markdown or parser
 vim data/chapter_X/topic_Y.md
 
-# 2. Regenerate JSON
-cd processed_data/scripts
-python3 markdown_to_json.py --chapter X
+# 2. Regenerate JSON + run all verifications in one step
+./manage.sh check X          # build chapter X (C++) then run the 4-point suite
+#   (omit X to rebuild every chapter)
 
-# 3. ⚠️ RUN VERIFICATIONS (MANDATORY!)
-cd ../../verification_scripts
-./run_all_verifications.sh
-
-# 4. Only if ALL checks pass, proceed
+# 3. Only if ALL checks pass, proceed
 git add .
 git commit -m "Your message"
+```
+
+`manage.sh check` runs `build` (regenerate) then `verify`. See `./manage.sh help`
+for every command. The equivalent low-level steps (still runnable directly) are:
+
+```bash
+cd processed_data/scripts && python3 markdown_to_json.py --chapter X
+cd ../../verification_scripts && ./run_all_verifications.sh
 ```
 
 **Expected Output:**
@@ -242,34 +249,23 @@ Create a class that...
 
 ## 🔧 Common Operations
 
-### Regenerate All JSON
+All common tasks go through the single entry point `./manage.sh` (repo root).
+Run `./manage.sh help` for the full list. Each command just delegates to the
+worker script shown, which you can still call directly if you prefer.
 
-```bash
-cd processed_data/scripts
-python3 markdown_to_json.py
-```
+| Task | `manage.sh` command | Delegates to |
+|------|---------------------|--------------|
+| Build + verify (standard workflow) | `./manage.sh check [N]` | build then verify |
+| Regenerate all C++ JSON | `./manage.sh build` | `markdown_to_json.py` |
+| Regenerate one chapter | `./manage.sh build 5` | `markdown_to_json.py --chapter 5` |
+| Regenerate ROS2 catalog | `./manage.sh build:ros2 [N]` | `markdown_to_json_ros2.py` |
+| Run verification suite | `./manage.sh verify [--verbose]` | `run_all_verifications.sh` |
+| Start / stop / restart app | `./manage.sh app <start\|stop\|restart\|kill>` | `app/START_APP.sh` etc. |
+| Deployment setup | `./manage.sh deploy` | `DEPLOY.sh` |
 
-### Regenerate Specific Chapter
-
-```bash
-python3 markdown_to_json.py --chapter 5
-```
-
-### Restart Application
-
-```bash
-cd app
-./STOP_APP.sh
-./START_APP.sh
-```
-
-### Run Verification System
-
-```bash
-cd verification_scripts
-./run_all_verifications.sh          # Summary output
-./run_all_verifications.sh --verbose  # Full output
-```
+**Note on `build N`:** regenerating a single chapter now merges into the existing
+`master_index.json` (preserving all other chapters). Earlier the `--chapter` flag
+overwrote the master index with only that chapter — that bug is fixed.
 
 ---
 
@@ -389,37 +385,36 @@ cd ../../app
 
 ---
 
-## 🗑️ Extra Files in Root Directory
+## 📜 Scripts Reference
 
-The following files are leftover from development and can be safely ignored or deleted:
+Prefer `./manage.sh` (see Common Operations) — it wraps the scripts below.
 
-### Utility Scripts (Old - Can Delete)
-- `add_practice_answers.py` - Old content generation script
-- `assess_theory_sections.py` - Old quality check script
-- `copy_qr_to_practice.py` / `copy_qr_to_practice_all.py` - Old copy utilities
-- `fix_edge_case_duplication.py` - One-time fix script (already applied)
-- `fix_table_headers.py` - One-time fix script (already applied)
-- `improve_practice_answers.py` - Old enhancement script
-- `improve_theory_sections.py` - Old enhancement script
-- `update_practice_simple.py` - Old update script
-- `verify_chapter1_practice.py` - Old single-chapter verification (superseded by verification_scripts/)
+### ✅ Core / Active (do not remove)
+- `manage.sh` - Single entry point; delegates to everything below.
+- `processed_data/scripts/markdown_to_json.py` - The C++ MD→JSON parser.
+- `processed_data/scripts/markdown_to_json_ros2.py` - ROS2 catalog parser
+  (`data_ros2/` → `json_output_ros2/`, served by `app_v3.py`).
+- `app/backend/app_v3.py` - Flask backend (multi-catalog: C++ + ROS2).
+- `app/START_APP.sh` / `STOP_APP.sh` / `KILL_ALL.sh` - App lifecycle.
+- `verification_scripts/*` - 4-point QA suite + `topic_utils.py` (shared
+  split-file grouping that reuses the parser's logic) + `run_all_verifications.sh`.
+- `DEPLOY.sh` - Deployment setup (Render + Vercel).
 
-### Test Files (Can Delete)
-- `comprehensive_test` / `comprehensive_test_all_practice.cpp` - Old test binaries
-- `test_edge_cases` / `test_edge_cases.cpp` - Old test code
-- `test_practice_questions/` - Old test directory
+### 🟡 Content pipeline (situational — only when regenerating content)
+- `split_md_files.py` - Split a single `topic_X.md` into `_theory/_practice/_qa`.
+- `strip_practice_answers.py` - Remove `**Answer:**` blocks for regeneration.
+- `add_practice_answers_automated.py` - Compile each C++ snippet and generate
+  practice answers (heavy; run only when regenerating answers).
 
-### Misc Files
-- `.frontend.pid` - Process ID file (auto-generated)
-- `add_examples_batch.sh` - Old batch script
-- `data_backup_*` / `processed_data_backup_*` - Backup directories (can clean up old ones)
+### 🗑️ Removed (already deleted — do not re-add)
+Old one-off migration/fix scripts (`rename_chapters_4_10.sh`,
+`remove_practice_answer_keys.py`, `fix_*`, `improve_*`, `copy_qr_*`, etc.) were
+one-time transforms whose effects are already baked into the content. They have
+been deleted.
 
-### Keep These
-- `verification_scripts/` - ✅ ESSENTIAL - Keep and use regularly
-- `CLAUDE.md` - ✅ This file - Development guide
-- `DEPLOYMENT_GUIDE.md`, `DEVELOPMENT_GUIDE.md`, etc. - ✅ Documentation
-- `.git/`, `.gitignore` - ✅ Git files
-- `app/`, `data/`, `processed_data/` - ✅ Core project directories
+### ⚠️ Unrelated (not part of this platform)
+- `linkedin_automation/` and `linkedin_automation (copy)/` - LinkedIn post
+  tooling, untracked; unrelated to the C++ learning platform.
 
 ---
 
