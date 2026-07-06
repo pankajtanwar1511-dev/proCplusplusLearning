@@ -832,7 +832,7 @@
       }
     },
     {
-      "topic": "topic_3_component_based_ecs",
+      "topic": "Component Based ECS",
       "filename": "topic_3_component_based_ecs.md",
       "theory": {
         "subsections": [
@@ -1238,7 +1238,7 @@
       }
     },
     {
-      "topic": "topic_4_layered_architecture",
+      "topic": "Layered Architecture",
       "filename": "topic_4_layered_architecture.md",
       "theory": {
         "subsections": [
@@ -1515,7 +1515,7 @@
       }
     },
     {
-      "topic": "topic_5_mvc_mvvm_patterns",
+      "topic": "MVC MVVM Patterns",
       "filename": "topic_5_mvc_mvvm_patterns.md",
       "theory": {
         "subsections": [
@@ -1839,7 +1839,7 @@
       }
     },
     {
-      "topic": "topic_6_microservices_architecture",
+      "topic": "Microservices Architecture",
       "filename": "topic_6_microservices_architecture.md",
       "theory": {
         "subsections": [
@@ -2109,7 +2109,7 @@
       }
     },
     {
-      "topic": "topic_7_clean_hexagonal_architecture",
+      "topic": "Clean Hexagonal Architecture",
       "filename": "topic_7_clean_hexagonal_architecture.md",
       "theory": {
         "subsections": [

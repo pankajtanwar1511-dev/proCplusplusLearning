@@ -38,6 +38,40 @@ from typing import Dict, List, Any, Optional
 from collections import defaultdict
 
 
+# Acronyms that should be upper-cased (or specially cased) in a derived title.
+_TITLE_ACRONYMS = {
+    'crtp': 'CRTP', 'ecs': 'ECS', 'mvc': 'MVC', 'mvvm': 'MVVM', 'lru': 'LRU',
+    'raii': 'RAII', 'spsc': 'SPSC', 'spmc': 'SPMC', 'api': 'API', 'stl': 'STL',
+    'oop': 'OOP', 'io': 'I/O', 'cpp': 'C++', 'rtti': 'RTTI', 'sfinae': 'SFINAE',
+    'tcp': 'TCP', 'udp': 'UDP', 'hashmap': 'HashMap',
+}
+# Small words kept lowercase in a derived title (unless they lead the title).
+_TITLE_MINOR = {'vs', 'and', 'or', 'of', 'the', 'a', 'an', 'to', 'with',
+                'in', 'on', 'for', 'as', 'by', 'at'}
+
+
+def humanize_topic_name(stem: str) -> Optional[str]:
+    """Derive a readable title from a topic filename stem.
+
+    e.g. "topic_03_lock_free_stack" -> "Lock Free Stack".
+    Returns None when the stem carries no descriptive words (e.g. "topic_1"),
+    signalling that the markdown needs an explicit "## TOPIC:" header instead.
+    """
+    s = re.sub(r'^topic_?\d+_?', '', stem)
+    if not s:
+        return None
+    words = []
+    for i, w in enumerate(s.split('_')):
+        lw = w.lower()
+        if lw in _TITLE_ACRONYMS:
+            words.append(_TITLE_ACRONYMS[lw])
+        elif lw in _TITLE_MINOR and i:
+            words.append(lw)
+        else:
+            words.append(w[:1].upper() + w[1:])
+    return ' '.join(words)
+
+
 class MarkdownParser:
     """Parses structured C++ learning markdown files with STRICT pattern enforcement."""
 
@@ -62,7 +96,12 @@ class MarkdownParser:
         else:
             # Try "# Topic N.M: Title" format (ROS2 style)
             topic_match = re.search(r'^#\s+Topic\s+[\d.]+:\s+(.+)$', content, re.MULTILINE)
-            topic_name = topic_match.group(1).strip() if topic_match else filepath.stem
+            if topic_match:
+                topic_name = topic_match.group(1).strip()
+            else:
+                # No explicit title header — derive a readable one from the
+                # filename rather than showing the raw stem.
+                topic_name = humanize_topic_name(filepath.stem) or filepath.stem
 
         # Validate section headers follow strict format
         self._validate_section_headers(content, filepath.name)
@@ -581,7 +620,12 @@ class MarkdownParser:
             topic_name = topic_match.group(1).strip()
         else:
             topic_match = re.search(r'^#\s+Topic\s+[\d.]+:\s+(.+)$', content, re.MULTILINE)
-            topic_name = topic_match.group(1).strip() if topic_match else base_name
+            if topic_match:
+                topic_name = topic_match.group(1).strip()
+            else:
+                # No explicit title header — derive a readable one from the
+                # base name rather than showing the raw stem.
+                topic_name = humanize_topic_name(base_name) or base_name
 
         # Validate and parse sections
         self._validate_section_headers(content, f"{base_name} (combined)")
@@ -609,6 +653,32 @@ class MarkdownParser:
         """Extract chapter number from directory name."""
         match = re.search(r'chapter_(\d+)', chapter_name)
         return int(match.group(1)) if match else 0
+
+    def _load_json_only_chapters(self, generated_names: set) -> List[Dict[str, Any]]:
+        """Return chapter dicts for JSON-only chapters (hand-authored chapter_*.json
+        files in the output dir that have no data/ source directory, e.g. chapter 21).
+
+        These are folded into master_index so they are served by the app and are
+        not dropped on a full rebuild. Chapters that ARE data-backed are skipped
+        here (they come from the freshly parsed markdown instead).
+        """
+        extras = []
+        for jf in sorted(self.output_dir.glob("chapter_*.json")):
+            name = jf.stem  # e.g. "chapter_21_advanced_implementations"
+            if name in generated_names:
+                continue
+            if (self.data_dir / name).is_dir():
+                continue  # data-backed; generated from markdown, not JSON-only
+            try:
+                with open(jf, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                continue
+            if isinstance(data, dict) and 'chapter_name' in data and 'topics' in data:
+                data.setdefault('topic_count', len(data['topics']))
+                extras.append(data)
+                print(f"  📦 Including JSON-only chapter: {name} ({data['topic_count']} topics)")
+        return extras
 
     def process_all_chapters(self, chapter_filter: Optional[int] = None):
         """Process all chapter directories."""
@@ -646,6 +716,13 @@ class MarkdownParser:
             all_chapters = sorted(merged.values(), key=lambda c: c["chapter_name"])
         else:
             # Full (re)build of the master index.
+            # Also fold in hand-authored, JSON-only chapters (a chapter_*.json
+            # in the output dir with no data/ source dir, e.g. chapter 21) so
+            # they appear in the index and survive full rebuilds.
+            generated_names = {c["chapter_name"] for c in all_chapters}
+            all_chapters += self._load_json_only_chapters(generated_names)
+            all_chapters = sorted(all_chapters, key=lambda c: c["chapter_name"])
+
             master_index = {
                 "version": "1.0",
                 "description": "C++ Professional Learning Content - All Chapters",

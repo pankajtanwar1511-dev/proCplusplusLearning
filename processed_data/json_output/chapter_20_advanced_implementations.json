@@ -4,7 +4,7 @@
   "topic_count": 14,
   "topics": [
     {
-      "topic": "topic_01_memory_pool_allocator",
+      "topic": "Memory Pool Allocator",
       "filename": "topic_01_memory_pool_allocator.md",
       "theory": {
         "subsections": [
@@ -418,7 +418,7 @@
       }
     },
     {
-      "topic": "topic_02_thread_safe_bounded_queue",
+      "topic": "Thread Safe Bounded Queue",
       "filename": "topic_02_thread_safe_bounded_queue.md",
       "theory": {
         "subsections": [
@@ -705,7 +705,7 @@
       }
     },
     {
-      "topic": "topic_03_lock_free_stack",
+      "topic": "Lock Free Stack",
       "filename": "topic_03_lock_free_stack.md",
       "theory": {
         "subsections": [
@@ -1084,7 +1084,7 @@
       }
     },
     {
-      "topic": "topic_04_thread_pool",
+      "topic": "Thread Pool",
       "filename": "topic_04_thread_pool.md",
       "theory": {
         "subsections": [
@@ -1412,7 +1412,7 @@
       }
     },
     {
-      "topic": "topic_05_vector_internals",
+      "topic": "Vector Internals",
       "filename": "topic_05_vector_internals.md",
       "theory": {
         "subsections": [
@@ -1717,7 +1717,7 @@
       }
     },
     {
-      "topic": "topic_06_custom_function",
+      "topic": "Custom Function",
       "filename": "topic_06_custom_function.md",
       "theory": {
         "subsections": [
@@ -2022,7 +2022,7 @@
       }
     },
     {
-      "topic": "topic_07_custom_hashmap",
+      "topic": "Custom HashMap",
       "filename": "topic_07_custom_hashmap.md",
       "theory": {
         "subsections": [
@@ -2184,7 +2184,7 @@
       }
     },
     {
-      "topic": "topic_08_singleton",
+      "topic": "Singleton",
       "filename": "topic_08_singleton.md",
       "theory": {
         "subsections": [
@@ -2345,7 +2345,7 @@
       }
     },
     {
-      "topic": "topic_09_raii_file_descriptor",
+      "topic": "RAII File Descriptor",
       "filename": "topic_09_raii_file_descriptor.md",
       "theory": {
         "subsections": [
@@ -2492,7 +2492,7 @@
       }
     },
     {
-      "topic": "topic_10_lock_free_ring_buffer",
+      "topic": "Lock Free Ring Buffer",
       "filename": "topic_10_lock_free_ring_buffer.md",
       "theory": {
         "subsections": [
@@ -2634,7 +2634,7 @@
       }
     },
     {
-      "topic": "topic_11_lru_cache",
+      "topic": "LRU Cache",
       "filename": "topic_11_lru_cache.md",
       "theory": {
         "subsections": [
@@ -2789,7 +2789,7 @@
       }
     },
     {
-      "topic": "topic_12_copy_on_write_string",
+      "topic": "Copy on Write String",
       "filename": "topic_12_copy_on_write_string.md",
       "theory": {
         "subsections": [
@@ -2929,7 +2929,7 @@
       }
     },
     {
-      "topic": "topic_13_smart_logger",
+      "topic": "Smart Logger",
       "filename": "topic_13_smart_logger.md",
       "theory": {
         "subsections": [
@@ -3072,7 +3072,7 @@
       }
     },
     {
-      "topic": "topic_14_spinlock_vs_mutex",
+      "topic": "Spinlock vs Mutex",
       "filename": "topic_14_spinlock_vs_mutex.md",
       "theory": {
         "subsections": [

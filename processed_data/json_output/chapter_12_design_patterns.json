@@ -965,7 +965,7 @@
       }
     },
     {
-      "topic": "topic_2_functor_pattern",
+      "topic": "Functor Pattern",
       "filename": "topic_2_functor_pattern.md",
       "theory": {
         "subsections": [
@@ -1922,7 +1922,7 @@
       }
     },
     {
-      "topic": "topic_3_crtp_pattern",
+      "topic": "CRTP Pattern",
       "filename": "topic_3_crtp_pattern.md",
       "theory": {
         "subsections": [
@@ -2837,7 +2837,7 @@
       }
     },
     {
-      "topic": "topic_4_object_pool",
+      "topic": "Object Pool",
       "filename": "topic_4_object_pool.md",
       "theory": {
         "subsections": [

@@ -1,3 +1,5 @@
+## TOPIC: Range-Based For, nullptr, and enum class
+
 ### THEORY_SECTION: Evolution of Safe C++ Programming
 
 #### 1. Range-Based For Loops - Iterator Management and Iteration Safety

@@ -4,7 +4,7 @@
   "topic_count": 5,
   "topics": [
     {
-      "topic": "topic_1",
+      "topic": "Type Inference: auto and decltype",
       "filename": "topic_1.md",
       "theory": {
         "subsections": [
@@ -918,7 +918,7 @@
       }
     },
     {
-      "topic": "topic_2",
+      "topic": "Range-Based For, nullptr, and enum class",
       "filename": "topic_2.md",
       "theory": {
         "subsections": [
@@ -1832,7 +1832,7 @@
       }
     },
     {
-      "topic": "topic_3",
+      "topic": "override and final Keywords",
       "filename": "topic_3.md",
       "theory": {
         "subsections": [

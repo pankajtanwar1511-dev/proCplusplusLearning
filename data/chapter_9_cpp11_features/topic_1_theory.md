@@ -1,3 +1,5 @@
+## TOPIC: Type Inference: auto and decltype
+
 ### THEORY_SECTION: Core Concepts of Type Inference
 
 #### 1. auto Type Deduction - Template Argument Deduction Rules and Qualifier Stripping
