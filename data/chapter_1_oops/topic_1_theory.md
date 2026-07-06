@@ -288,6 +288,45 @@ void reveal(const Box& b) {
 
 Friendship is not inherited and must be explicitly granted, making it a powerful but potentially dangerous feature.
 
+#### Edge Case 6: Changing Member Access with `using` Declarations
+
+A `using` declaration inside a derived class can **re-set the access level** of an inherited member — independent of its access in the base — as long as the derived class can already access that member. You place `using Base::member;` under the access specifier (`public`, `protected`, or `private`) you want that member to have in the derived class. This works with any inheritance mode and can either **widen** access (re-expose a member hidden by private inheritance) or **narrow** it. It is the standard tool for "inherit privately, but selectively publish one or two members."
+
+```cpp
+class Base {
+public:    void pub()  { std::cout << "pub\n"; }
+protected: void prot() { std::cout << "prot\n"; }
+private:   void priv() {}                 // Derived cannot see this at all
+};
+
+// Private inheritance makes pub()/prot() PRIVATE inside Derived...
+class Derived : private Base {
+public:
+    using Base::pub;    // ✅ re-exposed as PUBLIC in Derived
+    using Base::prot;   // ✅ protected-in-Base → PUBLIC (Derived has access)
+    // using Base::priv;  // ❌ ERROR: priv is private in Base; Derived can't see it
+};
+
+// A using-declaration can also NARROW access:
+class Locked : public Base {
+private:
+    using Base::pub;    // pub() is now PRIVATE in Locked
+};
+
+// Whatever access Derived sets is what propagates to further-derived classes:
+class GrandChild : public Derived {
+    // pub() and prot() inherited as PUBLIC, straight from Derived's interface
+};
+
+int main() {
+    Derived d;    d.pub();  d.prot();   // ✅ both public in Derived
+    Locked  l;    (void)l;  // l.pub(); // ❌ private in Locked
+    GrandChild g; g.pub();  g.prot();   // ✅ still public, via Derived
+}
+```
+
+The single rule behind all of this: **you can only re-expose a member you can already access.** A member that is `private` in the base is invisible to the derived class, so `using Base::priv;` fails — unless the derived class obtained access another way, such as being a `friend` of the base. And because the `using` declaration makes the member a genuine part of the derived class's interface, the original base access stops mattering downstream: further-derived classes see only the access level the intermediate class chose (public inheritance keeps it public, private inheritance narrows it again).
+
 ### CODE_EXAMPLES: Practical Demonstrations
 
 #### Example 1: Basic Struct vs Class Usage
