@@ -105,13 +105,13 @@ public:
 };
 
 class Derived : public Base {
-    // Cannot override privateFunc - no access
-    // But if Base exposes it via friend, override would use vtable
+    // A derived class MAY override privateFunc — overriding needs no access.
+    void privateFunc() override { cout << "Derived::privateFunc\n"; }
 };
 ```
 
 **Explanation:**
-The vtable is a runtime mechanism for polymorphism that exists independently of compile-time access control. Virtual dispatch looks up the correct function implementation in the vtable at runtime, regardless of the function's access level. Access specifiers only control whether code can syntactically call the function—the compiler checks access at compile time. This separation means private virtual functions can still be overridden by derived classes that have access (through friendship or other means) and will use dynamic dispatch when called through the base class interface.
+The vtable is a runtime mechanism for polymorphism that exists independently of compile-time access control. Virtual dispatch looks up the correct function implementation in the vtable at runtime, regardless of the function's access level. Access specifiers only control whether code can syntactically **call** the function—the compiler checks access at compile time against the *static type* at the call site. Overriding, by contrast, is never restricted by access: a derived class can override a private base virtual with no friendship or special access at all. So `d.caller()` dispatches to `Derived::privateFunc` even though `privateFunc` is private in `Base`.
 
 **Key takeaway:** Virtual dispatch is orthogonal to access control—vtables include all virtual functions regardless of their access level.
 
@@ -123,12 +123,12 @@ The vtable is a runtime mechanism for polymorphism that exists independently of 
 **Concepts:** #virtual_functions #override #private #access_specifiers #inheritance
 
 **Answer:**
-You can only override a private virtual function if you have access to it, which is typically not the case in derived classes, so in most situations the answer is no.
+Yes. In C++, access control governs who can **call** a function, not who can **override** it. A derived class can always override a base class's private virtual function—no friendship or special access is required—and may even declare the override with wider access such as `public`.
 
 **Explanation:**
-Private virtual functions are placed in the vtable and can participate in virtual dispatch, but derived classes cannot see or override them because they lack access. However, if a derived class gains access through friendship or other means, it could technically override the function. The C++ standard allows this scenario but it's extremely rare in practice. More commonly, protected virtual functions are used when you want derived classes to be able to customize behavior.
+Overriding is a property of the virtual dispatch (vtable) mechanism, which is completely independent of the compile-time access check. When you write `void func() override;` in a derived class, the compiler installs the override in the object's vtable regardless of the base function's access specifier. What access control *does* prevent is naming the function through a type where it's private: you can't write `basePtr->func()` if `func` is private in `Base`, because access is checked against the static type at the call site. But calling it *indirectly*—e.g. through a public non-virtual base method that invokes the private virtual—dispatches to the derived override at runtime. This is precisely the Non-Virtual Interface (NVI) idiom: a public non-virtual base function defines the interface and calls private virtual functions that derived classes customize.
 
-**Key takeaway:** Private virtual functions cannot be overridden by derived classes in typical inheritance scenarios due to access restrictions.
+**Key takeaway:** A private virtual function *can* be overridden by a derived class—access control restricts calling, not overriding.
 
 ---
 

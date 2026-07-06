@@ -232,23 +232,35 @@ This "works" because the object has a contiguous memory layout, and `value` is a
 
 #### Edge Case 4: Virtual Functions and Access Control
 
-Access specifiers control who can **call** a function, but they don't affect whether the function participates in virtual dispatch. Even private virtual functions are placed in the vtable and can be overridden by derived classes (if they have access).
+Access specifiers control who can **call** a function, but they don't affect whether the function participates in virtual dispatch. Even a private virtual function is placed in the vtable and **can be overridden by a derived class**—overriding does *not* require access to the base function. The derived class may even give its override a wider access level (e.g. `public`).
 
 ```cpp
 class Base {
 private:
+    // Private in Base: only Base's own members may CALL it directly
     virtual void secret() { std::cout << "Base::secret\n"; }
 public:
-    void callSecret() { secret(); }  // Calls through vtable
+    void callSecret() { secret(); }  // Triggers virtual dispatch
 };
 
 class Derived : public Base {
-    // Cannot override secret() because it's private in Base
-    // But if we could, it would use virtual dispatch
+public:
+    // Overriding a private base virtual is perfectly legal—
+    // access control does not restrict overriding, only calling.
+    // The override may even be made public, as here.
+    void secret() override { std::cout << "Derived::secret\n"; }
 };
+
+int main() {
+    Derived d;
+    Base* ptr = &d;
+    ptr->callSecret();  // Prints "Derived::secret" — polymorphism works
+    d.secret();         // OK: secret() is public in Derived
+    // ptr->secret();   // ERROR: secret() is private in Base (static type checked)
+}
 ```
 
-The vtable is a runtime mechanism for polymorphism, while access control is compile-time, so they operate independently.
+The vtable is a runtime mechanism for polymorphism, while access control is a compile-time check applied to the *static type* at the call site—so they operate independently. This is exactly the mechanism behind the Non-Virtual Interface (NVI) idiom, where a public non-virtual base function calls private virtual functions that derived classes override.
 
 #### Edge Case 5: Friend Declarations Override Access Control
 
