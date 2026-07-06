@@ -9,15 +9,19 @@ import json
 import random
 from pathlib import Path
 
-def check_content_presence(md_file, json_topic):
-    """Check if key content from MD appears in JSON"""
-    with open(md_file, 'r', encoding='utf-8') as f:
-        md_content = f.read()
+from topic_utils import iter_topics
 
+def check_content_presence(md_content, json_topic):
+    """Check if key content from combined MD appears in JSON.
+
+    Section headers may or may not carry a trailing ": Title" (both styles
+    exist across chapters), so every header match treats the colon/title as
+    optional.
+    """
     issues = []
 
     # Extract first question from INTERVIEW_QA in MD
-    qa_match = re.search(r'### INTERVIEW_QA:.*?####\s+Q1[:\s]+([^\n]+)\n+(.*?)(?=####\s+Q2|\n###)',
+    qa_match = re.search(r'###\s+INTERVIEW_QA\b.*?####\s+Q1\b[:\s]+([^\n]+)\n+(.*?)(?=####\s+Q2\b|\n###)',
                          md_content, re.DOTALL)
     if qa_match:
         q1_title = qa_match.group(1).strip()
@@ -31,7 +35,7 @@ def check_content_presence(md_file, json_topic):
             issues.append("❌ No INTERVIEW_QA in JSON")
 
     # Check for code example presence - ONLY within CODE_EXAMPLES section
-    code_section_match = re.search(r'### CODE_EXAMPLES:(.*?)(?=\n###\s+[A-Z_]+:|$)', md_content, re.DOTALL)
+    code_section_match = re.search(r'###\s+CODE_EXAMPLES\b[^\n]*\n(.*?)(?=\n###\s+[A-Z_]+|$)', md_content, re.DOTALL)
     if code_section_match:
         code_section = code_section_match.group(1)
         code_match = re.search(r'```cpp\n(.*?)\n```', code_section, re.DOTALL)
@@ -58,18 +62,31 @@ def check_content_presence(md_file, json_topic):
             else:
                 issues.append("❌ No CODE_EXAMPLES in JSON")
 
-    # Check for practice task presence
-    practice_match = re.search(r'### PRACTICE_TASKS:.*?####\s+Q1[:\s]+([^\n]+)',
-                               md_content, re.DOTALL)
-    if practice_match:
-        task1_title = practice_match.group(1).strip()
+    # Check for practice task presence.
+    # Practice tasks have NO title (the description — or, in the "bug analysis"
+    # format, a code block — starts on the line after "#### Q1"). So instead of
+    # a title we grab the first meaningful line of the Q1 body (skipping blank
+    # lines and ``` code-fence markers) and confirm it is present in the JSON
+    # task, using a whitespace-tolerant containment check.
+    practice_block = re.search(
+        r'###\s+PRACTICE_TASKS\b.*?####\s+Q1\b[^\n]*\n(.*?)(?=\n####\s+Q\d+\b|\n###\s+[A-Z_]+|\Z)',
+        md_content, re.DOTALL)
+    if practice_block:
+        marker = None
+        for line in practice_block.group(1).splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith('```'):
+                continue
+            marker = stripped
+            break
         json_practice = json_topic.get('practice_tasks', [])
-        if json_practice:
-            first_task = json_practice[0]
-            if task1_title not in str(first_task):
-                issues.append(f"⚠️  Task 1 title '{task1_title[:50]}' not in JSON")
-        else:
+        if not json_practice:
             issues.append("❌ No PRACTICE_TASKS in JSON")
+        elif marker:
+            marker_clean = re.sub(r'\s+', '', marker)
+            task_clean = re.sub(r'\s+', '', str(json_practice[0]))
+            if marker_clean not in task_clean:
+                issues.append(f"⚠️  Task 1 content '{marker[:50]}' not in JSON")
 
     return issues
 
@@ -99,13 +116,14 @@ def verify_random_sampling():
         with open(json_file, 'r', encoding='utf-8') as f:
             chapter_data = json.load(f)
 
-        md_files = sorted(chapter_dir.glob('*.md'))
-
-        for idx, md_file in enumerate(md_files):
+        # Group split (_theory/_practice/_qa) files into topics exactly the way
+        # the parser does, so the Nth topic here aligns with the Nth JSON topic.
+        for idx, (base_name, md_content) in enumerate(iter_topics(chapter_dir)):
             if idx < len(chapter_data['topics']):
                 all_topics.append({
                     'chapter': chapter_num,
-                    'md_file': md_file,
+                    'base_name': base_name,
+                    'md_content': md_content,
                     'json_topic': chapter_data['topics'][idx],
                     'name': chapter_data['topics'][idx].get('topic_name', 'Unknown')
                 })
@@ -121,9 +139,9 @@ def verify_random_sampling():
 
     for i, topic in enumerate(sampled_topics, 1):
         print(f"\n{i}. Chapter {topic['chapter']}: {topic['name'][:60]}")
-        print(f"   File: {topic['md_file'].name}")
+        print(f"   Topic: {topic['base_name']}")
 
-        issues = check_content_presence(topic['md_file'], topic['json_topic'])
+        issues = check_content_presence(topic['md_content'], topic['json_topic'])
 
         if issues:
             total_issues += len(issues)

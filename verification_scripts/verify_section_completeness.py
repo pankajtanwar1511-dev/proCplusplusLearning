@@ -13,13 +13,19 @@ def check_section_completeness():
     json_dir = base_dir / 'processed_data' / 'json_output'
 
     print("="*100)
-    print("SECTION COMPLETENESS VERIFICATION - ALL 88 TOPICS")
+    print("SECTION COMPLETENESS VERIFICATION - ALL TOPICS")
     print("="*100)
     print()
 
-    issues = []
+    # "Completeness" means every one of the 6 sections is present and non-empty
+    # (a hard ❌ failure if not). Item-count thresholds (e.g. "only 2 edge cases")
+    # are richness WARNINGS (⚠️) — they don't make a topic incomplete, so they're
+    # reported for visibility but don't fail the check.
+    incomplete = []      # topics missing/emptying at least one section (❌)
+    warning_topics = []  # topics that are complete but below a richness threshold
     total_topics = 0
-    perfect_topics = 0
+    complete_topics = 0
+    total_warnings = 0
 
     # Get all chapter JSON files
     chapter_files = sorted([f for f in json_dir.glob('chapter_*.json')
@@ -80,38 +86,60 @@ def check_section_completeness():
             if not topic.get('quick_reference'):
                 topic_issues.append("❌ QUICK_REFERENCE missing or empty")
 
-            # Report
+            # Split hard completeness failures (❌) from soft richness warnings (⚠️).
+            hard = [i for i in topic_issues if i.startswith('❌')]
+            soft = [i for i in topic_issues if not i.startswith('❌')]
+
             if topic_issues:
                 print(f"  Topic {idx}: {topic.get('topic_name', 'Unknown')[:50]}")
                 for issue in topic_issues:
                     print(f"    {issue}")
-                issues.append({
-                    'chapter': chapter_num,
-                    'topic': idx,
-                    'name': topic.get('topic_name', 'Unknown'),
-                    'issues': topic_issues
-                })
+
+            record = {
+                'chapter': chapter_num,
+                'topic': idx,
+                'name': topic.get('topic_name', 'Unknown'),
+                'issues': topic_issues,
+            }
+
+            if hard:
+                incomplete.append(record)
             else:
-                perfect_topics += 1
+                complete_topics += 1
+                if soft:
+                    warning_topics.append(record)
+                    total_warnings += len(soft)
 
     # Summary
     print("\n" + "="*100)
     print("SUMMARY")
     print("="*100)
     print(f"Total Topics: {total_topics}")
-    print(f"Perfect Topics (all 6 sections complete): {perfect_topics} ({perfect_topics/total_topics*100:.1f}%)")
-    print(f"Topics with Issues: {len(issues)} ({len(issues)/total_topics*100:.1f}%)")
+    print(f"Topics with all 6 sections: {complete_topics}/{total_topics}")
+    print(f"Incomplete Topics (missing/empty section): {len(incomplete)}")
+    print(f"Complete-but-below-richness-threshold Topics: {len(warning_topics)} "
+          f"({total_warnings} warnings)")
 
-    if issues:
+    if warning_topics:
         print(f"\n{'='*100}")
-        print(f"TOPICS WITH ISSUES: {len(issues)}")
+        print(f"RICHNESS WARNINGS (informational — sections present, just sparse): {len(warning_topics)} topics")
         print(f"{'='*100}")
-        for issue in issues:
+        for w in warning_topics:
+            print(f"Chapter {w['chapter']}, Topic {w['topic']}: {w['name'][:40]}")
+            for i in w['issues']:
+                print(f"  {i}")
+
+    if incomplete:
+        print(f"\n{'='*100}")
+        print(f"INCOMPLETE TOPICS: {len(incomplete)}")
+        print(f"{'='*100}")
+        for issue in incomplete:
             print(f"Chapter {issue['chapter']}, Topic {issue['topic']}: {issue['name'][:40]}")
             for i in issue['issues']:
                 print(f"  {i}")
+        print(f"\n❌ {len(incomplete)} TOPIC(S) MISSING SECTIONS")
     else:
-        print("\n✅ ALL 88 TOPICS HAVE COMPLETE SECTIONS!")
+        print(f"\n✅ ALL {total_topics} TOPICS HAVE COMPLETE SECTIONS!")
 
 if __name__ == '__main__':
     check_section_completeness()

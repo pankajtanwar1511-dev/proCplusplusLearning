@@ -8,13 +8,14 @@ import re
 import json
 from pathlib import Path
 
-def count_md_patterns(md_file, section_name):
-    """Count #### Q patterns in a specific section of MD file"""
-    with open(md_file, 'r', encoding='utf-8') as f:
-        content = f.read()
+from topic_utils import iter_topics
 
-    # Extract the specific section
-    pattern = rf'### {section_name}:.*?\n(.*?)(?=\n### [A-Z_]+:|\Z)'
+def count_md_patterns(content, section_name):
+    """Count #### Q patterns in a specific section of combined MD content"""
+    # Extract the specific section. The section header may or may not carry a
+    # trailing ": Title" (both styles exist across chapters), so the colon and
+    # title are optional. Stop at the next "### SECTION" header (colon optional).
+    pattern = rf'###\s+{section_name}\b[^\n]*\n(.*?)(?=\n###\s+[A-Z_]+|\Z)'
     match = re.search(pattern, content, re.DOTALL)
 
     if not match:
@@ -58,26 +59,24 @@ def verify_counts():
         print(f"\nChapter {chapter_num}: {chapter_name}")
         print("-" * 100)
 
-        md_files = sorted(chapter_dir.glob('*.md'))
-
-        for idx, md_file in enumerate(md_files):
+        # Group split (_theory/_practice/_qa) files into topics exactly the way
+        # the parser does, so the Nth topic here aligns with the Nth JSON topic.
+        for idx, (base_name, md_content) in enumerate(iter_topics(chapter_dir)):
             if idx >= len(chapter_data['topics']):
                 continue
 
             topic_json = chapter_data['topics'][idx]
 
             # Count INTERVIEW_QA
-            md_qa_count = count_md_patterns(md_file, 'INTERVIEW_QA')
+            md_qa_count = count_md_patterns(md_content, 'INTERVIEW_QA')
             json_qa_count = len(topic_json.get('interview_qa', []))
 
             # Count PRACTICE_TASKS
-            md_practice_count = count_md_patterns(md_file, 'PRACTICE_TASKS')
+            md_practice_count = count_md_patterns(md_content, 'PRACTICE_TASKS')
             json_practice_count = len(topic_json.get('practice_tasks', []))
 
-            # Count CODE_EXAMPLES
-            with open(md_file, 'r', encoding='utf-8') as f:
-                md_content = f.read()
-            code_section_match = re.search(r'### CODE_EXAMPLES:.*?\n(.*?)(?=\n### [A-Z_]+:|\Z)',
+            # Count CODE_EXAMPLES (header ": Title" optional, same as above)
+            code_section_match = re.search(r'###\s+CODE_EXAMPLES\b[^\n]*\n(.*?)(?=\n###\s+[A-Z_]+|\Z)',
                                           md_content, re.DOTALL)
             md_code_count = 0
             if code_section_match:
@@ -97,12 +96,12 @@ def verify_counts():
 
             # Report mismatches
             if not (qa_match and practice_match and code_match):
-                print(f"  Topic {idx+1}: {md_file.name[:50]}")
+                print(f"  Topic {idx+1}: {base_name[:50]}")
                 if not qa_match:
                     print(f"    ⚠️  INTERVIEW_QA: MD={md_qa_count}, JSON={json_qa_count}")
                     discrepancies.append({
                         'chapter': chapter_num,
-                        'file': md_file.name,
+                        'file': base_name,
                         'section': 'INTERVIEW_QA',
                         'md': md_qa_count,
                         'json': json_qa_count
@@ -111,7 +110,7 @@ def verify_counts():
                     print(f"    ⚠️  PRACTICE_TASKS: MD={md_practice_count}, JSON={json_practice_count}")
                     discrepancies.append({
                         'chapter': chapter_num,
-                        'file': md_file.name,
+                        'file': base_name,
                         'section': 'PRACTICE_TASKS',
                         'md': md_practice_count,
                         'json': json_practice_count
@@ -120,7 +119,7 @@ def verify_counts():
                     print(f"    ⚠️  CODE_EXAMPLES: MD={md_code_count}, JSON={json_code_count}")
                     discrepancies.append({
                         'chapter': chapter_num,
-                        'file': md_file.name,
+                        'file': base_name,
                         'section': 'CODE_EXAMPLES',
                         'md': md_code_count,
                         'json': json_code_count

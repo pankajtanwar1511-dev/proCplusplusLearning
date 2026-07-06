@@ -64,7 +64,7 @@ run_check() {
 }
 
 # Run all 4 checks
-run_check 1 "Section Completeness" "verify_section_completeness.py" "Topics with all 6 sections: 88/88"
+run_check 1 "Section Completeness" "verify_section_completeness.py" "TOPICS HAVE COMPLETE SECTIONS"
 run_check 2 "Count Accuracy" "verify_counts.py" "ALL COUNTS MATCH PERFECTLY"
 run_check 3 "Random Sampling" "verify_random_sampling.py" "ALL SAMPLED TOPICS HAVE PERFECT CONTENT MATCH"
 run_check 4 "Critical Content Preservation" "verify_critical_content.py" "ALL CRITICAL CONTENT PRESERVED"

@@ -620,34 +620,57 @@ class MarkdownParser:
                            if self._extract_chapter_number(d.name) == chapter_filter]
 
         all_chapters = []
-        stats = {
-            "total_chapters": 0,
-            "total_topics": 0,
-            "chapters_processed": []
-        }
 
         for chapter_dir in chapter_dirs:
             chapter_data = self.process_chapter(chapter_dir)
             if chapter_data:
                 all_chapters.append(chapter_data)
-                stats["total_chapters"] += 1
-                stats["total_topics"] += chapter_data["topic_count"]
-                stats["chapters_processed"].append({
-                    "name": chapter_data["chapter_name"],
-                    "number": chapter_data["chapter_number"],
-                    "topics": chapter_data["topic_count"]
-                })
-
-        # Create master index
-        master_index = {
-            "version": "1.0",
-            "description": "C++ Professional Learning Content - All Chapters",
-            "statistics": stats,
-            "chapters": all_chapters,
-            "catalog": "cpp"
-        }
 
         index_file = self.output_dir / "master_index.json"
+
+        # When processing a subset of chapters (--chapter), merge the freshly
+        # generated chapters into the EXISTING master index instead of replacing
+        # it. This ensures a single-chapter regeneration only touches that
+        # chapter's entry and leaves every other chapter byte-for-byte intact.
+        if chapter_filter and index_file.exists():
+            with open(index_file, 'r', encoding='utf-8') as f:
+                master_index = json.load(f)
+
+            # Index existing chapters by chapter_name for stable replacement.
+            merged = {c["chapter_name"]: c for c in master_index.get("chapters", [])}
+            for chapter_data in all_chapters:
+                merged[chapter_data["chapter_name"]] = chapter_data
+
+            # Keep the same ordering a full regeneration produces:
+            # sorted by chapter directory name.
+            all_chapters = sorted(merged.values(), key=lambda c: c["chapter_name"])
+        else:
+            # Full (re)build of the master index.
+            master_index = {
+                "version": "1.0",
+                "description": "C++ Professional Learning Content - All Chapters",
+                "statistics": {},
+                "chapters": [],
+                "catalog": "cpp"
+            }
+
+        # Recompute statistics from the final chapter set so counts stay correct.
+        stats = {
+            "total_chapters": len(all_chapters),
+            "total_topics": sum(c["topic_count"] for c in all_chapters),
+            "chapters_processed": [
+                {
+                    "name": c["chapter_name"],
+                    "number": c["chapter_number"],
+                    "topics": c["topic_count"],
+                }
+                for c in all_chapters
+            ],
+        }
+
+        master_index["statistics"] = stats
+        master_index["chapters"] = all_chapters
+
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(master_index, f, indent=2, ensure_ascii=False)
 
