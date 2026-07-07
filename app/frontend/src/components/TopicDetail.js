@@ -475,6 +475,39 @@ const TopicDetail = () => {
                     </pre>
                   </div>
 
+                  {Array.isArray(example.additional_code) && example.additional_code.map((extra, addIdx) => (
+                    // A block is real code if it has C++ syntax (#include / ; / { }).
+                    // Otherwise it's captured program output — show it as an Output box.
+                    /#include|[;{}]/.test(extra) ? (
+                      <div className="code-block-wrapper" key={`add-${addIdx}`}>
+                        <button
+                          className="copy-button"
+                          onClick={() => copyToClipboard(extra, `example-${index}-add-${addIdx}`)}
+                        >
+                          {copiedCode === `example-${index}-add-${addIdx}` ? (
+                            <>
+                              <Check size={16} />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={16} />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                        <pre>
+                          <code className="language-cpp" dangerouslySetInnerHTML={{ __html: highlightCppCode(extra) }} />
+                        </pre>
+                      </div>
+                    ) : (
+                      <div className="example-output" key={`add-${addIdx}`}>
+                        <h4>Output:</h4>
+                        <pre className="output-box">{extra}</pre>
+                      </div>
+                    )
+                  ))}
+
                   {example.explanation && (
                     <div className="example-explanation">
                       <h4>Explanation:</h4>
