@@ -135,6 +135,41 @@ int main() {
 
 This occurs because name lookup stops at the first scope where the name is found. Once `func` is found in `Derived`, the compiler doesn't look in `Base`. To fix this, use `using Base::func;` in the derived class to bring base class overloads into scope.
 
+Hiding is easy to miss when the argument silently converts (above, `10` becomes a `double`). It becomes undeniable when the hidden overload was the *only* one that could have matched — then the mismatch is a hard **compile error**, not a silent switch:
+
+```cpp
+class Base {
+public:
+    void func(std::string s) { std::cout << "Base::func(string)\n"; }
+};
+
+// (a) Hiding turns a mismatched argument into a COMPILE ERROR
+class Derived : public Base {
+public:
+    void func(double x) { std::cout << "Derived::func(double)\n"; }
+};
+
+// (b) `using` un-hides the base overload, so BOTH become candidates
+class Fixed : public Base {
+public:
+    using Base::func;               // bring Base::func(string) back into scope
+    void func(double x) { std::cout << "Fixed::func(double)\n"; }
+};
+
+int main() {
+    Derived d;
+    // d.func("Hello");   // ❌ ERROR: only Derived::func(double) is visible;
+    //                    //    a string literal cannot convert to double.
+    d.func(3.14);         // ✅ Derived::func(double)
+
+    Fixed f;
+    f.func("Hello");      // ✅ Base::func(string)  — un-hidden by `using`
+    f.func(3.14);         // ✅ Fixed::func(double)
+}
+```
+
+The two phases run in strict order: **name lookup first** picks the scope (it finds `func` in `Derived` and stops), then **overload resolution** runs on *only* those candidates. The argument type is never consulted during lookup — so hiding the `string` overload leaves `double` as the sole candidate, and `"Hello"` cannot convert to `double`, so the call fails to compile.
+
 #### Edge Case 2: Object Slicing in Polymorphic Hierarchies
 
 Object slicing occurs when a derived class object is assigned or passed by value to a base class object. The derived portion is "sliced off," leaving only the base class subobject. This destroys polymorphic behavior because the vtable pointer is replaced with the base class vtable, and all derived class data members are lost.
