@@ -279,6 +279,19 @@ int main() {
 
 This demonstrates the separation of concerns: access control is a compile-time interface contract, while virtual dispatch is a runtime polymorphism mechanism. They operate independently.
 
+**A common point of confusion:** *"We call `d.callSecret()` on a direct `Derived` object — no `Base* ptr = &d` anywhere. Where is the base pointer that runtime polymorphism needs?"* It is the hidden `this` pointer. Every non-static member call passes the object's address as an implicit `this`, and inside `Base::callSecret` that pointer has **static type `Base*`** (it is a `Base` member). So `secret();` is really `this->secret();` — a virtual call *through a base pointer*. Conceptually:
+
+```cpp
+// A member function receives the object as a hidden first argument:
+//   Base::callSecret(Base* self) { self->secret(); }   // 'self' is 'this', static type Base*
+//   d.callSecret();   ==>   Base::callSecret(&d);       // &d converts Derived* -> Base*
+//
+// The call to secret() goes through a Base* whose DYNAMIC type is only known at
+// runtime, so the vtable is consulted -> Derived::secret() runs.
+```
+
+The rule *"runtime polymorphism needs a base pointer or reference"* is never broken here — the base pointer is simply implicit (`this`). By contrast, calling a virtual function **directly** on an object of known exact type (e.g. `d.secret()`, if it were accessible) needs no vtable: the static type equals the dynamic type, so the compiler can resolve it to `Derived::secret()` at compile time — an optimization called **devirtualization**. Routing the call through the base member `callSecret` is precisely what forces the dynamic (vtable) path.
+
 #### Edge Case 6: Default Arguments and Virtual Functions
 
 Default arguments are resolved statically at compile-time based on the static type of the pointer or reference, not the dynamic type of the object. This means that even though virtual function calls use dynamic dispatch, their default arguments do not—they're bound to the type of the pointer used to call the function.
