@@ -240,13 +240,13 @@ public:
 class Modern {
 public:
     Modern(Modern&&) = default;  // User-defined move constructor
-    // ❌ Copy constructor NOT generated
-    // ❌ Copy assignment NOT generated
-    // ✅ Move assignment may be generated
+    // ❌ Copy constructor DELETED (=delete)
+    // ❌ Copy assignment DELETED (=delete)
+    // 🚫 Move assignment NOT declared (suppressed)
 };
 ```
 
-Defining a copy constructor or copy assignment suppresses move operations. Defining move operations suppresses copy operations. Defining a destructor doesn't suppress copy operations in C++98 (for backward compatibility) but should, according to modern guidelines. This is why the Rule of Five exists—to explicitly control all special member functions rather than relying on complex implicit rules that vary by C++ version and compiler.
+Defining a copy constructor or copy assignment suppresses move operations. Defining move operations DELETES the copy operations (copying becomes a hard compile error). Defining a destructor doesn't suppress copy operations in C++98 (for backward compatibility) but should, according to modern guidelines. This is why the Rule of Five exists—to explicitly control all special member functions rather than relying on complex implicit rules that vary by C++ version and compiler.
 
 #### Edge Case 4: Object Slicing in Copy Operations
 
@@ -890,14 +890,14 @@ SensorDataBuffer: Destroying camera_left (freeing 512000 bytes)
 | User Declares | Default Ctor | Destructor | Copy Ctor | Copy Assign | Move Ctor | Move Assign |
 |--------------|--------------|------------|-----------|-------------|-----------|-------------|
 | Nothing | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
-| Any Constructor | ❌ Not generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
-| Destructor | ✅ Generated | User-defined | ✅ Generated* | ✅ Generated* | ❌ Not generated | ❌ Not generated |
-| Copy Constructor | ✅ Generated | ✅ Generated | User-defined | ✅ Generated | ❌ Not generated | ❌ Not generated |
-| Copy Assignment | ✅ Generated | ✅ Generated | ✅ Generated | User-defined | ❌ Not generated | ❌ Not generated |
-| Move Constructor | ✅ Generated | ✅ Generated | ❌ Not generated | ❌ Not generated | User-defined | ✅ Generated |
-| Move Assignment | ✅ Generated | ✅ Generated | ❌ Not generated | ❌ Not generated | ✅ Generated | User-defined |
+| User-declared (non-special) constructor | 🚫 Suppressed | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
+| Destructor | ✅ Generated | User-defined | ⚠️ Generated (deprecated) | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared |
+| Copy Constructor | 🚫 Suppressed | ✅ Generated | User-defined | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared |
+| Copy Assignment | ✅ Generated | ✅ Generated | ⚠️ Generated (deprecated) | User-defined | 🚫 Not declared | 🚫 Not declared |
+| Move Constructor | 🚫 Suppressed | ✅ Generated | ❌ Deleted | ❌ Deleted | User-defined | 🚫 Not declared |
+| Move Assignment | ✅ Generated | ✅ Generated | ❌ Deleted | ❌ Deleted | 🚫 Not declared | User-defined |
 
-*Deprecated behavior; modern guidelines recommend against relying on this
+**Legend:** ✅ Generated = implicitly generated; ⚠️ Generated (deprecated) = generated but reliance is deprecated; ❌ Deleted = defined as `=delete`, so using it is a **hard compile error**; 🚫 Not declared = does not exist, so a move **silently falls back to copy**; 🚫 Suppressed = default constructor not declared because another constructor was declared.
 
 #### Copy Elision Rules
 

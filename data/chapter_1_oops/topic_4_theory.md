@@ -10,19 +10,21 @@
 |-----------------|-----------|-------------|---------|----------------|
 | **Default** | `T()` or `T(args=defaults)` | No arguments provided | Initialize with default values | ✅ Only if no other constructors exist |
 | **Parameterized** | `T(Type1 arg1, Type2 arg2, ...)` | With specific arguments | Initialize with custom values | ❌ Never auto-generated |
-| **Copy** | `T(const T& other)` | From lvalue of same type | Create duplicate of existing object | ✅ Unless move/copy/destructor user-defined |
-| **Move** | `T(T&& other)` noexcept | From rvalue of same type | Transfer resources from temporary | ✅ Only if no special members user-defined |
+| **Copy** | `T(const T& other)` | From lvalue of same type | Create duplicate of existing object | ✅ Unless a copy or move member is user-declared (a destructor leaves it generated but deprecated) |
+| **Move** | `T(T&& other)` noexcept | From rvalue of same type | Transfer resources from temporary | ✅ Only if no copy/move operation or destructor is user-declared |
 
 **Compiler-generated constructor rules (Rule of Five):**
 
 | You Declare | Default | Copy | Move | Reason |
 |-------------|---------|------|------|--------|
 | **Nothing** | ✅ Generated | ✅ Generated | ✅ Generated | Full automatic support |
-| **Any constructor** | ❌ Suppressed | ✅ Generated | ✅ Generated | Explicit construction required |
-| **Copy constructor** | ❌ Suppressed | User-defined | ❌ Suppressed | Resource management indicated |
-| **Move constructor** | ❌ Suppressed | ❌ Suppressed | User-defined | Resource management indicated |
-| **Destructor** | ❌ Suppressed | ✅ Generated (deprecated) | ❌ Suppressed | Resource management indicated |
-| **Copy assignment** | ❌ Suppressed | ✅ Generated | ❌ Suppressed | Resource management indicated |
+| **Any constructor** | 🚫 Suppressed | ✅ Generated | ✅ Generated | Explicit construction required |
+| **Copy constructor** | 🚫 Suppressed | User-defined | 🚫 Not declared | Resource management indicated |
+| **Move constructor** | 🚫 Suppressed | ❌ Deleted | User-defined | Resource management indicated |
+| **Destructor** | ✅ Generated | ⚠️ Generated (deprecated) | 🚫 Not declared | Resource management indicated |
+| **Copy assignment** | ✅ Generated | ⚠️ Generated (deprecated) | 🚫 Not declared | Resource management indicated |
+
+*Legend:* ❌ Deleted = copying is a hard compile error; 🚫 Not declared = a move silently falls back to copy.
 
 **Key insight:** Declaring any constructor suppresses automatic default constructor generation. Use `= default` to restore: `T() = default;`
 
@@ -745,8 +747,8 @@ This pattern is fundamental to managing any resource-heavy objects in autonomous
 |-----------------|-----------|-------------|-----------------|----------------|
 | Default | `T()` | No arguments | Yes | Only if no other constructors |
 | Parameterized | `T(args)` | With arguments | Yes (unless explicit) | No |
-| Copy | `T(const T&)` | From same-type lvalue | Yes | If no move/copy/destructor defined |
-| Move | `T(T&&)` | From same-type rvalue | Yes | If no special members defined |
+| Copy | `T(const T&)` | From same-type lvalue | Yes | Unless a copy or move member is user-declared (a destructor leaves it generated but deprecated) |
+| Move | `T(T&&)` | From same-type rvalue | Yes | If no copy/move operation or destructor is user-declared |
 
 #### Member Initialization Methods
 
@@ -772,11 +774,13 @@ This pattern is fundamental to managing any resource-heavy objects in autonomous
 | User-Declared | Default | Copy | Move | Reason |
 |---------------|---------|------|------|--------|
 | Nothing | ✅ Generated | ✅ Generated | ✅ Generated | Full automatic |
-| Any constructor | ❌ Not generated | ✅ Generated | ✅ Generated | Constructor declared |
-| Copy constructor | ❌ Not generated | User-defined | ❌ Not generated | Rule of Five |
-| Move constructor | ❌ Not generated | ❌ Not generated | User-defined | Rule of Five |
-| Destructor | ❌ Not generated | ✅ Generated* | ❌ Not generated | *Deprecated behavior |
-| Copy assignment | ❌ Not generated | ✅ Generated | ❌ Not generated | Rule of Five |
+| Any constructor | 🚫 Suppressed | ✅ Generated | ✅ Generated | Constructor declared |
+| Copy constructor | 🚫 Suppressed | User-defined | 🚫 Not declared | Rule of Five |
+| Move constructor | 🚫 Suppressed | ❌ Deleted | User-defined | Rule of Five |
+| Destructor | ✅ Generated | ⚠️ Generated (deprecated) | 🚫 Not declared | Deprecated behavior |
+| Copy assignment | ✅ Generated | ⚠️ Generated (deprecated) | 🚫 Not declared | Rule of Five |
+
+*Legend:* ❌ Deleted = copying is a hard compile error; 🚫 Not declared = a move silently falls back to copy.
 
 #### Initialization Order
 

@@ -9,13 +9,15 @@
 | You Declare | Default Ctor | Destructor | Copy Ctor | Copy Assign | Move Ctor | Move Assign |
 |-------------|--------------|------------|-----------|-------------|-----------|-------------|
 | **Nothing** | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
-| **Destructor** | ✅ Generated | User-defined | ✅ Generated (deprecated) | ✅ Generated (deprecated) | ❌ **Suppressed** | ❌ **Suppressed** |
-| **Copy Constructor** | ✅ Generated | ✅ Generated | User-defined | ✅ Generated | ❌ **Suppressed** | ❌ **Suppressed** |
-| **Copy Assignment** | ✅ Generated | ✅ Generated | ✅ Generated | User-defined | ❌ **Suppressed** | ❌ **Suppressed** |
-| **Move Constructor** | ✅ Generated | ✅ Generated | ❌ **Suppressed** | ❌ **Suppressed** | User-defined | ✅ Generated |
-| **Move Assignment** | ✅ Generated | ✅ Generated | ❌ **Suppressed** | ❌ **Suppressed** | ✅ Generated | User-defined |
+| **Destructor** | ✅ Generated | User-defined | ⚠️ Generated (deprecated) | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared |
+| **Copy Constructor** | 🚫 Suppressed | ✅ Generated | User-defined | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared |
+| **Copy Assignment** | ✅ Generated | ✅ Generated | ⚠️ Generated (deprecated) | User-defined | 🚫 Not declared | 🚫 Not declared |
+| **Move Constructor** | 🚫 Suppressed | ✅ Generated | ❌ Deleted | ❌ Deleted | User-defined | 🚫 Not declared |
+| **Move Assignment** | ✅ Generated | ✅ Generated | ❌ Deleted | ❌ Deleted | 🚫 Not declared | User-defined |
 
-**CRITICAL:** Declaring any special member triggers suppression of others. Modern practice: **explicitly define or delete all five** when any one is user-defined.
+**Legend:** ✅ Generated · ⚠️ Generated (deprecated) — still generated for backward compatibility · ❌ Deleted — declared as `= delete`, so selecting it is a HARD COMPILE ERROR (copy is deleted when a move op is user-declared) · 🚫 Not declared — the function does not exist, so a move request silently FALLS BACK TO COPY (moves when a copy op/destructor is declared, and the other move op) · 🚫 Suppressed — the default ctor is not generated because another constructor was declared.
+
+**CRITICAL:** Declaring a destructor or a copy/move operation changes what the compiler implicitly generates for the others (a move op *deletes* the copies; a copy op or destructor leaves the moves *not declared*; a copy/move *constructor* also suppresses the default ctor). Modern practice: **explicitly define or delete all five** when any one is user-defined.
 
 **Rule of Five + Virtual Destructors in inheritance:**
 
@@ -950,10 +952,10 @@ PathPlanner: Destroying A*
 | Function | Signature | When Auto-Generated | Suppressed By |
 |----------|-----------|-------------------|---------------|
 | Destructor | `~T()` | Always | User declaration |
-| Copy Constructor | `T(const T&)` | If no move/copy/destructor declared | Move constructor/assignment, destructor |
-| Copy Assignment | `T& operator=(const T&)` | If no move/copy/destructor declared | Move constructor/assignment, destructor |
-| Move Constructor | `T(T&&)` | If no special members declared | Any special member declaration |
-| Move Assignment | `T& operator=(T&&)` | If no special members declared | Any special member declaration |
+| Copy Constructor | `T(const T&)` | If no copy or move operation declared | A user-declared move constructor or move assignment (copy is then DELETED); becomes deprecated (still generated) if a destructor or the other copy member is declared |
+| Copy Assignment | `T& operator=(const T&)` | If no copy or move operation declared | A user-declared move constructor or move assignment (copy is then DELETED); becomes deprecated (still generated) if a destructor or the other copy member is declared |
+| Move Constructor | `T(T&&)` | If no copy operation, move operation, or destructor declared | A user-declared copy constructor, copy assignment, destructor, or the other move operation |
+| Move Assignment | `T& operator=(T&&)` | If no copy operation, move operation, or destructor declared | A user-declared copy constructor, copy assignment, destructor, or the other move operation |
 
 #### Virtual Destructor Rules
 

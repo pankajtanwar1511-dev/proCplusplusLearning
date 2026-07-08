@@ -374,7 +374,7 @@ Assignment operators should return a reference to the left-hand operand to suppo
 The compiler generates special member functions based on complex interdependent rules: user-declaring any special member (destructor, copy/move operations) can suppress generation of others following the Rule of Five logic.
 
 **Explanation:**
-If no special members are declared, the compiler generates all (Rule of Zero scenario). Declaring a copy constructor or copy assignment suppresses move generation. Declaring move operations suppresses copy generation. Declaring a destructor doesn't suppress copies in C++98 (backward compatibility) but should according to modern guidelines. These rules prevent the compiler from generating potentially incorrect special members when you've indicated custom handling is needed. Understanding these rules is crucial because they changed between C++ versions, and relying on implicit generation can lead to subtle bugs.
+If no special members are declared, the compiler generates all (Rule of Zero scenario). Declaring a copy constructor or copy assignment suppresses move generation. Declaring move operations causes the copy operations to be defined as DELETED (copying is then a hard compile error). Declaring a destructor doesn't suppress copies in C++98 (backward compatibility) but should according to modern guidelines. These rules prevent the compiler from generating potentially incorrect special members when you've indicated custom handling is needed. Understanding these rules is crucial because they changed between C++ versions, and relying on implicit generation can lead to subtle bugs.
 
 **Key takeaway:** Declaring any special member function affects which others the compiler generates; prefer explicit declaration or deletion for clarity.
 
@@ -428,7 +428,7 @@ public:
 ```
 
 **Explanation:**
-This pattern is rare because move operations are typically optimizations—if copying is safe, moving should be too. However, you might delete moves if moving would violate class invariants or if you want to force observable copy semantics for testing or debugging. More commonly, types are move-only (like `unique_ptr`) or both copyable and movable. When moves are deleted, temporaries fall back to copying if copies are available, potentially impacting performance.
+This pattern is rare because move operations are typically optimizations—if copying is safe, moving should be too. However, you might delete moves if moving would violate class invariants or if you want to force observable copy semantics for testing or debugging. More commonly, types are move-only (like `unique_ptr`) or both copyable and movable. A `=delete`d move operation is still declared, so it participates in overload resolution and is selected for rvalues—using it is therefore a HARD COMPILE ERROR, not a silent fall-back to copy. Silent fallback-to-copy happens only when the move operations are NOT DECLARED at all (i.e. suppressed because a copy operation or destructor was declared).
 
 **Key takeaway:** Classes can be copy-only by deleting moves, though this is unusual; typically moves are enabled if copies are.
 

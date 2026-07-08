@@ -73,8 +73,8 @@ void printArea(const Shape& shape) {
 | **Destructor** | `~T()` | Always (if not user-defined) | Clean up resources |
 | **Copy Constructor** | `T(const T&)` | If no move operations declared | Create new object as copy |
 | **Copy Assignment** | `T& operator=(const T&)` | If no move operations declared | Assign to existing object |
-| **Move Constructor** | `T(T&&)` | If no special members user-declared | Transfer resources from temporary |
-| **Move Assignment** | `T& operator=(T&&)` | If no special members user-declared | Transfer resources to existing object |
+| **Move Constructor** | `T(T&&)` | If no copy/move operation or destructor is user-declared | Transfer resources from temporary |
+| **Move Assignment** | `T& operator=(T&&)` | If no copy/move operation or destructor is user-declared | Transfer resources to existing object |
 
 **The three rules compared:**
 
@@ -242,7 +242,7 @@ During Base construction, the object's type is Base, not Derived. The vptr point
 
 #### Edge Case 2: Multiple Definitions of Special Members
 
-When you define some special members but not others, the compiler's generation rules create subtle interdependencies. Defining a destructor suppresses automatic move operation generation. Defining a move constructor suppresses copy operation generation. These rules changed between C++ standards, creating version-dependent behavior.
+When you define some special members but not others, the compiler's generation rules create subtle interdependencies. Defining a destructor suppresses automatic move operation generation. Defining a move constructor DELETES the copy operations (copying becomes a hard compile error). These rules changed between C++ standards, creating version-dependent behavior.
 
 ```cpp
 class Problem {
@@ -1229,10 +1229,14 @@ PerceptionSystem: Freed resources
 | User Defines | Default Ctor | Copy Ctor | Copy Assign | Move Ctor | Move Assign | Destructor |
 |--------------|--------------|-----------|-------------|-----------|-------------|------------|
 | Nothing | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
-| Any Constructor | ❌ Not generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
-| Destructor | ✅ Generated | ✅ Generated | ✅ Generated | ❌ Not generated | ❌ Not generated | User-defined |
-| Copy Ctor/Assign | ✅ Generated | User-defined | ✅/User-defined | ❌ Not generated | ❌ Not generated | ✅ Generated |
-| Move Ctor/Assign | ✅ Generated | ❌ Not generated | ❌ Not generated | User-defined | ✅/User-defined | ✅ Generated |
+| Any (non-special) constructor | 🚫 Suppressed | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated | ✅ Generated |
+| Destructor | ✅ Generated | ⚠️ Generated (deprecated) | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared | User-defined |
+| Copy Ctor | 🚫 Suppressed | User-defined | ⚠️ Generated (deprecated) | 🚫 Not declared | 🚫 Not declared | ✅ Generated |
+| Copy Assign | ✅ Generated | ⚠️ Generated (deprecated) | User-defined | 🚫 Not declared | 🚫 Not declared | ✅ Generated |
+| Move Ctor | 🚫 Suppressed | ❌ Deleted | ❌ Deleted | User-defined | 🚫 Not declared | ✅ Generated |
+| Move Assign | ✅ Generated | ❌ Deleted | ❌ Deleted | 🚫 Not declared | User-defined | ✅ Generated |
+
+**Legend:** ❌ Deleted = the copy op is `=delete`d, so using it is a **hard compile error**. 🚫 Not declared = the move op is never declared, so a move-expression **silently falls back to copy**. 🚫 Suppressed = the default ctor is not generated because another constructor was declared.
 
 #### Access Specifiers Behavior
 

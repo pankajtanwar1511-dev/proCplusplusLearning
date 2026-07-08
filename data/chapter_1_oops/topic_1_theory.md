@@ -524,7 +524,7 @@ int main() {
 }
 ```
 
-A **POD (Plain Old Data)** struct is one that is both **trivially copyable** (no custom constructor, copy, or destructor — the compiler-generated ones just move bytes) and **standard-layout** (one access section, no virtual functions, C-compatible member ordering). That combination is what makes `Point` and `Color` special, and it unlocks three "superpowers":
+A **POD (Plain Old Data)** struct is one that is both **trivially copyable** (no user-provided copy/move operations and a trivial destructor — the compiler-generated ones just move bytes; note a user-provided *default* constructor does not affect trivial copyability) and **standard-layout** (one access section, no virtual functions, C-compatible member ordering). That combination is what makes `Point` and `Color` special, and it unlocks three "superpowers":
 
 1. **Trivial copy → `memcpy` (Block 2).** A byte-for-byte copy of a trivially-copyable object is a *valid* copy — no constructor needs to run. This is why PODs can be bulk-copied, `memset`, and stored in flat arrays cheaply.
 2. **Standard layout → C interop & memory mapping (Blocks 3 and 5).** The struct's bytes are laid out exactly like the equivalent C struct, so you can share pointers with C libraries, and `offsetof` gives the exact byte offset of each field. That fixed layout is what lets you lay a struct directly over raw memory — a file buffer, a network packet, a memory-mapped file, or a hardware register.

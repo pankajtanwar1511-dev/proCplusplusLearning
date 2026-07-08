@@ -329,6 +329,7 @@ Move constructors require non-const rvalues (`T&&`); const objects cannot be mov
 ```cpp
 class MyClass {
 public:
+    MyClass() = default;  // needed: declaring copy+move ctors suppresses the default ctor
     MyClass(const MyClass&) { std::cout << "Copy\n"; }
     MyClass(MyClass&&) { std::cout << "Move\n"; }
 };
@@ -393,7 +394,7 @@ public:
 ```
 
 **Explanation:**
-This pattern is rare because if copying is safe and allowed, moving should also be safe and more efficient. However, you might delete moves if moving would violate class invariants or if you want to force observable copy behavior for debugging or testing. When moves are deleted but copies exist, operations that would use moves fall back to copying, potentially impacting performance but maintaining functionality.
+This pattern is rare because if copying is safe and allowed, moving should also be safe and more efficient. However, you might delete moves if moving would violate class invariants or if you want to force observable copy behavior for debugging or testing. Be careful about *how* you achieve this: if you simply declare a copy operation (or a destructor) and leave the move operations **not declared**, then move-expressions silently fall back to copying—the type is copyable-but-not-movable in practice. If instead you explicitly `=delete` the move operations (as above), a move-expression selects the deleted move via overload resolution and becomes a **hard compile error**, not a copy fallback. So for a "copyable but not movable" type that still lets `std::move` compile, prefer leaving the moves undeclared rather than deleting them.
 
 **Key takeaway:** Copy-only types are possible but unusual; typically enable both or neither.
 

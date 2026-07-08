@@ -200,23 +200,24 @@ Move-only types represent unique ownership semantics where objects cannot be dup
 **Concepts:** #move_constructor #deleted_functions #copy_constructor
 
 **Answer:**
-The class becomes move-incompatible but remains copyable; in contexts where moves are expected (like return by value without elision), copying occurs if available, or a compile error if copy is also deleted.
+The class becomes broken in move contexts, not merely "move-incompatible but copyable." A `= delete`d move constructor is NOT the same as an absent one: it still participates in overload resolution and is the best match for an rvalue, so any operation that requests a move (`std::move`, returning a local by value without elision, `std::vector` reallocation) selects the deleted move and produces a HARD COMPILE ERROR — it does NOT silently fall back to the copy constructor. A move only falls back to copy when the move is *not declared* (suppressed), not when it is deleted.
 
 **Code example:**
 ```cpp
 class NoMove {
 public:
-    NoMove(const NoMove&) { std::cout << "Copy\n"; }
-    NoMove(NoMove&&) = delete;
+    NoMove() = default;
+    NoMove(const NoMove&) { std::cout << "Copy\n"; }  // copy is fine
+    NoMove(NoMove&&) = delete;                          // DELETED, not merely undeclared
 };
 
-NoMove create() {
-    return NoMove();  // ⚠️ May copy or error depending on context
-}
+NoMove a;
+NoMove b = a;             // ✅ OK: uses the copy constructor
+NoMove c = std::move(a);  // ❌ COMPILE ERROR: selects the deleted move ctor (no copy fallback)
 ```
 
 **Explanation:**
-Deleting only the move constructor creates an unusual situation where the class explicitly rejects moves while allowing copies. In practice, this is rare and usually indicates a design problem. Most contexts requiring moves will fall back to copying if available, potentially impacting performance. If no copy exists either, the code won't compile. This asymmetry violates user expectations and should be avoided except in specific cases where moves would violate invariants.
+Deleting only the move constructor does not create a "copyable-but-not-movable" type — it creates a type that fails to compile whenever a move is requested. Because the deleted move constructor is still declared, overload resolution picks it for rvalues and then reports that the chosen function is deleted; it never quietly substitutes the copy constructor. Only *not declaring* the moves (e.g., by declaring a copy operation or a destructor, which suppresses implicit move generation) lets move requests silently fall back to copy. This asymmetry surprises users and should be avoided; if you truly want to forbid moving, be aware every move-requiring context becomes a compile error.
 
 **Key takeaway:** Avoid deleting only move operations; typically delete both copy and move together or provide both.
 
@@ -300,7 +301,7 @@ public:
 
 class Pessimized {
 public:
-    Optimized(Optimized&&);  // ❌ Container copies instead
+    Pessimized(Pessimized&&);  // ❌ Container copies instead
 };
 ```
 
@@ -317,21 +318,22 @@ When std::vector grows, it must move elements to new storage. If moves can throw
 **Concepts:** #copy_constructor #move_semantics #deleted_functions
 
 **Answer:**
-Yes, by explicitly deleting move operations while keeping copy operations, though this is unusual since moves are typically optimizations over copies.
+Yes, but NOT by deleting the move operations. The correct idiom is to declare the copy operations (or a destructor) and simply *not declare* the moves: user-declaring a copy operation suppresses implicit move generation, so move-requiring contexts silently and safely fall back to copy. Explicitly `= delete`-ing the moves instead produces a broken type — a deleted move still participates in overload resolution, is selected for rvalues, and causes a hard compile error rather than a copy.
 
 **Code example:**
 ```cpp
 class CopyOnly {
 public:
-    CopyOnly(const CopyOnly&) = default;
-    CopyOnly& operator=(const CopyOnly&) = default;
-    CopyOnly(CopyOnly&&) = delete;
-    CopyOnly& operator=(CopyOnly&&) = delete;
+    CopyOnly() = default;
+    CopyOnly(const CopyOnly&) = default;             // declaring a copy operation...
+    CopyOnly& operator=(const CopyOnly&) = default;  // ...suppresses the implicit moves
+    // Do NOT declare (or delete) the move operations. They are simply not
+    // generated, so move contexts silently and correctly fall back to copy.
 };
 ```
 
 **Explanation:**
-This pattern is rare because if copying is safe, moving should also be safe and more efficient. However, you might delete moves if move semantics would violate class invariants, or if you want to force observable copy behavior for testing. When moves are deleted, operations that would normally use moves (like returning temporaries) fall back to copying, potentially impacting performance. Use this pattern only when there's a specific reason moves shouldn't be allowed.
+This pattern is rare because if copying is safe, moving is usually safe and more efficient. The key subtlety is *how* you make the type non-movable. To get a working copyable-but-not-movable type you must NOT declare the move operations: declaring a copy operation (or a destructor) suppresses their implicit generation, so operations that would normally use moves (like returning temporaries or `std::vector` reallocation) fall back to copying. Do NOT `= delete` the moves: a deleted move is not "absent" — it still participates in overload resolution, so operations that would normally use moves (like returning temporaries) select the deleted move and cause a hard compile error, leaving the type unusable in move contexts. Use this pattern only when there's a specific reason moves shouldn't be allowed.
 
 **Key takeaway:** Copy-only types are possible but unusual; ensure there's a valid reason to prohibit moves when copies work.
 
