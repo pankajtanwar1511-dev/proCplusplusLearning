@@ -97,7 +97,8 @@ Base
 - End of scope: ptr destroyed, triggers correct destructor chain
 - Even without virtual destructor, shared_ptr handles it correctly!
 - Type erasure magic: shared_ptr remembers the real type
-- **Key Concept:** Smart pointers (shared_ptr/unique_ptr) correctly destruct derived objects even without virtual destructors
+- ⚠️ This is a `shared_ptr`-only superpower — `std::unique_ptr<Base>` does NOT store a deleter, so deleting a `Derived` through it without a virtual base destructor is **undefined behavior**
+- **Key Concept:** `std::shared_ptr` uses type erasure in its control block to destroy the true derived type even without a virtual base destructor; `std::unique_ptr` does NOT do this and still requires a virtual destructor
 
 #### Q4
 ```cpp
@@ -193,10 +194,10 @@ int main() {
 
 **Explanation:**
 - User-defined destructor declared
-- Compiler generates move constructor anyway (pre-C++11 compat)
-- std::move(a1) triggers compiler-generated move constructor
-- Move constructor does memberwise move (trivial for empty class)
-- **Key Concept:** User-defined destructor doesn't suppress move constructor in C++11+
+- The destructor **suppresses** the implicit move constructor (it is *not declared*)
+- `std::move(a1)` finds no move constructor, so overload resolution falls back to the implicitly-generated **copy** constructor (`const A&` binds to the rvalue)
+- For an empty class this copy is trivial, so there is no visible output — but it IS a copy, not a move
+- **Key Concept:** A user-declared destructor suppresses the move constructor; a move request then silently falls back to copy (it compiles, just doesn't move)
 
 #### Q7
 ```cpp
@@ -447,11 +448,11 @@ Compilation Error
 ```
 
 **Explanation:**
-- Shape has protected copy constructor
-- Circle doesn't define default constructor explicitly
-- Circle() = default fails - no accessible base default constructor
-- Protected copy prevents slicing but breaks default construction
-- **Key Concept:** Protected copy constructor pattern needs explicit derived constructors
+- `Shape` declares a copy constructor (`Shape(const Shape&) = default;`) — that counts as a **user-declared** constructor
+- Declaring any copy/move constructor **suppresses** `Shape`'s implicit default constructor, so `Shape()` no longer exists
+- `Circle() = default` therefore can't call a base default constructor → `Circle`'s default constructor is defined as deleted → `Circle c1;` fails to compile (`error: use of deleted function 'Circle::Circle()'`)
+- The `protected` access is **not** the cause — it only limits *who* may copy; the default ctor breaks purely because a copy ctor was declared
+- **Key Concept:** A user-declared copy constructor suppresses the class's default constructor; a derived class then can't default-construct unless the base restores it (`Shape() = default;`)
 
 #### Q15
 ```cpp

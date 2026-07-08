@@ -516,9 +516,9 @@ int main() {
 ```
 
 **Explanation:**
-- User-defined destructor doesn't suppress move constructor
-- Compiler generates move constructor (memberwise move)
-- std::move(a1) triggers implicit move constructor
+- A user-declared destructor **suppresses** the implicit move constructor (it is *not declared*)
+- `std::move(a1)` finds no move constructor, so it falls back to the implicitly-generated **copy** constructor
+- For an empty class this copy is trivial (no visible output), but it is a copy, not a move
 - Move semantics work despite user-defined destructor
 - **Key Concept:** User-defined destructor doesn't suppress move in C++11+ (deprecated but allowed)
 

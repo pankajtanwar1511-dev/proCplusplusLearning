@@ -253,36 +253,46 @@ int main() {
 
 The pure virtual destructor declaration prevents instantiation of the base class while ensuring the derived destructor chain executes properly. Forgetting to define the pure virtual destructor body causes cryptic linker errors about undefined symbols, confusing developers unfamiliar with this requirement.
 
-#### Edge Case 3: Deleted Destructors for Lifetime Control
+#### Edge Case 3: Controlling Object Lifetime — Private vs Deleted Destructors
 
-Explicitly deleting the destructor prevents object destruction, forcing controlled lifetime management through factory functions or specific deletion methods. This pattern enforces heap-only allocation or ensures objects are destroyed only through specific interfaces.
+Two different access controls on the destructor solve two different problems. A **private destructor** still *exists* — only the class itself can run it — so it forbids stack allocation and outside `delete` while allowing controlled self-destruction via `delete this`. A **deleted destructor** (`~T() = delete`) does not exist at all: the object can **never** be destroyed — an "immortal object" (a global registry or singleton meant to live for the whole program). A deleted destructor **cannot** be used for controlled cleanup, because even the class itself cannot call it — both `this->~T()` and `delete this` are hard compile errors.
 
 ```cpp
-class ControlledLifetime {
-private:
-    ControlledLifetime() {}
-    ~ControlledLifetime() = delete;  // ❌ Cannot destroy normally
-    
+#include <iostream>
+#include <string>
+
+// (A) PRIVATE destructor -> "controlled cleanup": only the class may destroy itself.
+class Session {
+    std::string id;
+    Session(std::string s) : id(std::move(s)) {}
+    ~Session() { std::cout << "Session " << id << " closed\n"; }   // private, but it EXISTS
 public:
-    static ControlledLifetime* create() {
-        return new ControlledLifetime();
-    }
-    
-    void destroy() {
-        this->~ControlledLifetime();  // ✅ Can call from within class
-        operator delete(this);
-    }
+    static Session* open(std::string s) { return new Session(std::move(s)); }
+    void close() { delete this; }   // ✅ OK: destructor is accessible inside the class
 };
 
+// (B) DELETED destructor -> "immortal object": it can NEVER be destroyed.
+struct GlobalRegistry {
+    int version = 1;
+    ~GlobalRegistry() = delete;     // ❌ no destructor exists anywhere -> cannot destroy, ever
+};
+GlobalRegistry& registry() {
+    static GlobalRegistry* inst = new GlobalRegistry();  // allocated once, intentionally never freed
+    return *inst;
+}
+
 int main() {
-    // ControlledLifetime obj;  // ❌ Error: deleted destructor
-    ControlledLifetime* obj = ControlledLifetime::create();
-    // delete obj;  // ❌ Error: deleted destructor
-    obj->destroy();  // ✅ OK: controlled destruction
+    // Session s;                 // ❌ error: destructor is private (no stack allocation)
+    Session* s = Session::open("db1");
+    // delete s;                  // ❌ error: destructor is private (no outside delete)
+    s->close();                   // ✅ controlled destruction
+
+    // GlobalRegistry g;          // ❌ error: deleted destructor (no stack, no delete, ever)
+    std::cout << "registry v" << registry().version << " lives for the whole program\n";
 }
 ```
 
-This idiom is useful for reference-counted objects, objects managed by pools, or resources requiring specific cleanup sequences. The deleted destructor prevents accidental stack allocation or direct `delete` calls, forcing users through the controlled interface.
+Use a **private** destructor for controlled-cleanup patterns (reference-counted objects, pool-managed objects, factory-only heap objects). Use a **deleted** destructor only for objects that must never be destroyed — it bypasses all cleanup, so it is unsuitable for types that own resources (a `std::string`, socket, or file handle would leak).
 
 #### Edge Case 4: Object Slicing During Function Parameter Passing
 
@@ -426,38 +436,35 @@ int main() {
 
 Pure virtual destructors provide a way to make a class abstract without requiring any pure virtual functions for operations. The destructor still needs a body because the destructor chain always executes, unlike pure virtual functions which may never be called.
 
-#### Example 3: Deleted Destructor for Factory Pattern
+#### Example 3: Factory Pattern with a Private Destructor (Controlled Cleanup)
 
 ```cpp
+#include <iostream>
+#include <string>
+
 class DatabaseConnection {
-private:
     std::string connectionString;
-    
-    DatabaseConnection(std::string conn) 
-        : connectionString(conn) {}
-    
-    ~DatabaseConnection() = delete;  // ❌ Prevents direct destruction
-    
+    DatabaseConnection(std::string conn) : connectionString(std::move(conn)) {}
+    ~DatabaseConnection() { std::cout << "Freed connection resources\n"; }  // PRIVATE: it owns a resource
 public:
     static DatabaseConnection* connect(std::string conn) {
-        return new DatabaseConnection(conn);
+        return new DatabaseConnection(std::move(conn));
     }
-    
     void disconnect() {
         std::cout << "Disconnecting from " << connectionString << "\n";
-        this->~DatabaseConnection();  // ✅ Accessible internally
-        operator delete(this);
+        delete this;   // ✅ runs the destructor (frees connectionString), then frees memory
     }
 };
 
 int main() {
     DatabaseConnection* db = DatabaseConnection::connect("localhost:5432");
-    // delete db;  // ❌ Error: deleted destructor
-    db->disconnect();  // ✅ Controlled cleanup
+    // DatabaseConnection local("x");  // ❌ error: private destructor -> no stack allocation
+    // delete db;                      // ❌ error: private destructor -> no outside delete
+    db->disconnect();                  // ✅ controlled cleanup, destructor runs
 }
 ```
 
-The deleted destructor enforces that connections can only be closed through the disconnect() method, preventing accidental destruction and ensuring proper cleanup sequences. This pattern is useful for resources requiring specific shutdown procedures.
+A **private** destructor forces connections to be closed only through `disconnect()`, blocking accidental stack allocation and outside `delete`. Note: a *deleted* (`= delete`) destructor would be **wrong** here — because this type owns a `std::string`, and `= delete` leaves no way to run the destructor, its memory would leak. Reserve `= delete` for immortal objects that own nothing needing cleanup.
 
 #### Example 4: Preventing Slicing Through Interface Design
 
