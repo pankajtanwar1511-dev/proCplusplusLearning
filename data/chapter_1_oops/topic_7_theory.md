@@ -252,8 +252,7 @@ public:
     // Copy operations still generated (deprecated)
 };
 
-static_assert(!std::is_move_constructible_v<Problem>);
-// Problem is not move-constructible despite appearing default
+// no move ctor is declared; a move request silently falls back to using the copy constructor instead
 
 class Fixed {
 public:
@@ -1163,10 +1162,10 @@ ControlSystem(Test_copy): Destroyed
 ControlSystem(Test): Destroyed
 
 === AutonomousVehicle(AV-001): Destroyed ===
-ControlSystem(Longitudinal): Destroyed
-ControlSystem(Lateral): Destroyed
-PlanningSystem(A*): Destroyed
 PerceptionSystem: Freed resources
+PlanningSystem(A*): Destroyed
+ControlSystem(Lateral): Destroyed
+ControlSystem(Longitudinal): Destroyed
 
 ========== Demo Complete ==========
 ```

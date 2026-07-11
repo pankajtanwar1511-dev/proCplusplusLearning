@@ -470,6 +470,7 @@ B::foo
 - Outputs both implementations
 - Pure virtual = 0 forces override but can still provide default implementation
 - **Key Concept:** Pure virtual functions can have implementations; derived classes can explicitly call them
+- **Note:** ~A() should really be virtual — deleting a Derived object through a Base* with a non-virtual destructor is undefined behavior; it happens to work here only because B adds no members needing cleanup.
 
 
 #### Q14

@@ -452,7 +452,7 @@ public:
 
 class Pessimized {
 public:
-    Optimized(Optimized&&);  // ❌ Not noexcept, vector copies instead
+    Pessimized(Pessimized&&);  // ❌ Not noexcept, vector copies instead
 };
 ```
 

@@ -275,7 +275,7 @@ int main() {
 ```
 
 **Explanation:**
-The using-declaration allows you to adjust the access level of inherited members within the limits imposed by the inheritance specifier. You can make protected members public or private members protected (if accessible). However, you cannot grant more access than the inheritance mode allows—with private inheritance, you cannot make inherited members public using this mechanism. This feature is useful when you want to selectively expose base class functionality through the derived class interface.
+The using-declaration allows you to adjust the access level of inherited members by placing the declaration in whichever section (public, protected, or private) you want that member to be accessible at. A using-declaration CAN widen access—e.g. under private inheritance you can re-expose a base member as public (the standard "inherit privately, publish selectively" idiom). The only real rule: you can only re-expose a member the derived class can already access; a member that is private in the base is invisible and cannot be re-exposed this way. This feature is useful when you want to selectively expose base class functionality through the derived class interface.
 
 **Key takeaway:** Using-declarations can adjust access levels of inherited members within the constraints of the inheritance mode.
 

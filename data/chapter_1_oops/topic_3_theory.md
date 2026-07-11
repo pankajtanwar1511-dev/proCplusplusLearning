@@ -880,8 +880,8 @@ Hybrid A* Planner: Planning parking maneuver
 ✓ Planning successful!
 Path preview:
   Waypoint 0: (0, 0)
-  Waypoint 1: (1, 0.8)
-  Waypoint 2: (2, 1.58)
+  Waypoint 1: (1, 1.12901)
+  Waypoint 2: (2, 2.05595)
 
 Switched to: RRT Planner
 

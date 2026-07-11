@@ -159,14 +159,14 @@ delete ptr;  // ✅ Calls ~Derived() then ~Base()
 class Animal {
 public:
     int id = 0;
-    virtual void speak() { std::cout << "Animal\n"; }
+    virtual void speak() const { std::cout << "Animal\n"; }
     virtual ~Animal() = default;
 };
 
 class Dog : public Animal {
 public:
     double weight = 25.5;
-    void speak() override { std::cout << "Woof! (weight: " << weight << ")\n"; }
+    void speak() const override { std::cout << "Woof! (weight: " << weight << ")\n"; }
 };
 
 // ❌ DANGER: Slicing function
@@ -592,7 +592,13 @@ public:
     // Move constructor NOT generated automatically
 };
 
-static_assert(!std::is_move_constructible_v<Resource>);
+// Note: is_move_constructible_v only checks whether Resource can be constructed
+// from an rvalue -- it does NOT mean a move constructor exists. Since no move ctor
+// is declared, the implicitly-generated copy ctor (which also binds to rvalues)
+// satisfies the trait, so this is actually TRUE:
+static_assert(std::is_move_constructible_v<Resource>);
+// std::move(someResource) therefore silently falls back to the copy constructor --
+// no compile error, no move, just a (potentially expensive) hidden copy.
 
 class BetterResource {
 public:
@@ -767,6 +773,29 @@ public:
         return *this;
     }
 
+    // ✅ Move constructor (transfers the base portion AND the derived portion)
+    AStarPlanner(AStarPlanner&& other) noexcept
+        : PathPlanner(std::move(other)), num_weights(other.num_weights) {
+        heuristic_weights = other.heuristic_weights;
+        other.heuristic_weights = nullptr;
+        other.num_weights = 0;
+        cout << "AStarPlanner: Move constructed" << endl;
+    }
+
+    // ✅ Move assignment operator
+    AStarPlanner& operator=(AStarPlanner&& other) noexcept {
+        if (this != &other) {
+            PathPlanner::operator=(std::move(other));
+            delete[] heuristic_weights;
+            heuristic_weights = other.heuristic_weights;
+            num_weights = other.num_weights;
+            other.heuristic_weights = nullptr;
+            other.num_weights = 0;
+            cout << "AStarPlanner: Move assigned" << endl;
+        }
+        return *this;
+    }
+
     void plan() const override {
         cout << "AStarPlanner: Planning with " << num_weights
              << " heuristic weights" << endl;
@@ -800,10 +829,12 @@ public:
     }
 };
 
-// ❌ DANGEROUS: Function that causes slicing
-void demonstrateSlicing(PathPlanner planner) {  // Pass by value
-    planner.plan();  // ❌ Will call PathPlanner::plan() even for derived types
-}
+// NOTE: A by-value overload like `void demonstrateSlicing(PathPlanner planner)`
+// cannot even be declared here -- PathPlanner is abstract (pure virtual plan()),
+// and C++ rejects any by-value parameter of an abstract type at compile time
+// ("cannot declare parameter to be of abstract type 'PathPlanner'"). Abstraction
+// itself blocks slicing in this case; see the Animal/Dog example earlier in this
+// file for slicing with a concrete (non-abstract) base class.
 
 // ✅ SAFE: Function that preserves polymorphism
 void demonstratePolymorphism(const PathPlanner& planner) {  // Pass by reference
@@ -840,8 +871,9 @@ int main() {
     cout << "\n=== Demonstrating Object Slicing Danger ===" << endl;
 
     AStarPlanner astar(1000, 4);
-    cout << "\nCalling function with pass-by-value (slicing occurs):" << endl;
-    // demonstrateSlicing(astar);  // ❌ Would slice and lose AStarPlanner portion
+    cout << "\nPass-by-value isn't even possible here (PathPlanner is abstract):" << endl;
+    // void demonstrateByValue(PathPlanner p) { p.plan(); }
+    // ❌ error: cannot declare parameter 'p' to be of abstract type 'PathPlanner'
 
     cout << "\nCalling function with pass-by-reference (no slicing):" << endl;
     demonstratePolymorphism(astar);  // ✅ Polymorphism preserved
@@ -892,6 +924,8 @@ RRTPlanner: Planning with 8 random samples
 PathPlanner: Constructed A*
 AStarPlanner: Constructed with 4 weights
 
+Pass-by-value isn't even possible here (PathPlanner is abstract):
+
 Calling function with pass-by-reference (no slicing):
 AStarPlanner: Planning with 4 heuristic weights
 
@@ -901,16 +935,18 @@ AStarPlanner: Constructed with 2 weights
 
 Moving planner:
 PathPlanner: Move constructed
+AStarPlanner: Move constructed
 
 === Cleanup (destructors will be called) ===
 AStarPlanner: Destroying (cleaning up weights)
 PathPlanner: Destroying A*
+AStarPlanner: Destroying (cleaning up weights)
+AStarPlanner: Destroying (cleaning up weights)
+PathPlanner: Destroying A*
+AStarPlanner: Destroying (cleaning up weights)
+PathPlanner: Destroying A*
 RRTPlanner: Destroying (cleaning up samples)
 PathPlanner: Destroying RRT
-AStarPlanner: Destroying (cleaning up weights)
-PathPlanner: Destroying A*
-AStarPlanner: Destroying (cleaning up weights)
-PathPlanner: Destroying A*
 ```
 
 **What This Example Demonstrates:**

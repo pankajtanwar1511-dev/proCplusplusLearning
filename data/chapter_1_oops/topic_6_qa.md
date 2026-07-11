@@ -116,11 +116,13 @@ Object slicing occurs when a derived class object is copied to a base class obje
 **Code example:**
 ```cpp
 class Base {
+public:
     virtual void func() { std::cout << "Base\n"; }
 };
 
 class Derived : public Base {
     int extraData;
+public:
     void func() override { std::cout << "Derived\n"; }
 };
 

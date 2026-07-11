@@ -55,14 +55,14 @@ int main() {
 
 **Answer:**
 ```
-Compilation Error (or runtime crash)
+Linker Error (undefined reference to `A::f()`)
 ```
 
 **Explanation:**
 - Pure virtual function called from constructor
 - During A's construction, B part doesn't exist yet
 - Calling pure virtual f() is undefined behavior
-- Most compilers: linker error or runtime crash
+- Compiles with only a warning; since no definition of `A::f()` exists, the linker fails with "undefined reference to `A::f()`" — it never reaches runtime
 - **Key Concept:** Never call pure virtual functions from constructors
 
 
@@ -647,6 +647,7 @@ class Interface {
 public:
     virtual void op1() = 0;
     virtual void op2() = 0;
+    virtual ~Interface() = default;
 };
 
 class Impl : public Interface {
@@ -674,7 +675,8 @@ op2
 - Impl provides all implementations
 - Polymorphic usage through interface pointer
 - Clean separation of interface and implementation
-- **Key Concept:** Interface pattern - abstract base with only pure virtuals
+- `Interface` declares a `virtual` destructor so `delete i;` through the base pointer is well-defined (deleting through a base pointer with a non-virtual destructor is undefined behavior)
+- **Key Concept:** Interface pattern - abstract base with only pure virtuals, remember to add a virtual destructor
 
 
 #### Q20

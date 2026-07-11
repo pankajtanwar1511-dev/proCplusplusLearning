@@ -663,7 +663,8 @@ protected:
         cout << "Derived::protectedVirtual" << endl;
     }
     
-    // Cannot override privateVirtual - no access to it
+    // privateVirtual is private in Base, so Derived can't name/call it directly -
+    // but it COULD still override it (see Edge Case 4). Omitted here only because it isn't called.
 };
 ```
 

@@ -539,7 +539,7 @@ struct Empty {};
 struct WithMember {
     Empty e;    // sizeof at least 1
     int x;
-};  // sizeof typically 8 (4 bytes padding + 4 bytes int)
+};  // sizeof typically 8 (1-byte Empty + 3 padding + 4-byte int)
 
 struct WithBase : Empty {
     int x;

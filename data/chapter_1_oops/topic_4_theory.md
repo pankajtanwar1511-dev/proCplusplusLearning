@@ -109,20 +109,26 @@ public:
 
 **Code example - initialization order bug:**
 ```cpp
-class Dangerous {
+class DangerousBad {
     int second;  // Declared first
     int first;   // Declared second
 
 public:
     // ❌ Bug: initializer list order doesn't matter
-    Dangerous(int x) : first(x), second(first + 1) {
+    DangerousBad(int x) : first(x), second(first + 1) {
         // Actual order: second initialized first (declaration order)
         // second = first + 1, but first is UNINITIALIZED
         // Result: second contains garbage
     }
+};
 
+class DangerousGood {
+    int second;  // Declared first
+    int first;   // Declared second
+
+public:
     // ✅ Fix: Match initializer list to declaration order
-    Dangerous(int x) : second(x), first(second + 1) {
+    DangerousGood(int x) : second(x), first(second + 1) {
         // Now safe: second initialized first with x,
         // then first initialized with second + 1
     }
@@ -304,16 +310,20 @@ This shows how to perform validation during initialization. The ternary operator
 #### Example 3: Member Initializer List vs Constructor Body
 
 ```cpp
-class String {
+class StringBad {
     std::string data;
 public:
     // ❌ Inefficient: default-constructs data, then assigns
-    String(const char* str) {
+    StringBad(const char* str) {
         data = str;
     }
-    
+};
+
+class StringGood {
+    std::string data;
+public:
     // ✅ Efficient: directly constructs data with str
-    String(const char* str) : data(str) {}
+    StringGood(const char* str) : data(str) {}
 };
 ```
 
@@ -346,26 +356,36 @@ In-class initializers (C++11+) provide default values that are used when not ove
 #### Example 5: Copy Constructor Deep vs Shallow Copy
 
 ```cpp
-class DynamicArray {
+class DynamicArrayBad {
     int* data;
     size_t size;
     
 public:
-    DynamicArray(size_t n) : size(n), data(new int[n]) {}
+    DynamicArrayBad(size_t n) : size(n), data(new int[n]) {}
     
     // ❌ Shallow copy (compiler-generated would do this)
-    DynamicArray(const DynamicArray& other) 
+    DynamicArrayBad(const DynamicArrayBad& other) 
         : size(other.size), data(other.data) {
         // Both objects point to same array - double delete!
     }
     
+    ~DynamicArrayBad() { delete[] data; }
+};
+
+class DynamicArrayGood {
+    int* data;
+    size_t size;
+    
+public:
+    DynamicArrayGood(size_t n) : size(n), data(new int[n]) {}
+    
     // ✅ Deep copy
-    DynamicArray(const DynamicArray& other) 
+    DynamicArrayGood(const DynamicArrayGood& other) 
         : size(other.size), data(new int[other.size]) {
         std::copy(other.data, other.data + size, data);
     }
     
-    ~DynamicArray() { delete[] data; }
+    ~DynamicArrayGood() { delete[] data; }
 };
 ```
 
@@ -672,7 +692,6 @@ After modifying original:
 
 [Factory] Creating parking trajectory...
 Trajectory(parking_maneuver): Full parameterized (speed=5, cap=20)
-Trajectory(parking_maneuver): Move constructed (transferred ownership)
   Trajectory: parking_maneuver | Waypoints: 4/20 | Max speed: 5 m/s
     WP[0]: (0, 0) heading=0°
     WP[1]: (1, 0.5) heading=15°
@@ -690,7 +709,6 @@ Trajectory(urban_navigation): Move constructed (transferred ownership)
 ~Trajectory(parking_maneuver): Destroying (4 waypoints)
 ~Trajectory(highway_lane_change_copy): Destroying (3 waypoints)
 ~Trajectory(highway_lane_change): Destroying (4 waypoints)
-~Trajectory(unnamed): Destroying (0 waypoints)
 ```
 
 This comprehensive example demonstrates all constructor types in an autonomous vehicle trajectory planning context:

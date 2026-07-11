@@ -821,8 +821,8 @@ SensorDataBuffer: Copy assignment to camera_left_copy
   [radar_rear] Capacity: 256000B, DataSize: 0B, Timestamp: 2000ms
 
 === Destructors will now be called ===
-SensorDataBuffer: Destroying moved-from object
 SensorDataBuffer: Destroying radar_rear (freeing 256000 bytes)
+SensorDataBuffer: Destroying moved-from object
 SensorDataBuffer: Destroying lidar_front (freeing 1024000 bytes)
 SensorDataBuffer: Destroying camera_left (freeing 512000 bytes)
 SensorDataBuffer: Destroying camera_left_copy (freeing 512000 bytes)
