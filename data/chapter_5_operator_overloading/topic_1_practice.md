@@ -63,6 +63,8 @@ int main() {
 **Answer:**
 ```
 Undefined behavior (double delete, shallow copy issues)
+(may not visibly manifest under default compiler optimizations due to copy
+elision -- compile with -fno-elide-constructors to observe the double-free)
 ```
 
 **Explanation:**
@@ -216,18 +218,18 @@ int main() {
 
 **Answer:**
 ```
-30 20
+30 30
 ```
 
 **Explanation:**
 - BUG: operator= returns by value, not by reference
 - Assignment is right-associative: evaluates right-to-left
-- `h2 = h3`: copies h3.val (30) to h2.val, returns COPY with val=30
+- `h2 = h3`: copies h3.val (30) into h2.val (h2.val is now 30), then returns a COPY with val=30
 - `h1 = (copy)`: assigns copy.val (30) to h1.val
-- h2.val remains 20 (wasn't reassigned, temporary copy used)
+- h2.val is 30 -- the assignment to h2 already happened before the return; returning by value only adds an extra copy of the *result*, it does not undo the assignment already performed on h2
 - **Correct:** Return `Holder&` not `Holder`
-- Proper: h2 gets 30, then h1 gets 30
-- **Key Concept:** Assignment operator must return reference for proper chaining
+- Proper: h2 gets 30, then h1 gets 30 (same values as the buggy version in this case)
+- **Key Concept:** Returning by value from `operator=` is bad practice -- it causes an unnecessary extra copy on every chained assignment and allows chaining onto a temporary (rvalue) when it shouldn't, but it does NOT change which values get assigned
 
 ---
 
@@ -601,19 +603,15 @@ int main() {
 
 **Answer:**
 ```
-Derived= Base=
+Base=
 ```
 
 **Explanation:**
-- Base has virtual operator= (can be overridden)
-- Derived overrides with own operator=
-- `b = d2` where b is Base& referring to Derived object
-- Virtual dispatch: calls Derived::operator= (runtime polymorphism)
-- Derived::operator= prints "Derived=", then explicitly calls Base::operator=
-- Base::operator= prints "Base="
-- Virtual assignment operators enable polymorphic assignment
-- Different from non-virtual: would call Base version only
-- **Key Concept:** Virtual assignment operators enable polymorphic behavior; derived version can extend base behavior
+- Base declares `virtual Base& operator=(const Base&)`; Derived declares `Derived& operator=(const Derived&)` -- the parameter types differ (`const Base&` vs `const Derived&`), so this is **not** an override, just a separate hidden overload (proof: adding the `override` keyword to `Derived::operator=` fails to compile with "does not override")
+- `b = d2` where `b` is `Base&` referring to a `Derived` object
+- Because `b`'s static type is `Base&`, only `Base::operator=(const Base&)` is visible at the call site -- `Derived::operator=` is never a candidate here, virtual dispatch or not
+- Output is just "Base= " (printed once) -- `Derived::operator=` is never called
+- **Key Concept:** For virtual dispatch/overriding to work, the overriding function's signature must match the base's exactly (including parameter type). A derived `operator=` taking `const Derived&` does NOT override a base `operator=` taking `const Base&`; it silently hides/shadows it via name lookup instead, which is the OPPOSITE of what a caller relying on polymorphism through a `Base&` would expect.
 
 ---
 

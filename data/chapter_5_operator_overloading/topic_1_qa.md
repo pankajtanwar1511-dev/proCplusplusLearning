@@ -449,7 +449,7 @@ MyClass* obj2 = new (buffer, "custom") MyClass();
 ```
 
 **Explanation:**
-Placement new is used when you want control over where objects are constructed, such as in memory pools or shared memory. The first `void*` parameter specifies the address. You can add custom parameters for debugging or tracking. Note that there's no matching placement delete; you must manually call the destructor.
+Placement new is used when you want control over where objects are constructed, such as in memory pools or shared memory. The first `void*` parameter specifies the address. You can add custom parameters for debugging or tracking. Standard placement new (`::new(ptr) T(...)`) actually DOES have a matching placement delete already: `<new>` declares a no-op `void operator delete(void*, void*) noexcept` specifically to pair with `void* operator new(size_t, void*)` (proof: trying to redefine `operator delete(void*, void*)` yourself fails with a "redefinition" error, since the standard library already provides it). That no-op placement delete is invoked automatically only if the constructor throws during the placement-new expression. The real point to remember is about NORMAL (non-exceptional) cleanup: there is no `delete` syntax that "undoes" a placement new in ordinary use -- you must manually call the destructor yourself (`ptr->~T()`) before reusing or freeing the raw memory.
 
 **Key takeaway:** Placement new constructs objects at pre-allocated addresses; it's useful for custom memory management but requires manual destructor calls since there's no placement delete.
 
@@ -506,7 +506,7 @@ public:
     ~DynamicArray() { delete[] data; }  // 1. Destructor
     
     DynamicArray(const DynamicArray& other)  // 2. Copy constructor
-        : size(other.size), data(new int[size]) {
+        : data(new int[other.size]), size(other.size) {
         std::copy(other.data, other.data + size, data);
     }
     
@@ -561,6 +561,9 @@ class Version {
     int major, minor, patch;
 public:
     auto operator<=>(const Version&) const = default;
+    // NOTE: the operator== below is REDUNDANT here -- a defaulted member
+    // operator<=> already implicitly declares operator== (per P1185R2),
+    // so this line is harmless but unnecessary.
     bool operator==(const Version&) const = default;
 };
 
@@ -780,7 +783,7 @@ public:
 
 Array arr;
 arr[0] = 5;           // ✅ OK: arr is lvalue
-getArray()[0] = 5;    // ❌ Error if rvalue version is deleted
+getArray()[0] = 5;    // ❌ Error: operator[] on an rvalue returns int by value (not a reference), so the result isn't assignable
 ```
 
 **Explanation:**
@@ -864,7 +867,7 @@ int main() {
 ```
 
 **Explanation:**
-Custom operator new overloads with additional parameters enable allocation tracking, memory debugging, and profiling. The additional parameters don't affect the basic allocation mechanism but provide context for debugging. Note that there's no matching "placement delete" - exceptions during construction will call regular `operator delete`.
+Custom operator new overloads with additional parameters enable allocation tracking, memory debugging, and profiling. The additional parameters don't affect the basic allocation mechanism but provide context for debugging. Note that in this example there's no matching "placement delete" overload (i.e. no `operator delete(void*, const char*, int)`) -- if no exact-matching placement `operator delete` exists for a placement `operator new`, no deallocation function is invoked at all if the constructor throws. This is a genuine memory leak, not a fallback to the regular `operator delete`. This is why custom placement-new overloads should always be paired with a matching placement-delete overload (e.g. `void operator delete(void* ptr, const char* file, int line)`).
 
 **Key takeaway:** Custom `operator new` overloads with additional parameters enable powerful debugging and tracking capabilities without changing the basic allocation semantics.
 

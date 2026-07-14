@@ -549,11 +549,12 @@ public:
 
 int main() {
     A* obj = new A;
-    delete obj;  // May or may not call sized delete depending on compiler
+    delete obj;  // Deterministically calls this sized delete -- it's the ONLY
+                 // deallocation function A declares, so there's no ambiguity
 }
 ```
 
-For maximum portability, provide both the sized and unsized versions of `operator delete`.
+Note: when a class declares only ONE deallocation function (as above), that function is unconditionally the one invoked -- there's no compiler-dependent choice involved. The genuine "may or may not" implementation-defined selection only arises when a class declares BOTH a sized AND an unsized member `operator delete` simultaneously; in that dual-overload case, which one the compiler picks (when it has a choice) is implementation-defined. For maximum portability, provide both the sized and unsized versions of `operator delete`.
 
 #### Edge Case 6: Assignment Operator Cannot Be Friend
 
@@ -847,7 +848,9 @@ public:
     // ✅ C++20: Single operator generates all six comparison operators
     auto operator<=>(const Version& other) const = default;
     
-    // Still need == for exact equality check
+    // NOTE: This explicit operator== is REDUNDANT (harmless but unnecessary).
+    // Per P1185R2, a defaulted member operator<=> already implicitly declares
+    // operator== for you, so ==, !=, <, >, <=, >= all work from <=> alone.
     bool operator==(const Version& other) const = default;
 };
 
@@ -1282,8 +1285,8 @@ This comprehensive example shows how operator overloading transforms a mathemati
 
 | Feature | Pre-C++20 | C++20 with `<=>` |
 |---------|-----------|------------------|
-| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 2 (`<=>`, `==`) |
-| Lines of code | 30-40 lines | 2-3 lines |
+| Operators needed | 6 (`<`, `>`, `<=`, `>=`, `==`, `!=`) | 1 (`<=>`) -- a defaulted member `<=>` implicitly provides `==` too |
+| Lines of code | 30-40 lines | 1-2 lines |
 | Consistency | Manual, error-prone | Automatic, guaranteed |
 | Syntax | Multiple function definitions | `auto operator<=>(const T&) const = default;` |
 | Return type | `bool` for each | `std::strong_ordering`, `std::weak_ordering`, or `std::partial_ordering` |
