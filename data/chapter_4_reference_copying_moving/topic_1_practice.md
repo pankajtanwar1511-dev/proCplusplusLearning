@@ -143,7 +143,7 @@ Compilation error
 void process(int& x) { std::cout << "lvalue\n"; }
 void process(int&& x) { std::cout << "rvalue\n"; }
 
-int&& get() { return 42; }
+int&& get() { static int val = 42; return std::move(val); }
 
 int main() {
     process(get());
@@ -161,7 +161,9 @@ rvalue
 - Overload resolution: rvalue binds to `process(int&&)` overload
 - Prints "rvalue"
 - Even though return type is reference, function call itself is rvalue expression
-- **Key Concept:** Function returning rvalue reference produces xvalue (rvalue category)
+- `val` is `static`, so it has program lifetime — the reference returned by `get()` is not dangling
+- **Caution:** a naive version like `int&& get() { return 42; }` would bind the returned reference to a temporary that is destroyed when `get()` returns — that is undefined behavior (dangling reference), the same antipattern flagged as UB in Q11. Always ensure the referenced object outlives the reference.
+- **Key Concept:** Function returning rvalue reference produces xvalue (rvalue category), but only use this pattern when the referenced object's lifetime is guaranteed to extend past the call
 
 ---
 

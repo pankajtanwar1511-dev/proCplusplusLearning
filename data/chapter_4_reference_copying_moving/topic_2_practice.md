@@ -229,6 +229,7 @@ std::cout << vec.size() << " " << vec[1].length();
 class Buffer {
     int* data;
 public:
+    Buffer(int n) : data(new int[n]) {}
     Buffer& operator=(Buffer&& other) noexcept {
         delete[] data;
         data = other.data;
@@ -286,7 +287,8 @@ hello
 ```cpp
 struct Data {
     std::string name;
-    Data(Data&& other) : name(other.name) { }
+    Data(std::string n) : name(std::move(n)) {}
+    Data(Data&& other) : name(other.name) { }   // BUG: copies, doesn't move
 };
 
 Data d1{"test"};

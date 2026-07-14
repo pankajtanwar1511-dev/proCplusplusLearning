@@ -18,8 +18,7 @@ int main() {
 
 **Answer:**
 ```
-1
-0
+10
 ```
 
 **Explanation:**

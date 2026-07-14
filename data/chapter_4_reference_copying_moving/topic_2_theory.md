@@ -412,7 +412,7 @@ std::cout << vec[1].length() << "\n"; // Likely 0 (empty but valid)
 
 // The moved-from element is still in the vector!
 for (const auto& str : vec) {
-    std::cout << "[" << str << "]\n";  // Prints [one][]three]
+    std::cout << "[" << str << "]\n";  // Prints on separate lines: [one] / [] / [three]
 }
 ```
 
@@ -426,6 +426,7 @@ Moving an object to itself should be safe but can cause problems if not handled 
 class Buffer {
     int* data;
 public:
+    Buffer(int n) : data(new int[n]) {}
     Buffer& operator=(Buffer&& other) noexcept {
         delete[] data;              // ❌ Dangerous if this == &other
         data = other.data;
@@ -441,17 +442,22 @@ b = std::move(b);  // Self-move: data is deleted then set to nullptr!
 The problem: if `this == &other`, we delete our data, then try to copy from ourselves, copying the nullptr we just set. The standard requires self-move to leave the object in a valid state, so we must check for self-assignment:
 
 ```cpp
-Buffer& operator=(Buffer&& other) noexcept {
-    if (this != &other) {  // ✅ Check for self-assignment
-        delete[] data;
-        data = other.data;
-        other.data = nullptr;
+class Buffer {
+    int* data;
+public:
+    Buffer(int n) : data(new int[n]) {}
+    Buffer& operator=(Buffer&& other) noexcept {
+        if (this != &other) {  // ✅ Check for self-assignment
+            delete[] data;
+            data = other.data;
+            other.data = nullptr;
+        }
+        return *this;
     }
-    return *this;
-}
+};
 ```
 
-For types using smart pointers or standard containers, self-move is automatically safe because these types handle it correctly.
+For types using smart pointers or standard containers, self-move will not crash or corrupt memory, but it is NOT guaranteed to preserve the object's value—e.g. self-moving a std::string or std::vector typically empties it. Don't rely on self-move being a no-op even for standard library types.
 
 #### Edge Case 7: Moving Non-Movable Types
 
@@ -936,6 +942,10 @@ class TrajectoryPlanner {
     std::vector<Trajectory> trajectory_history_;
 
 public:
+    TrajectoryPlanner() {
+        trajectory_history_.reserve(10);  // Avoid reallocation moves in this demo
+    }
+
     // Accept by value and move - sink parameter pattern
     void storeTrajectory(Trajectory traj) {
         std::cout << "Storing trajectory...\n";
@@ -1013,7 +1023,6 @@ int main() {
 ```
 === Move from Temporary ===
 Trajectory 'temp_path' constructed with 200 waypoint capacity
-Trajectory 'temp_path' MOVED (efficient transfer)
 Storing trajectory...
 Trajectory 'temp_path' MOVED (efficient transfer)
 
@@ -1032,7 +1041,6 @@ backup_path still valid: backup_route
 
 === Return Value Optimization ===
 Trajectory 'generated_path' constructed with 500 waypoint capacity
-Trajectory 'generated_path' MOVED (efficient transfer)
 
 === Move Assignment ===
 Trajectory 'path_1' constructed with 100 waypoint capacity
@@ -1048,9 +1056,16 @@ Reused path2: emergency_stop
 Trajectory 'vec_path_1' constructed with 50 waypoint capacity
 Trajectory 'vec_path_1' MOVED (efficient transfer)
 Trajectory 'generated_path' MOVED (efficient transfer)
+Trajectory 'vec_path_1' MOVED (efficient transfer)
 
 === Complete ===
 ```
+
+Notes on this output:
+- **No MOVED line right after "constructed" for `temp_path`**: the temporary `Trajectory("temp_path", 200)` directly initializes the by-value parameter `traj` in `storeTrajectory`. Since C++17, this is mandatory copy elision (a prvalue initializing a same-type by-value parameter) — no constructor call happens there at all, not even a move.
+- **`TrajectoryPlanner` reserves capacity for `trajectory_history_` up front** so that the vector never reallocates while `storeTrajectory` is called in `main()`. Without this reserve, growth of the vector would trigger additional moves of previously-stored `Trajectory` objects via the `noexcept` move constructor — real, but non-deterministic/implementation-dependent output that would clutter this example.
+- **`generated_path` shows only "constructed", no MOVED line**: `return traj;` in `generateTrajectory` is eligible for Named Return Value Optimization (NRVO), which GCC applies here even though it isn't mandated by the standard — verified at both `-O0` and `-O2`.
+- **The final `Trajectory 'vec_path_1' MOVED` appears twice**: `trajectories` (a separate local `std::vector<Trajectory>` in `main()`, unrelated to `trajectory_history_`) is not reserved, so its growth from capacity 1 to 2 when the second element is pushed relocates `vec_path_1` via the move constructor.
 
 **Key Concepts Demonstrated:**
 

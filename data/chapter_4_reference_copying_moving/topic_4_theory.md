@@ -179,7 +179,7 @@ int main() {
 | `T obj = T();` | ✅ Mandatory | Prvalue initialization, must be elided |
 | `func(T());` | ✅ Mandatory | Prvalue argument, must be elided |
 | `T obj; return obj;` | ⚠️ Optional | Named local, NRVO discretionary |
-| `return flag ? a : b;` | ❌ Cannot elide | Multiple candidates, automatic move instead |
+| `return flag ? a : b;` | ❌ Cannot elide | Ternary yields an lvalue (not eligible for implicit move), copy occurs instead |
 | `return std::move(obj);` | ❌ Cannot elide | Explicit xvalue (not prvalue), forces move |
 | `return param;` | ❌ Cannot elide | Parameter (not local), automatic move instead |
 
@@ -237,9 +237,9 @@ While copy elision is powerful, it has specific requirements and limitations. Un
 | **Multiple return paths, different variables** | Compiler can't determine which to elide at compile time | Automatic move conversion | Return prvalues: `return T(args);` |
 | **Return with std::move** | Explicit cast to xvalue (not prvalue) | Move constructor called | Remove `std::move`: `return obj;` |
 | **Return function parameter** | Parameter storage from caller, not local | Automatic move conversion | Create local: `T local = param; return local;` (still moves) |
-| **Conditional return of different named vars** | Runtime decision, multiple candidates | Automatic move conversion | Use prvalues per branch |
-| **Return member variable** | Member's lifetime tied to object | Copy or move (depending on context) | Cannot optimize this case |
-| **Return global/static** | Not a temporary or local | Copy or move | Cannot optimize this case |
+| **Conditional return of different named vars** | Runtime decision, multiple candidates; ternary yields an lvalue (not eligible for implicit move) | Copy | Use prvalues per branch |
+| **Return member variable** | Member's lifetime tied to object; not eligible for implicit move | Copy (always -- use `std::move(member_)` explicitly if a move is desired and safe) | Cannot optimize this case |
+| **Return global/static** | Not a temporary or local; not eligible for implicit move | Copy (always -- use `std::move(global_)` explicitly if a move is desired and safe) | Cannot optimize this case |
 
 **The std::move Paradox in Return Statements**
 
@@ -1003,7 +1003,7 @@ public:
     Path planMultiPath(bool fast) {
         Path fast_path("fast_route", 200);
         Path safe_path("safe_route", 400);
-        return fast ? fast_path : safe_path;  // Cannot elide, moves instead
+        return fast ? fast_path : safe_path;  // Cannot elide, COPIES instead (ternary yields an lvalue, not eligible for implicit move)
     }
 };
 
@@ -1058,7 +1058,7 @@ int main() {
 
     std::cout << "=== 5. Multiple paths prevent NRVO ===\n";
     Path p6 = planner.planMultiPath(true);
-    // Cannot determine which to elide, automatic move applies
+    // Cannot determine which to elide, COPIES instead (ternary yields an lvalue, not eligible for implicit move)
     std::cout << "\n";
 
     std::cout << "=== 6. Factory Pattern with RVO ===\n";
@@ -1127,7 +1127,7 @@ Path 'normal_cruise' constructed (waypoints capacity: 300, cost map: 1000000 dou
 === 5. Multiple paths prevent NRVO ===
 Path 'fast_route' constructed (waypoints capacity: 200, cost map: 1000000 doubles)
 Path 'safe_route' constructed (waypoints capacity: 400, cost map: 1000000 doubles)
-Path MOVED: fast_route
+Path COPIED: fast_route_copy (7 MB)
 
 === 6. Factory Pattern with RVO ===
 Factory creating parking path
@@ -1193,10 +1193,10 @@ This optimization is critical for meeting the strict real-time requirements of a
 | 1 | 1 | Only default constructor called. C++17 mandatory elision constructs Widget directly in `w` with no copy or move. | #mandatory_elision |
 | 2 | Yes in C++17, No in C++14 | C++17 mandatory elision doesn't require copy/move constructors for prvalues. C++14 needs at least move constructor. | #mandatory_elision |
 | 3 | CM | One default constructor (C), one move (M). `std::move(s)` prevents NRVO, forcing move constructor call. | #std_move_harm |
-| 4 | 113 | Two constructions (11) for `a` and `b`, one move (3) for return. Multiple paths prevent NRVO, automatic move applies. | #multiple_returns |
+| 4 | 112 | Two constructions for `a` and `b`, one COPY (not move) for return -- ternary is not a bare id-expression, so implicit move doesn't apply. | #multiple_returns |
 | 5 | Nothing or "Move" once | `create1` likely uses NRVO (no output). `create2` with `std::move` forces move, prints "Move". NRVO prevented by std::move. | #nrvo |
 | 6 | CXD | One construction (C), main prints (X), one destruction (D). C++17 elision eliminates all intermediate operations. | #mandatory_elision |
-| 7 | 13 or 113 | One construction for S(5) (1), then move into parameter (3), then return uses automatic move (3). May vary with optimization. | #parameter_passing |
+| 7 | 13 | One construction for S(5) (1); C++17 mandatory elision constructs the prvalue argument directly into parameter `s` (no copy/move step); `return s;` then uses implicit move since `s` is a parameter (3). Guaranteed by mandatory elision, not compiler-dependent. | #parameter_passing |
 | 8 | D, D or DM, DM | get1: only D (RVO). get2: D or DM (NRVO or move). get3: DM (std::move prevents NRVO). | #rvo_vs_nrvo |
 | 9 | CXD | Prints C (construct), X (from main), D (destruct). C++17 mandatory elision allows non-movable type. | #non_movable |
 | 10 | 1P | One construction (1), then process prints P. C++17 elision constructs directly in parameter location. | #parameter_elision |
@@ -1204,7 +1204,7 @@ This optimization is critical for meeting the strict real-time requirements of a
 | 12 | W | Only W printed. Modern compilers reliably apply NRVO for simple named returns like this. | #nrvo |
 | 13 | RVO applies, but const prevents move | RVO works regardless of const. If NRVO didn't apply, const would prevent moving (but this is prvalue, so RVO guaranteed). | #const_return |
 | 14 | 1 | Only 1 constructor called due to mandatory C++17 elision. Static counter only increments once. | #mandatory_elision |
-| 15 | BD | Base constructor (B), Derived constructor (D). C++17 elision eliminates all moves, only default constructors called. | #inheritance |
+| 15 | Compilation Error | `std::declval` used in an evaluated context (inside the constructor body) triggers a static_assert -- it is only valid inside an unevaluated context like `decltype()`. | #declval_misuse |
 | 16 | C | Static initialization: one construction when first accessed. Static local initialized once per program execution. | #static_initialization |
 | 17 | VX | One construction (V), then X. RVO constructs in temporary, lifetime extended by const reference binding. | #lifetime_extension |
 | 18 | 11 | Two constructions, one per array element. C++17 elision applies to each element independently. | #array_initialization |
@@ -1217,7 +1217,7 @@ This optimization is critical for meeting the strict real-time requirements of a
 |----------|--------------|--------------|---------|
 | Return unnamed temporary | RVO | Mandatory | `return T();` |
 | Return named local variable | NRVO | Optional | `T obj; return obj;` |
-| Return from multiple named locals | None | N/A (moves) | `return flag ? a : b;` |
+| Return from multiple named locals | None | N/A (copy; ternary is an lvalue, not eligible for implicit move) | `return flag ? a : b;` |
 | Return with std::move | None | N/A (moves) | `return std::move(obj);` |
 | Return function parameter | None | N/A (moves) | `T func(T param) { return param; }` |
 | Initialize from prvalue | Mandatory | Mandatory | `T obj = T();` |
@@ -1263,9 +1263,9 @@ This optimization is critical for meeting the strict real-time requirements of a
 | Multiple named return candidates | Compiler can't determine which to elide | Use automatic move |
 | Returning parameter | Parameter storage already allocated | Automatic move applies |
 | Returning with `std::move` | Explicit rvalue cast prevents elision | Remove `std::move` |
-| Returning global/static variable | Not a local temporary | Cannot optimize |
-| Conditional returning different variables | Runtime decision prevents compile-time elision | Automatic move applies |
-| Returning member variable | Object lifetime different from return | Cannot optimize |
+| Returning global/static variable | Not a local temporary; not eligible for implicit move | Copy (always -- use `std::move(global_)` explicitly if desired and safe) |
+| Conditional returning different variables | Runtime decision prevents compile-time elision; ternary yields an lvalue, not eligible for implicit move | Copy occurs (not move) |
+| Returning member variable | Object lifetime different from return; not eligible for implicit move | Copy (always -- use `std::move(member_)` explicitly if desired and safe) |
 
 #### Optimization Guarantees Summary
 
@@ -1275,5 +1275,5 @@ This optimization is critical for meeting the strict real-time requirements of a
 | `return func();` (prvalue) | RVO | ✅ Guaranteed | Prvalue chain, mandatory |
 | `T obj; return obj;` | NRVO | ⚠️ Optional | Most compilers apply it |
 | `return std::move(obj);` | None | ❌ Forces move | Worse than NRVO |
-| `return flag ? a : b;` | None | ❌ Moves | Multiple candidates |
+| `return flag ? a : b;` | None | ❌ Forces copy | Ternary yields an lvalue; not eligible for implicit move |
 | `return param;` | None | ❌ Moves | Parameter return |

@@ -601,7 +601,7 @@ Copy elision (including RVO) allows the compiler to skip copy/move constructors 
 **Concepts:** #array #std_move #element_wise_move
 
 **Answer:**
-Arrays decay to pointers, which are trivial types, so moving arrays requires element-wise moves using algorithms like `std::move` (the algorithm, not the cast).
+Array types cannot be copy-initialized or move-initialized from another array via `=` at all—this restriction applies equally to copies and moves (arrays are simply not assignable in C++; the same code fails identically whether you write `= arr1` or `= std::move(arr1)`). To "move" an array, you must move each element individually, e.g. via the `std::move` ALGORITHM (`std::move(begin, end, dest)`, distinct from the `std::move` cast).
 
 **Code example:**
 ```cpp

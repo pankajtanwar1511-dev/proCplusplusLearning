@@ -605,7 +605,7 @@ int main() {
     
     rref2 = 75;
     std::cout << "rref1: " << rref1 << ", rref2: " << rref2 << "\n";
-    // Both might print 75 (implementation-dependent after move)
+    // Both print 75 (guaranteed -- rref2 aliases the same object as rref1, this is NOT implementation-dependent)
 }
 ```
 
@@ -700,7 +700,7 @@ int main() {
     std::cout << "\n=== Named Rvalue References are Lvalues ===\n";
     SensorData&& rref = SensorData("temp_sensor", 50, 3000);
     // rref has type SensorData&&, but expression rref is an lvalue
-    processor.process(rref);  // ❌ Error if uncommented: rref is lvalue!
+    processor.process(rref);  // Compiles fine: rref is a named lvalue expression, so this silently calls process(SensorData&), not the rvalue overload!
     processor.process(std::move(rref));  // ✅ OK: cast back to rvalue
 
     std::cout << "\n=== Processing Complete ===\n";
@@ -729,6 +729,7 @@ Read-only processing: lidar_front
 
 === Named Rvalue References are Lvalues ===
 SensorData created: temp_sensor (50 points)
+Processing lvalue: temp_sensor
 Processing rvalue: temp_sensor
 
 === Processing Complete ===
@@ -742,7 +743,7 @@ Processing rvalue: temp_sensor
 
 3. **const Lvalue References (`const T&`)**: The universal acceptor pattern that works with both lvalues and rvalues. Used for read-only operations when you don't need to distinguish between temporary and persistent data.
 
-4. **Named Rvalue References are Lvalues**: Even though `rref` has type `SensorData&&`, the *expression* `rref` is an lvalue (it has a name). To pass it to an rvalue reference parameter, you must explicitly use `std::move`.
+4. **Named Rvalue References are Lvalues**: Even though `rref` has type `SensorData&&`, the *expression* `rref` is an lvalue (it has a name). Passing `rref` directly to `process()` compiles without error and silently resolves to `process(SensorData&)` (the "Processing lvalue" line), not the rvalue overload — there is no compiler error to warn you. To actually invoke the rvalue overload and move from `rref`, you must explicitly use `std::move`.
 
 5. **Overload Resolution**: The compiler automatically selects the appropriate overload based on value category:
    - Lvalues → `process(SensorData& data)`

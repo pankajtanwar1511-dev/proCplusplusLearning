@@ -105,7 +105,7 @@ void example(T&& param) {
     // BUT param as an expression is an LVALUE (it has a name)
 
     int&& rref = param;        // ❌ Error: cannot bind rvalue ref to lvalue
-    int& lref = param;         // ❌ Error if T=int (param would be int&&)
+    int& lref = param;         // ✅ OK -- param is an lvalue expression, binds fine to int&
 
     // This is why we need std::forward
 }
@@ -663,7 +663,7 @@ int main() {
     std::string name = "Alice";
     Person p1(name, 30);              // name copied (lvalue)
     Person p2(std::string("Bob"), 25); // string moved (rvalue)
-    Person p3("Charlie", 35);         // constructed in-place then moved
+    Person p3("Charlie", 35);         // constructed directly from the literal via implicit conversion -- NOT moved (string literals are lvalues, so no std::string temporary exists to move from)
 }
 ```
 
@@ -973,7 +973,7 @@ This pattern is essential for high-performance logging frameworks where millions
 |----|--------|-------------|-------------|
 | 1 | 1 0 | For `mystery(a)`, `T` deduces to `int&` (lvalue ref is true). For `mystery(10)`, `T` deduces to `int` (not a reference). | #template_deduction |
 | 2 | Compiles successfully | When `func(a)` called with lvalue, `T` = `int&`, so `T&&` = `int&`. Line `T&& y` becomes `int& y`, which can bind to forwarded lvalue. | #reference_collapsing |
-| 3 | overload1 | `x` forwarded as `int&` (lvalue), `std::move(y)` forwarded as `int&&` (rvalue), matching `process(int&, int&&)`. | #perfect_forwarding |
+| 3 | Compilation Error (would print "overload1" if process were declared before forwardMultiple) | `process` is used inside `forwardMultiple` before it has been declared; two-phase lookup means ordinary lookup at definition time doesn't see it, and ADL doesn't find it either since `int`/`int&`/`int&&` have no associated namespaces. If `process` were declared first, `x` forwards as `int&` (lvalue) and `std::move(y)` forwards as `int&&` (rvalue), matching `process(int&, int&&)` → "overload1". | #perfect_forwarding |
 | 4 | For `int&`: `int&&`<br>For `int`: `int&&` | `std::remove_reference_t<int&>` = `int`, then add `&&` = `int&&`. For non-ref `int`, same result. | #type_traits |
 | 5 | Compilation error | `T` is fixed as `int` at class instantiation, so `T&&` is `int&&` (not universal ref). Cannot pass lvalue `a` to rvalue ref. | #universal_reference |
 | 6 | lvalue: `int&`<br>rvalue: `int&&` | `auto&&` creates universal reference. Forwarded lvalue remains lvalue ref, forwarded rvalue remains rvalue ref. | #auto_deduction |
@@ -983,7 +983,7 @@ This pattern is essential for high-performance logging frameworks where millions
 | 10 | Runtime error or undefined behavior | First call moves unique_ptr into `consume`. Second call forwards already-moved-from unique_ptr (nullptr), causing crash in dereference. | #moved_from_state |
 | 11 | Compiles successfully | `s1`: `T` = `int&`, forwards lvalue (copy). `s2`: `T` = `int`, forwards rvalue. Forwarding constructor handles both. | #forwarding_constructor |
 | 12 | Prints 3 (but dangerous) | Both forwards work, but if `process` moves the vector, second forward uses moved-from object. Here `process` doesn't move, so prints size. | #multiple_forwarding |
-| 13 | Does not compile as written | Partial specialization for `T&&` doesn't match because after deduction, `T&&` has already collapsed. The trait cannot distinguish universal refs this way. | #template_specialization |
+| 13 | 01 | `check(a)`: `T` is `int&`, `T&&` becomes `int& &&` → collapses to `int&`, doesn't match the `<T&&>` partial specialization → prints 0. `check(10)`: `T` is `int`, `T&&` is `int&&`, matches the `<T&&>` pattern → prints 1. | #template_specialization |
 | 14 | lvalue<br>rvalue | `U` is deduced independently in template member function. `str` → lvalue, `"literal"` → rvalue, both forwarded correctly. | #member_template |
 | 15 | y: `int&` (both cases)<br>z: `int&` when lvalue | `decltype(x)` gives reference type of named variable. `decltype(std::forward<T>(x))` gives the forwarded type. | #decltype |
 | 16 | 1234 | Outputs correspond to each overload: (lvalue, lvalue)→1, (lvalue, rvalue)→2, (rvalue, lvalue)→3, (rvalue, rvalue)→4. | #perfect_forwarding |

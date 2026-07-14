@@ -249,6 +249,8 @@ Widget getValue() {
 **Explanation:**
 Temporaries have limited lifetimes: they are destroyed at the end of the full expression that creates them, unless they are bound to a reference (which extends their lifetime). Trying to return a pointer or reference to a temporary or local object creates a dangling pointer/reference. Even with copy elision, you cannot extend an object's lifetime by returning its address—RVO doesn't change the fundamental rule that you cannot return pointers/references to local objects. The correct approach is to return by value, allowing copy elision to optimize the operation.
 
+Note: `&Widget()` (getPointer1) is actually rejected by the compiler (ill-formed, "error: taking address of rvalue") -- you cannot even take the address of a prvalue temporary directly. getPointer2 and getReference, by contrast, compile successfully but produce genuine undefined behavior at runtime (dangling pointer/reference).
+
 **Key takeaway:** Never return pointers or references to temporaries or local objects; return by value instead and let copy elision optimize.
 
 ---
@@ -278,9 +280,9 @@ Widget good(bool flag) {
 ```
 
 **Explanation:**
-For NRVO to work, the compiler must be able to identify a single local variable that will definitely be returned, allowing it to construct that variable directly in the caller's space. When there are multiple named variables that might be returned based on runtime conditions, the compiler cannot perform this optimization—it doesn't know which object to construct in the caller's space. However, if each return statement returns a different temporary (prvalue), each path can benefit from RVO independently. Automatic move conversion will apply in the bad case, so moves occur instead of copies.
+For NRVO to work, the compiler must be able to identify a single local variable that will definitely be returned, allowing it to construct that variable directly in the caller's space. When there are multiple named variables that might be returned based on runtime conditions, the compiler cannot perform this optimization—it doesn't know which object to construct in the caller's space. However, if each return statement returns a different temporary (prvalue), each path can benefit from RVO independently. The COPY constructor is called in the bad case, because `flag ? a : b` is an lvalue expression (not an id-expression naming a local), so the implicit-move-on-return exemption does not apply -- it does not automatically become a move.
 
-**Key takeaway:** Return temporaries from multiple paths to enable RVO; returning different named variables prevents NRVO but automatic move conversion applies.
+**Key takeaway:** Return temporaries from multiple paths to enable RVO; returning different named variables prevents NRVO, and a ternary/conditional return copies rather than moves.
 
 ---
 
