@@ -424,17 +424,18 @@ p2 = std::move(p1);
 
 **Answer:**
 ```
-Compilation error
+p1 is null
+*p2 = 42
+p2.use_count() = 1
 ```
 
 **Explanation:**
-- `p1` has type `unique_ptr<int>`
-- `p2` deduced as `shared_ptr<int>` from make_shared
-- `p2 = std::move(p1)` attempts to assign unique_ptr to shared_ptr variable
-- shared_ptr move assignment expects shared_ptr, not unique_ptr
-- Type mismatch: no matching operator= for shared_ptr = unique_ptr
-- **Fix:** Create new shared_ptr: `std::shared_ptr<int> sp = std::move(p1);`
-- **Key Concept:** Cannot assign unique_ptr to existing shared_ptr variable; can convert via construction
+- `p1` has type `unique_ptr<int>` owning an int with value 42
+- `p2` deduced as `shared_ptr<int>` from make_shared, initially owning an int with value 100
+- `shared_ptr` has a converting move-assignment operator template that accepts `unique_ptr<T, D>&&`
+- `p2 = std::move(p1)` compiles cleanly: it releases p2's original int (100, refcount drops to 0 and it is freed), takes ownership of p1's int (42), and sets up a new control block for it
+- After the assignment, `p1` is null (ownership transferred out) and `p2` now points to the int that was originally owned by `p1`, with `use_count() == 1`
+- **Key Concept:** `shared_ptr` supports move-assignment (and move-construction) directly from a `unique_ptr` of a compatible type -- this is a valid, well-defined ownership transfer from unique to shared ownership, not a compilation error
 
 ---
 

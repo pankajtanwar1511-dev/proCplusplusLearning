@@ -617,6 +617,7 @@ Custom deleters enable smart pointers to manage any resource type, not just heap
 ```cpp
 #include <memory>
 #include <iostream>
+#include <vector>
 
 void uniquePtrArray() {
     // ✅ Correct: unique_ptr<T[]> for arrays
@@ -909,7 +910,7 @@ public:
     ~SensorManager() {
         cout << "SensorManager(" << manager_id << "): Shutting down with "
              << sensors.size() << " sensors\n";
-        // ✅ Sensors automatically deleted in reverse order
+        // ✅ Sensors destroyed in the vector's own (forward/insertion) order -- NOT reverse, unlike separate local variables
     }
 
     // ✅ Takes ownership via move
@@ -1194,9 +1195,9 @@ LidarSensor(lidar_rear): Reading 32000 point cloud
 
 Manager has 3 sensors
 SensorManager(primary_manager): Shutting down with 3 sensors
-LidarSensor(lidar_rear): Destroyed
-CameraSensor(cam_left): Destroyed
 LidarSensor(lidar_front): Destroyed
+CameraSensor(cam_left): Destroyed
+LidarSensor(lidar_rear): Destroyed
 
 ### PART 2: shared_ptr for Shared Ownership ###
 Cache MISS for lidar_front
@@ -1234,8 +1235,8 @@ LidarSensor(lidar_shared): Destroyed
 --- Fusion Engine Processing ---
 CameraSensor(cam_shared): Capturing image
 Fusion complete: 1 active sensors, 1 removed sensors
-CameraSensor(cam_shared): Destroyed
 FusionEngine(main_fusion): Destroyed
+CameraSensor(cam_shared): Destroyed
 
 ### PART 4: Custom Deleters for Hardware ###
 HardwareResource: Opened device 101
@@ -1262,7 +1263,7 @@ LidarSensor(lidar_convertible): Destroyed
 1. **unique_ptr for Exclusive Ownership**:
    - Sensor manager exclusively owns sensors
    - Move semantics for ownership transfer
-   - Automatic cleanup in reverse order
+   - Container elements are destroyed in the container's own order (forward for std::vector), which is DIFFERENT from the LIFO destruction of separate local stack variables
    - Zero overhead polymorphism with virtual destructors
 
 2. **shared_ptr for Shared Ownership**:

@@ -231,18 +231,36 @@ The array specialization unique_ptr<T[]> uses delete[] for proper array dealloca
 
 ---
 
-#### Q11: Why doesn't std::make_unique support array syntax?
+#### Q11: Does std::make_unique support array syntax?
 **Difficulty:** #intermediate  
 **Category:** #smart_pointers #language_design  
 **Concepts:** #make_unique #arrays #initialization
 
 **Answer:**  
-make_unique for arrays would require specifying both element count and initialization values, creating ambiguous syntax, so it was excluded from C++14/17.
+Yes -- `std::make_unique<T[]>(n)` (the array-of-unknown-bound overload) has been supported since C++14 and value-initializes `n` elements. What is NOT supported is a per-element initializer variant like `make_unique<T[]>(n, value)` to set every element to a specific value at construction time -- that overload does not exist and fails to compile.
 
 **Explanation:**  
-Function template syntax make_unique<int[]>(10) is unclear whether 10 is the array size or an initialization value. Additionally, proper array initialization syntax (brace-init-lists) doesn't map cleanly to make_unique's variadic template design. For arrays, using unique_ptr<T[]> with new T[n] directly, or preferably using std::vector, avoids these ambiguities.
+```cpp
+#include <memory>
+#include <iostream>
 
-**Key takeaway:** Use unique_ptr<T[]> with explicit new T[n] for arrays, or better yet, use std::vector.
+int main() {
+    // ✅ Compiles fine since C++14: value-initializes 5 ints to 0
+    auto arr = std::make_unique<int[]>(5);
+    for (int i = 0; i < 5; ++i) std::cout << arr[i] << " ";
+    std::cout << "\n";
+
+    // ❌ Does NOT compile: no make_unique overload takes a per-element value
+    // auto arr2 = std::make_unique<int[]>(5, 42);
+}
+```
+Expected output (verified with g++ -std=c++14):
+```
+0 0 0 0 0
+```
+`make_unique<int[]>(n)` is unambiguous -- `n` is always the element count, and the elements are value-initialized (zero for scalar types like `int`). There is simply no overload that also takes an initializer value per element, so attempting `make_unique<int[]>(5, 42)` fails with "no matching function for call to 'make_unique'". If you need every element set to a specific value, construct the array with `make_unique<T[]>(n)` and then assign, or prefer `std::vector<T>(n, value)`, which supports fill-construction directly.
+
+**Key takeaway:** `make_unique<T[]>(n)` (default/value-initializing n elements) is supported since C++14; only the per-element-initializer-list form (`make_unique<T[]>(n, value)`) is unsupported. For fill-initialization, use `std::vector`.
 
 ---
 
@@ -365,6 +383,8 @@ Exclusive ownership can become shared (relaxing constraints), so unique_ptr impl
 
 **Answer:**  
 use_count() returns the number of shared_ptr instances sharing ownership, while unique() returns true if use_count() == 1.
+
+Note: `unique()` was deprecated in C++17 and removed in C++20's strict conformance mode on some standard libraries (e.g. libc++) -- prefer checking `use_count() == 1` if you need this on a C++20+ codebase, though `use_count()` itself is also only guaranteed accurate in single-threaded contexts.
 
 **Code example:**
 ```cpp

@@ -1054,11 +1054,30 @@ SafeSensorData: Allocated 8000 points (RAII)
 
 Pipeline has 3 sensors
 === PerceptionPipeline(main_pipeline): Shutting down ===
-SafeSensorData: Auto-cleanup 8000 points
-SafeSensorData: Auto-cleanup 12000 points
 SafeSensorData: Auto-cleanup 15000 points
+SafeSensorData: Auto-cleanup 12000 points
+SafeSensorData: Auto-cleanup 8000 points
 
 ### PART 5: Common Memory Management Pitfalls ###
+
+### DANGER: Memory Leak Example ###
+Allocated 100000 doubles
+Early return - memory leaked!
+
+### SAFE: Exception-Safe RAII ###
+Allocated 100000 doubles (RAII)
+Early return - memory automatically cleaned!
+
+### DANGER: Dangling Pointer ###
+Allocated array
+Freed array
+Set to nullptr - safe
+
+### DANGER: Double Delete (Prevented) ###
+Double delete prevented
+
+========== Demo Complete (All Memory Safely Managed) ==========
+```
 
 ### QUICK_REFERENCE: Answer Key and Summary Tables
 
