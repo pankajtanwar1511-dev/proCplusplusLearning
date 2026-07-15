@@ -204,32 +204,19 @@ lst.push_back(42);
 
 **Answer:**
 ```
-Compilation error
+Compiles and runs fine: 42
 ```
 
 **Explanation:**
-- Custom allocator MyAlloc provided for std::list
-- std::list stores nodes, not raw ints
-- Node structure: {T data, Node* next, Node* prev}
-- std::list needs to allocate Node<T>, not T
-- Requires allocator rebinding mechanism
-- MyAlloc missing `rebind` template
-- Compilation error: cannot rebind allocator type
-- **Fix:** Add rebind support
-  ```cpp
-  template<typename T>
-  class MyAlloc {
-  public:
-      using value_type = T;
-      template<typename U>
-      struct rebind { using other = MyAlloc<U>; };
-      T* allocate(std::size_t n) { return new T[n]; }
-      void deallocate(T* p, std::size_t) { delete[] p; }
-  };
-  ```
-- C++11+ alternative: derive from std::allocator
-- Rebind allows list to create allocator for its internal node type
-- **Key Concept:** Container allocators must support rebind for internal structures; list uses nodes, not raw values
+- Custom allocator MyAlloc provided for std::list, with no explicit `rebind` member
+- std::list stores nodes, not raw ints, so internally it needs an allocator for its node type, not `MyAlloc<int>`
+- In C++98/pre-allocator_traits code, the container would use `Alloc::rebind<U>::other` directly, so a missing `rebind` really would fail to compile
+- Since C++11, containers no longer touch `Alloc::rebind` directly -- they go through `std::allocator_traits<Alloc>`
+- `std::allocator_traits<Alloc>::rebind_alloc<U>` only looks for a nested `Alloc::rebind<U>::other` if one exists; otherwise, for a standard-shaped allocator template `Alloc<T, Args...>`, it SYNTHESIZES the rebound type itself as `Alloc<U, Args...>`
+- `MyAlloc<T>` is exactly this standard shape (a single template type parameter), so `allocator_traits` can rebind it to `MyAlloc<Node>` automatically, with no explicit `rebind` needed
+- Verified by compiling this exact code with g++ -std=c++17: it compiles cleanly and `lst.push_back(42)` runs correctly, printing `42`
+- Explicit `rebind` is only truly required for non-standard allocator shapes (e.g. extra non-type template parameters that don't fit the `Alloc<T, Args...>` pattern) or for legacy code that bypasses `allocator_traits` and touches `Alloc::rebind` directly
+- **Key Concept:** Since C++11, `std::allocator_traits` synthesizes `rebind` automatically for standard-shaped allocator templates; you only need to write an explicit `rebind` member for non-standard allocator shapes or pre-C++11-style allocator usage
 
 ---
 
@@ -443,33 +430,20 @@ std::string result = std::accumulate(v.begin(), v.end(), std::string(""));
 
 **Answer:**
 ```
-Compilation error
+hello world
 ```
 
 **Explanation:**
 - `std::accumulate` in `<numeric>` header
-- Template deduces types from initial value
-- `std::string("")` creates temporary std::string
-- But "" literal has type `const char*`
-- Type mismatch in concatenation
-- Accumulate tries: `const char* + std::string`
-- No operator+ for (const char*, std::string) in that order
-- Compilation error: no matching operator+
-- **Fix:** Explicitly construct std::string
-  ```cpp
-  std::string result = std::accumulate(v.begin(), v.end(), std::string(""));
-  ```
-  Wait, that's what's already written! Actually this SHOULD compile.
-- Let me reconsider: This actually compiles in C++11+
-- The issue might be missing `<numeric>` header
-- Or older compilers
-- Modern C++: this compiles and returns "hello world"
-- **Alternative fix:** Use std::accumulate with explicit type
-  ```cpp
-  std::accumulate(v.begin(), v.end(), std::string{});
-  ```
-- Better modern solution: Use std::reduce or fold expressions (C++17+)
-- **Key Concept:** std::accumulate requires compatible types; string concatenation works with std::string initial value
+- `std::accumulate(first, last, init)` deduces its accumulator type from `init`, NOT from the elements
+- Here `init` is `std::string("")`, so the accumulator type is `std::string`
+- Each step computes `acc = acc + *it`, i.e. `std::string + std::string`
+- `operator+(const std::string&, const std::string&)` exists and returns a `std::string`
+- So every intermediate step is a well-formed string concatenation
+- Step by step: `"" + "hello"` -> `"hello"`; `"hello" + " "` -> `"hello "`; `"hello " + "world"` -> `"hello world"`
+- Compiles cleanly, no ambiguity or type mismatch anywhere
+- Result: `"hello world"`
+- **Key Concept:** `std::accumulate`'s accumulator type is determined by the INITIAL VALUE's type, not the element type; passing `std::string("")` (instead of `""` or `0`) makes the accumulation use `std::string::operator+` throughout, which is exactly why this pattern is the idiomatic way to concatenate a range of strings with `std::accumulate`
 
 ---
 
@@ -523,7 +497,7 @@ std::cout << *it;
 
 **Answer:**
 ```
-May be 1 or undefined behavior (implementation-dependent)
+Undefined behavior -- `it` is guaranteed to be invalidated by push_front per the standard (deque push_front/push_back always invalidate all iterators)
 ```
 
 **Explanation:**
@@ -531,24 +505,17 @@ May be 1 or undefined behavior (implementation-dependent)
 - `it = d.begin()` points to first element (1)
 - `push_front(0)` adds element at front
 - Deque becomes: {0, 1, 2, 3}
-- Deque iterator invalidation rules:
-  - push_front/push_back: end iterators invalidated
-  - Middle iterators MAY remain valid
-  - If internal map reallocates: all iterators invalidated
-- Deque uses chunked storage (map of arrays)
-- Adding at ends may require allocating new chunk
-- If new chunk added: iterators to existing elements usually valid
-- If map reallocates: all iterators invalidated
-- Implementation-dependent behavior
-- May print 1 (iterator still valid)
-- May crash or garbage (iterator invalidated)
+- Per the standard, `push_front` (and `push_back`) on a `std::deque` ALWAYS invalidates ALL iterators of the deque -- this is guaranteed behavior, not implementation-dependent
+- References and pointers to existing elements are NOT invalidated by push_front/push_back, but iterators are
+- Deque uses chunked storage (map of arrays); adding at either end can require allocating a new chunk and/or growing the internal map of chunk pointers, which is why the standard mandates that ALL iterators (not just end()) are invalidated
+- Therefore `it` is definitely invalidated after `push_front(0)`, and `std::cout << *it;` is definite undefined behavior -- not a "may or may not" situation
 - **Safe approach:** Re-acquire iterator after modification
   ```cpp
   d.push_front(0);
   auto new_it = d.begin() + 1;
   std::cout << *new_it;
   ```
-- **Key Concept:** Deque push_front/back may invalidate iterators; implementation-dependent, safest to re-acquire
+- **Key Concept:** `std::deque::push_front`/`push_back` unconditionally invalidate all iterators (per the standard); only references/pointers to existing elements survive -- always re-acquire iterators after either call
 
 ---
 

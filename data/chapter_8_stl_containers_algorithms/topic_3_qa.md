@@ -78,22 +78,22 @@ Deque's chunked architecture means elements may span multiple non-adjacent memor
 **Concepts:** #iterator_stability #memory_management
 
 **Answer:**
-Deque's invalidation rules are complex. push_front/push_back preserve iterators unless the map reallocates. Insert/erase in middle invalidate all iterators. Erase at ends invalidates only erased elements' iterators.
+Deque's invalidation rules are complex. push_front/push_back ALWAYS invalidate all iterators (every call, not just when the map reallocates), though references/pointers to existing elements remain valid. Insert/erase in middle invalidate all iterators. Erase at ends invalidates only erased elements' iterators.
 
 **Code example:**
 ```cpp
 std::deque<int> dq = {1, 2, 3, 4, 5};
 auto it = dq.begin() + 2;
 
-dq.push_back(6);   // ✅ Usually preserves iterators
-dq.push_front(0);  // ✅ Usually preserves iterators
+dq.push_back(6);   // ❌ Invalidates all iterators (references/pointers to existing elements remain valid)
+dq.push_front(0);  // ❌ Invalidates all iterators (references/pointers to existing elements remain valid)
 
 dq.insert(dq.begin() + 1, 99);  // ❌ Invalidates all iterators
 dq.erase(it);  // ❌ Invalidates all iterators
 ```
 
 **Explanation:**
-Unlike list (only erased elements invalidated) or vector (all invalidated on reallocation), deque has nuanced rules. End operations preserve iterators unless the central map needs reallocation (rare). Middle operations invalidate all iterators because elements may shift between chunks or the entire chunk structure may reorganize. This makes deque less predictable than list for iterator stability but more stable than vector for end operations.
+Unlike list (only erased elements invalidated) or vector (all invalidated on reallocation), deque has nuanced rules. push_front/push_back ALWAYS invalidate all iterators, on every call (not just when the central map reallocates)—though references/pointers to existing elements remain valid. Middle operations invalidate all iterators (and references/pointers) because elements may shift between chunks or the entire chunk structure may reorganize. This makes deque less predictable than list for iterator stability, and less forgiving than commonly assumed for end operations too.
 
 **Key takeaway:** Deque iterator invalidation is operation-dependent; avoid storing iterators across middle insertions/deletions.
 
@@ -503,10 +503,10 @@ operator[] provides unchecked access (undefined behavior if out of bounds) for p
 std::deque<int> dq = {1, 2, 3};
 
 int x = dq[10];     // ❌ Undefined behavior
-int y = dq.at(10);  // ✅ Throws std::out_of_range
 
 try {
-    dq.at(10) = 99;
+    int y = dq.at(10);  // ✅ Throws std::out_of_range
+    (void)y;            // unreachable: exception thrown above
 } catch (const std::out_of_range& e) {
     std::cout << "Index out of range\n";
 }

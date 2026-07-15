@@ -153,8 +153,8 @@ When `size() == capacity()` and a new element is added, vector:
 | `push_back(x)` | `size() == capacity()` | ✅ Yes (if realloc) | ✅ Yes (if realloc) |
 | `emplace_back(args)` | `size() == capacity()` | ✅ Yes (if realloc) | ✅ Yes (if realloc) |
 | `insert(pos, x)` | `size() == capacity()` | ✅ Yes (all if realloc, >= pos otherwise) | ✅ Yes (all if realloc, >= pos otherwise) |
-| `reserve(n)` | `n > capacity()` | ✅ Yes (all) | ✅ Yes (all) |
-| `resize(n)` | `n > capacity()` | ✅ Yes (all) | ✅ Yes (all) |
+| `reserve(n)` | `n > capacity()` | ✅ Yes (all, if realloc) | ✅ Yes (all, if realloc) |
+| `resize(n)` | `n > capacity()` | ✅ Yes (all, if realloc) | ✅ Yes (all, if realloc) |
 | `erase(pos)` | Never | ✅ Yes (>= pos) | ✅ Yes (>= pos) |
 | `clear()` | Never | ✅ Yes (all) | ✅ Yes (all) |
 | `shrink_to_fit()` | Implementation-defined | ✅ Yes (may realloc) | ✅ Yes (may realloc) |

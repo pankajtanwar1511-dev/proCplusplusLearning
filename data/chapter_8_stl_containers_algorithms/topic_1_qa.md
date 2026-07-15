@@ -107,7 +107,7 @@ operator[] is designed for performance and trusts the programmer to provide vali
 **Concepts:** #destructors #clear #resource_management
 
 **Answer:**
-When a vector is destroyed or clear() is called, it calls the destructor for each element in reverse order, then deallocates the memory. This follows RAII principles, ensuring proper resource cleanup.
+When a vector is destroyed or clear() is called, it calls the destructor for each element in order (from the first to the last), then deallocates the memory. This follows RAII principles, ensuring proper resource cleanup.
 
 **Explanation:**
 Vector guarantees that element destructors are called even if exceptions occur during destruction. This is crucial for managing resources like file handles or dynamic memory. However, clear() destroys all elements but maintains capacity; the memory remains allocated. To deallocate memory, use shrink_to_fit() or swap with an empty vector.
@@ -261,7 +261,7 @@ Each reallocation doubles (or multiplies by 1.5) the capacity, ensuring only O(l
 **Concepts:** #copyable #movable #type_traits #emplacement
 
 **Answer:**
-No, vector elements must be at least movable because reallocations require transferring elements to new memory. Types must satisfy MoveInsertable or CopyInsertable requirements.
+Only in a very limited way. Vector elements must be at least movable (or copyable) for almost every operation that can grow the container, because growth requires transferring existing elements to new memory. reserve(), and any push_back()/emplace_back() that must grow the vector -- including the very first one, since a default-constructed vector starts with size() == capacity() == 0 -- unconditionally require the element type to satisfy MoveInsertable or CopyInsertable, even if, at runtime, there happen to be zero elements to relocate. The one case that does work is constructing the vector directly at its final size with the sized constructor, which value-initializes elements in place without relocating anything.
 
 **Code example:**
 ```cpp
@@ -272,16 +272,22 @@ struct NonMovable {
 };
 
 std::vector<NonMovable> v;
-v.emplace_back();  // ✅ Constructs in place
-v.push_back(NonMovable());  // ❌ Requires move/copy
-v.reserve(10);
-v.emplace_back();  // ✅ Safe if no reallocation
+v.emplace_back();  // ❌ Compile error: size()==capacity()==0 still triggers
+                   //    the reallocation path, which requires MoveInsertable
+
+std::vector<NonMovable> v2(5);  // ✅ OK: sized constructor value-initializes
+                                //    5 elements directly, nothing to relocate
+v2.reserve(10);    // ❌ Compile error: reserve() always requires
+                   //    MoveInsertable/CopyInsertable, regardless of whether
+                   //    a reallocation is actually needed
+v2.emplace_back(); // ❌ Compile error: size()==capacity()==5, so growing
+                   //    by one more element requires MoveInsertable
 ```
 
 **Explanation:**
-emplace_back can construct non-movable types in-place if capacity is sufficient. However, any operation causing reallocation fails because vector can't relocate non-movable elements. Use reserve() to prevent reallocations, or consider storing pointers/smart pointers instead.
+Every growth path in vector -- reserve(), and push_back()/emplace_back() when size() == capacity() -- is implemented generically in terms of relocating existing elements into new storage, and the compiler instantiates that relocation code (and its MoveInsertable/CopyInsertable check) regardless of whether any elements actually need to move at runtime. That is why even a lone emplace_back() on a freshly default-constructed vector fails to compile: capacity starts at 0, so size() == capacity() is already true. The only way to populate a vector of a genuinely non-movable, non-copyable type is to construct it at its final size up front (e.g., `std::vector<NonMovable> v(n);`), which constructs the n elements directly with no relocation step. Once built this way, the vector can never grow further -- reserve() and any capacity-increasing insertion are permanently unavailable. In practice, prefer storing pointers or smart pointers when elements cannot be moved or copied.
 
-**Key takeaway:** Vector requires elements to be at least movable; use reserve() and emplace for non-movable types.
+**Key takeaway:** For a non-movable, non-copyable type, vector growth (reserve(), and any push_back()/emplace_back() that would exceed current capacity) never compiles; only building the vector at its final size via the sized constructor works, and its size is then fixed forever.
 
 ---
 
@@ -296,7 +302,8 @@ std::vector<bool> is specialized to store bits compactly (typically 8 bools per 
 **Code example:**
 ```cpp
 std::vector<bool> v = {true, false, true};
-auto& ref = v[0];  // ❌ Not actually a reference, it's a proxy
+auto ref = v[0];   // ✅ Compiles: proxy object (std::vector<bool>::reference),
+                   //    not a real bool& -- auto (without &) can bind to it
 bool* ptr = &v[0]; // ❌ Compile error - can't take address
 ```
 
@@ -344,7 +351,7 @@ Reserving space before insertion prevents reallocations. Using move_iterators tr
 **Concepts:** #destructor #automatic_cleanup #resource_management
 
 **Answer:**
-The vector's destructor is automatically called, which destroys all elements in reverse order and then deallocates the memory. This follows RAII principles.
+The vector's destructor is automatically called, which destroys all elements in order (from the first to the last) and then deallocates the memory. This follows RAII principles.
 
 **Explanation:**
 Vector's destructor ensures proper cleanup without manual intervention. Each element's destructor is called, allowing proper release of resources managed by elements (files, memory, locks). After element destruction, the vector deallocates its internal buffer. This automatic cleanup is exception-safe and works correctly even if constructors or destructors throw.

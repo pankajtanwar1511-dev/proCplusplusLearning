@@ -201,7 +201,7 @@ v2[5] = 42;  // ✅ Valid, accesses default-constructed element
 Allocators abstract memory acquisition and release, allowing containers to use custom allocation strategies like memory pools instead of global new/delete.
 
 **Explanation:**
-Every STL container accepts an allocator template parameter (defaulting to `std::allocator<T>`). Allocators separate raw memory allocation from object construction, providing methods like `allocate`, `deallocate`, `construct`, and `destroy`. This separation enables optimizations like bulk allocation, stack allocation, arena allocation, or placement in shared memory. Custom allocators must satisfy specific requirements including providing the `rebind` template for node-based containers.
+Every STL container accepts an allocator template parameter (defaulting to `std::allocator<T>`). Allocators separate raw memory allocation from object construction, providing methods like `allocate`, `deallocate`, `construct`, and `destroy`. This separation enables optimizations like bulk allocation, stack allocation, arena allocation, or placement in shared memory. Custom allocators must satisfy the `Allocator` named requirements; a nested `rebind` template used to be required for node-based containers, but since C++11 `std::allocator_traits` synthesizes `rebind` automatically for any standard-shaped allocator template `Alloc<T, Args...>`, so an explicit `rebind` member is only needed for non-standard allocator shapes.
 
 **Key takeaway:** Allocators enable memory management customization without changing container logic, crucial for performance optimization.
 
@@ -234,7 +234,9 @@ public:
 **Explanation:**
 Node-based containers like `std::list` store elements in dynamically allocated nodes, not as raw `T` objects. A `list<int, MyAllocator<int>>` needs to allocate memory for node structures containing `int`, not just `int` directly. The `rebind` mechanism allows the container to obtain `MyAllocator<Node>` from `MyAllocator<int>`, ensuring the same allocation strategy is used for internal structures.
 
-**Key takeaway:** Rebind enables allocators to work with node-based containers by allowing type adaptation while preserving allocation policy.
+Note that since C++11, containers do not use `Alloc::rebind` directly -- they go through `std::allocator_traits<Alloc>::rebind_alloc<U>`, which SYNTHESIZES the rebound type automatically (as `Alloc<U, Args...>`) for any standard-shaped allocator template, even if `Alloc` provides no nested `rebind` at all. Explicit `rebind`, as shown above, is still useful to document intent or to override the default synthesis, but it is only strictly *required* for non-standard allocator shapes (e.g. extra non-type template parameters) or legacy pre-C++11 code that bypasses `allocator_traits`. For example, `MyAllocator<int>` from the code above would still rebind correctly to `MyAllocator<Node>` for use with `std::list` even without the nested `rebind` struct.
+
+**Key takeaway:** Rebind enables allocators to work with node-based containers by allowing type adaptation while preserving allocation policy; since C++11, `std::allocator_traits` synthesizes this automatically for standard-shaped allocators, so explicit `rebind` is optional in most modern code.
 
 ---
 

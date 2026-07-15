@@ -334,21 +334,21 @@ std::cout << *it;
 ```
 
 **Answer:**
+This is undefined behavior. `push_back` on a `std::deque` ALWAYS invalidates every iterator into the deque, including `it`—every call, not only when the internal map reallocates. So `*it` dereferences an invalidated iterator. In practice, many implementations (e.g., libstdc++ in a non-debug build) still happen to print the pre-invalidation value, such as:
 ```
 1
 ```
+but that output is not guaranteed by the standard and must not be relied upon—it is UB, and compiling with `-D_GLIBCXX_DEBUG` reliably turns it into an abort ("attempt to dereference a singular iterator") rather than printing anything.
 
 **Explanation:**
 - Deque initially: {1, 2, 3}
 - `it = dq.begin()` points to first element
 - `push_back(4)` adds to back
-- Iterator `it` usually remains valid
-- Prints 1 (still points to first element)
-- Partial iterator stability (unlike vector)
-- May invalidate if internal map reallocates
-- push_front/push_back: only end iterators invalidated
-- Middle insertion: all iterators invalidated
-- **Key Concept:** Deque provides partial iterator stability; push_back preserves existing iterators usually
+- Iterator `it` is invalidated by `push_back`, unconditionally (every call, not just on map reallocation)
+- Dereferencing `it` afterward is undefined behavior; any observed output (e.g., printing 1) is coincidental, implementation-specific behavior, not a guarantee
+- Only references/pointers to existing elements survive push_front/push_back—iterators do not
+- Middle insertion: all iterators invalidated (same as push_front/push_back)
+- **Key Concept:** Deque iterators do not survive push_front/push_back; only references/pointers to existing elements do. Never dereference an iterator after push_front/push_back.
 
 ---
 

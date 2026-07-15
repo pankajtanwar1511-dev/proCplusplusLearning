@@ -150,7 +150,7 @@ void processRange(Iterator first, Iterator last) {
 | Container | `insert()` | `erase()` | `push_back()` | `push_front()` | `pop_back()` | `pop_front()` |
 |-----------|-----------|-----------|---------------|----------------|--------------|---------------|
 | **vector** | At/after | At/after | All if realloc, else end | N/A | End only | N/A |
-| **deque** | All | All | End only | All | End only | All |
+| **deque** | All | All | All | All | End only | Erased only |
 | **list** | None | Erased only | None | None | None | None |
 | **forward_list** | None | Erased only | N/A | None | N/A | None |
 | **set/map** | None | Erased only | N/A | N/A | N/A | N/A |
@@ -397,12 +397,10 @@ public:
         ::operator delete(p);
     }
 
-    // ✅ Allocators from same pool are equal
-    template<typename U>
-    bool operator==(const PoolAllocator<U>&) const { return true; }
+    // ✅ Allocators are equal only if they share the same underlying pool
+    bool operator==(const PoolAllocator& other) const { return pool_ == other.pool_; }
 
-    template<typename U>
-    bool operator!=(const PoolAllocator<U>& other) const {
+    bool operator!=(const PoolAllocator& other) const {
         return !(*this == other);
     }
 };
@@ -825,15 +823,29 @@ When writing generic code, be aware that iterator operations have different comp
 ```cpp
 int sum = 0;
 auto lambda = [&sum](int x) { sum += x; };
-std::for_each(v.begin(), v.end(), lambda);  // ❌ sum may not be updated
+std::for_each(v.begin(), v.end(), lambda);  // ✅ sum IS correctly updated
 ```
 
-STL algorithms may copy the predicate/function object internally, and the return value is the final copy. For stateful lambdas, you must use the returned function object to access the final state:
+STL algorithms may copy the predicate/function object internally, and the return value is the final copy. This matters ONLY when the function object captures its state BY VALUE: each internal copy then carries its own independent copy of that state, so the caller's original object never sees the accumulated result unless it captures `for_each`'s returned copy:
+
+```cpp
+// By-value capture: internal copies each track independent state
+struct Counter { int total = 0; void operator()(int x) { total += x; } };
+Counter c;
+std::for_each(v.begin(), v.end(), c);       // ❌ c.total is UNCHANGED (c was copied internally)
+c = std::for_each(v.begin(), v.end(), c);   // ✅ must capture the returned copy to see the final state
+```
+
+By contrast, when the lambda captures its state BY REFERENCE (as in the `[&sum]` example above), every internal copy of the lambda still refers to the SAME external `sum` variable, so `sum` is correctly updated in place -- there is no need to use `for_each`'s return value at all:
 
 ```cpp
 int sum = 0;
-auto final_lambda = std::for_each(v.begin(), v.end(), [&sum](int x) { sum += x; });
-// Or better: use std::accumulate
+auto lambda = [&sum](int x) { sum += x; };
+std::for_each(v.begin(), v.end(), lambda);
+// sum is already correct here; capturing the return value is unnecessary (though harmless):
+// auto final_lambda = std::for_each(v.begin(), v.end(), lambda);
+
+// Alternative that avoids the question entirely: use std::accumulate
 sum = std::accumulate(v.begin(), v.end(), 0);
 ```
 
@@ -847,7 +859,7 @@ public:
     
     template<typename U>
     struct rebind {
-        using other = MyAllocator<U>;  // ✅ Must support rebind
+        using other = MyAllocator<U>;  // Optional since C++11, but documents intent
     };
     
     T* allocate(std::size_t n);
@@ -855,7 +867,7 @@ public:
 };
 ```
 
-STL containers often need to allocate memory for types other than `T`. For example, `std::list<T, Alloc>` needs to allocate list nodes, not raw `T` objects. The `rebind` mechanism allows the container to obtain an allocator for a different type using the same allocation strategy. Forgetting to provide `rebind` will cause compilation errors with node-based containers.
+STL containers often need to allocate memory for types other than `T`. For example, `std::list<T, Alloc>` needs to allocate list nodes, not raw `T` objects. The `rebind` mechanism allows the container to obtain an allocator for a different type using the same allocation strategy. Historically (pre-C++11), forgetting to provide `rebind` would cause compilation errors with node-based containers, because containers accessed `Alloc::rebind<U>::other` directly. Since C++11, containers instead go through `std::allocator_traits<Alloc>::rebind_alloc<U>`, which SYNTHESIZES the rebound type automatically for any standard-shaped allocator template `Alloc<T, Args...>` -- even if `Alloc` defines no `rebind` at all. Explicit `rebind` is therefore only truly required for non-standard allocator shapes (e.g. extra non-type template parameters) or for code that must remain compatible with pre-C++11-style allocator usage that bypasses `allocator_traits`.
 
 ---
 
@@ -964,11 +976,8 @@ public:
         }
     }
     
-    template<typename U>
-    bool operator==(const PoolAllocator<U>&) const { return true; }
-    
-    template<typename U>
-    bool operator!=(const PoolAllocator<U>& other) const { return !(*this == other); }
+    bool operator==(const PoolAllocator& other) const { return pool == other.pool; }
+    bool operator!=(const PoolAllocator& other) const { return !(*this == other); }
 };
 
 // Usage
@@ -1230,7 +1239,7 @@ This example demonstrates C++14 init-capture (move capture), which allows captur
 | Container | `insert` | `erase` | `push_back` | `push_front` |
 |-----------|----------|---------|-------------|--------------|
 | `vector` | At/after position | At/after position | All if realloc | N/A |
-| `deque` | All | All | End iterator only | All iterators |
+| `deque` | All | All | All iterators | All iterators |
 | `list` | None | Only erased | None | None |
 | `forward_list` | None | Only erased | N/A | None |
 | `set`/`map` | None | Only erased | N/A | N/A |

@@ -124,18 +124,19 @@ When `load_factor() > max_load_factor()` after insertion, the container **rehash
 4. **All iterators invalidated** (except element values remain valid)
 
 ```cpp
-// Rehashing example
+// Rehashing example (verified on libstdc++/GCC: reserve(10) actually
+// allocates 11 buckets, since libstdc++ rounds bucket counts up to a prime)
 std::unordered_set<int> s;
 s.max_load_factor(1.0);  // Default threshold
-s.reserve(10);           // Pre-allocate 10 buckets
+s.reserve(10);           // Pre-allocate buckets (yields bucket_count() == 11)
 
-for (int i = 0; i < 10; ++i) {
-    s.insert(i);  // No rehashing (load factor stays ≤ 1.0)
+for (int i = 0; i < 11; ++i) {
+    s.insert(i);  // No rehashing yet: 11 elements / 11 buckets = 1.0, not > 1.0
 }
 
-s.insert(11);  // ✅ Triggers rehash: 11 elements / 10 buckets = 1.1 > 1.0
-// New bucket array allocated (typically 20-22 buckets)
-// All 11 elements rehashed into new buckets
+s.insert(11);  // ✅ Triggers rehash: 12 elements / 11 buckets = 1.09 > 1.0
+// New bucket array allocated (23 buckets on libstdc++)
+// All 12 elements rehashed into new buckets
 ```
 
 **Memory Overhead Comparison:**
@@ -366,7 +367,7 @@ if (it == m.end()) {
 | **erase(key)** | ❌ Matching elements | ❌ Matching elements | Other iterators valid |
 | **clear()** | ❌ All invalid | ❌ All invalid | Container emptied |
 | **rehash()/reserve()** | ❌ All invalid | ✅ Valid | Bucket structure changed |
-| **swap()** | ❌ All invalid | ✅ Valid | Containers swapped |
+| **swap()** | ✅ Valid (now refer to swapped container) | ✅ Valid | Containers swapped |
 
 **Safe Iteration with Erase:**
 
@@ -643,16 +644,15 @@ Rehashing occurs when the load factor exceeds max_load_factor (default 1.0) duri
 
 ```cpp
 std::unordered_map<int, std::string> m;
-m.reserve(10);  // Pre-allocate buckets
+m.insert({1, "one"});  // Insert an element first
 auto it = m.begin();
-int* ptr = &m.begin()->first;
+const int* ptr = &m.begin()->first;  // key type is const int, not int
 
-m.insert({1, "one"});  // May cause rehash
-// ❌ it is now invalid if rehash occurred
-// ❌ ptr is now dangling if rehash occurred
+m.reserve(100);  // Forces a rehash (bucket array must grow to fit 100 elements)
+// ❌ it is now invalid (rehash occurred)
+// ❌ ptr is now dangling (rehash occurred)
 
-// ✅ Check bucket_count and reserve to avoid rehashing
-m.reserve(100);  // Ensures capacity for 100 elements
+// ✅ Call reserve() BEFORE taking iterators/pointers to avoid this problem
 ```
 
 Unlike ordered containers where iterator invalidation is limited, unordered container rehashing invalidates everything. You can prevent rehashing by calling `reserve(n)` before insertions if you know the final size. The `rehash(n)` function lets you manually trigger rehashing to a specific bucket count.
@@ -875,13 +875,19 @@ void analyze_distribution(const std::string& name) {
     std::cout << "Buckets: " << s.bucket_count() << "\n";
     std::cout << "Load factor: " << s.load_factor() << "\n";
     
-    // Count buckets with different occupancies
-    std::vector<int> histogram(10, 0);
+    // Find the largest bucket first, so the histogram is always big enough
+    // to hold every observed bucket size (a poor hash can pack hundreds of
+    // elements into a single bucket, and a fixed small histogram would
+    // silently drop those buckets instead of showing the collision problem).
+    size_t max_bucket_size = 0;
     for (size_t i = 0; i < s.bucket_count(); ++i) {
-        size_t sz = s.bucket_size(i);
-        if (sz < histogram.size()) {
-            histogram[sz]++;
-        }
+        max_bucket_size = std::max(max_bucket_size, s.bucket_size(i));
+    }
+
+    // Count buckets with different occupancies
+    std::vector<int> histogram(max_bucket_size + 1, 0);
+    for (size_t i = 0; i < s.bucket_count(); ++i) {
+        histogram[s.bucket_size(i)]++;
     }
     
     std::cout << "Bucket size distribution:\n";
@@ -1209,7 +1215,7 @@ This example highlights a critical pitfall: `operator[]` creates a default-const
 | 2 | Compile error | No hash function provided for custom type Point | #custom_hash |
 | 3 | 2 | operator[] creates "test2" with value 0, checking it adds entry | #operator_brackets_pitfall |
 | 4 | Undefined behavior | Erasing during iteration invalidates iterator, then incrementing is UB | #iterator_invalidation |
-| 5 | Likely 32 and ~0.94 | With max_load_factor 2.0 and 30 elements, needs 15+ buckets; implementation may use next power of 2 | #load_factor |
+| 5 | Implementation-defined; on libstdc++: 23 and ~1.30 | With max_load_factor 2.0 and 30 elements, needs 15+ buckets; libstdc++ uses prime bucket counts (other implementations may use powers of 2) | #load_factor |
 | 6 | Undefined behavior | Modifying key in unordered_map corrupts hash table structure | #key_immutability |
 | 7 | 3 | Copy creates independent container; s1.insert doesn't affect s2 | #container_copy |
 | 8 | Typically 0-2 | With good hash, elements distributed evenly; exact number varies | #bucket_interface |
@@ -1223,5 +1229,5 @@ This example highlights a critical pitfall: `operator[]` creates a default-const
 | 16 | 42 | try_emplace doesn't overwrite existing keys; first insertion succeeds, second is no-op | #try_emplace |
 | 17 | Most buckets size 0-2, evenly distributed | Good hash distributes elements uniformly; few empty buckets, few overloaded buckets | #hash_quality |
 | 18 | 0 42 | Move transfers ownership; m becomes empty, m2 contains the unique_ptr | #move_semantics |
-| 19 | No, at least 100 | rehash(n) is minimum bucket count; implementation may choose larger value (typically next power of 2) | #rehash_behavior |
+| 19 | No, at least 100 | rehash(n) is minimum bucket count; implementation may choose larger value (libstdc++: next prime ≥ n, e.g. rehash(100) → 103; other implementations may use next power of 2) | #rehash_behavior |
 | 20 | 10 Exception | at(1) succeeds and prints 10; at(2) throws out_of_range exception for missing key | #at_vs_brackets |

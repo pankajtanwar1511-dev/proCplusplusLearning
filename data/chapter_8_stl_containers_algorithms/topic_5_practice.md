@@ -159,21 +159,20 @@ std::cout << m.bucket_count() << " " << m.load_factor();
 
 **Answer:**
 ```
-(Implementation-dependent, likely: 32 0.9375 or similar)
+(Implementation-dependent; on libstdc++ (GCC): 23 1.30435)
 ```
 
 **Explanation:**
 - `max_load_factor(2.0)` sets threshold for rehashing
 - Load factor = size / bucket_count
 - When load factor > max_load_factor, rehash occurs
-- `reserve(10)` sets initial capacity for ~10 elements
-- With max_load_factor 2.0: 10 buckets can hold ~20 elements before rehash
-- Inserting 30 elements triggers rehash
-- After rehash, bucket_count increases (likely to next power of 2 ≥ 15)
-- Typical: 32 buckets (next power of 2)
-- load_factor = 30 / 32 = 0.9375
-- Exact values implementation-dependent
-- reserve() sets buckets = size / max_load_factor
+- `reserve(10)` with max_load_factor 2.0 sets initial capacity for ~10 elements (on libstdc++ this yields only 5 buckets, since reserve() computes buckets ≈ size / max_load_factor)
+- Inserting 30 elements triggers one or more rehashes
+- After rehash, bucket_count increases to accommodate the load factor threshold
+- On libstdc++ (GCC's standard library): 23 buckets (next prime ≥ 15)
+- load_factor = 30 / 23 ≈ 1.30435
+- Exact values are implementation-defined: libstdc++ uses prime bucket counts, while some other standard library implementations use powers of 2
+- reserve() sets buckets ≈ size / max_load_factor
 - **Key Concept:** Unordered containers rehash when load factor exceeds max; reserve() pre-allocates to avoid rehashing
 
 ---

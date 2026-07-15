@@ -128,7 +128,7 @@ Memory savings: 40% less overhead (12B vs 20B per node)
 | Container | Per-Element Overhead | Container Object Size | Total for 1000 ints (64-bit) |
 |-----------|---------------------|----------------------|------------------------------|
 | **std::vector** | 0 bytes | 24 bytes (3 pointers) | ~4-8KB (depends on capacity) |
-| **std::deque** | ~0.1-1 byte (chunk boundaries) | 24-48 bytes (map + offsets) | ~5-7KB |
+| **std::deque** | ~0.1-1 byte (chunk boundaries) | commonly 80 bytes on libstdc++/GCC (map pointer + offsets + size); varies significantly by implementation (e.g., libc++/MSVC may differ) since deque's layout is not standardized | ~5-7KB |
 | **std::list** | 16 bytes (2 pointers) | 24 bytes (head, tail, size) | ~20KB |
 | **std::forward_list** | 8 bytes (1 pointer) | 8-16 bytes (head only) | ~12KB |
 
@@ -252,9 +252,10 @@ int main() {
 
 | Operation | Deque Invalidation | Forward_List Invalidation | List Invalidation |
 |-----------|-------------------|---------------------------|-------------------|
-| **push_front/back** | ✅ Usually none (unless map realloc) | ❌ None | ❌ None |
+| **push_front/back** | ❌ All iterators invalidated (refs/pointers to existing elements stay valid) | ❌ None | ❌ None |
 | **insert middle** | ✅ All iterators | ❌ None | ❌ None |
-| **erase** | ✅ All iterators | ✅ Only erased element | ✅ Only erased element |
+| **erase (front/back)** | ✅ Only erased element's iterators | ✅ Only erased element | ✅ Only erased element |
+| **erase (middle)** | ✅ All iterators | ✅ Only erased element | ✅ Only erased element |
 | **clear()** | ✅ All | ✅ All | ✅ All |
 
 **The before_begin() Pattern:**
@@ -476,13 +477,13 @@ auto it_begin = dq.begin();
 auto it_mid = dq.begin() + 2;
 auto it_end = dq.end() - 1;
 
-dq.push_back(6);  // ✅ All iterators remain valid
-dq.push_front(0); // ✅ All iterators remain valid (values shift but pointers valid)
+dq.push_back(6);  // ❌ All iterators invalidated (references/pointers to existing elements remain valid)
+dq.push_front(0); // ❌ All iterators invalidated (references/pointers to existing elements remain valid)
 
 dq.insert(dq.begin() + 2, 99);  // ❌ May invalidate all iterators
 ```
 
-Push_front and push_back generally preserve iterator validity unless they cause the central map to reallocate. Middle insertions and erasures invalidate all iterators because elements may shift between chunks. This makes deque less predictable than list for iterator stability but better than vector which invalidates on any reallocation.
+Push_front and push_back ALWAYS invalidate every iterator into the deque, on every call—not just when the central map reallocates. However, references and pointers to existing elements remain valid across push_front/push_back. Middle insertions and erasures invalidate all iterators (and references/pointers) because elements may shift between chunks. This makes deque less predictable than list for iterator stability but better than vector which invalidates on any reallocation.
 
 #### Edge Case 2: Deque Provides Random Access But Not Contiguous Memory
 
@@ -937,7 +938,7 @@ Forward_list's splice_after works like list's splice but follows the after patte
 
 | Container | push_front/back | insert middle | erase | Notes |
 |-----------|----------------|---------------|-------|-------|
-| deque | Usually valid | All invalid | All invalid | Unless map reallocates |
+| deque | All invalid (refs/pointers to existing elements stay valid) | All invalid | Only erased (front/back) / All invalid (middle) | push_front/back ALWAYS invalidate iterators, every call |
 | forward_list | All valid | All valid | Only erased | Like list, excellent stability |
 
 #### Memory Overhead Comparison (64-bit systems)

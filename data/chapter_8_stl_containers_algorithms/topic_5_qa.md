@@ -61,11 +61,11 @@ Rehashing invalidates all iterators, pointers, and references to elements. The e
 **Code example:**
 ```cpp
 std::unordered_map<int, int> m;
-m.reserve(5);
+m.insert({1, 10});  // Insert an element first
 auto it = m.begin();
-int* ptr = &m.begin()->first;
+const int* ptr = &m.begin()->first;  // key type is const int, not int
 
-m.insert({1, 10});  // May trigger rehash
+m.reserve(100);  // Forces a rehash (bucket array must grow to fit 100 elements)
 // ❌ it is now invalid
 // ❌ ptr is dangling
 // ✅ Elements still exist but iterators don't point to them
@@ -206,7 +206,7 @@ std::unordered_map<std::string, int> m;
 m["abc"] = 1;
 
 for (auto& [k, v] : m) {
-    k[0] = 'x';  // ❌ UNDEFINED BEHAVIOR - modifies key
+    k[0] = 'x';  // ❌ COMPILE ERROR (k is const, assignment of read-only location)
     // Hash table now corrupted: key content changed but bucket unchanged
 }
 

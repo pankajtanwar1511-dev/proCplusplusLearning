@@ -298,7 +298,7 @@ The choice depends on requirements: use `std::map` when sorted order matters, ra
 **Concepts:** #map #equal_range #lower_bound #upper_bound #range_query
 
 **Answer:**  
-`equal_range(k)` returns a pair of iterators representing the range of elements with key equivalent to k (essentially `[lower_bound(k), upper_bound(k)]`).
+`equal_range(k)` returns a pair of iterators representing the range of elements with key equivalent to k (essentially `[lower_bound(k), upper_bound(k))`).
 
 **Code example:**
 ```cpp

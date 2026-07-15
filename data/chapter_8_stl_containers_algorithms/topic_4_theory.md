@@ -56,7 +56,7 @@ struct RBTreeNode {
     RBTreeNode* left;        // Pointer to left child
     RBTreeNode* right;       // Pointer to right child
     bool color;              // Red (false) or Black (true)
-    // Total overhead: ~32 bytes on 64-bit (3 pointers + data + color)
+    // Total overhead: ~32 bytes on 64-bit (3 pointers + color + padding, excluding key/value data)
 };
 
 // Set node: sizeof(Key) + 32 bytes
@@ -518,8 +518,12 @@ When accessing a non-existent key via `operator[]`, `std::map` default-construct
 std::map<std::string, std::string> m;
 std::cout << m["nonexistent"].size();  // Creates empty string, prints 0
 
-std::map<int, std::unique_ptr<int>> m2;
-// m2[5];  // ❌ Compile error: unique_ptr not default-constructible
+struct NoDefault {
+    int x;
+    NoDefault(int v) : x(v) {}
+};
+std::map<int, NoDefault> m2;
+// m2[5];  // ❌ Compile error: no matching function for call to 'NoDefault::NoDefault()'
 ```
 
 For types that aren't default-constructible, you must use `insert()` or `emplace()` instead of `operator[]`. For types with expensive default construction, consider using `find()` or `at()` when you only need read access without modification.

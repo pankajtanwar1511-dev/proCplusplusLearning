@@ -93,7 +93,7 @@ int main() {
 | **Access last element** | ✅ O(1) via tail | ❌ O(n) | ✅ O(1) |
 | **Insert after position** | ✅ O(1) | ✅ O(1) | ❌ O(n) |
 | **Insert before position** | ✅ O(1) via prev | ❌ O(n) (need previous) | ❌ O(n) |
-| **Reverse operation** | ✅ O(n) (swap pointers) | ❌ Not available | ✅ O(n) (swap elements) |
+| **Reverse operation** | ✅ O(n) (swap pointers) | ✅ O(n) (swap pointers, via reverse()) | ✅ O(n) (swap elements) |
 | **Memory overhead** | 16 bytes/element | 8 bytes/element | 0 bytes/element |
 
 **Key Architectural Differences - List vs Vector:**
@@ -202,7 +202,7 @@ for (auto it = lst.begin(); it != lst.end(); ) {
 | `dest.splice(pos, src, it)` | O(1) | Move single element from src at it to dest at pos |
 | `dest.splice(pos, src, first, last)` | O(n) | Move range [first, last) from src to dest at pos |
 
-**\*Note:** C++11 changed splice(entire list) from O(1) to O(n) to maintain O(1) size() guarantee. Some implementations optimize this if source is rvalue.
+**\*Note:** C++11 changed splice(range: first,last) from O(1) to O(n) [proportional to distance(first,last)] to maintain the O(1) size() guarantee; splicing an entire list remains O(1).
 
 **Code Example - Splice Power:**
 
@@ -858,7 +858,7 @@ List's sort accepts custom comparators via function objects or lambdas. The sort
 | Single insertion | Strong | Allocation failure leaves list unchanged |
 | Range insertion | Basic | May be partially filled on exception |
 | Splice | Noexcept | Only pointer manipulation |
-| Sort | Strong | Exception during comparison aborts safely |
+| Sort | Basic | Exception during comparison leaves element order unspecified (list itself remains valid, no elements lost) |
 | Clear/Destructor | Noexcept | Destroys elements even if dtors throw |
 | Move operations | Noexcept | Pointer swapping only |
 | Remove operations | Basic | List valid but partially processed |
