@@ -90,7 +90,7 @@ int main() {
 | **enable_if with false condition** | `std::enable_if<false>::type` | `type` member doesn't exist when condition is false |
 | **Invalid expression** | `decltype(std::declval<T>().foo())` when no `foo()` | Expression `T::foo()` is ill-formed |
 | **Array of references** | `T&[]` | Cannot create arrays of references |
-| **Function returning array** | `int[5] func()` | Cannot return arrays by value |
+| **Function returning array** | `int func()[5]` (invalid syntax) | Cannot return arrays by value; requires a type alias, e.g. `using Arr5 = int[5]; Arr5 func();` |
 
 **Benefits of SFINAE:**
 
@@ -420,7 +420,9 @@ public:
     int computeImpl() { return 42; }  // ✅ Can be inlined
 };
 
-// Benchmark: CRTP is 10-30% faster in tight loops due to inlining + no vtable
+// CRTP can be measurably faster than virtual dispatch in tight loops by
+// avoiding vtable indirection and enabling inlining, though the exact
+// speedup is highly workload- and compiler-dependent (no fixed percentage).
 ```
 
 **CRTP Common Patterns:**
@@ -588,7 +590,7 @@ SFINAE only applies to errors occurring directly during template parameter subst
 
 ```cpp
 template<typename T>
-typename std::enable_if<sizeof(T) > 4>::type  // ✅ SFINAE applies here
+typename std::enable_if<(sizeof(T) > 4)>::type  // ✅ SFINAE applies here
 func(T val) {
     typename T::nonexistent_type x;  // ❌ Hard error if instantiated, not SFINAE
 }
@@ -766,12 +768,14 @@ The `enable_if` in the return type removes non-matching overloads via SFINAE. Wh
 #include <type_traits>
 #include <iostream>
 
-template<typename T, typename = typename std::enable_if<std::is_pointer<T>::value>::type>
+template<typename T,
+         typename std::enable_if<std::is_pointer<T>::value, int>::type = 0>
 void handlePointer(T ptr) {
     std::cout << "Pointer type\n";  // ✅ Only enabled for pointer types
 }
 
-template<typename T, typename = typename std::enable_if<!std::is_pointer<T>::value>::type>
+template<typename T,
+         typename std::enable_if<!std::is_pointer<T>::value, long>::type = 0>
 void handlePointer(T val) {
     std::cout << "Non-pointer type\n";  // ✅ Only enabled for non-pointer types
 }
@@ -783,7 +787,7 @@ int main() {
 }
 ```
 
-Using `enable_if` in a defaulted template parameter keeps the function signature clean. The unnamed template parameter (using `typename =`) serves only for SFINAE purposes without cluttering the function interface.
+Using `enable_if` in a defaulted template parameter keeps the function signature clean. The extra, unnamed template parameter serves only for SFINAE purposes without cluttering the function interface. Note that the two overloads must use different default types (`int` vs `long`) for the `enable_if` parameter — if both used the identical unnamed `typename = typename std::enable_if<...>::type` form, the two templates would have the same signature and the second definition would be rejected as a redefinition rather than treated as a distinct overload.
 
 #### Example 3: Expression SFINAE - Detecting Member Functions
 
@@ -1606,7 +1610,7 @@ class SensorBase {
 };
 ```
 
-Benchmarks in real autonomous vehicle systems show CRTP reducing sensor processing latency by 15-30% compared to virtual functions—critical when processing 2 million LiDAR points per second at 10Hz.
+CRTP can measurably reduce sensor processing latency compared to virtual functions by avoiding vtable indirection—an advantage that matters when processing high-throughput sensor streams (e.g., LiDAR point clouds) under real-time constraints, though the exact speedup is highly workload- and compiler-dependent rather than a fixed percentage.
 
 **Safety-Critical Considerations:**
 - **Compile-time verification**: SFINAE detects missing methods at compile time, not during driving

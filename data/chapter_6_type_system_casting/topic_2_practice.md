@@ -326,16 +326,20 @@ Hello
 ```cpp
 #include <iostream>
 
-struct NonPoly {
+struct NonPolyBase {
     int value = 42;
 };
 
+struct NonPolyDerived : public NonPolyBase {
+    int extra = 1;
+};
+
 int main() {
-    NonPoly np;
-    NonPoly* p1 = &np;
-    // NonPoly* p2 = dynamic_cast<NonPoly*>(p1);  // Will this compile?
+    NonPolyBase base;
+    NonPolyBase* basePtr = &base;
+    // NonPolyDerived* d = dynamic_cast<NonPolyDerived*>(basePtr);  // Will this compile?
     
-    std::cout << p1->value << "\n";
+    std::cout << basePtr->value << "\n";
 }
 ```
 
@@ -346,14 +350,14 @@ Prints: 42
 ```
 
 **Explanation:**
-- NonPoly has no virtual functions (non-polymorphic)
-- dynamic_cast requires polymorphic type (at least one virtual function)
+- NonPolyBase has no virtual functions (non-polymorphic)
+- dynamic_cast requires the source's static type to be polymorphic when performing a genuine downcast (at least one virtual function)
 - Needs vtable for RTTI (Run-Time Type Information)
-- `dynamic_cast<NonPoly*>(p1)` fails to compile
-- Compiler error: dynamic_cast requires polymorphic class
-- static_cast would work (compile-time, no RTTI needed)
-- Add virtual destructor to enable dynamic_cast
-- **Key Concept:** dynamic_cast requires polymorphic types with vtable; add virtual function to enable RTTI
+- `dynamic_cast<NonPolyDerived*>(basePtr)` fails to compile
+- Compiler error: "source type is not polymorphic"
+- static_cast would work (compile-time, no RTTI needed) but is unsafe if basePtr doesn't actually point to a NonPolyDerived
+- Add virtual destructor to NonPolyBase to enable dynamic_cast
+- **Key Concept:** dynamic_cast requires a polymorphic source type with vtable; add virtual function to enable RTTI
 
 ---
 
@@ -478,7 +482,8 @@ int main() {
 
 **Answer:**
 ```
-Undefined behavior (implementation-defined)
+Undefined behavior
+(commonly prints -2147483648 on many compilers, e.g. g++)
 ```
 
 **Explanation:**
@@ -487,11 +492,11 @@ Undefined behavior (implementation-defined)
 - 1e100 vastly exceeds maximum int value
 - `static_cast<int>(large)` attempts narrowing conversion
 - Source value not representable in target type
-- Result is implementation-defined (compiler-dependent)
-- May be INT_MAX, INT_MIN, garbage, or trap
+- Result is undefined behavior (not implementation-defined -- the standard gives no guarantee at all)
+- May print INT_MIN (commonly seen in practice, e.g. -2147483648), INT_MAX, garbage, or trap depending on compiler/hardware
 - static_cast doesn't prevent overflow
 - Check range before casting or use saturating conversion
-- **Key Concept:** static_cast doesn't prevent overflow; out-of-range conversions have implementation-defined behavior
+- **Key Concept:** static_cast doesn't prevent overflow; out-of-range floating-to-integral conversions are undefined behavior
 
 ---
 

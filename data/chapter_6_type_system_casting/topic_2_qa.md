@@ -110,6 +110,8 @@ struct NonPoly {
     int x;
 };
 
+struct NonPolyDerived : NonPoly { };
+
 // ✅ Polymorphic: has virtual function
 struct PolyBase {
     virtual ~PolyBase() { }
@@ -118,7 +120,7 @@ struct PolyBase {
 struct PolyDerived : PolyBase { };
 
 NonPoly* np = new NonPoly();
-// auto* p1 = dynamic_cast<NonPoly*>(np);  // Compile error
+// auto* p1 = dynamic_cast<NonPolyDerived*>(np);  // Compile error: source type is not polymorphic
 
 PolyBase* pb = new PolyDerived();
 auto* pd = dynamic_cast<PolyDerived*>(pb);  // ✅ OK
@@ -604,9 +606,9 @@ int* ip1 = static_cast<int*>(vp1);  // Safe back to original type
 void* vp2 = reinterpret_cast<void*>(&x);
 int* ip2 = reinterpret_cast<int*>(vp2);  // Works
 
-// ❌ Danger with wrong type (both are UB)
-double* dp1 = static_cast<double*>(vp1);  // Compiles but UB
-double* dp2 = reinterpret_cast<double*>(vp2);  // Compiles but UB
+// ❌ Danger with wrong type
+double* dp1 = static_cast<double*>(vp1);  // Compiles; dereferencing dp1 as a double would be UB (the pointee is actually an int)
+double* dp2 = reinterpret_cast<double*>(vp2);  // Compiles; dereferencing dp2 as a double would be UB (the pointee is actually an int)
 ```
 
 **Explanation:**

@@ -345,20 +345,23 @@ void helper(int x) { std::cout << "int: " << x << "\n"; }
 
 template<typename T>
 void process(T x) {
-    helper(x);  // ✅ Looked up at instantiation
+    helper(x);  // ✅ Looked up at process's point of definition (helper(int) is visible here)
     unknown();  // ❌ Error at definition (non-dependent name)
 }
 
-void helper(double x) { std::cout << "double: " << x << "\n"; }
+void helper(double x) { std::cout << "double: " << x << "\n"; }  // Declared too late to be found
 
 int main() {
-    process(42);    // ✅ Finds helper(int)
-    process(3.14);  // ✅ Finds helper(double)
+    process(42);    // ✅ Finds helper(int) -> prints "int: 42"
+    process(3.14);  // ⚠️ Also finds helper(int) -> prints "int: 3" (3.14 truncated to 3)!
+                     //    helper(double) is NOT found: it's declared after process's
+                     //    definition, and x has a built-in type (double), so ADL never
+                     //    applies (ADL only kicks in for class/enum-typed arguments).
 }
 ```
 
 **Explanation:**
-Non-dependent names (like `unknown()`) are looked up at definition time and must be visible then. Dependent names (like `helper(x)` where `x` has template type) are looked up at instantiation time using both normal lookup and Argument-Dependent Lookup (ADL). This allows templates to work with types defined after the template.
+Non-dependent names (like `unknown()`) are looked up at definition time and must be visible then. Dependent names (like `helper(x)` where `x` has template type) are looked up using ordinary unqualified lookup restricted to declarations visible at the template's **point of definition**, plus (only when an argument has class/enum type) Argument-Dependent Lookup (ADL) at instantiation. Since `x` here is a built-in type (`int`/`double`), ADL never applies - only `helper(int)`, which is visible before `process` is defined, gets found. `process(3.14)` therefore silently calls `helper(int)` with `3.14` truncated to `3`, NOT `helper(double)`, even though `helper(double)` exists in the translation unit - it was simply declared too late.
 
 **Key takeaway:** Templates check non-dependent code at definition, dependent code at instantiation.
 

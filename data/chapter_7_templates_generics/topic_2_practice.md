@@ -585,7 +585,7 @@ Extra
 #### Q16
 ```cpp
 template<typename T>
-typename std::enable_if<sizeof(T) > 4, void>::type
+typename std::enable_if<(sizeof(T) > 4), void>::type
 func(T) { std::cout << "large type\n"; }
 
 int main() {

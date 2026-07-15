@@ -97,6 +97,8 @@ int main() {
 **Two-Phase Name Lookup:**
 
 ```cpp
+void helper(int x);  // ✅ Forward declaration - must be visible at process's point of definition
+
 // ✅ Phase 1: Definition-time check (non-dependent names)
 template<typename T>
 void process(T x) {
@@ -104,11 +106,13 @@ void process(T x) {
     helper(x);          // ✅ Deferred - dependent name (depends on T)
 }
 
-// ✅ Phase 2: Instantiation-time check (dependent names via ADL)
+// ✅ Phase 2: Instantiation-time check (dependent names)
 void helper(int x) { std::cout << "int: " << x << "\n"; }
 
 int main() {
-    process(42);  // ✅ Finds helper(int) via ADL at instantiation time
+    process(42);  // ✅ Finds helper(int) via ordinary unqualified lookup at the
+                  //    point of definition - NOT ADL, since ADL never applies
+                  //    to built-in-typed arguments like int
 }
 ```
 
@@ -238,13 +242,24 @@ struct Pair<double, int> {
     static void show() { std::cout << "Full specialization (double, int)\n"; }
 };
 
+// ✅ Full specialization: resolves ambiguity between Pair<T,T> and Pair<T,int>
+// (without this, Pair<int, int> would be ambiguous - see below)
+template<>
+struct Pair<int, int> {
+    static void show() { std::cout << "Full specialization (int, int)\n"; }
+};
+
 int main() {
     Pair<float, char>::show();   // Generic pair
-    Pair<int, int>::show();      // Homogeneous pair (most specific match)
+    Pair<int, int>::show();      // Full specialization (disambiguates T,T vs T,int)
     Pair<float, int>::show();    // Second is int
     Pair<double, int>::show();   // Full specialization (highest priority)
 }
 ```
+
+**Why the `Pair<int, int>` Full Specialization Is Needed:**
+
+Without it, `Pair<int, int>` would be **ambiguous**: both `Pair<T, T>` (with `T = int`) and `Pair<T, int>` (with `T = int`) match equally well, and neither partial specialization is more specialized than the other in both directions. This is the exact same ambiguity pattern shown below in "Ambiguous Partial Specialization" - adding a full specialization for the conflicting case is the standard fix.
 
 **Specialization Selection Priority (Most Specific Wins):**
 
@@ -612,19 +627,22 @@ Understanding these deduction rules is critical for writing correct generic code
 Templates undergo two-phase compilation: first at definition (checking template syntax), second at instantiation (checking type-dependent expressions). This affects when errors are caught.
 
 ```cpp
+void helper(int x);  // ✅ Forward declaration - must be visible at process's point of definition
+
 template<typename T>
 void process(T x) {
-    helper(x);  // ✅ Lookup happens at instantiation
+    helper(x);  // ✅ Ordinary unqualified lookup, resolved using declarations
+                //    visible at process's point of definition
 }
 
 void helper(int x) { std::cout << x << "\n"; }
 
 int main() {
-    process(42);  // ✅ Finds helper through ADL at instantiation
+    process(42);  // ✅ Finds helper(int)
 }
 ```
 
-If `helper` is only defined after the template, the code still compiles because lookup is deferred. However, this can lead to confusing error messages when instantiation fails.
+Because `x` is a built-in type (`int`), argument-dependent lookup (ADL) never applies - ADL only considers arguments of class/enum type with associated namespaces. So `helper` must be visible via ordinary unqualified lookup at the template's **point of definition**. If `helper` is only declared *after* the template, this is a hard compile error ("`helper` was not declared in this scope, and no declarations were found by argument-dependent lookup") - lookup for a dependent call with only built-in-typed arguments is not deferred all the way to instantiation the way it is for class-type arguments.
 
 #### Edge Case 5: Default Arguments Must Be Rightmost
 
@@ -755,9 +773,16 @@ struct Pair<T, int> {
     static void print() { std::cout << "Second is int\n"; }  // ✅ Second parameter is int
 };
 
+// ✅ Full specialization: without this, Pair<int, int> is ambiguous
+// (Pair<T, T> and Pair<T, int> both match equally with T = int)
+template<>
+struct Pair<int, int> {
+    static void print() { std::cout << "Same type Pair (int, int - resolved)\n"; }
+};
+
 int main() {
     Pair<double, char>::print();  // Generic Pair
-    Pair<int, int>::print();      // Same type Pair
+    Pair<int, int>::print();      // Same type Pair (int, int - resolved)
     Pair<float, int>::print();    // Second is int
 }
 ```
@@ -1107,6 +1132,15 @@ struct SensorPair<T, double> {
     }
 };
 
+// Full specialization: without this, SensorPair<double, double> is ambiguous
+// (SensorPair<T, T> and SensorPair<T, double> both match equally with T = double)
+template<>
+struct SensorPair<double, double> {
+    static void printTypes() {
+        std::cout << "Homogeneous sensor pair (double, double - resolved)\n";
+    }
+};
+
 // ============================================================================
 // Main: Demonstrating All Template Concepts in AV Context
 // ============================================================================
@@ -1193,7 +1227,7 @@ int main() {
     // 9. Partial specialization with multiple parameters
     std::cout << "=== Partial Specialization (Multiple Parameters) ===\n";
     SensorPair<int, float>::printTypes();     // Generic
-    SensorPair<double, double>::printTypes(); // Both same
+    SensorPair<double, double>::printTypes(); // Full spec resolves T,T vs T,double ambiguity
     SensorPair<int, double>::printTypes();    // Second is double
     std::cout << "\n";
 
@@ -1249,11 +1283,11 @@ Value (via pointer): 22.3, Timestamp: 1000100
 Category: Indirect/Reference sensor
 
 === Weighted Sensor Fusion (Non-Type Parameters) ===
-Fused speed value: 15.25 m/s
+Fused speed value: 15.35 m/s
 Number of sensors: 3
 
 === Template Metaprogramming (Compile-Time Computation) ===
-ADC calibration scale (12-bit -> 100 units): 0.0244200
+ADC calibration scale (12-bit -> 100 units): 0.02442
 2^10 (computed at compile time): 1024
 
 === Default Template Arguments ===
@@ -1262,7 +1296,7 @@ Average: 12.75
 
 === Partial Specialization (Multiple Parameters) ===
 Generic sensor pair
-Homogeneous sensor pair (same type)
+Homogeneous sensor pair (double, double - resolved)
 Sensor pair (first: varied, second: double)
 
 === Explicit Template Arguments (Resolving Ambiguity) ===

@@ -283,13 +283,17 @@ What are you trying to do?
 **dynamic_cast Requirements in Detail**
 
 ```cpp
-// ❌ Won't compile: No virtual functions (not polymorphic)
-struct NonPolymorphic {
+// ❌ Won't compile: source type is not polymorphic (no virtual functions)
+struct NonPolyBase {
     int x;
 };
 
-NonPolymorphic* np = new NonPolymorphic();
-// auto* x = dynamic_cast<NonPolymorphic*>(np);  // Compile error
+struct NonPolyDerived : public NonPolyBase {
+    int y;
+};
+
+NonPolyBase* np = new NonPolyBase();
+// auto* x = dynamic_cast<NonPolyDerived*>(np);  // Compile error: source type is not polymorphic
 
 // ✅ Compiles: Has virtual function (polymorphic)
 struct Polymorphic {
@@ -297,8 +301,12 @@ struct Polymorphic {
     int x;
 };
 
-Polymorphic* pp = new Polymorphic();
-auto* y = dynamic_cast<Polymorphic*>(pp);  // OK
+struct PolyDerived : public Polymorphic {
+    int y;
+};
+
+Polymorphic* pp = new PolyDerived();
+auto* y = dynamic_cast<PolyDerived*>(pp);  // OK
 
 // Why: virtual function creates vtable with RTTI
 // Without vtable, there's no type information at runtime
@@ -449,12 +457,14 @@ This demonstrates why static_cast downcasts are dangerous without additional kno
 
 #### Edge Case 2: dynamic_cast Requires Polymorphic Types
 
-dynamic_cast only works with polymorphic types (classes with at least one virtual function). Without virtual functions, it won't compile.
+dynamic_cast only works with polymorphic types (classes with at least one virtual function) when performing a genuine downcast or cross-cast. Without virtual functions in the source's static type, such a cast won't compile.
 
 ```cpp
 struct NonPolymorphic {
     int value;
 };
+
+struct NonPolyDerived : NonPolymorphic { };
 
 struct PolymorphicBase {
     virtual ~PolymorphicBase() { }
@@ -465,14 +475,14 @@ struct DerivedPoly : PolymorphicBase { };
 
 int main() {
     NonPolymorphic* np = new NonPolymorphic();
-    // auto* x = dynamic_cast<NonPolymorphic*>(np);  // ❌ Compile error
+    // auto* x = dynamic_cast<NonPolyDerived*>(np);  // ❌ Compile error: source type is not polymorphic
     
     PolymorphicBase* pb = new DerivedPoly();
     auto* dp = dynamic_cast<DerivedPoly*>(pb);        // ✅ OK - polymorphic
 }
 ```
 
-The requirement for virtual functions ensures RTTI is available for runtime type checking. Without it, dynamic_cast cannot verify types.
+The requirement for virtual functions ensures RTTI is available for runtime type checking during a downcast. Without it, dynamic_cast cannot verify types.
 
 #### Edge Case 3: dynamic_cast with References Throws Exception
 
@@ -1416,14 +1426,14 @@ Successfully called legacy API with const data
 
 === Safe Bit Pattern Inspection ===
 Float value: 9.81
-Bit pattern: 0x411d70a4
+Bit pattern: 0x411cf5c3
 Sign: 0
 Exponent: 130 (biased)
-Mantissa: 0x1d70a4
+Mantissa: 0x1cf5c3
 
 === Numeric Conversions (static_cast) ===
 Sensor temperature: 45.7°C → 45°C (truncated)
-ADC reading: 2048 → 2.500305V
+ADC reading: 2048 → 2.50061V
 
 === Summary: When to Use Each Cast ===
 1. static_cast:       Numeric conversions, safe upcasts, known downcasts
@@ -1525,7 +1535,7 @@ This example comprehensively demonstrates how all four C++ cast operators are us
 | `reinterpret_cast` + access through pointer | Violates strict aliasing → UB | Use `memcpy` for type punning |
 | `reinterpret_cast` in inheritance hierarchy | Wrong pointer offset → UB | Use `static_cast` or `dynamic_cast` |
 | Call through wrong function pointer type | UB due to ABI mismatch | Cast back to original type before calling |
-| `static_cast` numeric overflow | Implementation-defined / UB | Check range before casting |
+| `static_cast` numeric overflow (out-of-range float→int) | Undefined behavior | Check range before casting |
 
 #### C++ Cast vs C-Style Cast Behavior
 

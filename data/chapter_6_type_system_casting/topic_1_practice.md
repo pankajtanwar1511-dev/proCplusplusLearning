@@ -327,19 +327,19 @@ int main() {
 
 **Answer:**
 ```
-Derived(1.5)
+Compilation error -- an implicit conversion sequence permits at most ONE user-defined conversion; here it would require two (Base::operator double() then Derived(double)), which is not allowed
 ```
 
 **Explanation:**
 - `execute(b)` expects Derived, receives Base
 - Base has conversion operator: operator double() returns 1.5
 - Derived has conversion constructor: Derived(double)
-- Conversion chain: Base → double (user-defined) → Derived (user-defined)
-- Standard allows at most one user-defined conversion in chain
-- This appears to use two, but it's actually one per step
-- Base converts to double, then standard overload resolution finds Derived(double)
-- Constructor prints "Derived(1.5)"
-- **Key Concept:** Conversion chains allowed with user-defined conversions; enables flexible type compatibility
+- To convert Base to Derived, the compiler would need: Base → double (user-defined, via operator double()) → Derived (user-defined, via constructor)
+- An implicit conversion sequence allows at most ONE user-defined conversion (plus any number of standard conversions before/after it)
+- Since this path requires TWO user-defined conversions chained together, the compiler rejects it
+- Actual error: `error: could not convert 'b' from 'Base' to 'Derived'`
+- To make this work, an explicit cast is needed at one step, e.g. `execute(Derived(static_cast<double>(b)));` or `execute(static_cast<Derived>(static_cast<double>(b)));`
+- **Key Concept:** Only one user-defined conversion is allowed per implicit conversion sequence; chaining two user-defined conversions requires an explicit cast
 
 ---
 

@@ -528,7 +528,7 @@ C
 #### Q16
 ```cpp
 template<typename T>
-void test(T) { std::cout << "1\n"; }
+void test(const T&) { std::cout << "1\n"; }
 
 template<typename T>
 void test(T&) { std::cout << "2\n"; }
@@ -547,18 +547,18 @@ int main() {
 ```
 
 **Explanation:**
-- Two template overloads: test(T) and test(T&)
+- Two template overloads: test(const T&) and test(T&)
 - `test(x)` where x is lvalue int
 - T deduced as int for both overloads
-- test(T&) is more specific (reference binding)
-- Lvalue prefers reference overload, calls test(T&)
+- test(T&) is more specific (exact match, no const added) than test(const T&) (requires a qualification conversion)
+- Partial ordering / overload resolution prefers the more specialized, non-const reference overload, calls test(T&)
 - Prints "2"
 - `test(42)` where 42 is rvalue
 - test(T&) cannot bind to rvalue (non-const lvalue ref)
-- Only test(T) viable, T deduced as int
+- Only test(const T&) viable (const references can bind to rvalues), T deduced as int
 - Prints "1"
-- Template partial ordering: reference version more specialized
-- **Key Concept:** Lvalues prefer reference templates; rvalues bind to value parameter templates
+- Template partial ordering: non-const reference version more specialized for lvalues
+- **Key Concept:** Lvalues prefer the non-const reference template; rvalues can only bind to the const reference template
 
 ---
 

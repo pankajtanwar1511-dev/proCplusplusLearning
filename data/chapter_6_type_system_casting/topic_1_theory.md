@@ -391,7 +391,7 @@ decltype(auto) getReference() {
 }
 
 int main() {
-    getValue() = 200;       // ❌ Error: cannot assign to rvalue
+    // getValue() = 200;       // ❌ Error: cannot assign to rvalue (would not compile if uncommented)
     getReference() = 300;   // ✅ OK: returns reference to globalValue
 
     std::cout << globalValue << "\n";  // 300
@@ -552,14 +552,14 @@ int main() {
     Wrapper w2(10);           // ✅ Direct-initialization works
     Wrapper w3 = Wrapper(10); // ✅ Also works
     Wrapper w4{10};           // ✅ Direct-list-initialization
-    Wrapper w5 = {10};        // ✅ In C++11+, this is allowed!
+    // Wrapper w5 = {10};     // ❌ Error - copy-list-initialization also blocked by explicit
     
     // consume(20);           // ❌ Error - explicit prevents implicit conversion
     consume(Wrapper(20));     // ✅ Explicit construction
 }
 ```
 
-Despite being marked explicit, the brace-initialization syntax `= {10}` is allowed because the language treats it as direct-initialization in certain contexts. This is a common source of confusion.
+The `= {10}` syntax is copy-list-initialization, not direct-list-initialization -- despite the braces, it is still a form of copy-initialization, so an `explicit` constructor blocks it just like plain `Wrapper w1 = 10;` does. Only the brace-less parenthesized form `Wrapper w2(10);` and the brace form *without* `=`, `Wrapper w4{10};`, are direct-initialization and can use the explicit constructor. This is a common source of confusion.
 
 #### Edge Case 6: Reference Collapsing with auto&&
 
@@ -675,7 +675,7 @@ public:
     int getMeters() const { return meters; }
 };
 
-void safeTra vel(SafeDistance d) {
+void safeTravel(SafeDistance d) {
     std::cout << "Traveling safely: " << d.getMeters() << "m\n";
 }
 
@@ -758,7 +758,7 @@ decltype(auto) getReference() {
 }
 
 int main() {
-    getValue() = 100;         // ❌ Error - returns by value
+    // getValue() = 100;         // ❌ Error - returns by value (would not compile if uncommented)
     getReference() = 200;     // ✅ Modifies globalValue
     
     std::cout << globalValue << "\n";  // Prints: 200
@@ -931,9 +931,10 @@ int main() {
     auto copy1 = sensors.getReadings();  // Type: std::vector<double>
     std::cout << "auto copy1: " << sizeof(copy1) << " bytes (vector copy)\n";
 
-    // auto& preserves reference
+    // auto& preserves reference (no copy is made, but sizeof(ref1) reports
+    // the size of the referenced std::vector<double>, NOT a pointer's size)
     auto& ref1 = sensors.getReadings();  // Type: const std::vector<double>&
-    std::cout << "auto& ref1: " << sizeof(ref1) << " bytes (reference)\n";
+    std::cout << "auto& ref1: " << sizeof(ref1) << " bytes (size of referenced vector, no copy made)\n";
 
     // const auto& - read-only reference
     const auto& ref2 = sensors.getReadings();  // Type: const std::vector<double>&
@@ -977,7 +978,7 @@ int main() {
     std::cout << "x: " << x << ", a: " << a << ", b: " << b << "\n\n";
 
     std::cout << "=== decltype(auto) for Return Types ===\n";
-    getValue() = 500;     // ❌ Error: returns by value
+    // getValue() = 500;     // ❌ Error: returns by value (would not compile if uncommented)
     getReference() = 600;  // ✅ OK: returns reference
     std::cout << "global_reading: " << global_reading << "\n\n";
 
@@ -1019,8 +1020,8 @@ int main() {
 **Output:**
 ```
 === Implicit and Explicit Conversions ===
-Raw 2048 → 2.5V (implicit)
-Explicit cast: 2.5V
+Raw 2048 → 2.50061V (implicit)
+Explicit cast: 2.50061V
 
 === Conversion Constructor ===
 Converting 2.5V to 4m
@@ -1028,12 +1029,12 @@ Converting 3V to 5m
 Distance: 5m
 
 === Chained Conversions ===
-Converting 3.75V to 6.5m
-Chained: 6.5m
+Converting 3.75092V to 6.50183m
+Chained: 6.50183m
 
 === Auto Type Deduction ===
 auto copy1: 24 bytes (vector copy)
-auto& ref1: 8 bytes (reference)
+auto& ref1: 24 bytes (size of referenced vector, no copy made)
 const auto& ref2: reference to const
 
 === Auto with Arrays ===
@@ -1163,5 +1164,5 @@ This example demonstrates how understanding type conversions and deduction is cr
 | Copy-initialization: `T x = value;` | ❌ Error | ✅ Allowed |
 | Direct-initialization: `T x(value);` | ✅ Allowed | ✅ Allowed |
 | Direct-list-init: `T x{value};` | ✅ Allowed | ✅ Allowed |
-| Copy-list-init: `T x = {value};` | ✅ Allowed (C++11+) | ✅ Allowed |
+| Copy-list-init: `T x = {value};` | ❌ Error (explicit ctors blocked) | ✅ Allowed |
 | Function arg: `func(value);` | ❌ Error | ✅ Allowed |

@@ -57,24 +57,27 @@ SFINAE only applies to errors in the immediate context of template substitution 
 **Code example:**
 ```cpp
 template<typename T>
-typename std::enable_if<sizeof(T) > 4>::type  // ✅ SFINAE applies here
+typename std::enable_if<(sizeof(T) > 4)>::type  // ✅ SFINAE applies here
 func(T val) {
     typename T::nonexistent;  // ❌ Hard error if instantiated, not SFINAE
 }
 
 template<typename T>
 void helper() {
-    typename T::invalid;  // ❌ Hard error
+    typename T::invalid;  // ❌ Hard error if this body is ever instantiated
 }
 
 template<typename T>
-auto func2(T val) -> decltype(helper<T>()) { }  // ✅ SFINAE if helper fails
+auto func2(T val) -> decltype(helper<T>()) { }  // ✅ Works here only because helper's
+                                                 // return type is explicitly `void`,
+                                                 // so decltype never needs to
+                                                 // instantiate helper's body
 ```
 
 **Explanation:**
-The immediate context includes the function signature, template parameter list, and return type declaration. Errors outside this context (like in the function body) aren't subject to SFINAE. However, using `decltype` in the return type can make errors in other templates part of the immediate context, enabling SFINAE for them. This subtlety affects what can and cannot be detected via SFINAE.
+The immediate context includes the function signature, template parameter list, and return type declaration. Errors outside this context (like in the function body) aren't subject to SFINAE. Using `decltype` in a return type does **not**, by itself, extend SFINAE's reach into a called function's body — that is the single most common SFINAE misconception. `decltype(helper<T>())` only needs to instantiate `helper`'s *body* if `helper`'s return type must be deduced (e.g. declared `auto`); here `helper` explicitly returns `void`, so the compiler can determine the type of `helper<T>()` from the declaration alone, without ever instantiating (and thus without ever hitting the hard error inside) `helper`'s body. If `helper` instead used `auto` and its body actually had to be instantiated to deduce the return type, a hard error in that body would still be a hard compile error, not a SFINAE-friendly removal — decltype does not generally extend SFINAE's reach into called-function bodies.
 
-**Key takeaway:** SFINAE only covers signature substitution errors, not function body errors.
+**Key takeaway:** SFINAE only covers signature substitution errors, not function body errors — and `decltype` on a call to a function with a *non-deduced* return type avoids touching that function's body at all, which is why such examples appear to "work," not because `decltype` extends SFINAE into called-function bodies.
 
 ---
 
@@ -609,19 +612,22 @@ SFINAE doesn't apply to non-dependent types because they're checked at template 
 **Code example:**
 ```cpp
 template<typename T>
-typename std::enable_if<sizeof(int) > 10>::type  // ❌ Non-dependent condition
+typename std::enable_if<(sizeof(int) > 10)>::type  // ❌ Non-dependent condition
 func(T val) { }
 
-// Always false, evaluated at definition time, not instantiation
-// This template definition would be accepted but never usable
+// Always false, evaluated at definition time, not instantiation.
+// This is a hard error at the template DEFINITION itself (not merely "never
+// usable") — the compiler rejects this template definition immediately,
+// with an error like: "'type' in 'struct std::enable_if<false>' does not
+// name a type", because the condition doesn't depend on T.
 
 template<typename T>
-typename std::enable_if<sizeof(T) > 4>::type  // ✅ Dependent on T
+typename std::enable_if<(sizeof(T) > 4)>::type  // ✅ Dependent on T
 func2(T val) { }  // SFINAE applies at instantiation
 ```
 
 **Explanation:**
-Non-dependent expressions (those not involving template parameters) are evaluated during template definition. If `sizeof(int) > 10` is false (it always is), this overload could never be instantiated, but the compiler accepts the definition. SFINAE only applies to dependent expressions that are evaluated during substitution at instantiation time. Always ensure SFINAE conditions depend on template parameters.
+Non-dependent expressions (those not involving template parameters) are evaluated during template definition, not deferred to substitution/instantiation time. If `sizeof(int) > 10` is false (it always is), `std::enable_if<false>::type` doesn't exist right away — this is an immediate hard error at the point the template is defined, and the compiler rejects the definition outright (it does **not** "accept the definition but leave it unusable"). SFINAE only applies to dependent expressions that are evaluated during substitution at instantiation time. Always ensure SFINAE conditions depend on template parameters.
 
 **Key takeaway:** SFINAE requires conditions dependent on template parameters to work correctly.
 
