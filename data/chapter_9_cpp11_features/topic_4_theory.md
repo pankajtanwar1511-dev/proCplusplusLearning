@@ -144,7 +144,7 @@ f1 = f2;  // ✅ Assignable (both are std::function<int(int)>)
 | **Assignability** | Cannot assign different lambdas | Can reassign any compatible callable |
 | **Template-friendly** | ✅ Perfect for templates | ❌ Loses specific type |
 | **Copy cost** | Minimal (copy captures) | Copies wrapper + callable |
-| **Move-only support (C++11)** | ✅ Supported | ❌ NOT supported |
+| **Move-only support (C++11)** | ❌ Not supported (requires C++14 init-capture syntax) | ❌ NOT supported |
 | **Best use case** | Performance-critical, templates | Callback storage, runtime polymorphism |
 
 **Performance Overhead Visualization:**
@@ -326,7 +326,7 @@ int result5 = func(10, 20, 30);
 | **Dangling reference** | `[&]` capture outlives scope | Use `[=]` for value capture |
 | **Loop variable capture** | All lambdas share same `i` reference | Use `[i]` (by value) |
 | **Mutable misconception** | Expecting original to change | Understand `mutable` modifies copy |
-| **This lifetime** | `[this]` dangling after object destroyed | Use `[=]` or C++17's `[*this]` |
+| **This lifetime** | `[this]` dangling after object destroyed | Use C++17's `[*this]` (copies the object) or an explicit init-capture like `[value = value]` (C++14) — `[=]` does NOT help, it still captures `this` by pointer |
 | **std::bind copy trap** | Expecting references, getting copies | Use `std::ref()` or prefer lambda |
 | **std::function overhead** | Using in hot loops | Use templates or direct lambda type |
 | **Move-only captures (C++11)** | Cannot store `unique_ptr` in lambda | Use `shared_ptr` or upgrade to C++14+ |
@@ -825,7 +825,7 @@ public:
     }
 
     // Transform sensor data using lambdas
-    static void applyCal ibration(vector<SensorReading>& readings, double factor) {
+    static void applyCalibration(vector<SensorReading>& readings, double factor) {
         // Lambda for transformation
         transform(readings.begin(), readings.end(), readings.begin(),
             [factor](const SensorReading& r) {
@@ -1020,8 +1020,8 @@ Applying moving average filter:
   Raw: 10.0m -> Filtered: 10.0m
   Raw: 12.0m -> Filtered: 11.0m
   Raw: 11.0m -> Filtered: 11.0m
-  Raw: 13.0m -> Filtered: 12.0m
-  Raw: 12.5m -> Filtered: 12.17m
+  Raw: 13.0m -> Filtered: 13.8889m
+  Raw: 12.5m -> Filtered: 16.6667m
 
 PART 5: Lambda vs std::bind
 
@@ -1101,7 +1101,7 @@ Sorted by distance (descending):
 | **Copy Cost** | Compiler-dependent | Always copyable (if callable is) |
 | **Template Friendly** | ✅ Yes, preserves type | ❌ Loses specific type |
 | **Syntax Uniformity** | ❌ Each lambda unique | ✅ Common type for all |
-| **Move-Only Support (C++11)** | ✅ Supported | ❌ Not supported |
+| **Move-Only Support (C++11)** | ❌ Not supported (requires C++14 init-capture syntax) | ❌ Not supported |
 | **Best For** | Templates, performance-critical | Callback storage, type uniformity |
 
 #### Lambda vs std::bind Comparison
@@ -1123,7 +1123,7 @@ Sorted by distance (descending):
 | Dangling references | [&] capture outlives scope | Use [=] for value capture |
 | Loop variable capture | All lambdas share same reference | Use [i] (by value) in loops |
 | Const modification | Can't modify [=] captured vars | Add mutable keyword |
-| This lifetime | [this] dangling after object destroyed | Use [=] or [*this] (C++17) |
+| This lifetime | [this] dangling after object destroyed | Use [*this] (C++17, copies object) or [value = value] init-capture (C++14) — [=] does NOT fix this |
 | Implicit this capture | [=] captures 'this' in member functions | Be aware, or explicit [*this] |
 | Type erasure overhead | Using std::function unnecessarily | Use templates or auto |
 | Move-only captures | unique_ptr in C++11 lambda | Use shared_ptr or C++14+ |

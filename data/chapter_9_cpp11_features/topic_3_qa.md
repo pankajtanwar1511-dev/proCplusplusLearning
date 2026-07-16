@@ -388,7 +388,7 @@ class Base {
 class Derived : public Base {
     void method() & override { }   // ✅ Overrides lvalue version
     void method() && override { }  // ✅ Overrides rvalue version
-    // void method() override { }  // ❌ Error: ambiguous
+    // void method() override { }  // ❌ Error: does not override (ref-qualifier mismatch)
 };
 ```
 

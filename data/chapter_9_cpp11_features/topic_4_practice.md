@@ -10,8 +10,7 @@ auto f = [=]() mutable {
 
 std::cout << f() << " ";
 std::cout << x << " ";
-std::cout << f() << "
-";
+std::cout << f() << "\n";
 ```
 
 **Answer:**

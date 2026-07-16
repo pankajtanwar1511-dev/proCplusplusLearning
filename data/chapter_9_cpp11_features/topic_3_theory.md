@@ -655,10 +655,10 @@ public:
 class Derived : public Base {
 public:
     // ❌ Without override: compiles but doesn't override (typo: "procces")
-    virtual void procces() { }  // Silent bug!
+    // virtual void procces() { }  // Silent bug!
     
     // ✅ With override: compile error catches typo
-    virtual void procces() override { }  // Error: no matching function
+    virtual void procces() override { }  // Error: does not override
 };
 ```
 
@@ -974,8 +974,16 @@ When multiple base classes have virtual functions with the same signature, a sin
 #### Example 7: Covariant Return Types with override
 
 ```cpp
-class Base;
-class Derived;
+class Base {
+public:
+    virtual ~Base() = default;
+    virtual void identify() { std::cout << "I am Base\n"; }
+};
+
+class Derived : public Base {
+public:
+    void identify() override { std::cout << "I am Derived\n"; }
+};
 
 class Factory {
 public:
@@ -989,7 +997,7 @@ public:
 };
 ```
 
-C++ allows covariant return types in overrides—the return type can be a pointer or reference to a more derived class. The `override` keyword correctly recognizes this as a valid override despite the return type difference, because covariance is an exception to the usual signature matching rules.
+C++ allows covariant return types in overrides—the return type can be a pointer or reference to a more derived class. The `override` keyword correctly recognizes this as a valid override despite the return type difference, because covariance is an exception to the usual signature matching rules. Calling `factory.create()` through a `DerivedFactory` returns a `Derived*` directly, with no cast needed; calling it through a `Factory*`/`Base*`-typed interface still returns a `Base*` at compile time, but the object underneath is genuinely a `Derived`, as confirmed by `dynamic_cast<Derived*>`.
 
 #### Example 8: Private Virtual Functions with override
 
@@ -1414,6 +1422,7 @@ PART 4: Reset Operations (final prevents override of critical logic)
 [ProductionLiDAR] Production sensor cannot be reset - factory sealed
 [Sensor] sensor_cleanup reset to defaults
 
+
 PART 5: Safety Features Demonstrated
 =====================================
 ✅ override catches:
@@ -1430,6 +1439,7 @@ PART 5: Safety Features Demonstrated
 ✅ Virtual destructor with override ensures:
    - Proper cleanup through base pointers
    - Detection if base destructor is not virtual
+
 
 === Cleanup (Virtual Destructors in Action) ===
 -----------------------------------------------

@@ -1192,8 +1192,6 @@ auto& c (const reference): 1.025
 After modifying via decltype reference: 37.8
 Original longitude unchanged: -122.419
 heading modified via decltype((x)): 180
-
-=== Universal References with auto&& ===
 x after auto&& modification: 50
 rvalue bound to auto&&: 1000
 
@@ -1203,12 +1201,12 @@ Attempting to double with auto (copies): 5.2 10.8 3.1 15.6 7.4  (unchanged)
 Doubling with auto& (references): 10.4 21.6 6.2 31.2 14.8  (modified)
 
 === auto with Lambdas ===
-Sensor values in valid range [5.0, 50.0]: 4
+Sensor values in valid range [5.0, 50.0]: 2
 Sensor values above threshold 10: 3
 
 === Trailing Return Type with auto ===
 Acceleration (int/int): 5 m/s²
-Acceleration (double/int): 7 m/s²
+Acceleration (double/int): 7.75 m/s²
 Acceleration (double/double): 8 m/s²
 
 === Summary: Type Deduction Benefits ===

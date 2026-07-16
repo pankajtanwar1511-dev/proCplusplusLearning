@@ -415,7 +415,7 @@ std::cout << vec[0];  // What is printed?
 
 **Answer:**
 ```
-true (1)
+false (0)
 ```
 
 **Explanation:**
@@ -423,24 +423,20 @@ true (1)
 - Stores bits, not actual bool objects
 - `vec[0]` returns proxy object, not bool&
 - Proxy type: std::vector<bool>::reference
-- `auto x = vec[0]` deduces x as proxy type
-- x is copy of proxy (not reference to vec[0])
-- `x = false` modifies proxy copy, not original
-- vec[0] unchanged (still true)
-- Prints "true" (or 1)
-- This is a gotcha with std::vector<bool>!
-- To modify original: don't use auto
+- `auto x = vec[0]` deduces x as `std::vector<bool>::reference` (the proxy type), NOT bool
+- Copying the proxy does NOT decouple it from the source bit - the copy still aliases the same underlying bit
+- `x = false` assigns THROUGH the proxy, writing back to the original vec[0]
+- vec[0] is changed (becomes false)
+- Prints "false" (or 0)
+- This is a gotcha with std::vector<bool> - it looks like an independent copy but isn't!
+- To avoid this: force an actual bool copy
   ```cpp
-  vec[0] = false;  // Direct assignment works
+  bool x = vec[0];  // Forces conversion to real bool, decoupled from vec
+  x = false;        // Does NOT affect vec[0]
   ```
-- Or use explicit type:
-  ```cpp
-  std::vector<bool>::reference x = vec[0];
-  x = false;  // Now modifies original
-  ```
-- Avoid std::vector<bool> when possible
-- Use std::vector<char> or std::deque<bool> for normal behavior
-- **Key Concept:** std::vector<bool> operator[] returns proxy, not reference; auto deduces proxy type, not bool&
+- Or avoid std::vector<bool> for boolean flags entirely
+- Use std::vector<char> or std::deque<bool> for normal reference/copy semantics
+- **Key Concept:** std::vector<bool> operator[] returns a proxy, not bool&; auto deduces the proxy type (not bool), so assigning through it still mutates the original - use `bool x = vec[0];` to get a true, independent copy
 
 ---
 
@@ -629,7 +625,9 @@ i i (both show int)
 
 #### Q19
 ```cpp
-auto make_lambda() {
+#include <functional>
+
+auto make_lambda() -> std::function<int()> {
     int x = 42;
     return [&]() { return x; };
 }

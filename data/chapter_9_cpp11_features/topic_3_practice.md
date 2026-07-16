@@ -356,18 +356,17 @@ class Derived : public Base {
 
 **Answer:**
 ```
-Compiles in C++11-16; deprecated in C++17; error in C++20
+Compiles cleanly in every standard from C++11 through C++20 (and later)
 ```
 
 **Explanation:**
 - Base: no noexcept specification
 - Derived: noexcept added
-- C++11-16: Allowed, weakening exception spec
-- Derived more restrictive (noexcept)
-- C++17: Deprecated this behavior
-- C++20: Compilation error (noexcept part of signature)
-- **Modern best practice:** Match exception specs
-- **Key Concept:** Exception specs part of signature (C++20); match base class noexcept
+- Adding a stricter (more restrictive) exception specification when overriding is always allowed
+- This is true in C++11, C++14, C++17, and C++20 alike—there is no deprecation or later restriction
+- Only going the other way—overriding a noexcept base function with a non-noexcept derived function—is an error
+- **Modern best practice:** Prefer matching exception specs for clarity, but tightening with noexcept is always legal
+- **Key Concept:** A stricter exception specification (including adding noexcept) is always allowed when overriding, in every C++ standard from C++11 onward
 
 ---
 

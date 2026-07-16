@@ -28,9 +28,13 @@ int x2{3.14};        // ❌ Error: narrowing double to int
 char c2{300};        // ❌ Error: 300 doesn't fit in char
 unsigned u2{-1};     // ❌ Error: negative to unsigned narrowing
 
-// Exact values allowed
-int x3{7.0};         // ✅ OK: 7.0 exactly representable as int
-char c3{127};        // ✅ OK: 127 fits in signed char
+// Exact values allowed - ONLY for int→int and int→float conversions!
+long x3{7};          // ✅ OK: int 7 widens exactly to long (int→int, no data loss)
+char c3{127};        // ✅ OK: 127 fits in signed char (int→int, in range)
+
+// Floating→integer is NEVER exempt from narrowing, even for whole numbers
+int x4{7.0};         // ❌ Error: narrowing double to int (the exact-fit exception
+                     //    applies only to int→int and int→float, NOT float→int)
 ```
 
 **Narrowing Conversion Categories:**
@@ -41,8 +45,11 @@ char c3{127};        // ✅ OK: 127 fits in signed char
 | **Larger int → Smaller** | `int` → `char` | `char c{300}` | Overflow/UB | ❌ Error |
 | **Signed → Unsigned** | `int` → `unsigned` | `unsigned u{-1}` | Wraps to max | ❌ Error |
 | **Unsigned → Signed** | `unsigned` → `int` | `int x{4000000000u}` | Overflow | ❌ Error |
-| **Exact floating** | `double` → `int` | `int x{7.0}` | Truncates | ✅ OK (exact) |
+| **Floating → Integer (whole number)** | `double` → `int` | `int x{7.0}` | Truncates | ❌ Error (no exemption) |
+| **Exact int → float** | `int` → `double` | `double d{7}` | Converts | ✅ OK (exact) |
 | **In-range constant** | `int` → `char` | `char c{100}` | Works | ✅ OK |
+
+> **Note:** The "exact value fits" exemption ([dcl.init.list]p7.2-7.4) applies ONLY to int→int and int→float conversions. Floating→integer conversions are ALWAYS narrowing in brace-init, even when the value is a whole number (e.g. `7.0`) - there is no exemption for this category.
 
 **The Most Vexing Parse Problem:**
 
@@ -108,7 +115,7 @@ Widget w4{10, 5.0};      // ❌ Error: can't narrow 5.0 to int for initializer_l
 | `Widget(int, int)` only | `Widget{10, 20}` | `Widget(int, int)` | No initializer_list |
 | `Widget(int, int)` + `Widget(initializer_list<int>)` | `Widget{10, 20}` | `initializer_list` | ✅ Preferred |
 | `Widget(int, int)` + `Widget(initializer_list<long>)` | `Widget{10, 20}` | `initializer_list<long>` | ✅ int→long allowed |
-| `Widget(int, int)` + `Widget(initializer_list<bool>)` | `Widget{10, 20}` | `initializer_list<bool>` | ✅ int→bool allowed |
+| `Widget(int, int)` + `Widget(initializer_list<bool>)` | `Widget{10, 20}` | ❌ Compile error | int→bool narrowing (10, 20 aren't 0/1) |
 | `Widget(int, double)` + `Widget(initializer_list<int>)` | `Widget{10, 5.0}` | ❌ Compile error | Narrowing prevented |
 | Empty braces `{}` + `Widget(initializer_list<int>)` | `Widget{}` | ⚠️ Empty list | Zero-element list |
 | Empty braces `{}` + default constructor | `Widget{}` | Default constructor | No initializer_list |
@@ -142,7 +149,7 @@ std::vector<int> v7{5};           // ✅ 1 element with value 5
 | **Container with size** | ❌ NO | ✅ YES | `vector(10)` vs `vector{10}` differ |
 | **Custom types** | ✅ Preferred | ⚠️ OK | Consistency, safety |
 | **Prevent most vexing parse** | ✅ YES | ❌ NO | `Widget w{};` vs `Widget w();` |
-| **Auto with single value** | ⚠️ NO | ✅ YES | `auto x{1}` → `initializer_list` |
+| **Auto with single value** | ✅ OK | ✅ YES | `auto x{1}` deduces `int` in practice (CWG1467); use `auto x = {1}` if you want `initializer_list<int>` |
 | **Template forwarding** | ⚠️ Contextual | ✅ Preferred | Avoid `initializer_list` surprise |
 
 ---
@@ -438,7 +445,9 @@ double d1 = 100000000000000001LL;  // Precision loss
 // ✅ Brace initialization: prevents narrowing (compile error)
 int x2{3.14};         // ❌ Compile error: narrowing conversion
 char c2{300};         // ❌ Compile error: value out of range
-int x3{7.0};          // ✅ OK: 7.0 is exactly representable as int
+int x3{7.0};          // ❌ Compile error: narrowing double to int
+                      //    (floating→integer is NEVER exempt, even for
+                      //    whole numbers like 7.0 - unlike int→int/int→float)
 
 // ✅ Prevents implicit truncation
 unsigned int u1 = -1;   // OK: wraps to max unsigned value
@@ -471,8 +480,11 @@ struct Widget {
 Widget w1(10, 20);    // ✅ Calls: int, int: 10, 20
 Widget w2{10, 20};    // ❌ Calls: initializer_list: size 2  (surprising!)
 
-// Even with conversion, initializer_list wins
-Widget w3{10.5, 20.5}; // Calls initializer_list (converts to int)
+// double→int would be narrowing, so NEITHER constructor is viable here
+Widget w3{10.5, 20.5}; // ❌ Compile error: narrowing conversion of '10.5'
+                       //    from 'double' to 'int' (fails for both the
+                       //    initializer_list<int> ctor AND any fallback
+                       //    ctor, since both require double→int)
 
 // Only if initializer_list is not viable, falls back
 struct Widget2 {
@@ -480,7 +492,10 @@ struct Widget2 {
     Widget2(std::initializer_list<double> list) {}
 };
 
-Widget2 w4{10};  // Calls: int constructor (no conversion to double for list)
+Widget2 w4{10};  // Calls: initializer_list<double> ctor, size=1
+                 // (int→double is NOT narrowing - 10 is exactly
+                 // representable as double - so the initializer_list
+                 // overload is viable and wins, per the usual preference)
 ```
 
 This preference can cause unexpected behavior when adding `initializer_list` constructors to existing classes. The same syntax `{10, 20}` chooses different constructors based on whether an `initializer_list` overload exists.

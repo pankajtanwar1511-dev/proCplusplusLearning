@@ -226,8 +226,8 @@ constexpr int ct = square(10);  // ✅ Compile-time: ct = 100
 int rt = 5;
 int result = square(rt);        // ✅ Runtime: rt not constexpr
 
-// const function: always runtime
-int cubeConst(int x) const {  // const member function
+// non-constexpr function: always runtime
+int cubeRuntime(int x) {
     return x * x * x;
 }
 ```
@@ -710,7 +710,7 @@ Perfect forwarding with variadic templates combines universal references (`Args&
 **Concepts:** #auto #initializer_list #type_deduction
 
 **Answer:**
-Yes, but with caveats: `auto x = {1, 2, 3}` deduces `std::initializer_list<int>`, but `auto x{1}` may deduce `int` depending on C++ version.
+Yes, but with caveats: `auto x = {1, 2, 3}` (with `=`) always deduces `std::initializer_list<int>`. `auto x{1}` (braced, no `=`) deduces `int` (the element type) on real-world compilers across C++11/14/17, because GCC and Clang apply CWG defect report 1467 retroactively even in strict pre-C++17 modes.
 
 **Code example:**
 ```cpp
@@ -721,11 +721,12 @@ auto list2 = {1.0, 2.0}; // std::initializer_list<double>
 // ❌ Mixed types: error
 // auto bad = {1, 2.0};  // Error: cannot deduce type
 
-// ⚠️ C++17 changed single-element behavior
-auto x1{42};      // C++11/14: initializer_list<int>
-                  // C++17+: int
+// ⚠️ auto x{single_value} (no '=') deduces the element type in practice,
+//    across C++11/14/17 alike (GCC/Clang apply CWG1467 retroactively,
+//    even under -std=c++11/-std=c++14)
+auto x1{42};      // int (in practice, all standards)
 
-auto x2 = {42};   // Always: initializer_list<int>
+auto x2 = {42};   // Always: initializer_list<int> (note the '=')
 
 // Use with functions
 void process(std::initializer_list<int> list) { }
@@ -742,9 +743,9 @@ for (auto x : {1, 2, 3}) {  // Temp initializer_list
 ```
 
 **Explanation:**
-C++11 and C++14 deduce `std::initializer_list<T>` for `auto x = {values}`, providing a convenient way to create temporary lists. However, this behavior changed slightly in C++17 for single-element initialization. The rule in C++11/14: `auto x = {values}` always gives `initializer_list`, but `auto x{single_value}` also gives `initializer_list`. In C++17+, `auto x{single_value}` deduces the element type directly. Always use `= {values}` for explicit `initializer_list` to avoid confusion across versions.
+`auto x = {values}` (copy-list-init, WITH the `=`) always deduces `std::initializer_list<T>`, in every C++ standard from C++11 onward - this part never changed. The single-element braced form WITHOUT `=` (`auto x{single_value}`) is different: the C++11/14 standard wording technically specified `initializer_list<T>` for this case too, but CWG defect report 1467 fixed this to deduce the element type directly, and both GCC and Clang implement the fix retroactively - even when compiling with `-std=c++11` or `-std=c++14`. In practice, on real-world compilers, `auto x{1}` always deduces `int`, never `initializer_list<int>`. Always use `= {values}` if you specifically want `initializer_list` deduction, to avoid ambiguity.
 
-**Key takeaway:** `auto = {values}` deduces `std::initializer_list`; behavior varies slightly by C++ standard for single-element braces.
+**Key takeaway:** `auto x = {values}` (with `=`) always deduces `std::initializer_list`; `auto x{single_value}` (no `=`) deduces the element type directly on all commonly-used compilers, regardless of the `-std=` flag.
 
 ---
 
@@ -1229,9 +1230,21 @@ void process(const std::initializer_list<int>& list) {
 }
 process({1, 2, 3});
 
-// ⚠️ Storing reference: dangerous
-const std::initializer_list<int>& stored = {1, 2, 3};
-// Later use may be UB if underlying array destroyed
+// ⚠️ Storing as a class member reference: genuinely dangerous
+struct Holder {
+    const std::initializer_list<int>& ref;  // reference member
+    Holder(const std::initializer_list<int>& il) : ref(il) {}
+    // Binding a reference MEMBER to a constructor parameter does NOT
+    // extend the temporary's lifetime - lifetime extension only applies
+    // to a reference bound DIRECTLY to a temporary in its own
+    // declaration (like ref1 and process()'s parameter above), not when
+    // the temporary is reached through a constructor parameter.
+};
+
+Holder h{{1, 2, 3}};   // temporary {1, 2, 3} destroyed after this line
+for (int x : h.ref) {  // ⚠️ UB: dangling reference (confirmed via ASan:
+    std::cout << x;    //    "stack-use-after-scope")
+}
 
 // Return reference: UB
 const std::initializer_list<int>& makeList() {
@@ -1245,9 +1258,9 @@ std::vector<int> makeVector() {
 ```
 
 **Explanation:**
-Const references can bind to temporaries, and in C++, this extends the temporary's lifetime to match the reference's scope. For `initializer_list`, this extends both the `initializer_list` object and its underlying array. Within the same scope, this is safe. However, returning such references from functions or storing them beyond the initialization scope is dangerous - the underlying array may be destroyed, leading to undefined behavior.
+Const references can bind to temporaries, and in C++, this extends the temporary's lifetime to match the reference's scope. For `initializer_list`, this extends both the `initializer_list` object and its underlying array. This applies to `ref1` above and to `process()`'s parameter - both are safe. However, lifetime extension does NOT propagate through a constructor's member-initializer list: when `Holder`'s reference member is bound to the constructor's parameter, the temporary passed to `Holder{{1, 2, 3}}` is destroyed at the end of that full expression, leaving `h.ref` dangling. Similarly, returning such a reference from a function is dangerous - the underlying array is destroyed when the function returns, before the caller can use it.
 
-**Key takeaway:** Const references to `initializer_list` are safe within scope due to lifetime extension; never return or store long-term.
+**Key takeaway:** Const references to `initializer_list` are safe within scope due to lifetime extension - but only when bound directly to the temporary; storing the reference as a class member, or returning it from a function, does NOT extend the temporary's lifetime and causes dangling references.
 
 ---
 

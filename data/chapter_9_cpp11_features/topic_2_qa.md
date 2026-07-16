@@ -37,12 +37,13 @@ Traditional enums suffer from three major design flaws: their enumerators pollut
 void func(int x) { }
 void func(char* ptr) { }
 
-func(NULL);     // ⚠️  Calls int version (NULL is 0)
+func(NULL);     // ❌ Ambiguous on GCC/libstdc++ (compile error): NULL is __null,
+                //    equally convertible to int and char*
 func(nullptr);  // ✅ Calls pointer version
 ```
 
 **Explanation:**
-The fundamental problem with `NULL` is that it's a macro defined as `0` (or `((void*)0)` in C, which doesn't work in C++), making it an integer literal. When passed to overloaded functions, it preferentially matches integer parameters rather than pointer parameters, contradicting programmer intent. `nullptr` has its own type (`std::nullptr_t`) that converts to any pointer type but not to integers, eliminating this ambiguity and making null pointer intent explicit.
+The fundamental problem with `NULL` is that it's implementation-defined. On GCC/libstdc++ it's `__null`, a magic constant equally convertible to integer and pointer types, so passing it to this overload set is a compile-time ambiguity error rather than a silent choice. On implementations where `NULL` is plain `0`, it would instead silently prefer the integer overload. Either way, the behavior is not what the programmer intends when passing a null pointer. `nullptr` has its own type (`std::nullptr_t`) that converts to any pointer type but not to integers, eliminating this ambiguity and making null pointer intent explicit.
 
 **Key takeaway:** nullptr is type-safe and eliminates overload resolution ambiguity that NULL causes with integer overloads.
 
@@ -219,16 +220,16 @@ C++11 provides `std::begin()` and `std::end()` function templates that can deduc
 **Concepts:** #range_based_for #temporary_lifetime #dangling_reference
 
 **Answer:**
-When iterating over a temporary container with reference types (`auto&` or `const auto&`), the temporary is destroyed after full expression evaluation, leaving dangling references.
+There is actually no risk here: iterating directly over a temporary container with reference types (`auto&` or `const auto&`) has been safe since C++11, because the compiler-generated `auto&& __range = range_expression;` binds directly to the prvalue temporary, extending its lifetime for the entire loop. The genuine (and much narrower) risk is with *nested* temporaries, e.g. `for (auto& x : make().getMember())`, which was only fixed in C++23 (P2718R0).
 
 **Code example:**
 ```cpp
-// ❌ Undefined behavior
+// ✅ Safe since C++11: lifetime extension
 for (const auto& x : get_vector()) {
-    // x dangles: temporary vector destroyed
+    // The temporary vector's lifetime is extended to cover the whole loop.
 }
 
-// ✅ Correct
+// ✅ Also correct (equally safe, sometimes clearer)
 auto vec = get_vector();
 for (const auto& x : vec) {
     // Safe: vec outlives loop
@@ -236,9 +237,9 @@ for (const auto& x : vec) {
 ```
 
 **Explanation:**
-The lifetime of temporaries in range-based for loops is a subtle trap. While the range expression is evaluated once, the temporary is only guaranteed to live until the end of the full-expression containing its creation. This means the container is destroyed immediately after `begin()` and `end()` are called, but before iteration begins. Any references (`auto&` or `const auto&`) obtained from the iterators become dangling references. Using `auto` (by value) would work but causes unnecessary copies of all elements.
+The lifetime of temporaries in range-based for loops is often misunderstood as a trap, but the direct case shown above is not one: the range expression is bound to `auto&& __range`, and reference-binding a prvalue temporary extends its lifetime to match the reference's own lifetime — here, the lifetime of the hidden `__range` variable, which spans the whole loop. The temporary is destroyed only after the loop finishes, not after `begin()`/`end()` are called. Using `auto` (by value) also works but causes unnecessary copies of all elements. The pattern that *is* still risky pre-C++23 is a nested/indirect temporary, where a member function returns a reference into a temporary produced by another call in the same expression (e.g. `make().getMember()`) — that inner temporary is destroyed at the end of the full expression even though the range-for keeps using a reference into it.
 
-**Key takeaway:** Store temporary containers in named variables before range-based iteration with references to avoid dangling reference issues.
+**Key takeaway:** Iterating directly over a temporary container (`for (const auto& x : get_vector())`) is safe since C++11 due to lifetime extension; only nested/indirect temporaries via a member-access chain were unsafe prior to C++23.
 
 ---
 
@@ -305,27 +306,31 @@ Switch statements fully support `enum class`, but the scoped nature of strong en
 **Concepts:** #nullptr #null #template_deduction
 
 **Answer:**
-`nullptr` deduces to `std::nullptr_t` type in templates, while `NULL` deduces to an integer type (typically `int`), affecting template instantiation and overload resolution.
+`nullptr` deduces to `std::nullptr_t` type in templates, while `NULL` deduces to an implementation-defined integer type (e.g. `long` on GCC/libstdc++), affecting template instantiation and overload resolution.
 
 **Code example:**
 ```cpp
 template<typename T>
 void func(T param) { /* ... */ }
 
-func(NULL);     // T deduced as int
+func(NULL);     // T deduced as long (implementation-defined; NULL's exact type
+                //   varies -- long on GCC/libstdc++)
 func(nullptr);  // T deduced as std::nullptr_t
 
 template<typename T>
 void ptrFunc(T* param) { /* ... */ }
 
-// ptrFunc(NULL);  // ❌ Error: NULL is int, not pointer
-ptrFunc(nullptr);  // ✅ OK: nullptr converts to any pointer type
+// ptrFunc(NULL);     // ❌ Error: template deduction fails -- NULL's type doesn't
+                       //   structurally match T*, even though it's implicitly
+                       //   convertible to pointer types post-deduction
+// ptrFunc(nullptr);   // ❌ Also a compile error: std::nullptr_t doesn't
+                       //   structurally match T* either, for the same reason
 ```
 
 **Explanation:**
-This difference is critical in generic programming. When `NULL` is passed to a template, it's an integer literal, so `T` deduces to `int`, which may not match pointer-accepting overloads or constraints. With `nullptr`, `T` correctly deduces to `std::nullptr_t`, which then converts to appropriate pointer types as needed. This makes `nullptr` the only correct choice for null pointers in generic code, ensuring proper type deduction and avoiding subtle template instantiation bugs.
+This difference is critical in generic programming. When `NULL` is passed to a template, it's an integer literal of implementation-defined type (e.g. `long` on GCC/libstdc++), so `T` deduces to that integer type, which may not match pointer-accepting overloads or constraints. With `nullptr`, `T` correctly deduces to `std::nullptr_t`. However, deduction against a `T*` parameter is stricter than deduction against a plain `T` parameter: it requires the argument's type to structurally be a pointer type. Neither `NULL`'s integer type nor `std::nullptr_t` structurally matches `T*`, so `ptrFunc(NULL)` and `ptrFunc(nullptr)` both fail to compile, even though `nullptr` itself converts implicitly to any pointer type once a concrete pointer type is known (as with the non-template `void accept_pointer(void*)` case).
 
-**Key takeaway:** Use nullptr in templates to ensure correct type deduction as nullptr_t rather than int deduction from NULL.
+**Key takeaway:** Use nullptr in templates to ensure correct type deduction as nullptr_t rather than an implementation-defined integer type (e.g. long on GCC/libstdc++) from NULL -- and note that deduction against a `T*` parameter fails for both NULL and nullptr, since neither structurally matches a pointer type.
 
 ---
 
@@ -386,22 +391,23 @@ This is one of the primary motivations for `enum class`. Traditional enums injec
 **Concepts:** #range_based_for #temporary_lifetime #dangling_reference
 
 **Answer:**
-Forgetting to store a temporary container when using reference types causes undefined behavior as the temporary is destroyed immediately after initialization.
+Nothing bad happens: iterating directly over a temporary container with reference types is safe since C++11 — you don't need to store it first. The range-based for loop's hidden `auto&& __range = range_expression;` binds directly to the temporary and extends its lifetime for the entire loop.
 
 **Code example:**
 ```cpp
 std::vector<int> get_data() { return {1, 2, 3, 4, 5}; }
 
-// ❌ Undefined behavior: temporary destroyed
+// ✅ Safe since C++11: lifetime extension keeps the temporary alive for the loop
 for (const auto& x : get_data()) {
-    // x is dangling reference to destroyed vector's elements
+    // x refers to elements of a temporary vector whose lifetime has been
+    // extended to cover the whole loop -- not dangling.
 }
 ```
 
 **Explanation:**
-The temporary vector returned by `get_data()` lives only until the end of the full-expression. The range-based for loop extracts `begin()` and `end()` iterators, then immediately the temporary is destroyed, leaving the iterators pointing to freed memory. Any use of these iterators (dereferencing to get `x`) is undefined behavior. This is particularly insidious because it may appear to work in debug builds due to memory not being immediately reused.
+The temporary vector returned by `get_data()` is bound to the compiler-generated `auto&& __range` reference, and reference-binding a prvalue temporary extends the temporary's lifetime to match — here, the lifetime of `__range`, which spans the entire loop. The container is destroyed only after the loop body finishes, not immediately after `begin()`/`end()` are called. This has been true since C++11; there is no need to store the temporary in a named variable first for this direct usage. (The genuinely risky, still-unsafe-pre-C++23 case is a *nested* temporary reached through a member-access chain, e.g. `for (auto& x : make().getMember())`, where `getMember()` returns a reference into `make()`'s temporary — a different pattern from the one shown here.)
 
-**Key takeaway:** Always store function-returned containers in named variables before range-based iteration to ensure proper lifetime management.
+**Key takeaway:** Iterating directly over a function-returned temporary container in a range-based for loop is safe since C++11 due to lifetime extension; storing it in a named variable first is optional (useful for reuse or clarity, not for safety) for this direct pattern -- only nested/indirect temporaries via a member-access chain require care, and only prior to C++23.
 
 ---
 
