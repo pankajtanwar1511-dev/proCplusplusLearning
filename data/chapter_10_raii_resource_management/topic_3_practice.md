@@ -549,7 +549,9 @@ int main() {
 
 **Answer:**
 ```
-1 1 (then double-delete crash)
+(no output — crashes before anything is printed)
+free(): double free detected in tcache 2
+Aborted (core dumped)
 ```
 
 **Explanation:**
@@ -558,14 +560,15 @@ int main() {
 - **CRITICAL BUG:** p2 creates new control block
 - p1 and p2 have independent control blocks
 - Both think they uniquely own int(5)
-- Both use_count() return 1
+- **Undefined behavior — this is not "prints then crashes":** the program crashes with a double-free abort (glibc: `free(): double free detected in tcache 2`) during static/global teardown, **before** the buffered `std::cout` output is ever flushed to the terminal. `abort()` does not flush unflushed stdout buffers, and since the `cout` statement here has no trailing `\n`/`std::flush`, nothing reaches the terminal — you will see only the crash message, never any printed numbers. (Verified with plain execution, output redirected to a file, and a pseudo-tty: the captured stdout is empty in every case.)
+- Logically, *if* execution somehow continued normally without crashing, `use_count()` would report 1 and 1 (each shared_ptr wrongly believing it's the sole owner) — but that is not what you actually observe when you run this code.
 - **Program ends:**
   - p2 destroyed: deletes int(5)
   - p1 destroyed: tries to delete already-freed memory
   - **Double-delete:** Undefined behavior, crash
 - **Never do:** shared_ptr from raw pointer of another shared_ptr
 - **Correct:** p2 = p1 or p2(p1)
-- **Key Concept:** Never create shared_ptr from get(); causes double control blocks and double-delete
+- **Key Concept:** Never create shared_ptr from get(); causes double control blocks and double-delete, and the crash pre-empts any buffered output
 
 ---
 

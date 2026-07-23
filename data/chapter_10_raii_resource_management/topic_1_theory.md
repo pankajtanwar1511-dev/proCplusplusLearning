@@ -1094,6 +1094,7 @@ Multiple exit points create cleanup complexity with manual resource management. 
 #include <mutex>
 #include <stdexcept>
 #include <chrono>
+#include <cmath>
 using namespace std;
 
 // Part 1: LiDAR Hardware Resource RAII Wrapper
@@ -1406,19 +1407,19 @@ int main() {
 [Pipeline] Frame processing complete
   Raw readings: 5
   Filtered readings: 5
-  Average distance: 25.1976 meters
+  Average distance: 22.9039 meters
 
 [Pipeline] Processing sensor frame...
 [Pipeline] Frame processing complete
   Raw readings: 10
   Filtered readings: 10
-  Average distance: 25.1976 meters
+  Average distance: 22.9039 meters
 
 [Pipeline] Shutting down pipeline...
+[Pipeline] Pipeline shutdown complete
 [Buffer] Destroying buffer with 10 elements
 [Buffer] Destroying buffer with 10 elements
 [LiDAR] Releasing hardware resource (fd=42)
-[Pipeline] Pipeline shutdown complete
 
 === Demonstration 2: Exception During Processing ===
 
@@ -1433,23 +1434,22 @@ int main() {
 [Pipeline] Frame processing complete
   Raw readings: 5
   Filtered readings: 5
-  Average distance: 25.1976 meters
-Caught exception: Sensor data validation failed
+  Average distance: 22.9039 meters
 
 [Pipeline] Shutting down pipeline...
+[Pipeline] Pipeline shutdown complete
 [Buffer] Destroying buffer with 5 elements
 [Buffer] Destroying buffer with 5 elements
 [LiDAR] Releasing hardware resource (fd=42)
-[Pipeline] Pipeline shutdown complete
+Caught exception: Sensor data validation failed
 
 === Demonstration 3: Exception During Initialization ===
 
 [Pipeline] Initializing sensor processing pipeline...
 [LiDAR] Acquiring hardware resource: /dev/lidar0
 [LiDAR] Hardware initialized (fd=42)
-[Buffer] Allocated 100 elements
+[Buffer] Allocated 20000 elements
 [Pipeline] Initialization failed: Buffer size exceeds hardware limits
-[Buffer] Destroying buffer with 0 elements
 [LiDAR] Releasing hardware resource (fd=42)
 Caught exception: Buffer size exceeds hardware limits
 
@@ -1459,7 +1459,6 @@ Caught exception: Buffer size exceeds hardware limits
 [LiDAR] Acquiring hardware resource: /dev/lidar0
 [LiDAR] Hardware initialized (fd=42)
 [Factory] Returning LiDAR (move semantics)
-[LiDAR] Ownership transferred via move
 
 [Main] Moving lidar1 to lidar2...
 [LiDAR] Ownership transferred via move

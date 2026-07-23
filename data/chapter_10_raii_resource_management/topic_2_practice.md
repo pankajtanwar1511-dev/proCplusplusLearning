@@ -29,10 +29,22 @@ Constructor once, destructor once (C++17 RVO)
 - No temporary object in createResource
 - No move or copy constructor called
 - Single construction, single destruction
-- **Pre-C++17:** Might call move constructor
-- **RVO benefit:** Eliminates overhead of move/copy
+- **Pre-C++17 (or with elision disabled):** Falls back to the **copy**
+  constructor, NOT the move constructor — this class user-declares a
+  destructor (`~Resource() { delete data; }`) and no user-declared move
+  constructor, so per C++11/14/17 rules the implicit move constructor
+  is **never generated** at all, at any standard version. Overload
+  resolution therefore falls back to the implicit copy constructor,
+  which does a shallow (member-wise) copy of `data`
+- **Verified:** compiled with `-std=c++11 -fno-elide-constructors` and
+  run under AddressSanitizer — this produces a **double-free crash**:
+  the temporary and `test()`'s `r` both end up owning the same raw
+  pointer, and both destructors call `delete` on it
+- **RVO benefit:** Eliminates overhead of move/copy, and in this
+  particular class also happens to be the only thing preventing a
+  double-free, since a real move constructor was never declared
 - **Performance:** One object lifetime instead of multiple
-- **Key Concept:** C++17 RVO guarantees elision; single object constructed at final destination
+- **Key Concept:** C++17 RVO guarantees elision; a user-declared destructor with no user-declared move constructor suppresses implicit move-constructor generation entirely, so pre-C++17 (or non-elided) code paths fall back to a shallow copy, not a move
 
 ---
 
@@ -139,21 +151,22 @@ void test() {
 
 **Answer:**
 ```
-Self-move bug: deletes data before transfer
+Self-move bug: resource silently lost, not a crash
 ```
 
 **Explanation:**
 - r constructed: data allocated
-- r = std::move(r): Self-assignment
-- Move assignment: `delete[] data` (frees r.data)
-- Then: `data = other.data` (but other IS r, already freed!)
-- data now dangling pointer
-- Destructor: delete[] dangling pointer → **crash**
-- **Self-assignment not checked**
+- r = std::move(r): Self-assignment (other IS r/*this)
+- Move assignment: `delete[] data` (frees r.data, which is also other.data)
+- Then: `data = other.data` (re-reads the SAME member that was just freed — but since `other` IS `*this`, this just re-reads the now-stale pointer value)
+- Then: `other.data = nullptr` (also sets our OWN data to nullptr, since other IS r)
+- **End state:** `data == nullptr` — valid-but-empty, no dangling pointer
+- Destructor: `delete[] nullptr` → **harmless no-op, no crash**
+- **Verified:** compiled and run under AddressSanitizer — no crash, no double-free; r.data is nullptr afterward
+- **Self-assignment not checked** (still a bug, just not the one it looks like)
 - **Fix:** Check `if (this != &other)` first
-- **Standard library:** std::move handles self-assignment
-- **Best practice:** Always check self-assignment in move assignment
-- **Key Concept:** Move assignment must handle self-assignment; check this != &other
+- **Best practice:** Always check self-assignment in move assignment, even though this particular case merely loses the resource silently rather than crashing
+- **Key Concept:** Move assignment must handle self-assignment; check this != &other — otherwise the resource is silently emptied (data becomes nullptr) since `other` IS `*this` in a self-assignment, not dangling
 
 ---
 
@@ -228,24 +241,31 @@ void test2() {
 
 **Answer:**
 ```
-test1: BEGIN COMMIT COMMIT ROLLBACK
+test1: BEGIN COMMIT COMMIT
 test2: BEGIN ROLLBACK
 ```
 
 **Explanation:**
-- **test1:**
+- **test1:** (verified by compiling and running — actual output is
+  `BEGIN`, `COMMIT`, `COMMIT`, with no `ROLLBACK`)
   - Constructor: "BEGIN"
   - First commit(): "COMMIT", committed = true
-  - Second commit(): "COMMIT" (prints again!)
-  - Destructor: committed = true, but prints "ROLLBACK" anyway
-  - **Bug:** Destructor should print "COMMITTED" when committed = true
+  - Second commit(): "COMMIT" (prints again — commit() can be called
+    more than once, which is itself a minor design smell, but it does
+    not print ROLLBACK)
+  - Destructor: `if (!committed)` is now false, so the ROLLBACK branch
+    is correctly skipped — **nothing** is printed by the destructor
 - **test2:**
   - Constructor: "BEGIN"
   - Never commits
   - Destructor: committed = false, "ROLLBACK" ✓
-- **Expected test1 destructor:** Should print nothing or "COMMITTED"
-- **Issue:** commit() should set committed=true, destructor logic wrong
-- **Key Concept:** Transaction pattern requires correct commit/rollback logic in destructor
+- **Not a bug in the commit/rollback guard itself:** the destructor's
+  `if (!committed)` check works exactly as intended and correctly
+  suppresses ROLLBACK once committed = true
+- **Real (minor) issue:** `commit()` can be called twice, silently
+  reprinting "COMMIT" with no guard against double-commit — that is the
+  only actual defect here, not a false ROLLBACK
+- **Key Concept:** Transaction pattern's destructor guard (`if (!committed)`) correctly prevents ROLLBACK after commit; the only latent bug is that `commit()` itself has no re-entrancy guard
 
 ---
 
@@ -366,21 +386,38 @@ void test() {
 
 **Answer:**
 ```
-Compilation error: ScopedLock needs move constructor
+Compiles fine (verified g++ -std=c++11/-std=c++17, with/without
+-fno-elide-constructors) — but returning a lock guard by value is
+still bad design
 ```
 
 **Explanation:**
 - getLock() returns ScopedLock by value
-- Requires move or copy constructor
-- **No move constructor defined**
-- Compiler-generated move constructor deleted (has reference member)
-- Reference members cannot be moved
-- **Cannot return by value**
+- **C++17:** guaranteed copy elision applies to this prvalue return — no
+  constructor call is even needed at the call site, so there's nothing
+  to fail
+- **Even without elision (pre-C++17 / `-fno-elide-constructors`):** a
+  class with a reference member still gets an implicitly-generated
+  **copy** constructor — binding a reference member during copy-
+  **construction** is legal in C++. Only copy/move **assignment** is
+  blocked by a reference member (you can't rebind a reference), not
+  construction
+- **Verified:** compiles with zero errors under `-std=c++11` and
+  `-std=c++17`, both with and without `-fno-elide-constructors`
+- **No compilation error** — the doc's original claim about a
+  move-constructor-related compile failure is backwards: construction
+  from a reference-holding class works via the implicit copy
+  constructor (or elision), it's only *assignment* that reference
+  members break
+- **Still bad design:** even though it compiles, returning a lock guard
+  by value is fragile — depends on guaranteed elision (or copies a live
+  lock, which is semantically confusing) and obscures when the lock is
+  actually released
 - **Fix 1:** Return std::unique_ptr<ScopedLock>
-- **Fix 2:** Use std::lock_guard (standard solution)
-- **Design issue:** Lock objects shouldn't be movable
-- **Real solution:** Don't return lock objects
-- **Key Concept:** RAII lock wrappers should be non-movable; reference members prevent implicit move
+- **Fix 2:** Use std::lock_guard and keep it in the caller's own scope (standard solution)
+- **Design issue:** Lock objects shouldn't be returned by value even when it compiles
+- **Real solution:** Don't return lock objects — acquire them directly in the scope that needs them
+- **Key Concept:** Reference members block copy/move *assignment*, not copy *construction*; RAII lock wrappers should still avoid being returned by value as a matter of design, not because it fails to compile
 
 ---
 
@@ -450,25 +487,40 @@ void test() {
 
 **Answer:**
 ```
-rawPtr may leak if second allocation throws
+Not actually a leak in this exact snippet — verified with LeakSanitizer
 ```
 
 **Explanation:**
 - Member initialization order: buffer first, rawPtr second
-- buffer allocation: new int[size] succeeds
+- buffer allocation: `new int[size]` succeeds
 - buffer(ptr): unique_ptr constructor succeeds
-- **If rawPtr allocation throws:**
-  - Exception before rawPtr initialized
-  - Widget constructor incomplete
-  - Widget destructor NOT called
-  - rawPtr member never constructed (indeterminate value)
-  - **But:** buffer IS constructed, its destructor WILL run
-  - buffer memory freed ✓
-  - **No leak from buffer** (RAII working)
-- **Actually safe:** unique_ptr is RAII-wrapped
-- **Problem if:** Second allocation throws, Widget incomplete
-- **Better:** Both as unique_ptr (exception-safe)
-- **Key Concept:** Use RAII for all resources in constructors; partial construction destroys completed members
+- **If rawPtr's own `new int[size]` throws:**
+  - Exception happens *during* rawPtr's initializer, before rawPtr
+    itself is ever assigned a value — there is nothing allocated for
+    rawPtr to leak, because its allocation is exactly what threw
+  - Widget constructor is left incomplete, so the Widget destructor is
+    NOT called
+  - **But:** buffer IS a fully-constructed member at that point, so its
+    destructor (unique_ptr's) WILL run during stack unwinding, freeing
+    buffer's memory
+  - **Verified:** compiled with a custom `operator new[]` that throws on
+    the 2nd allocation and ran under AddressSanitizer/LeakSanitizer —
+    no leak reported; buffer's allocation is freed, rawPtr's allocation
+    never happened
+- **Consistent conclusion:** this exact snippet is safe — buffer's RAII
+  wrapper cleans up correctly via stack unwinding if its own allocation
+  throws, and if rawPtr's own `new` is what throws, there's nothing yet
+  allocated to leak either
+- **The real risk pattern:** would require a THIRD step/resource
+  acquired after rawPtr succeeds but before some other later step that
+  can throw — since rawPtr is a raw pointer, not RAII-wrapped, nothing
+  will free it if some *subsequent* operation throws after it succeeds.
+  This 2-member example doesn't demonstrate that because there's no
+  step after rawPtr's initialization
+- **Better regardless:** Use unique_ptr for rawPtr too — not because
+  this snippet leaks today, but because raw owning pointers stay a leak
+  risk the moment the constructor grows another step after them
+- **Key Concept:** Use RAII for all resources in constructors; partially-constructed objects still destroy their already-completed members, and whether anything leaks depends on exactly where the throw happens relative to each raw resource
 
 ---
 

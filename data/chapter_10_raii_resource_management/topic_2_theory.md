@@ -621,9 +621,11 @@ public:
 
 #### Edge Case 1: Move-Only RAII and Self-Move-Assignment
 
-Move-only RAII classes that delete copy operations must carefully handle self-move-assignment. While self-assignment checks are obvious for copy assignment (`if (this == &other)`), self-move-assignment seems unlikely but can occur through reference chains, template instantiation, or container operations. Failing to check for self-move can leave objects in invalid states where resources are released but pointers aren't nullified.
+Move-only RAII classes that delete copy operations must carefully handle self-move-assignment. While self-assignment checks are obvious for copy assignment (`if (this == &other)`), self-move-assignment seems unlikely but can occur through reference chains, template instantiation, or container operations. Failing to check for self-move doesn't necessarily crash — in the single-pointer example below, the resource is released and the pointer ends up `nullptr` (a valid-but-empty state, since `other` IS `*this` in a self-assignment) rather than dangling. But that's still a silent, unintended loss of the resource, and classes with more than one member (or destructors that assume "non-null means valid") can be broken by exactly this kind of unchecked self-move. It should always be checked regardless.
 
 ```cpp
+#include <utility>
+
 class MoveOnlyResource {
     int* data;
 public:
@@ -657,7 +659,14 @@ Proper implementation checks for self-assignment before releasing resources:
 class MoveOnlyResourceSafe {
     int* data;
 public:
-    MoveOnlyResource& operator=(MoveOnlyResource&& other) noexcept {
+    MoveOnlyResourceSafe() : data(new int[100]) {}
+    ~MoveOnlyResourceSafe() { delete[] data; }
+
+    MoveOnlyResourceSafe(MoveOnlyResourceSafe&& other) noexcept : data(other.data) {
+        other.data = nullptr;
+    }
+
+    MoveOnlyResourceSafe& operator=(MoveOnlyResourceSafe&& other) noexcept {
         if (this != &other) {  // ✅ Self-move check
             delete[] data;
             data = other.data;
@@ -665,15 +674,19 @@ public:
         }
         return *this;
     }
+
+    void swap(MoveOnlyResourceSafe& other) noexcept {
+        std::swap(data, other.data);
+    }
 };
 ```
 
-Alternative approaches use swap-based move assignment, which naturally handles self-move correctly:
+Alternative approaches use swap-based move assignment, which naturally handles self-move correctly. This would replace the `operator=` shown above in `MoveOnlyResourceSafe` (it relies on the same `swap()` member and move constructor already defined on that class):
 
 ```cpp
-MoveOnlyResource& operator=(MoveOnlyResource&& other) noexcept {
-    MoveOnlyResource temp(std::move(other));  // Move into temp
-    swap(temp);                                // Swap with temp
+MoveOnlyResourceSafe& operator=(MoveOnlyResourceSafe&& other) noexcept {
+    MoveOnlyResourceSafe temp(std::move(other));  // Move into temp
+    swap(temp);                                    // Swap with temp
     return *this;  // temp destroyed with old resources
 }
 ```
@@ -1049,6 +1062,7 @@ This complete implementation demonstrates all aspects of move-only RAII: resourc
 ```cpp
 #include <mutex>
 #include <chrono>
+#include <thread>
 
 class ScopedLock {
     std::mutex& mutex_;
@@ -1412,6 +1426,7 @@ Two-phase initialization with `std::optional` provides exception-free resource a
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 class Database {
 public:
@@ -1652,6 +1667,7 @@ This multi-resource example shows how RAII naturally handles dependency chains. 
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <functional>
 
 template<typename T>
 class LazyResource {
@@ -1745,6 +1761,7 @@ Lazy initialization with thread safety demonstrates RAII with deferred resource 
 #include <functional>
 #include <map>
 #include <chrono>
+#include <atomic>
 using namespace std;
 
 // Part 1: Move-Only Calibration Session Resource

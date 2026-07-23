@@ -918,6 +918,8 @@ This cache stores `weak_ptr` to allow resources to be destroyed when no longer i
 #include <memory>
 #include <cstdio>
 #include <sys/socket.h>
+#include <iostream>
+#include <unistd.h>
 
 // ✅ File handle with lambda deleter
 std::shared_ptr<FILE> openFile(const char* filename) {
