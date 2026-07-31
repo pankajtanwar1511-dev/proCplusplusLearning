@@ -1,5 +1,137 @@
 ## TOPIC: C++17 Parallel Algorithms - Execution Policies and Performance
 
+### THEORY_SECTION: Execution Policies and Parallel Algorithms
+
+#### Execution Policies Overview
+
+C++17 defines four execution policies in `<execution>`:
+
+1. **`std::execution::seq`** - Sequential execution (default behavior)
+2. **`std::execution::par`** - Parallel execution (multi-threaded)
+3. **`std::execution::par_unseq`** - Parallel + vectorized (SIMD)
+4. **`std::execution::unseq`** - Vectorized only (C++20)
+
+**Usage pattern:**
+```cpp
+#include <algorithm>
+#include <execution>
+#include <vector>
+
+std::vector<int> data(1'000'000);
+
+// Sequential (traditional)
+std::sort(data.begin(), data.end());
+
+// Parallel
+std::sort(std::execution::par, data.begin(), data.end());
+
+// Parallel + vectorized
+std::sort(std::execution::par_unseq, data.begin(), data.end());
+```
+
+**Key principle:**
+Execution policies are **permission**, not commands. The implementation may execute sequentially if parallelization isn't beneficial.
+
+#### Execution Policy Semantics
+
+**std::execution::seq (Sequential):**
+- Guaranteed sequential execution
+- Same as traditional algorithms
+- Use when order matters or operations have side effects
+
+**std::execution::par (Parallel):**
+- May execute on multiple threads
+- Operations must be thread-safe
+- Exceptions are caught and re-thrown after all work completes
+- Use for CPU-bound independent operations
+
+**std::execution::par_unseq (Parallel + Unsequenced):**
+- May execute on multiple threads AND vectorize
+- Operations must be thread-safe AND vectorization-safe
+- No locks, no allocations, no exceptions in element operations
+- Highest performance potential
+- Use for pure computations without side effects
+
+**std::execution::unseq (Unsequenced, C++20):**
+- Vectorization only, no parallelization
+- Use for single-threaded SIMD optimization
+
+#### Supported Algorithms
+
+Most STL algorithms support execution policies in C++17:
+
+**Sorting and searching:**
+- `std::sort`, `std::stable_sort`, `std::partial_sort`
+- `std::nth_element`
+- `std::find`, `std::find_if`, `std::find_if_not`
+- `std::binary_search`, `std::lower_bound`, `std::upper_bound`
+
+**Numeric:**
+- `std::accumulate` → `std::reduce` (parallel version)
+- `std::transform_reduce`
+- `std::inclusive_scan`, `std::exclusive_scan`
+- `std::transform_inclusive_scan`, `std::transform_exclusive_scan`
+
+**Transformations:**
+- `std::transform`
+- `std::for_each`, `std::for_each_n`
+- `std::copy`, `std::copy_if`, `std::move`
+- `std::fill`, `std::fill_n`
+- `std::replace`, `std::replace_if`
+
+**Set operations:**
+- `std::set_union`, `std::set_intersection`, `std::set_difference`
+
+#### Performance Considerations
+
+**When parallelization helps:**
+- Large data sets (>10,000 elements typically)
+- CPU-bound operations (significant work per element)
+- Independent operations (no shared state)
+- Modern multi-core CPU available
+
+**When parallelization doesn't help or hurts:**
+- Small data sets (<1,000 elements) - overhead dominates
+- I/O-bound operations (file/network access)
+- Operations with dependencies
+- Memory-bound operations (already saturating memory bandwidth)
+
+**Overhead sources:**
+- Thread creation/synchronization
+- Work distribution/scheduling
+- Cache coherence traffic
+- False sharing
+
+#### Thread Safety Requirements
+
+**For `std::execution::par`:**
+- Element operations must be thread-safe
+- Locks and mutexes are allowed (but hurt performance)
+- Memory allocations are allowed
+- Exceptions are allowed (caught and re-thrown)
+
+**For `std::execution::par_unseq`:**
+- Element operations must be thread-safe AND vectorization-safe
+- **No locks** (would break vectorization)
+- **No allocations** (not vectorizable)
+- **No exceptions** (not vectorizable)
+- Pure computations only
+
+**Example violations:**
+```cpp
+std::vector<int> data(1'000'000);
+int global_sum = 0;
+
+// ❌ WRONG: Data race on global_sum
+std::for_each(std::execution::par, data.begin(), data.end(),
+    [&](int x) {
+        global_sum += x;  // Race condition!
+    });
+
+// ✅ CORRECT: Use reduce for parallel sum
+int result = std::reduce(std::execution::par, data.begin(), data.end(), 0);
+```
+
 ### EDGE_CASES: Parallel Algorithm Pitfalls
 
 #### Edge Case 1: Data Races with Parallel Execution

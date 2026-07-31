@@ -18,7 +18,7 @@ C++17 introduced **execution policies** that enable automatic parallelization of
 
 ---
 
-###THEORY_SECTION: Execution Policies and Parallel Algorithms
+### THEORY_SECTION: Execution Policies and Parallel Algorithms
 
 #### Execution Policies Overview
 
