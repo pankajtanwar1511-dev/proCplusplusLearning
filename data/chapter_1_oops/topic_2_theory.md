@@ -100,6 +100,42 @@ ptr->foo();  // Runtime: ptr->vptr->vtable[0]() → Derived::foo
 4. Looks up `foo()` entry in `Derived`'s vtable
 5. Calls `Derived::foo()` even though pointer is `Base*`
 
+**Two Phases: What the Compiler Decides vs What Runtime Decides**
+
+The step-by-step above is the runtime mechanics only. The full picture needs the compile-time phase too, since that phase is what decides whether those runtime mechanics get used at all.
+
+| Phase | Question It Answers | What It Produces |
+|-------|----------------------|-------------------|
+| **Compile-time (static)** | Does `Base` declare a member named `foo`? Is it `virtual`? | HOW the call is compiled: a direct call, or an indirect call through a fixed vtable slot |
+| **Runtime (dynamic)** | Which object does `ptr` actually point to right now? | WHICH function address sits in that vtable slot for this particular object |
+
+**Compile-time steps, in order:**
+1. Static type check: `ptr` is typed `Base*`, so lookup starts in `Base`, not `Derived`.
+2. Member lookup: confirm `Base` has a member named `foo`. If it doesn't, compilation fails here, before any dispatch decision is even made.
+3. Dispatch decision: if `Base::foo` is not `virtual`, the compiler binds the call directly to `Base::foo` (static dispatch, zero indirection). If it is `virtual`, the compiler instead emits code that reads a fixed vtable slot at runtime.
+
+**Runtime steps, once the virtual path was chosen at compile time:**
+1. Evaluate `ptr` to find the actual object.
+2. Read that object's vptr, set during construction to its own class's vtable, `Derived`'s vtable here, regardless of `ptr`'s static type.
+3. Fetch the function pointer sitting in the slot the compiler picked for `foo` (slot `[0]` in this example).
+4. Call through that pointer, landing in `Derived::foo`.
+
+```
+      [ Derived object ]                 [ Derived's vtable ]
+ptr ->  +----------------+                +----------------------+
+        | vptr           | -------------> | [0]: &Derived::foo   |
+        +----------------+                +----------------------+
+        | Derived members |
+        +----------------+
+```
+
+Roughly compiles to: `(*(ptr->vptr[0]))(ptr);`
+
+**Key takeaway:**
+- The **compiler** decides *that* the call needs a vtable lookup, and *which slot* to read. That decision comes from the static type (`Base*`) and never changes at runtime.
+- The **object's own vptr** decides *which function address* is sitting in that slot right now. That comes from the dynamic type (`Derived`) and is fixed by whichever constructor ran last.
+- Static type governs the first; dynamic type governs the second. Neither phase alone explains the output, both are needed.
+
 **Virtual Function Overhead:**
 
 | Cost Type | Impact | Typical Size |
@@ -169,6 +205,50 @@ int main() {
 ```
 
 The two phases run in strict order: **name lookup first** picks the scope (it finds `func` in `Derived` and stops), then **overload resolution** runs on *only* those candidates. The argument type is never consulted during lookup — so hiding the `string` overload leaves `double` as the sole candidate, and `"Hello"` cannot convert to `double`, so the call fails to compile.
+
+**Hiding is not limited to functions.** Name lookup stops at the first scope that contains the name, regardless of what kind of entity that name refers to: function, data member, type, anything. A plain data member with the same name as a base class function hides the function completely, not just its overload set:
+
+```cpp
+class Base {
+public:
+    void foo(int x) { std::cout << "Base::foo(int): " << x << "\n"; }
+};
+
+class Derived : public Base {
+public:
+    int foo = 42;   // Not a function at all
+};
+
+int main() {
+    Derived d;
+    // d.foo(10);   // COMPILE ERROR: 'foo' resolves to Derived::foo, an int.
+    //              // (10) then tries to call that int like a function.
+    //              // Base::foo(int) is never even considered.
+}
+```
+
+The pipeline that produces this error runs in three fixed steps, and step 1 finishes before the compiler has any notion that `(10)` is coming:
+
+```
+Step 1: Name Lookup       Step 2: Overload Resolution      Step 3: Access Check
+(find the name "foo")  -> (match args to candidates)    -> (public/private?)
+```
+
+1. **Name lookup** searches `Derived`'s scope first, finds `int foo`, and stops there. It does not yet know, and does not care, whether the full expression is `d.foo` or `d.foo(10)`.
+2. **Only after** the name resolves to one entity does the compiler look at how it's used. Substituting the result gives `(int)(10)`: calling an `int` as if it were a function, a type error.
+3. `Base::foo(int)` never enters the candidate set, because it was never *found*. Overload resolution has nothing to do with this failure; the call never reaches that step.
+
+**Reaching the hidden member explicitly.** The `Base` subobject still exists in memory inside every `Derived` object; the scope resolution operator reaches into it directly, bypassing derived-scope lookup entirely:
+
+```cpp
+d.Base::foo(10);   // Explicitly targets Base's scope; prints "Base::foo(int): 10"
+```
+
+**Why C++ resolves the name before checking how it's used.** If lookup skipped a non-callable candidate and kept searching outer scopes for a callable one, it would need to know things it can't know yet at that point:
+- Whether a variable happens to be a function pointer, or a functor with `operator()`.
+- Whether a template parameter's type will turn out to be callable, which isn't known until instantiation.
+
+Making lookup depend on later phases (argument types, template instantiation) would turn a fixed, scope-based rule into one that shifts with context, harder to reason about and harder to compile predictably. So C++ fixes the order instead: find the name in exactly one scope first, decide what to do with it second.
 
 #### Edge Case 2: Object Slicing in Polymorphic Hierarchies
 
