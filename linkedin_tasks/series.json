@@ -9,7 +9,7 @@
     "09:00",
     "21:00"
   ],
-  "start_date": "2026-11-23",
+  "start_date": "2026-11-17",
   "min_gap_hours": 6,
   "low_buffer_days": 7,
   "skip": [],
