@@ -6,5 +6,13 @@
   "chapter": "posts/ch4_concurrency",
   "comment_ok": true,
   "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/44070495179"
+ },
+ "T02-P2": {
+  "posted_at": "2026-11-18T04:33:28+05:30",
+  "post_urn": "urn:li:ugcPost:7528593683743674368",
+  "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7528593683743674368/",
+  "chapter": "posts/ch4_concurrency",
+  "comment_ok": true,
+  "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/44195691584"
  }
 }
