@@ -2,7 +2,10 @@
 
 ### THEORY_SECTION: Pack Indexing, Structured Bindings, Placeholders, Relocation, and Safer Uninitialized Reads
 
-C++26 is not yet a ratified ISO standard at the time of writing — everything below describes a proposal that has been **adopted into the C++26 working draft** by WG21 (the ISO C++ committee). Wording can still be refined by further papers before final ratification, but the design direction described here reflects the accepted proposals. This topic covers core language improvements outside of reflection, contracts, and `std::execution`, which have their own dedicated topics in this chapter.
+C++26 is not yet a ratified ISO standard at the time of writing. Everything below describes a proposal that has been **adopted into the C++26 working draft** by WG21 (the ISO C++ committee):
+
+- Wording can still be refined by further papers before final ratification, but the design direction described here reflects the accepted proposals.
+- This topic covers core language improvements outside of reflection, contracts, and `std::execution`, which have their own dedicated topics in this chapter.
 
 ---
 
@@ -86,13 +89,19 @@ second_arg(10, 20.5, "hi");  // → 20.5
 | First / Last type | Specialize base case | `Ts...[0]` / `Ts...[sizeof...(Ts)-1]` |
 | Compile cost | Extra template instantiations per index | Direct language construct, no extra instantiations |
 
-**Key restriction:** the index must be a compile-time constant expression (it can depend on other template parameters, but it cannot be a runtime value) — this is a compile-time indexing facility, not a runtime one. Out-of-range indices are ill-formed, just like an out-of-bounds `std::get`.
+**Key restrictions:**
+- The index must be a compile-time constant expression. It can depend on other template parameters, but it cannot be a runtime value: this is a compile-time indexing facility, not a runtime one.
+- Out-of-range indices are ill-formed, just like an out-of-bounds `std::get`.
 
 ---
 
 #### 2. Structured Bindings Improvements - Packs, and `static`/`thread_local` Storage
 
-C++17 introduced structured bindings (`auto [a, b, c] = tuple_like;`) but shipped with two restrictions that always felt arbitrary: you had to name every single element, and you could not give the binding `static` or `thread_local` storage duration. C++26 adopts papers (built around **P1061, "Structured Bindings can introduce a Pack"**, together with companion wording removing the storage-duration restriction) that lift both limits.
+C++17 introduced structured bindings (`auto [a, b, c] = tuple_like;`) but shipped with two restrictions that always felt arbitrary:
+- You had to name every single element.
+- You could not give the binding `static` or `thread_local` storage duration.
+
+C++26 adopts papers (built around **P1061, "Structured Bindings can introduce a Pack"**, together with companion wording removing the storage-duration restriction) that lift both limits.
 
 **2a. Structured Bindings Can Introduce a Pack**
 
@@ -150,7 +159,10 @@ Before C++26, working around this meant giving up structured bindings entirely a
 
 **The Pre-C++26 Problem:**
 
-C++ has always allowed exactly one unnamed *thing* per scope in a few contexts (e.g., an unused function parameter can be left nameless), but you could never declare **multiple** same-named "I don't care about this" variables in one scope — a second `auto _ = ...;` was a hard redefinition error. Structured bindings made this especially painful, because you're often forced to name every element even when you only want one or two of them.
+C++ has always allowed exactly one unnamed *thing* per scope in a few contexts (for example, an unused function parameter can be left nameless). But there was a real limitation:
+
+- You could never declare **multiple** same-named "I don't care about this" variables in one scope: a second `auto _ = ...;` was a hard redefinition error.
+- Structured bindings made this especially painful, because you're often forced to name every element even when you only want one or two of them.
 
 ```cpp
 // ❌ Pre-C++26: can't reuse the same throwaway name twice in one scope
@@ -193,7 +205,7 @@ for (auto _ : {1, 2, 3}) {            // range-for where the loop variable is un
 | Signal intent "this is genuinely unused" | `[[maybe_unused]]` + a name | `_` alone communicates it |
 | Redeclaring `_` in the same scope | Hard error | Explicitly allowed |
 
-**Key restriction:** `_` still must be *usable* as an ordinary identifier where the language requires one (for example you can't reference "the value of `_`" later if there are multiple placeholders active, since which `_` you'd mean is ambiguous by design) — its entire purpose is "I will never refer to this again."
+**Key restriction:** `_` still must be *usable* as an ordinary identifier where the language requires one. For example, you can't reference "the value of `_`" later if there are multiple placeholders active, since which `_` you'd mean is ambiguous by design: its entire purpose is "I will never refer to this again."
 
 ---
 
@@ -201,7 +213,12 @@ for (auto _ : {1, 2, 3}) {            // range-for where the loop variable is un
 
 **The Problem Relocation Solves:**
 
-Growing a `std::vector<T>` beyond its capacity has always meant, conceptually: allocate a bigger buffer, **move-construct** each existing element into the new buffer, then **destroy** each old element. For a type whose move constructor and destructor are both trivial in effect (no heap ownership tricks, no self-referential pointers, nothing that depends on the object's *address*), that's logically equivalent to a single `memcpy` of the whole buffer — but the standard, strictly speaking, still required the compiler to run N move-constructions and N destructions in sequence.
+Growing a `std::vector<T>` beyond its capacity has always meant, conceptually:
+1. Allocate a bigger buffer.
+2. **Move-construct** each existing element into the new buffer.
+3. **Destroy** each old element.
+
+For a type whose move constructor and destructor are both trivial in effect (no heap ownership tricks, no self-referential pointers, nothing that depends on the object's *address*), that's logically equivalent to a single `memcpy` of the whole buffer. But the standard, strictly speaking, still required the compiler to run N move-constructions and N destructions in sequence.
 
 ```cpp
 struct Point { double x, y, z; };   // move ctor + dtor are both trivial in EFFECT
@@ -212,11 +229,14 @@ std::vector<Point> pts;
 // Historically: still expressed as n individual move-constructs + n destructs
 ```
 
-For simple aggregates the optimizer often manages to see through this and generate the `memcpy` anyway, but for anything with a user-provided move constructor/destructor (even a "trivial-looking" one, or one hidden behind a non-inlined function boundary), the compiler had no *standard, portable* way to know it was safe to skip straight to a bulk-memory operation — and library-internal tricks to detect this were non-portable, `is_trivially_copyable`-based heuristics that undersold what's actually safe to relocate.
+For simple aggregates the optimizer often manages to see through this and generate the `memcpy` anyway. But for anything with a user-provided move constructor/destructor (even a "trivial-looking" one, or one hidden behind a non-inlined function boundary), the compiler had no *standard, portable* way to know it was safe to skip straight to a bulk-memory operation. Library-internal tricks to detect this were non-portable, `is_trivially_copyable`-based heuristics that undersold what's actually safe to relocate.
 
 **The C++26 Design (merging the long-running P1144 and P2786 proposals):**
 
-C++26 introduces a standard notion of a type being **trivially relocatable**: a property (opt-in via a trait/attribute — the exact standard spelling refined the two competing proposals into one, so treat any exact syntax shown here as illustrative of the *concept* rather than a guaranteed final spelling) meaning "moving this object and then destroying the moved-from object can be replaced by copying its bytes to the new location and treating the old bytes as inert, uninitialized storage — no constructor or destructor call needed at all."
+C++26 introduces a standard notion of a type being **trivially relocatable**: a property (opt-in via a trait/attribute, with the exact standard spelling refined as the two competing proposals merged into one, so treat any exact syntax shown here as illustrative of the *concept* rather than a guaranteed final spelling) meaning:
+
+- Moving this object and then destroying the moved-from object can be replaced by copying its bytes to the new location.
+- The old bytes can then be treated as inert, uninitialized storage, with no constructor or destructor call needed at all.
 
 ```cpp
 // Illustrative: the standard exposes a trait/attribute-based mechanism.
@@ -225,7 +245,7 @@ C++26 introduces a standard notion of a type being **trivially relocatable**: a 
 // can be declared/deduced trivially relocatable:
 
 struct Point { double x, y, z; };                 // trivially relocatable "for free"
-struct Widget { std::unique_ptr<Impl> impl; };    // can OPT IN — owns no self-reference
+struct Widget { std::unique_ptr<Impl> impl; };    // can OPT IN: owns no self-reference
 
 struct SelfReferential {
     char buffer[64];
@@ -233,7 +253,10 @@ struct SelfReferential {
 };
 ```
 
-The library-facing payoff is that containers (`std::vector`, `std::deque`, and friends) can detect "is `T` trivially relocatable?" and, when true, use a single bulk memory operation for growth/reallocation instead of a loop of individual move+destroy calls — a real, measurable throughput win for large containers of medium-sized, pointer-free-of-self-reference types.
+The library-facing payoff:
+- Containers (`std::vector`, `std::deque`, and friends) can detect "is `T` trivially relocatable?"
+- When true, they use a single bulk memory operation for growth/reallocation instead of a loop of individual move+destroy calls.
+- This is a real, measurable throughput win for large containers of medium-sized, pointer-free-of-self-reference types.
 
 **Why This Isn't Automatic for Every Movable Type:**
 
@@ -244,7 +267,7 @@ The library-facing payoff is that containers (`std::vector`, `std::deque`, and f
 | A type storing `this` in a global registry in its constructor | ✅ | ❌ (moving/memcpy'ing it leaves a dangling registry entry) |
 | A type with a pointer/reference *into itself* (e.g. small-buffer-optimized string-like types) | ✅ | ❌ unless specially handled (the whole point of SBO types is they're address-dependent) |
 
-Being movable only promises "there exists a valid sequence of move-then-destroy." Being **trivially** relocatable promises something stronger: that sequence has *no observable side effects beyond copying bytes* — which is a stricter, opt-in guarantee the compiler/library can rely on for optimization, not something safely inferred just because a move constructor exists.
+Being movable only promises "there exists a valid sequence of move-then-destroy." Being **trivially** relocatable promises something stronger: that sequence has *no observable side effects beyond copying bytes*. This is a stricter, opt-in guarantee the compiler/library can rely on for optimization, not something safely inferred just because a move constructor exists.
 
 ---
 
@@ -264,13 +287,17 @@ void classic_bug() {
 }
 ```
 
-Under **undefined behaviour**, the standard makes *no promise whatsoever* about what happens: the optimizer is legally entitled to assume the UB path is unreachable, which historically has led to bizarre, surprising results — branches that "shouldn't" be possible getting taken, code before the UB being affected by "time-traveling" optimizations, or the classic "it happened to work in debug builds and crashed mysteriously in release."
+Under **undefined behaviour**, the standard makes *no promise whatsoever* about what happens. The optimizer is legally entitled to assume the UB path is unreachable, which historically has led to bizarre, surprising results:
+- Branches that "shouldn't" be possible getting taken.
+- Code before the UB being affected by "time-traveling" optimizations.
+- The classic "it happened to work in debug builds and crashed mysteriously in release."
 
 C++26 introduces a new, narrower category for exactly this case (default-initialization of a trivial automatic object followed by reading it before assignment): **erroneous behaviour**. Under erroneous behaviour:
 
-- The read still produces a value — but it's a fixed, well-defined "erroneous value" (conceptually, the implementation is expected to give it a deterministic, typically zero-like, value rather than arbitrary garbage), **not** "anything can happen."
-- Implementations are encouraged (and, in many cases, required in debug/instrumented modes) to **diagnose** the erroneous read — e.g. at runtime via sanitizers or a debug build trap — rather than silently propagating a wrong value forever.
-- Crucially, this is *not* the same relaxation as "just zero-initialize everything by default": performance-sensitive code that truly wants uninitialized memory (e.g. via an explicit escape hatch) can still opt out, and the change is designed to avoid new mandatory runtime cost in optimized builds while still eliminating the worst class of "UB makes the optimizer assume this branch never happens" surprises.
+- The read still produces a value, but it's a fixed, well-defined "erroneous value" (conceptually, the implementation is expected to give it a deterministic, typically zero-like, value rather than arbitrary garbage), **not** "anything can happen."
+- Implementations are encouraged (and, in many cases, required in debug/instrumented modes) to **diagnose** the erroneous read, for example at runtime via sanitizers or a debug build trap, rather than silently propagating a wrong value forever.
+- Crucially, this is *not* the same relaxation as "just zero-initialize everything by default": performance-sensitive code that truly wants uninitialized memory (via an explicit escape hatch) can still opt out.
+- The change is designed to avoid new mandatory runtime cost in optimized builds while still eliminating the worst class of "UB makes the optimizer assume this branch never happens" surprises.
 
 ```cpp
 // ✅ C++26: erroneous behaviour instead of UB
@@ -314,16 +341,19 @@ The net effect: one of the most dangerous, hardest-to-diagnose bug categories in
 
 #### 7. Compile-Time vs Runtime Breakdown
 
-Not every feature in this topic costs the same at runtime — some are purely compile-time bookkeeping, one has a genuine (small) per-access runtime check, and one changes *how much runtime work* a completely different operation (container growth) does.
+Not every feature in this topic costs the same at runtime:
+- Some are purely compile-time bookkeeping.
+- One has a genuine (small) per-access runtime check.
+- One changes *how much runtime work* a completely different operation (container growth) does.
 
 | Feature | Compile Time | Runtime | Runtime Cost |
 |---|---|---|---|
-| Pack indexing (`Ts...[i]`) | Resolves directly to the concrete Nth type/value; no recursive template instantiation chain to walk | Nothing — for type packs there is no runtime artifact at all; for value packs (`args...[i]`) it reads the already-materialized argument, same as writing the name directly | **Zero.** Actually *cheaper at compile time too* than the old recursive-`NthType`/`tuple_element` approach, since there's no chain of intermediate template instantiations to elaborate |
-| Structured bindings introduce a pack (`auto [head, ...rest] = x`) | The compiler decides, per name, which tuple/struct element it aliases | Reading `head` or any element of `rest` is a plain memory read of that element — identical codegen to naming it by hand | **Zero extra** beyond what accessing the underlying elements always cost |
-| `static`/`thread_local` structured bindings | Storage duration and layout fixed at compile time | **This one is different:** every access after the first goes through the same thread-safe initialization-guard check any function-local `static` uses (a flag test, "have I run the initializer yet?") | **Small but real** — a guard-flag branch per access; worth knowing about if the binding sits in a hot loop, though it's the same cost you'd already pay for an equivalent hand-written `static` variable |
-| Placeholder `_` | Purely a name-lookup rule — the compiler stops treating `_` as "redeclaration" and stops complaining about "unused" | The underlying object still has a real address, a real constructor, and a real destructor that runs at scope exit exactly as if it had a normal name | **Zero.** `_` changes what the compiler *lets you write*, not what code it *emits* — an unnamed `std::lock_guard _(mtx);` locks and unlocks exactly like a named one |
-| Trivial relocatability (opt-in trait) | The trait check (`is_trivially_relocatable_v<T>`) is evaluated at compile time and selects, at compile time, *which relocation strategy the container's growth code compiles to* | The strategy itself runs at runtime — but which one runs is fixed at compile time, not decided per-call | See the Memory Model below — this is where trivial relocatability actually pays off, by changing the *shape* of the runtime work container growth does |
-| Erroneous behaviour for uninitialized reads | The standard's *promise* about the read changes; no new instrumentation is inserted, no check is added | The read itself was always going to load whatever bit pattern sits at that stack address — that load still happens exactly as before | **Zero added cost.** This is a pure semantic reclassification: "undefined (anything can happen)" becomes "erroneous (a real, fixed, possibly-diagnosable value)" without the compiler doing any extra work at the point of the read |
+| Pack indexing (`Ts...[i]`) | Resolves directly to the concrete Nth type/value; no recursive template instantiation chain to walk | Nothing for type packs (no runtime artifact at all); for value packs (`args...[i]`) it reads the already-materialized argument, same as writing the name directly | **Zero.** Actually *cheaper at compile time too* than the old recursive-`NthType`/`tuple_element` approach, since there's no chain of intermediate template instantiations to elaborate |
+| Structured bindings introduce a pack (`auto [head, ...rest] = x`) | The compiler decides, per name, which tuple/struct element it aliases | Reading `head` or any element of `rest` is a plain memory read of that element: identical codegen to naming it by hand | **Zero extra** beyond what accessing the underlying elements always cost |
+| `static`/`thread_local` structured bindings | Storage duration and layout fixed at compile time | **This one is different:** every access after the first goes through the same thread-safe initialization-guard check any function-local `static` uses (a flag test, "have I run the initializer yet?") | **Small but real:** a guard-flag branch per access. Worth knowing about if the binding sits in a hot loop, though it's the same cost you'd already pay for an equivalent hand-written `static` variable |
+| Placeholder `_` | Purely a name-lookup rule: the compiler stops treating `_` as "redeclaration" and stops complaining about "unused" | The underlying object still has a real address, a real constructor, and a real destructor that runs at scope exit exactly as if it had a normal name | **Zero.** `_` changes what the compiler *lets you write*, not what code it *emits*. An unnamed `std::lock_guard _(mtx);` locks and unlocks exactly like a named one |
+| Trivial relocatability (opt-in trait) | The trait check (`is_trivially_relocatable_v<T>`) is evaluated at compile time and selects, at compile time, *which relocation strategy the container's growth code compiles to* | The strategy itself runs at runtime, but which one runs is fixed at compile time, not decided per-call | See the Memory Model below: this is where trivial relocatability actually pays off, by changing the *shape* of the runtime work container growth does |
+| Erroneous behaviour for uninitialized reads | The standard's *promise* about the read changes; no new instrumentation is inserted, no check is added | The read itself was always going to load whatever bit pattern sits at that stack address; that load still happens exactly as before | **Zero added cost.** This is a pure semantic reclassification: "undefined (anything can happen)" becomes "erroneous (a real, fixed, possibly-diagnosable value)" without the compiler doing any extra work at the point of the read |
 
 ---
 
@@ -357,9 +387,14 @@ ONE call: memcpy(new_buffer, old_buffer, 4 * sizeof(T))
 = 1 bulk memory operation instead of 8 function calls
 ```
 
-The other two features have simpler footprints worth noting: pack indexing leaves **zero runtime bytes anywhere** — it only exists while the template is being instantiated, and is gone by the time code is emitted. A `static`/`thread_local` structured binding, by contrast, lives in **static storage** (not the stack, not the heap) for the life of the program or thread, exactly like any other `static` variable — the only "extra" memory is the one-time init-guard flag the runtime already needs for ordinary statics.
+The other two features have simpler footprints worth noting:
+- Pack indexing leaves **zero runtime bytes anywhere**. It only exists while the template is being instantiated, and is gone by the time code is emitted.
+- A `static`/`thread_local` structured binding, by contrast, lives in **static storage** (not the stack, not the heap) for the life of the program or thread, exactly like any other `static` variable. The only "extra" memory is the one-time init-guard flag the runtime already needs for ordinary statics.
 
-**Why this matters for low latency:** container reallocation is a well-known source of latency spikes in hot paths — a `std::vector<T>` that outgrows its capacity mid-loop pays for N move-constructions and N destructions synchronously, right when you can least afford it. Trivial relocatability collapses that into a single `memcpy`/`memmove`, trading N small function calls for one bulk copy the CPU can execute with tight, predictable, cache-friendly throughput. For simple, safely-relocatable payloads (small structs, fixed buffers, anything without self-referential pointers or external registration of `this`), opting into this trait is one of the more direct, measurable wins C++26 offers for allocation-and-growth-sensitive hot-path code.
+**Why this matters for low latency:**
+- Container reallocation is a well-known source of latency spikes in hot paths. A `std::vector<T>` that outgrows its capacity mid-loop pays for N move-constructions and N destructions synchronously, right when you can least afford it.
+- Trivial relocatability collapses that into a single `memcpy`/`memmove`, trading N small function calls for one bulk copy the CPU can execute with tight, predictable, cache-friendly throughput.
+- For simple, safely-relocatable payloads (small structs, fixed buffers, anything without self-referential pointers or external registration of `this`), opting into this trait is one of the more direct, measurable wins C++26 offers for allocation-and-growth-sensitive hot-path code.
 
 ---
 
@@ -374,7 +409,7 @@ using Third = Ts...[2];
 using Bad = Third<int, double>;   // ❌ Error: pack only has 2 elements (indices 0, 1)
 ```
 
-`Ts...[i]` is checked against the pack's actual size at compile time, so an out-of-range index is ill-formed — but the diagnostic is direct: "pack index 2 is out of bounds for a pack of size 2," pointing straight at the indexing expression. Compare this to the pre-C++26 recursive-template equivalent:
+`Ts...[i]` is checked against the pack's actual size at compile time, so an out-of-range index is ill-formed. But the diagnostic is direct: "pack index 2 is out of bounds for a pack of size 2," pointing straight at the indexing expression. Compare this to the pre-C++26 recursive-template equivalent:
 
 ```cpp
 template<std::size_t I, typename T, typename... Rest>
@@ -387,7 +422,7 @@ using Bad2 = NthType<2, int, double>::type;  // ❌ Error, but buried several
                                               // case* rather than at the call site.
 ```
 
-The recursion-based approach fails "downstream" — the error surfaces inside the metaprogramming helper, not at the line the programmer actually wrote. Pack indexing fails exactly where the mistake was made.
+The recursion-based approach fails "downstream": the error surfaces inside the metaprogramming helper, not at the line the programmer actually wrote. Pack indexing fails exactly where the mistake was made.
 
 ---
 
@@ -397,12 +432,12 @@ The recursion-based approach fails "downstream" — the error surfaces inside th
 template<typename... Args>
 auto pick(std::size_t n, Args&&... args) {
     // ❌ Error: `n` is a runtime value, but pack indexing needs a
-    // compile-time constant expression — this is NOT operator[] on an array.
+    // compile-time constant expression (this is NOT operator[] on an array).
     return args...[n];
 }
 ```
 
-A common misconception is that `args...[n]` behaves like indexing a `std::array` or `std::vector` at runtime. It does not: the pack itself is a compile-time construct (its length and the type/value of each element are fixed when the template is instantiated), so the index must be a constant expression — usable with `if constexpr`, a template non-type parameter, or `sizeof...(Args)`-derived constants, but never with an ordinary runtime `std::size_t` parameter:
+A common misconception is that `args...[n]` behaves like indexing a `std::array` or `std::vector` at runtime. It does not: the pack itself is a compile-time construct (its length and the type/value of each element are fixed when the template is instantiated), so the index must be a constant expression. It's usable with `if constexpr`, a template non-type parameter, or `sizeof...(Args)`-derived constants, but never with an ordinary runtime `std::size_t` parameter:
 
 ```cpp
 template<std::size_t N, typename... Args>
@@ -430,7 +465,9 @@ auto&& [first_f, ...rest_f] = std::move(tup);
 // `rest_f` is a pack of rvalue references, enabling moves out of `tup`
 ```
 
-Because each element of the pack can have a *different* underlying type, `rest`/`rest_r`/`rest_f` are heterogeneous packs — you can fold-expression over them (`(use(rest), ...)`) but you cannot store them all in one homogeneous container without first converting to a common type or a `std::tuple`. And when the source has exactly one element, `...rest` legally binds to an **empty pack** — `sizeof...(rest) == 0` — which is well-formed but means any fold expression over `rest` silently does nothing rather than erroring.
+Because each element of the pack can have a *different* underlying type, `rest`/`rest_r`/`rest_f` are heterogeneous packs:
+- You can fold-expression over them (`(use(rest), ...)`) but you cannot store them all in one homogeneous container without first converting to a common type or a `std::tuple`.
+- When the source has exactly one element, `...rest` legally binds to an **empty pack** (`sizeof...(rest) == 0`), which is well-formed but means any fold expression over `rest` silently does nothing rather than erroring.
 
 ---
 
@@ -450,7 +487,9 @@ void f() {
 }
 ```
 
-The pitfall isn't new semantics — it's that people sometimes *expect* new semantics because the syntax is new. A `static`/`thread_local` structured binding follows the exact same "initialized once, on first control flow through the declaration" and "destroyed in reverse order of construction at program/thread exit" rules as any other static or thread-local variable. Forgetting that a `static auto [x, y] = expensive_call();` inside a function only calls `expensive_call()` once (not once per invocation of the function) is the same classic static-local mistake C++ programmers have always had to watch for — it just now also applies to structured bindings.
+The pitfall isn't new semantics. It's that people sometimes *expect* new semantics because the syntax is new:
+- A `static`/`thread_local` structured binding follows the exact same "initialized once, on first control flow through the declaration" and "destroyed in reverse order of construction at program/thread exit" rules as any other static or thread-local variable.
+- Forgetting that a `static auto [x, y] = expensive_call();` inside a function only calls `expensive_call()` once (not once per invocation of the function) is the same classic static-local mistake C++ programmers have always had to watch for. It just now also applies to structured bindings.
 
 ---
 
@@ -463,7 +502,10 @@ auto [_, total]  = get_pair_2();   // ✅ OK - a second, independent placeholder
 // std::cout << _;   // ❌ Error: ambiguous / ill-formed - which `_` do you mean?
 ```
 
-The relaxation only permits *declaring* multiple `_`s in one scope without a redefinition error — it does **not** turn `_` into a single mutable shared variable you can read back later. Each `_` is its own unnamed entity that exists purely to satisfy "a name is required here," and the language does not let you refer to "the value of `_`" afterward, since with more than one active placeholder there would be no well-defined answer to *which* `_` you meant. If you need the value later, you must give it a real name — `_` communicates "I will never read this again," and the compiler holds you to that.
+The relaxation only permits *declaring* multiple `_`s in one scope without a redefinition error. It does **not** turn `_` into a single mutable shared variable you can read back later:
+- Each `_` is its own unnamed entity that exists purely to satisfy "a name is required here."
+- The language does not let you refer to "the value of `_`" afterward, since with more than one active placeholder there would be no well-defined answer to *which* `_` you meant.
+- If you need the value later, you must give it a real name. `_` communicates "I will never read this again," and the compiler holds you to that.
 
 ---
 
@@ -483,7 +525,7 @@ struct Observer {
 // programmer makes*, and the compiler generally cannot verify it for you.
 ```
 
-This is the sharp edge of an opt-in feature: trivial relocatability is a contract the type author asserts, not something the compiler exhaustively proves in all cases. A type with any address-dependent state (external registries, intrusive linked-list nodes pointing at `this`, small-buffer-optimized storage pointing into itself) that is incorrectly marked trivially relocatable will *compile fine* and then corrupt memory only when a container actually reallocates — making this a "looks fine until the vector grows past its initial capacity" class of bug.
+This is the sharp edge of an opt-in feature: trivial relocatability is a contract the type author asserts, not something the compiler exhaustively proves in all cases. A type with any address-dependent state (external registries, intrusive linked-list nodes pointing at `this`, small-buffer-optimized storage pointing into itself) that is incorrectly marked trivially relocatable will *compile fine* and then corrupt memory only when a container actually reallocates. This makes it a "looks fine until the vector grows past its initial capacity" class of bug.
 
 ---
 
@@ -505,7 +547,7 @@ void still_dangerous() {
 }
 ```
 
-A common over-generalization is assuming P2795 makes uninitialized-variable bugs "safe" across the board. It narrowly targets one specific, extremely common pattern — reading a *trivial* automatic variable (like a bare `int`, `double`, or a trivial struct of such fields) before any initialization — and gives that specific read a fixed, diagnosable value instead of full UB. It says nothing about dereferencing wild pointers, calling member functions on non-trivial objects in a moved-from-but-not-reset state, or any of C++'s many other UB sources — those remain exactly as dangerous as before.
+A common over-generalization is assuming P2795 makes uninitialized-variable bugs "safe" across the board. It narrowly targets one specific, extremely common pattern (reading a *trivial* automatic variable, like a bare `int`, `double`, or a trivial struct of such fields, before any initialization) and gives that specific read a fixed, diagnosable value instead of full UB. It says nothing about dereferencing wild pointers, calling member functions on non-trivial objects in a moved-from-but-not-reset state, or any of C++'s many other UB sources: those remain exactly as dangerous as before.
 
 ---
 

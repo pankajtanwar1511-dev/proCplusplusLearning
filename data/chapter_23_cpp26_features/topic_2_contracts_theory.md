@@ -2,7 +2,11 @@
 
 ### THEORY_SECTION: Declaring Function Contracts as Part of the Interface
 
-C++26 is on track to adopt **Contracts** — `pre()`, `post()`, and `contract_assert()` — based on **P2900 "Contracts for C++"**, the accepted **Minimum Viable Product (MVP)** design voted into the C++26 working draft. This is a deliberately trimmed-down design: contracts have a long, difficult standardization history (an earlier attempt was voted into C++20 and then pulled before publication due to unresolved semantic questions), and the MVP represents the subset the committee could reach consensus on. Some details below (exact build-mode names, the full shape of the violation-handling customization surface) are still settling as of this writing and are described conceptually rather than as frozen wording.
+C++26 is on track to adopt **Contracts**: `pre()`, `post()`, and `contract_assert()`, based on **P2900 "Contracts for C++"**, the accepted **Minimum Viable Product (MVP)** design voted into the C++26 working draft. This is a deliberately trimmed-down design:
+
+- Contracts have a long, difficult standardization history. An earlier attempt was voted into C++20 and then pulled before publication due to unresolved semantic questions.
+- The MVP represents the subset the committee could reach consensus on.
+- Some details below (exact build-mode names, the full shape of the violation-handling customization surface) are still settling as of this writing and are described conceptually rather than as frozen wording.
 
 ---
 
@@ -32,10 +36,10 @@ double compute_sqrt(double x) {
 | `assert()` lives in the definition, not the declaration | A caller including only the header has no idea `x >= 0` is required |
 | `assert()` disappears entirely under `NDEBUG` | "Release mode" silently drops all checking, including checks a team may have wanted to keep |
 | No standard way to express postconditions | Teams invent ad hoc macros (`POSTCONDITION(...)`, `ENSURES(...)`) that vary project to project |
-| Comments as documentation | `// x must be positive` is not checked by the compiler or at runtime — it rots silently |
+| Comments as documentation | `// x must be positive` is not checked by the compiler or at runtime, and it rots silently |
 | Design-by-Contract libraries | Every library reinvents its own contract macros, with no interoperability and no compiler awareness |
 
-The core idea of Contracts is to make preconditions and postconditions **syntax attached to the function declaration** — visible wherever the function is declared, not hidden inside a translation unit the caller never sees.
+The core idea of Contracts is to make preconditions and postconditions **syntax attached to the function declaration**. This makes the contract visible wherever the function is declared, not hidden inside a translation unit the caller never sees.
 
 ---
 
@@ -78,7 +82,7 @@ A function is usually *declared* in a header and *defined* in a `.cpp` file. Eve
 - Other translation units that merely `#include` the header
 - Future maintainers reading the public API surface
 
-By attaching `pre(...)` to the declaration (and, when repeated, to the definition — the standard requires the contract-assertions to be consistent across redeclarations), the requirement becomes discoverable at the *call site*, not just inside the implementation.
+By attaching `pre(...)` to the declaration (and, when repeated, to the definition; the standard requires the contract-assertions to be consistent across redeclarations), the requirement becomes discoverable at the *call site*, not just inside the implementation.
 
 ```cpp
 // header.hpp
@@ -105,7 +109,7 @@ double compute_sqrt(double x)
 }
 ```
 
-**Worked example — a `clamp`-style function:**
+**Worked example: a `clamp`-style function:**
 
 ```cpp
 int clamp_to_range(int value, int lo, int hi)
@@ -122,7 +126,7 @@ Here:
 - `pre(lo <= hi)` documents and (depending on build semantic) checks that the caller passed a sane range.
 - `post(r: r >= lo && r <= hi)` documents and checks that whatever the implementation does internally, the result is guaranteed to land inside `[lo, hi]`.
 
-If a future maintainer "optimizes" the function and introduces a bug that lets the result escape the range, the postcondition — not just a unit test that happens to cover that path — catches it, in exactly the build modes where checking is enabled.
+If a future maintainer "optimizes" the function and introduces a bug that lets the result escape the range, the postcondition catches it, not just a unit test that happens to cover that path, in exactly the build modes where checking is enabled.
 
 **Postconditions on `void` functions** simply omit the result binding:
 
@@ -137,9 +141,9 @@ void resize_buffer(std::vector<char>& buf, size_t n)
 
 ---
 
-#### 4. `contract_assert` — An In-Body Assertion Statement
+#### 4. `contract_assert`: An In-Body Assertion Statement
 
-Alongside `pre`/`post` on declarations, C++26 introduces `contract_assert(expression);` as a **statement usable anywhere inside a function body** — the direct successor to the `assert()` macro, but as real language grammar rather than a preprocessor macro:
+Alongside `pre`/`post` on declarations, C++26 introduces `contract_assert(expression);` as a **statement usable anywhere inside a function body**. It is the direct successor to the `assert()` macro, but as real language grammar rather than a preprocessor macro:
 
 ```cpp
 void process(std::vector<int>& data) {
@@ -159,10 +163,10 @@ void process(std::vector<int>& data) {
 | Nature | Preprocessor macro | Real grammar production, part of the language |
 | Disabling | Entirely compiled out when `NDEBUG` is defined | Governed by the same contract *semantic* system as `pre`/`post` (conceptually "ignore" vs. checked modes), not an all-or-nothing macro flag |
 | Diagnostic on failure | Implementation-defined `abort()`-style message | Goes through the standard **violation handler** mechanism (see below), consistently with `pre`/`post` failures |
-| Where it can appear | Anywhere `assert(...)` is textually valid (function-like macro) | Anywhere a statement is valid — a genuine statement, so it participates properly in things like `if constexpr` branches |
-| Relationship to the type system | None — it's text substitution | Part of the same contract-assertion family as `pre`/`post`, sharing one evaluation model |
+| Where it can appear | Anywhere `assert(...)` is textually valid (function-like macro) | Anywhere a statement is valid, a genuine statement, so it participates properly in things like `if constexpr` branches |
+| Relationship to the type system | None, it's text substitution | Part of the same contract-assertion family as `pre`/`post`, sharing one evaluation model |
 
-`contract_assert` does not replace `pre`/`post` — it complements them for mid-function invariants that don't naturally belong on the signature.
+`contract_assert` does not replace `pre`/`post`. It complements them for mid-function invariants that don't naturally belong on the signature.
 
 ---
 
@@ -172,8 +176,8 @@ A contract-assertion (`pre`, `post`, or `contract_assert`) is governed by a **se
 
 | Semantic | Is the expression evaluated? | On violation (expression is `false`) | Typical use |
 |---|---|---|---|
-| **ignore** | No — the check is not evaluated at all | N/A — zero runtime cost, as if the contract-assertion were absent | Maximum-performance release builds, analogous to today's `NDEBUG` |
-| **observe** | Yes | Invokes the *violation handler*, then execution **continues** | Diagnostics/telemetry in production without crashing the program |
+| **ignore** | No, the check is not evaluated at all | N/A, zero runtime cost, as if the contract-assertion were absent | Maximum-performance release builds, analogous to today's `NDEBUG` |
+| **observe** | Yes | Invokes the *violation handler*, then execution **continues** | Diagnostics/telemetry in production without crashing |
 | **enforce** | Yes | Invokes the *violation handler*, then the program **terminates** | Debug and testing builds where a broken contract must stop execution immediately |
 
 ```cpp
@@ -189,9 +193,9 @@ divide(10, 0);
 // Under "enforce": violation handler runs, then the program terminates before reaching a/b
 ```
 
-Which semantic applies to which contract-assertions in a given translation unit is a **build-mode decision** — the standard defines the semantic model, but the exact mechanism for selecting a semantic (compiler flag names, attributes, or a future "labeled semantics" extension) is implementation-defined and, at the time of writing, still an area where implementations and tooling are converging. Treat "ignore/observe/enforce" as the *concepts* to reason about, not as fixed command-line syntax.
+Which semantic applies to which contract-assertions in a given translation unit is a **build-mode decision**. The standard defines the semantic model, but the exact mechanism for selecting a semantic (compiler flag names, attributes, or a future "labeled semantics" extension) is implementation-defined and, at the time of writing, still an area where implementations and tooling are converging. Treat "ignore/observe/enforce" as the *concepts* to reason about, not as fixed command-line syntax.
 
-**Key implication:** because `ignore` mode evaluates nothing, a contract-assertion expression **must not have side effects the program depends on** — exactly like the historical guidance for `assert()`.
+**Key implication:** because `ignore` mode evaluates nothing, a contract-assertion expression **must not have side effects the program depends on**, exactly like the historical guidance for `assert()`.
 
 ```cpp
 // ❌ Dangerous: relies on the side effect of the expression
@@ -210,10 +214,10 @@ pre(resource_ready)
 When a contract-assertion is evaluated (under `observe` or `enforce`) and found `false`, the implementation invokes a **contract-violation handler**. Conceptually, a violation event carries information such as:
 
 - **Which kind of contract-assertion** failed (a precondition, a postcondition, or a `contract_assert`)
-- **The source location** of the contract-assertion (file, line — similar in spirit to `std::source_location`)
+- **The source location** of the contract-assertion (file and line, similar in spirit to `std::source_location`)
 - **The evaluation semantic in effect** (so the handler, or a human reading a log, knows whether the program is about to terminate)
 
-By default, a violation is expected to produce a diagnostic (implementation-defined format) and, in `enforce` mode, terminate the program. The MVP's design leaves room for programs to eventually customize this handler (for example, to route violations into an application's own logging/telemetry system instead of the default behavior), but a fully standardized, portable customization API was **not** locked down in the initial MVP — this is explicitly called out as follow-up work for later revisions of the feature.
+By default, a violation is expected to produce a diagnostic (implementation-defined format) and, in `enforce` mode, terminate the program. The MVP's design leaves room for programs to eventually customize this handler (for example, to route violations into an application's own logging/telemetry system instead of the default behavior), but a fully standardized, portable customization API was **not** locked down in the initial MVP. This is explicitly called out as follow-up work for later revisions of the feature.
 
 ```cpp
 // Conceptual sketch of what a violation handler receives — not standardized surface syntax
@@ -229,16 +233,21 @@ void my_conceptual_handler(/* contract_violation info */) {
 
 #### 7. What the MVP Deliberately Leaves Out
 
-Contracts have been attempted before: a version was voted into the **C++20** working draft and then **removed before publication** because the committee could not agree on core semantic questions (particularly around what optimizers were allowed to assume from a contract, and how virtual functions should behave). The C++26 MVP is a intentionally-narrowed redesign meant to avoid repeating that failure. Notable omissions versus earlier, more ambitious proposals:
+Contracts have been attempted before:
+
+- A version was voted into the **C++20** working draft and then **removed before publication** because the committee could not agree on core semantic questions, particularly around what optimizers were allowed to assume from a contract, and how virtual functions should behave.
+- The C++26 MVP is an intentionally-narrowed redesign meant to avoid repeating that failure.
+
+Notable omissions versus earlier, more ambitious proposals:
 
 | Left out of the MVP | Why | Status |
 |---|---|---|
-| **`axiom` assertions** (unchecked, documentation/optimizer-only contracts — never evaluated, purely advisory) | Blurred the line with `[[assume]]`-style optimization hints and reopened the "what may the optimizer assume" debate that sank the C++20 attempt | Deferred to a future paper |
+| **`axiom` assertions** (unchecked, documentation/optimizer-only contracts, never evaluated, purely advisory) | Blurred the line with `[[assume]]`-style optimization hints and reopened the "what may the optimizer assume" debate that sank the C++20 attempt | Deferred to a future paper |
 | **Contracts on virtual functions with different conditions per override** | Subtle semantic questions about which contract applies at a call through a base pointer | Deferred / restricted in the MVP |
 | **A fully standardized custom violation-handler API** | Needed more design time to get right without over-constraining implementations | Left for a follow-up proposal |
 | **Contracts as part of the mangled/ABI-visible type** (e.g. contract-checking affecting overload resolution or function identity) | Would have massively increased scope | Explicitly out of scope |
 
-The guiding principle of the MVP, as stated by its authors, is: ship a **minimal, useful, and safe** core now, and let real-world experience guide extensions in later C++ revisions — rather than trying to standardize the "complete" Design-by-Contract vision in one step, which is exactly what stalled the C++20 attempt.
+The guiding principle of the MVP, as stated by its authors, is to ship a **minimal, useful, and safe** core now, and let real-world experience guide extensions in later C++ revisions, rather than trying to standardize the "complete" Design-by-Contract vision in one step. That all-at-once approach is exactly what stalled the C++20 attempt.
 
 ---
 
@@ -248,12 +257,14 @@ C++23 already added `[[assume(expr)]]` as a pure optimizer hint (covered in the 
 
 | Feature | Introduced | Checked at runtime? | Purpose | Behavior if the condition is false |
 |---|---|---|---|---|
-| `assert(expr)` (`<cassert>` macro) | C (pre-standard C++) | Only in debug builds (`NDEBUG` undefined) | Ad hoc debugging aid | Debug: `abort()`-style failure. Release (`NDEBUG`): condition is **not evaluated at all** — silently skipped |
-| `[[assume(expr)]]` | C++23 | **Never** | Tell the optimizer "you may assume this is true" to enable better code generation | **Undefined behavior** if false — the compiler is allowed to miscompile the surrounding code |
+| `assert(expr)` (`<cassert>` macro) | C (pre-standard C++) | Only in debug builds (`NDEBUG` undefined) | Ad hoc debugging aid | Debug: `abort()`-style failure. Release (`NDEBUG`): condition is **not evaluated at all**, silently skipped |
+| `[[assume(expr)]]` | C++23 | **Never** | Tell the optimizer "you may assume this is true" to enable better code generation | **Undefined behavior** if false, the compiler is allowed to miscompile the surrounding code |
 | `pre(expr)` / `post(name: expr)` | C++26 (P2900 MVP) | Depends on the in-effect semantic (`ignore`/`observe`/`enforce`) | Declare a function's interface contract, visible at the call site | `ignore`: not evaluated. `observe`: violation handler runs, execution continues. `enforce`: violation handler runs, then terminate |
 | `contract_assert(expr)` | C++26 (P2900 MVP) | Same semantic model as `pre`/`post` | In-body invariant check, successor to `assert()` | Same as above, per the active semantic |
 
-**The critical distinction to internalize:** `[[assume]]` is a promise *to the compiler* with no runtime check and undefined behavior if broken — it is not a safety mechanism. Contracts (`pre`/`post`/`contract_assert`) are the opposite: a documented, potentially-checked interface guarantee whose failure is a well-defined event (a violation), not undefined behavior, whenever the active semantic actually evaluates it.
+**The critical distinction to internalize:**
+- `[[assume]]` is a promise *to the compiler* with no runtime check and undefined behavior if broken. It is not a safety mechanism.
+- Contracts (`pre`/`post`/`contract_assert`) are the opposite: a documented, potentially-checked interface guarantee whose failure is a well-defined event (a violation), not undefined behavior, whenever the active semantic actually evaluates it.
 
 ```cpp
 int fast_path(int x)
@@ -264,27 +275,27 @@ int fast_path(int x)
 }
 ```
 
-A function can reasonably use both: `pre(x > 0)` as the documented, checkable contract for callers and tooling, and `[[assume(x > 0)]]` inside the body as a separate optimizer hint for the compiler — understanding that only the former ever protects you at runtime.
+A function can reasonably use both: `pre(x > 0)` as the documented, checkable contract for callers and tooling, and `[[assume(x > 0)]]` inside the body as a separate optimizer hint for the compiler. Only the former ever protects you at runtime.
 
 ---
 
 #### 9. Compile-Time vs Runtime Breakdown
 
-Contracts split cleanly into a compile-time phase (syntax checking, and — critically — deciding whether any runtime code exists at all) and a runtime phase (the actual branch, only in certain build modes):
+Contracts split cleanly into a compile-time phase (syntax checking, and, critically, deciding whether any runtime code exists at all) and a runtime phase (the actual branch, only in certain build modes):
 
 | Code / Mechanism | Phase | What Happens |
 |---|---|---|
 | `pre(x >= 0)` / `post(r: r >= 0)` syntax | Compile time | Parsed and type-checked as a `bool`-convertible expression referencing only names in scope; a malformed contract is a compile error, not a runtime surprise |
-| Build-mode selection (`ignore` / `observe` / `enforce`) | Compile time | A global (or per-TU, implementation-defined) configuration choice that determines *whether any runtime instructions are generated at all* for the check — this is decided once, at build time, not per call |
-| `ignore` mode | Compile time only | The check is fully erased — zero runtime instructions. The compiler *may* additionally treat the asserted condition as an `[[assume]]`-style fact for optimization, exactly as if you'd written the assumption by hand |
+| Build-mode selection (`ignore` / `observe` / `enforce`) | Compile time | A global (or per-TU, implementation-defined) configuration choice that determines *whether any runtime instructions are generated at all* for the check, decided once, at build time, not per call |
+| `ignore` mode | Compile time only | The check is fully erased, zero runtime instructions. The compiler *may* additionally treat the asserted condition as an `[[assume]]`-style fact for optimization, exactly as if you'd written the assumption by hand |
 | `observe` / `enforce` mode | Runtime (every call) | Compiler emits a real `if (!(x >= 0)) handle_contract_violation(...)` branch that executes on **every** invocation of the contracted function, not just failing ones |
-| The violation itself (building `std::contract_violation`, formatting a message, capturing a stack trace) | Runtime (failure path only) | Only constructed and paid for when the condition actually evaluates false — never on a successful call |
+| The violation itself (building `std::contract_violation`, formatting a message, capturing a stack trace) | Runtime (failure path only) | Only constructed and paid for when the condition actually evaluates false, never on a successful call |
 
-The key takeaway: which of these lines even exist in your compiled binary is a **compile-time** decision (the build mode), but whether the surviving branch is *taken* is a **runtime** one, decided fresh on every call based on live data.
+The key takeaway: which of these lines even exist in your compiled binary is a **compile-time** decision (the build mode). Whether the surviving branch is *taken* is a **runtime** one, decided fresh on every call based on live data.
 
 #### 10. Memory Model: Hot Path vs. Cold Path
 
-Contracts are designed so that the cost lives almost entirely on the failure path, which is rare, while the success path — the one that dominates real production traffic — stays cheap:
+Contracts are designed so that the cost lives almost entirely on the failure path, which is rare, while the success path, the one that dominates real production traffic, stays cheap:
 
 ```
 Caller invokes a contracted function
@@ -305,9 +316,12 @@ Caller invokes a contracted function
                                          └─ log / terminate / continue per semantic
 ```
 
-The branch-compare on the hot path touches only a value already in a register — no heap, no indirection, no extra cache line. All the "expensive" work (stack unwinding info, formatting, I/O for logging) is deferred to the cold path and only paid for when something has actually gone wrong.
+The branch-compare on the hot path touches only a value already in a register: no heap access, no indirection, no extra cache line. All the "expensive" work (stack unwinding info, formatting, I/O for logging) is deferred to the cold path and only paid for when something has actually gone wrong.
 
-**Why this matters for low latency:** this cost shape — near-zero on the success path, real cost only on the rare failure path — is exactly what makes `observe` mode viable to leave *enabled in production* low-latency systems: you get a safety net (logging/telemetry on violations) without taxing the hot path that carries real traffic. `ignore` mode goes further and removes the branch entirely, potentially letting the optimizer use the asserted condition to generate tighter code than it otherwise could — the same trick as `[[assume]]`, but derived from a contract you were already documenting.
+**Why this matters for low latency:**
+- This cost shape (near-zero on the success path, real cost only on the rare failure path) is exactly what makes `observe` mode viable to leave *enabled in production* for low-latency systems.
+- You get a safety net (logging/telemetry on violations) without taxing the hot path that carries real traffic.
+- `ignore` mode goes further and removes the branch entirely, potentially letting the optimizer use the asserted condition to generate tighter code than it otherwise could: the same trick as `[[assume]]`, but derived from a contract you were already documenting.
 
 ---
 
@@ -315,7 +329,7 @@ The branch-compare on the hot path touches only a value already in a register �
 
 #### Edge Case 1: Mutating a By-Reference Parameter Before the Postcondition Checks It
 
-A postcondition is evaluated **after the function body finishes** — so if the body mutates a by-reference (or pointer) parameter, the postcondition sees the *mutated* state, not the state at entry. This is easy to get backwards when translating an old `assert()`-at-the-top idiom:
+A postcondition is evaluated **after the function body finishes**. So if the body mutates a by-reference (or pointer) parameter, the postcondition sees the *mutated* state, not the state at entry. This is easy to get backwards when translating an old `assert()`-at-the-top idiom:
 
 ```cpp
 // The intent: "grow the buffer to at least n bytes, and afterward its size is >= n"
@@ -330,7 +344,7 @@ void ensure_capacity(std::vector<char>& buf, size_t n)
 }
 ```
 
-The subtlety is not that this is wrong — it is correct — but that a postcondition referring to a by-reference parameter is implicitly a statement about **post-call state**, not a snapshot from entry. A contract-assertion that needs to compare "before" and "after" values (e.g. `post(buf.size() >= old_size)`) has no built-in "old-value" capture facility in the MVP — unlike some Design-by-Contract languages (e.g. Eiffel's `old` keyword), which is a known limitation of this first iteration.
+The subtlety is not that this is wrong (it is correct), but that a postcondition referring to a by-reference parameter is implicitly a statement about **post-call state**, not a snapshot from entry. A contract-assertion that needs to compare "before" and "after" values (e.g. `post(buf.size() >= old_size)`) has no built-in "old-value" capture facility in the MVP. This is a known limitation of this first iteration, unlike some Design-by-Contract languages (e.g. Eiffel's `old` keyword).
 
 ```cpp
 // ❌ Cannot express directly in the MVP — no `old(...)` facility yet:
@@ -346,7 +360,7 @@ assert(buf.size() >= before);   // Manual "old value" comparison, outside the co
 
 #### Edge Case 2: A Postcondition Must Hold for *Every* Return Statement, Not Just the One You Were Thinking About
 
-`post(r: ...)` is checked once per call, at whichever `return` statement actually executes — but it is trivially easy to write a postcondition while mentally testing it against only the "main" return path and forget a secondary one:
+`post(r: ...)` is checked once per call, at whichever `return` statement actually executes. It is trivially easy to write a postcondition while mentally testing it against only the "main" return path and forget a secondary one:
 
 ```cpp
 int find_first_even(const std::vector<int>& v)
@@ -363,7 +377,7 @@ int find_first_even(const std::vector<int>& v)
 }
 ```
 
-The author clearly meant to `return -1` when nothing even is found, but a copy-paste mistake left `return v.front();`. Because the postcondition is attached to the *declaration*, it fires on **every** exit path automatically — this is precisely the class of bug contracts are designed to catch that a unit test only covering "the happy path" would miss. The fix is functional (return the right value), not a change to the contract:
+The author clearly meant to `return -1` when nothing even is found, but a copy-paste mistake left `return v.front();`. Because the postcondition is attached to the *declaration*, it fires on **every** exit path automatically. This is precisely the class of bug contracts are designed to catch that a unit test only covering "the happy path" would miss. The fix is functional (return the right value), not a change to the contract:
 
 ```cpp
 int find_first_even(const std::vector<int>& v)
@@ -379,9 +393,9 @@ int find_first_even(const std::vector<int>& v)
 
 ---
 
-#### Edge Case 3: Contracts and Exceptions — What Happens If the Body Throws?
+#### Edge Case 3: Contracts and Exceptions: What Happens If the Body Throws?
 
-If a function body throws an exception before reaching a `return` statement, the function never produces a "result" — so its `post(r: ...)` is conceptually about the **normal-return** path only. Exiting via an exception is a different kind of contract entirely (the standard treats it as leaving via the exceptional path, not a postcondition violation):
+If a function body throws an exception before reaching a `return` statement, the function never produces a "result", so its `post(r: ...)` is conceptually about the **normal-return** path only. Exiting via an exception is a different kind of contract entirely (the standard treats it as leaving via the exceptional path, not a postcondition violation):
 
 ```cpp
 double compute_sqrt(double x)
@@ -395,7 +409,10 @@ double compute_sqrt(double x)
 }
 ```
 
-The important distinction to internalize: a precondition violation and a postcondition-on-throw are **not the same event**. `pre(x >= 0)` is checked on entry regardless of how the function later behaves; `post(r: r >= 0)` simply has nothing to check if the function exits by throwing instead of returning. Do not assume a `post()` is a "this function always leaves the system in state X" guarantee that also covers its exceptional exits — if that guarantee matters, it has to be documented and tested separately (e.g. via the strong exception-safety guarantee), not expressed through `post()`.
+The important distinction to internalize: a precondition violation and a postcondition-on-throw are **not the same event**.
+- `pre(x >= 0)` is checked on entry regardless of how the function later behaves.
+- `post(r: r >= 0)` simply has nothing to check if the function exits by throwing instead of returning.
+- Do not assume a `post()` is a "this function always leaves the system in state X" guarantee that also covers its exceptional exits. If that guarantee matters, it has to be documented and tested separately (e.g. via the strong exception-safety guarantee), not expressed through `post()`.
 
 ---
 
@@ -417,13 +434,13 @@ struct BuggyShape : Shape {
 };
 ```
 
-At the time of writing, whether (and how) a derived override is checked against a base's contract-assertions is one of the areas the MVP explicitly restricts or leaves for follow-up work rather than fully specifying — this was one of the concrete open questions that helped sink the earlier C++20 attempt. Treat contracts on virtual functions as an area to watch for refinement in later revisions of the feature rather than something to rely on today for polymorphic guarantees.
+At the time of writing, whether (and how) a derived override is checked against a base's contract-assertions is one of the areas the MVP explicitly restricts or leaves for follow-up work rather than fully specifying. This was one of the concrete open questions that helped sink the earlier C++20 attempt. Treat contracts on virtual functions as an area to watch for refinement in later revisions of the feature, rather than something to rely on today for polymorphic guarantees.
 
 ---
 
 #### Edge Case 5: A Precondition Expression With a Side Effect Behaves Differently Under Different Semantics
 
-Because `ignore` semantics skip evaluating the expression **entirely**, a contract-assertion that relies on a side effect will silently behave differently depending on which semantic is active — exactly the historical `assert()` trap, but easier to fall into because `pre(...)` looks like part of the function signature, not "debug code":
+Because `ignore` semantics skip evaluating the expression **entirely**, a contract-assertion that relies on a side effect will silently behave differently depending on which semantic is active. This is exactly the historical `assert()` trap, but easier to fall into because `pre(...)` looks like part of the function signature, not "debug code":
 
 ```cpp
 bool register_and_check(Registry& reg, int id)
@@ -436,7 +453,7 @@ bool register_and_check(Registry& reg, int id)
 // Under "ignore":            register_id(id) NEVER RUNS — id is silently never registered!
 ```
 
-This is not a corner case an optimizer invented — it is a direct consequence of the semantic model: `ignore` mode's entire performance benefit comes from *not evaluating the expression at all*, so any required side effect embedded in a contract-assertion is a latent, semantic-mode-dependent bug. The fix is the same discipline long recommended for `assert()`: perform the required work as an ordinary statement, and let the contract-assertion only *read* the resulting state.
+This is not a corner case an optimizer invented. It is a direct consequence of the semantic model: `ignore` mode's entire performance benefit comes from *not evaluating the expression at all*, so any required side effect embedded in a contract-assertion is a latent, semantic-mode-dependent bug. The fix is the same discipline long recommended for `assert()`: perform the required work as an ordinary statement, and let the contract-assertion only *read* the resulting state.
 
 ```cpp
 // ✅ Correct: side effect happens unconditionally; the contract only observes it
@@ -463,7 +480,7 @@ compute_sqrt(-1.0);
 // itself was built, not by how app.cpp was built.
 ```
 
-As of this writing, the precise rules for how semantics are selected per translation unit — and what happens when they disagree across a link boundary — are still an area where tooling and vendor guidance are converging; treat any specific claim about "which semantic wins" as implementation-defined until your toolchain's documentation says otherwise.
+As of this writing, the precise rules for how semantics are selected per translation unit, and what happens when they disagree across a link boundary, are still an area where tooling and vendor guidance are converging. Treat any specific claim about "which semantic wins" as implementation-defined until your toolchain's documentation says otherwise.
 
 ---
 
@@ -489,7 +506,7 @@ int main() {
 }
 ```
 
-Notice the precondition protects the implementation from ever having to reason about what `std::sqrt` does with a negative argument (implementation-defined/NaN territory) — the contract, not a runtime `if`, is the guard.
+Notice the precondition protects the implementation from ever having to reason about what `std::sqrt` does with a negative argument (implementation-defined/NaN territory). The contract, not a runtime `if`, is the guard.
 
 ---
 
@@ -539,7 +556,7 @@ Functionally identical in spirit to `assert(sum != 0.0);`, but `contract_assert`
 
 ---
 
-#### Example 4: Before/After — Manual `assert()` Idiom vs. Declared Contracts
+#### Example 4: Before/After: Manual `assert()` Idiom vs. Declared Contracts
 
 ```cpp
 // ❌ Before (pre-C++26 idiom): contract exists only as comments + body asserts
@@ -558,7 +575,7 @@ int checked_at(const std::vector<int>& v, int index)
 }
 ```
 
-The runtime behavior in an "enforce"-equivalent build is similar to the `assert()` version — but the C++26 version's contract is visible in `checked_at`'s declaration wherever it appears (e.g. in a header), discoverable by tooling, and governed by the same semantic system as every other contract-assertion in the program, rather than being an independent `NDEBUG`-gated macro.
+The runtime behavior in an "enforce"-equivalent build is similar to the `assert()` version. But the C++26 version's contract is visible in `checked_at`'s declaration wherever it appears (e.g. in a header), discoverable by tooling, and governed by the same semantic system as every other contract-assertion in the program, rather than being an independent `NDEBUG`-gated macro.
 
 ---
 
@@ -594,14 +611,14 @@ Until a given toolchain documents its actual violation-handler customization mec
 
 ### QUICK_REFERENCE: Contracts Cheat Sheet
 
-*(Reminder: this reflects the C++26 working-draft MVP design (P2900) — exact build-mode selection syntax is implementation-defined and still converging.)*
+*(Reminder: this reflects the C++26 working-draft MVP design (P2900). Exact build-mode selection syntax is implementation-defined and still converging.)*
 
 #### Contract-Assertion Syntax
 
 | Form | Attaches to | Purpose | Can reference |
 |---|---|---|---|
-| `pre(expr)` | Function declaration/definition | Precondition — checked on entry (per semantic) | Parameters, non-local state |
-| `post(name: expr)` | Function declaration/definition | Postcondition — checked after body, before return | `name` bound to the return value, parameters (post-call state) |
+| `pre(expr)` | Function declaration/definition | Precondition, checked on entry (per semantic) | Parameters, non-local state |
+| `post(name: expr)` | Function declaration/definition | Postcondition, checked after body, before return | `name` bound to the return value, parameters (post-call state) |
 | `post(expr)` (no binding) | `void`-returning function | Postcondition with no result to name | Parameters/state after the call |
 | `contract_assert(expr);` | Anywhere a statement is valid, inside a body | Mid-function invariant check | Any local state in scope |
 
@@ -609,7 +626,7 @@ Until a given toolchain documents its actual violation-handler customization mec
 
 | Semantic | Expression evaluated? | On violation | Cost |
 |---|---|---|---|
-| `ignore` | No | N/A (nothing runs) | Zero — as if absent |
+| `ignore` | No | N/A (nothing runs) | Zero, as if absent |
 | `observe` | Yes | Violation handler runs, then execution **continues** | Cost of evaluating + handler |
 | `enforce` | Yes | Violation handler runs, then the program **terminates** | Cost of evaluating + handler |
 

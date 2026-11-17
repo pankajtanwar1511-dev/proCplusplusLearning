@@ -2,7 +2,17 @@
 
 ### THEORY_SECTION: A Standard Model for Asynchronous and Parallel Work
 
-C++26 adopts **`std::execution`** (proposal **P2300**, "`std::execution`") into the working draft — the first standard-library-level, composable, allocator-aware model for asynchronous and parallel programming in C++. It introduces a small set of vocabulary types — **senders**, **receivers**, **schedulers**, and **operation states** — that let you describe *what* async work should happen and *where* it should run, without committing to a specific threading model, and without needing heap allocation or type erasure on the hot path. This section covers the model as adopted for C++26; some fine-grained naming and a few algorithm signatures were still being refined in later WG21 mailings, so treat exact spelling of lesser-used adaptors as approximate and always check the final wording of your standard library's implementation.
+C++26 adopts **`std::execution`** (proposal **P2300**) into the working draft. It is the first standard-library-level, composable, allocator-aware model for asynchronous and parallel programming in C++.
+
+It introduces a small set of vocabulary types:
+- **Senders** describe *what* async work should happen
+- **Receivers** describe how that work reports its outcome
+- **Schedulers** describe *where* the work should run
+- **Operation states** own the resources for a piece of work that is about to run, or is running
+
+None of this requires committing to a specific threading model, heap allocation, or type erasure on the hot path.
+
+This section covers the model as adopted for C++26. Some fine-grained naming and a few algorithm signatures were still being refined in later WG21 mailings, so treat exact spelling of lesser-used adaptors as approximate, and always check the final wording of your standard library's implementation.
 
 ---
 
@@ -67,12 +77,12 @@ task<int> compute() {
 
 | Approach | Composable? | Structured cancellation? | Allocation | Standardized "where it runs"? |
 |---|---|---|---|---|
-| `std::future` (`std::async`) | Poor — `.then()` not standard | No | Typically heap (shared state) | No (launch policy is a coarse hint) |
+| `std::future` (`std::async`) | Poor (`.then()` not standard) | No | Typically heap (shared state) | No (launch policy is a coarse hint) |
 | Raw callbacks | Ad hoc, manual glue per API | No standard shape | Depends on API | No |
-| C++20 coroutines alone | Good syntax, no stdlib wiring | Depends on hand-rolled `task` type | Depends on hand-rolled `task` type | No — no standard scheduler concept |
-| **`std::execution` (C++26)** | **Yes — senders compose via adaptors** | **Yes — `set_stopped` is first-class** | **Can be zero-allocation** | **Yes — schedulers are the "where"** |
+| C++20 coroutines alone | Good syntax, no stdlib wiring | Depends on hand-rolled `task` type | Depends on hand-rolled `task` type | No (no standard scheduler concept) |
+| **`std::execution` (C++26)** | **Yes: senders compose via adaptors** | **Yes: `set_stopped` is first-class** | **Can be zero-allocation** | **Yes: schedulers are the "where"** |
 
-`std::execution` is the library-level piece that was missing: a small set of concepts general enough to describe "run this on a thread pool, then transform the result, then join with this other piece of work, then report completion" — all as a static, composable *value* — while coroutines remain the syntax you can optionally layer on top.
+`std::execution` is the library-level piece that was missing. It is a small set of concepts general enough to describe a whole chain like "run this on a thread pool, then transform the result, then join with this other piece of work, then report completion," all as a single, static, composable *value*. Coroutines remain the syntax you can optionally layer on top.
 
 ---
 
@@ -80,7 +90,9 @@ task<int> compute() {
 
 **A sender describes work; it does not perform it.**
 
-A **sender** is a value that *describes* an asynchronous (or synchronous) operation and its possible completions, without starting anything. This is the same laziness principle as C++20 ranges: a `views::transform(v, f)` doesn't iterate `v` — it describes a transformation to apply when *something else* drives iteration. Similarly, a sender describes an operation to run when *something else* starts it.
+A **sender** is a value that *describes* an asynchronous (or synchronous) operation and its possible completions, without starting anything.
+
+This is the same laziness principle as C++20 ranges: a `views::transform(v, f)` doesn't iterate `v`, it describes a transformation to apply when *something else* drives iteration. Similarly, a sender describes an operation to run when *something else* starts it.
 
 ```cpp
 #include <execution>  // exposition; exact header/namespace may vary by implementation
@@ -97,7 +109,7 @@ ex::sender auto s2 = ex::then(s, [] { return 42; });
 
 **A receiver is how a sender reports its outcome.**
 
-A **receiver** is the "other end" of a sender — an object with (conceptually) three completion channels:
+A **receiver** is the "other end" of a sender: an object with (conceptually) three completion channels:
 
 ```cpp
 // Conceptual shape of the receiver contract (simplified):
@@ -130,7 +142,9 @@ ex::start(op_state);  // <-- THIS is what actually begins the work
 | `connect(sender, receiver)` | Bind a specific completion handler, materialize storage | Assembling ingredients into a pan |
 | `start(operation_state)` | Begin execution | Turning on the stove |
 
-Because the description (sender) is separate from the execution (`start`), senders can be composed, stored, passed around, and inspected *before* committing to running them — and because `connect` can allocate the operation state on the caller's stack frame (not the heap), whole pipelines can run with **zero dynamic allocation**, which was a hard design requirement of P2300 for use in embedded and high-performance contexts.
+Because the description (sender) is separate from the execution (`start`), this split gives two independent benefits:
+- Senders can be composed, stored, passed around, and inspected *before* committing to running them
+- `connect` can allocate the operation state on the caller's stack frame instead of the heap, so whole pipelines can run with **zero dynamic allocation**, a hard design requirement of P2300 for embedded and high-performance contexts
 
 ---
 
@@ -149,15 +163,18 @@ ex::scheduler auto gpu_sched   = my_gpu_context.get_scheduler(); // conceptual -
 ex::sender auto work = ex::schedule(pool_sched);
 ```
 
-This is a strictly more composable replacement for handing a callable directly to a thread pool's `submit()`/`enqueue()` method: a scheduler is a first-class, copyable, comparable value that can be threaded through generic algorithms, stored in variables, and swapped out (e.g. "run on the GPU scheduler in release builds, the inline scheduler in unit tests") without touching the code that builds the sender pipeline.
+This is a strictly more composable replacement for handing a callable directly to a thread pool's `submit()`/`enqueue()` method. A scheduler is a first-class, copyable, comparable value:
+- Can be threaded through generic algorithms
+- Can be stored in variables
+- Can be swapped out (e.g. run on the GPU scheduler in release builds, the inline scheduler in unit tests) without touching the code that builds the sender pipeline
 
 **Comparison: raw executor `submit()` vs. `schedule()`:**
 
 | | Raw thread-pool `submit(callable)` | `schedule(scheduler)` |
 |---|---|---|
-| Return value | Usually a `future`, or nothing | A **sender** — composable with `then`, `when_all`, etc. |
+| Return value | Usually a `future`, or nothing | A **sender**, composable with `then`, `when_all`, etc. |
 | Composability | Must nest callbacks or block on future | Chain via sender adaptors, no blocking |
-| Swappable "where" | Tied to a specific pool's API | Any type modeling `scheduler` — thread pool, inline, SIMD/GPU context |
+| Swappable "where" | Tied to a specific pool's API | Any type modeling `scheduler`: thread pool, inline, SIMD/GPU context |
 | Generic algorithms | Hard to write against arbitrary pools | Algorithms can be written generically over `scheduler auto` |
 
 ---
@@ -166,7 +183,7 @@ This is a strictly more composable replacement for handing a callable directly t
 
 The real power of the model is that senders compose through a set of standard adaptors, building up a pipeline that is only a *description* until something drives it.
 
-**`then` — transform a completion value:**
+**`then`: transform a completion value.**
 
 ```cpp
 ex::sender auto s = ex::then(
@@ -176,7 +193,7 @@ ex::sender auto s = ex::then(
 // s completes with the value 21, on pool_sched
 ```
 
-**`when_all` — structured fan-out / fan-in:**
+**`when_all`: structured fan-out / fan-in.**
 
 ```cpp
 // Run two independent pieces of work concurrently, and join their results
@@ -206,7 +223,7 @@ ex::sender auto pipeline =
     | ex::then([](auto gpu_result) { return finalize(gpu_result); });
 ```
 
-**`sync_wait` — bridging back into synchronous code:**
+**`sync_wait`: bridging back into synchronous code.**
 
 ```cpp
 int main() {
@@ -248,7 +265,7 @@ int main() {
 //   set_stopped(receiver)            -> cancelled, no value, no error
 ```
 
-This matters for structured concurrency: when `when_all` joins two senders and one of them calls `set_error`, the model can propagate a stop request to the sibling operation that's still running, and wait for it to unwind via `set_stopped` — rather than leaving orphaned work running after the enclosing scope has "moved on," which is exactly the class of bug structured-concurrency designs (and `std::jthread`'s `stop_token` in C++20) are meant to eliminate.
+This matters for structured concurrency. When `when_all` joins two senders and one of them calls `set_error`, the model can propagate a stop request to the sibling operation that's still running, and wait for it to unwind via `set_stopped`, rather than leaving orphaned work running after the enclosing scope has "moved on." This is exactly the class of bug structured-concurrency designs (and `std::jthread`'s `stop_token` in C++20) are meant to eliminate.
 
 ```cpp
 ex::sender auto risky = ex::then(ex::schedule(pool_sched), [] {
@@ -282,7 +299,7 @@ The relationship is layered, not competing:
 | Layer | Provides | Example |
 |---|---|---|
 | C++20 coroutines (language) | Suspend/resume syntax (`co_await`, `co_return`) | `task<int>` bodies |
-| `std::execution` (library, C++26) | Senders/receivers/schedulers — the "engine" a coroutine can plug into | `ex::schedule`, `ex::then`, thread pools |
+| `std::execution` (library, C++26) | Senders/receivers/schedulers: the "engine" a coroutine can plug into | `ex::schedule`, `ex::then`, thread pools |
 
 Before C++26, every project that wanted coroutine-based async code had to *also* invent its own scheduler/executor abstraction by hand. `std::execution` standardizes that missing piece, so coroutine-based `task<T>` types across different libraries can share the same underlying scheduling vocabulary instead of each reinventing it incompatibly.
 
@@ -290,7 +307,7 @@ Before C++26, every project that wanted coroutine-based async code had to *also*
 
 #### 7. Why This Took So Long: Design History and Prior Art
 
-`std::execution` did not appear from nothing — P2300 is the product of years of iteration, informed by production experience with earlier asynchrony libraries:
+`std::execution` did not appear from nothing. P2300 is the product of years of iteration, informed by production experience with earlier asynchrony libraries:
 
 - **Folly's `Future`/`SemiFuture`** (Meta) explored continuation-based composition at scale in production C++.
 - **libunifex** (Facebook/Meta) was an experimental implementation of an earlier sender/receiver design and served as a proving ground for the P2300 model.
@@ -311,33 +328,33 @@ Be honest with yourself (and readers) that this is a genuinely large, still-sett
 | **Scheduler** | An abstraction for *where* work executes; `schedule()` turns it into a sender | An executor / thread pool handle, but composable |
 | **`then`, `when_all`, `let_value`, `on`, `sync_wait`** | Standard adaptors for composing senders declaratively | `.map()`/`.join()`/`.flatMap()`-style combinators, plus a sync bridge |
 
-**Key takeaway:** `std::execution` gives C++26 what it never had — a single, standard, composable, low-allocation vocabulary for "describe async work, choose where it runs, compose it with other async work, and know precisely how it succeeds, fails, or gets cancelled," with C++20 coroutines available as an optional, complementary syntax layered on top rather than a competing model.
+**Key takeaway:** `std::execution` gives C++26 what it never had: a single, standard, composable, low-allocation vocabulary to describe async work, choose where it runs, compose it with other async work, and know precisely how it succeeds, fails, or gets cancelled. C++20 coroutines remain available as an optional, complementary syntax layered on top, not a competing model.
 
 ---
 
 #### 9. Compile-Time vs Runtime Breakdown
 
-The single most important thing to internalize about senders/receivers is *when* each piece of work actually happens. Almost everything up to `start()` is pure compile-time template machinery — the "async" part hasn't begun yet.
+The single most important thing to internalize about senders/receivers is *when* each piece of work actually happens. Almost everything up to `start()` is pure compile-time template machinery. The "async" part hasn't begun yet.
 
 | Code / Mechanism | Phase | What Happens |
 |---|---|---|
-| `schedule(sched) \| then(f) \| then(g)` pipeline construction | Compile time | Builds a nested, statically-typed sender type via templates (`then_sender<then_sender<schedule_sender, F>, G>`) — zero work is done, zero bytes are allocated |
-| `std::execution::connect(sender, receiver)` | Compile time (size computed) | The compiler walks the nested sender type and computes the exact total size of the operation state needed for the *entire* chain — every intermediate result slot, every captured lambda, laid out end-to-end |
+| `schedule(sched) \| then(f) \| then(g)` pipeline construction | Compile time | Builds a nested, statically-typed sender type via templates (`then_sender<then_sender<schedule_sender, F>, G>`); zero work is done, zero bytes are allocated |
+| `std::execution::connect(sender, receiver)` | Compile time (size computed) | The compiler walks the nested sender type and computes the exact total size of the operation state needed for the *entire* chain: every intermediate result slot, every captured lambda, laid out end-to-end |
 | The returned operation-state object | Compile time (type), Runtime (storage) | Its *type and size* are fixed by the compiler; the actual bytes are reserved wherever the caller places it (almost always a local variable, i.e. the stack) |
-| `start(op_state)` | Runtime | Scheduling actually begins — the first sender in the chain is submitted to its scheduler (e.g. a thread pool's work queue) |
+| `start(op_state)` | Runtime | Scheduling actually begins: the first sender in the chain is submitted to its scheduler (e.g. a thread pool's work queue) |
 | Each `then(f)` callback body | Runtime | `f` actually executes on a worker thread, reading the previous stage's result out of the operation state and writing its own result back into it |
 | `set_value` / `set_error` / `set_stopped` on the receiver | Runtime | The terminal completion signal fires, unblocking `sync_wait` (or invoking whatever continuation follows) |
 
-Nothing about `schedule | then | then` "runs" in the way a function call runs — it is closer to how building a `std::ranges::filter_view | std::ranges::transform_view` chain is compile-time type composition, not iteration. The iteration (here, the actual async execution) only happens once something drives it — `start()`, typically invoked indirectly via `sync_wait`.
+Nothing about `schedule | then | then` "runs" in the way a function call runs. It is closer to how building a `std::ranges::filter_view | std::ranges::transform_view` chain is compile-time type composition, not iteration. The iteration (here, the actual async execution) only happens once something drives it: `start()`, typically invoked indirectly via `sync_wait`.
 
 ---
 
 #### 10. Memory Model: Stack-Allocated Operation States vs. Heap-Allocated Futures
 
-This is the concrete payoff of "everything is a compile-time-sized type": the entire pipeline's storage requirement is a single, fixed number known before any code runs, so it can live on the **stack** of whichever function starts the pipeline — no heap, no allocator, no atomic reference count.
+This is the concrete payoff of "everything is a compile-time-sized type": the entire pipeline's storage requirement is a single, fixed number known before any code runs, so it can live on the **stack** of whichever function starts the pipeline. No heap, no allocator, no atomic reference count.
 
 ```
-std::execution (C++26) — operation state lives on the caller's stack
+std::execution (C++26): operation state lives on the caller's stack
 ┌───────────────────────────────────────────────────────────┐
 │ STACK FRAME of sync_wait(pipeline)                         │
 │                                                             │
@@ -351,7 +368,7 @@ std::execution (C++26) — operation state lives on the caller's stack
 │                                at compile time, zero heap    │
 └───────────────────────────────────────────────────────────┘
 
-std::future / std::promise (pre-C++26) — shared state on the heap
+std::future / std::promise (pre-C++26): shared state on the heap
 ┌────────────────────┐                    ┌────────────────────┐
 │ Producer thread     │                    │ Consumer thread     │
 │ stack frame          │                    │ stack frame          │
@@ -366,7 +383,13 @@ std::future / std::promise (pre-C++26) — shared state on the heap
                     └─────────────────────────┘     of future/promise
 ```
 
-**Why this matters for low latency:** because the compiler knows the whole chain's shape up front, it can size and place the operation state as an ordinary local — the same category of storage as an `int` or a small `struct` on the stack. There is no per-task `new`, no atomic refcount traffic, and no condition-variable wakeup path unless you explicitly ask for one (e.g. via `sync_wait`). That is precisely why `std::execution` is viable in latency-sensitive domains — trading systems, real-time audio/video pipelines, game engines — where `std::future`'s mandatory heap allocation and atomic bookkeeping per asynchronous task is disqualifying, not just "a bit slower."
+**Why this matters for low latency:** because the compiler knows the whole chain's shape up front, it can size and place the operation state as an ordinary local, the same category of storage as an `int` or a small `struct` on the stack.
+
+- No per-task `new`
+- No atomic refcount traffic
+- No condition-variable wakeup path, unless explicitly requested (e.g. via `sync_wait`)
+
+This is precisely why `std::execution` is viable in latency-sensitive domains such as trading systems, real-time audio/video pipelines, and game engines, where `std::future`'s mandatory heap allocation and atomic bookkeeping per asynchronous task is disqualifying, not just "a bit slower."
 
 ---
 
@@ -760,12 +783,12 @@ build sender  -->  connect(sender, receiver)  -->  start(operation_state)
 
 | Do | Don't |
 |---|---|
-| Drive every sender to `start`/`sync_wait` (or hand it to a caller that will) | Build a sender and let it fall out of scope unconsumed — the work may never run |
+| Drive every sender to `start`/`sync_wait` (or hand it to a caller that will) | Build a sender and let it fall out of scope unconsumed: the work may never run |
 | Use `on(sched, ...)` explicitly for every scheduler hop you need | Assume execution "snaps back" to the original thread automatically |
 | Keep blocking calls off shared pool schedulers | Run blocking I/O inside a `then()` on a fixed-size shared pool |
 | Treat `set_error` as the normal async failure channel | Assume an exception inside `then()` always unwinds like a synchronous throw |
 
-**Key takeaway:** senders are inert until `start`ed, completions are always exactly one of value/error/stopped, and scheduler placement is always explicit — never implicit — throughout a pipeline.
+**Key takeaway:** senders are inert until `start`ed, completions are always exactly one of value/error/stopped, and scheduler placement is always explicit (never implicit) throughout a pipeline.
 
 ---
 

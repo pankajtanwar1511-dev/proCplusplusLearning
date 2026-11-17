@@ -2,7 +2,14 @@
 
 ### THEORY_SECTION: The Three-Tier Lookup, Polymorphic I/O, and Inter-Process Communication
 
-Every piece of I/O in Linux — a disk file, a TCP socket, a pipe, a terminal, a GPU device — is accessed through the exact same four syscalls: `open()`/`socket()`/`pipe()`, `read()`, `write()`, `close()`. This is not a coincidence or a marketing slogan ("everything is a file") — it is a concrete, three-layer kernel data structure with a function-pointer vtable sitting underneath every single file descriptor. This topic builds that machinery from the ground up: the exact structs, the exact syscall traces, and the exact pointer relationships that make one `read()` implementation serve a disk file, a socket, and a pipe identically.
+Every piece of I/O in Linux is accessed through the exact same four syscalls: `open()`/`socket()`/`pipe()`, `read()`, `write()`, `close()`. This applies uniformly to:
+- A disk file
+- A TCP socket
+- A pipe
+- A terminal
+- A GPU device
+
+This is not a coincidence or a marketing slogan ("everything is a file"). It is a concrete, three-layer kernel data structure with a function-pointer vtable sitting underneath every single file descriptor. This topic builds that machinery from the ground up: the exact structs, the exact syscall traces, and the exact pointer relationships that make one `read()` implementation serve a disk file, a socket, and a pipe identically.
 
 ---
 
@@ -40,7 +47,7 @@ KERNEL SPACE
 |---|---|---|
 | 1. `fd_array` (per-process) | One process (or shared by threads via `clone(CLONE_FILES)`) | "What does the small integer `3` mean *to me*?" |
 | 2. `struct file` (system-wide, one per **open** call) | Shared only if explicitly duplicated (`fork()`, `dup()`, fd-passing) | "Where is my read/write cursor, and what mode did I open with?" |
-| 3. `struct inode` (system-wide, one per **file on disk**) | Shared by every open of the same file, system-wide | "What actually IS this file — its size, its blocks, its permissions?" |
+| 3. `struct inode` (system-wide, one per **file on disk**) | Shared by every open of the same file, system-wide | "What actually IS this file: its size, its blocks, its permissions?" |
 
 The trace of `open("/tmp/data.txt", O_RDWR | O_CREAT, 0644)` followed by `write(fd, "HELLO", 5)`:
 
@@ -64,7 +71,7 @@ The trace of `open("/tmp/data.txt", O_RDWR | O_CREAT, 0644)` followed by `write(
 2. Reads current offset (0).
 3. Writes `"HELLO"` into a 4 KB **Page Cache** frame in RAM (**not** directly to disk!), marks the page **Dirty**.
 4. Updates Entry #42's offset: `0 → 5`.
-5. Background writeback threads flush dirty page-cache pages to disk later, asynchronously — your `write()` call returned long before the bytes physically hit the platter/SSD.
+5. Background writeback threads flush dirty page-cache pages to disk later, asynchronously. Your `write()` call returned long before the bytes physically hit the platter/SSD.
 
 ---
 
@@ -123,7 +130,13 @@ ssize_t sys_read(int fd, void *user_buffer, size_t count) {
 }
 ```
 
-This is the level of precision worth internalizing: `fd` is nothing but an **array index**. `sys_read` does not "know" anything about files — it dereferences a pointer, reads an offset, copies bytes, and updates the offset. All the "file-ness" lives in `struct inode` and `struct file`.
+This is the level of precision worth internalizing: `fd` is nothing but an **array index**. `sys_read` does not "know" anything about files. It just:
+- Dereferences a pointer
+- Reads an offset
+- Copies bytes
+- Updates the offset
+
+All the "file-ness" lives in `struct inode` and `struct file`.
 
 ---
 
@@ -145,7 +158,9 @@ lseek()            NO                            Uses existing; changes f_pos
 close()            NO (Destroys it)              Decrements ref count & frees memory
 ```
 
-**Opening the same file twice is two independent cursors on one inode.** If you call `open("/tmp/file.txt", ...)` twice from the same process, you get **two separate `struct file` objects** — each with its own independent `f_pos` — both pointing at the **same** `struct inode`:
+**Opening the same file twice is two independent cursors on one inode.** If you call `open("/tmp/file.txt", ...)` twice from the same process, you get:
+- **Two separate `struct file` objects**, each with its own independent `f_pos`
+- Both pointing at the **same** `struct inode`
 
 ```
 fd_array[3] ───> struct file #1 { f_pos = 0 } ──┐
@@ -153,17 +168,17 @@ fd_array[3] ───> struct file #1 { f_pos = 0 } ──┐
 fd_array[4] ───> struct file #2 { f_pos = 0 } ──┘
 ```
 
-Reading through fd 3 does **not** advance fd 4's offset — they are entirely independent cursors that just happen to point at the same underlying file content.
+Reading through fd 3 does **not** advance fd 4's offset. They are entirely independent cursors that just happen to point at the same underlying file content.
 
 ---
 
 #### 5.4 Why `fork()` Shares the File Offset (A Precise Correction)
 
-This is one of the most commonly mis-stated facts in systems programming, worth stating precisely: after `fork()`, if the child reads 5 bytes from an inherited fd, the **parent's** next read on that same fd continues from byte 5 too — the offset is shared.
+This is one of the most commonly mis-stated facts in systems programming, worth stating precisely: after `fork()`, if the child reads 5 bytes from an inherited fd, the **parent's** next read on that same fd continues from byte 5 too. The offset is shared.
 
 **The naive (wrong) explanation**: "the child gets a shallow copy of `fd_array`, so it shares state with the parent."
 
-**The precise explanation**: `fork()` gives the child a **brand new, independent `files_struct` and a brand new `fd_array`** (this is real memory, freshly allocated for the child) — but each **pointer value** inside that new array is *copied* from the parent, meaning both arrays' slot 3 point at the exact same `struct file` object in the Open File Table:
+**The precise explanation**: `fork()` gives the child a **brand new, independent `files_struct` and a brand new `fd_array`** (this is real memory, freshly allocated for the child). But each **pointer value** inside that new array is *copied* from the parent, meaning both arrays' slot 3 point at the exact same `struct file` object in the Open File Table:
 
 ```
 [ PARENT FD TABLE ]  FD 3 ──┐
@@ -171,16 +186,16 @@ This is one of the most commonly mis-stated facts in systems programming, worth 
 [ CHILD FD TABLE ]   FD 3 ──┘
 ```
 
-It is not "the array is shared" — it is "two independent arrays happen to hold pointers to the same object." The `f_pos` field lives inside the shared `struct file`, so advancing it via either process's fd is visible to both. This exact mechanism is what makes shell pipelines and `dup2()`-based redirection work correctly across `fork()`.
+It is not "the array is shared." It is "two independent arrays happen to hold pointers to the same object." The `f_pos` field lives inside the shared `struct file`, so advancing it via either process's fd is visible to both. This exact mechanism is what makes shell pipelines and `dup2()`-based redirection work correctly across `fork()`.
 
-**Process vs Thread — a sharper distinction on the same axis:**
+**Process vs Thread: a sharper distinction on the same axis.**
 
 | Resource | `fork()` (new process) | `pthread_create()` / `clone(CLONE_FILES)` (new thread) |
 |---|---|---|
-| `files_struct` | **Copied** — child gets a new struct, new array, but array entries point at the same `struct file` objects | **Shared** — thread's `task_struct->files` points at the exact **same** `files_struct` object as its siblings |
-| Effect of `close(fd)` | Only closes that process's *entry*; the shared `struct file` survives if the other process still references it (refcounted) | Closes it for **every thread in the process immediately** — there is only one `fd_array` |
+| `files_struct` | **Copied**: child gets a new struct, new array, but array entries point at the same `struct file` objects | **Shared**: thread's `task_struct->files` points at the exact **same** `files_struct` object as its siblings |
+| Effect of `close(fd)` | Only closes that process's *entry*; the shared `struct file` survives if the other process still references it (refcounted) | Closes it for **every thread in the process immediately** (there is only one `fd_array`) |
 
-This is why closing a file descriptor from one thread while another thread is mid-`read()` on it is a classic concurrency bug — there is no per-thread isolation at all, because `files_struct` itself (not just the objects it points to) is the shared resource.
+This is why closing a file descriptor from one thread while another thread is mid-`read()` on it is a classic concurrency bug: there is no per-thread isolation at all, because `files_struct` itself (not just the objects it points to) is the shared resource.
 
 ---
 
@@ -224,9 +239,16 @@ struct fdtable {
       └──────────────────┘          └── f_op: &ext4_file_operations
 ```
 
-**Why an inline `fd_array[64]` at all, instead of always dynamically allocating?** Because the overwhelming majority of processes open well under 64 file descriptors — an embedded fixed-size array avoids a `kmalloc` on the common path. A process that opens **more** than 64 files (e.g., Nginx handling thousands of concurrent connections) forces the kernel to allocate a larger `fdtable`, copy the existing pointers over, and update `current->files->fdt` to point at the bigger table — invisible to user space, just slightly more expensive the first time it happens.
+**Why an inline `fd_array[64]` at all, instead of always dynamically allocating?** Because the overwhelming majority of processes open well under 64 file descriptors. An embedded fixed-size array avoids a `kmalloc` on the common path.
 
-**Worked demo — `dup2()` redirection:**
+A process that opens **more** than 64 files (e.g., Nginx handling thousands of concurrent connections) forces the kernel to:
+1. Allocate a larger `fdtable`
+2. Copy the existing pointers over
+3. Update `current->files->fdt` to point at the bigger table
+
+This is invisible to user space, just slightly more expensive the first time it happens.
+
+**Worked demo: `dup2()` redirection.**
 
 ```c
 #include <stdio.h>
@@ -263,7 +285,7 @@ int main() {
 }
 ```
 
-`dup2(fd3, 1)` does **not** copy bytes or create a new `struct file` — it simply makes `fdt->fd[1]` point at the **same `struct file`** that `fdt->fd[3]` points at (bumping its refcount). This is the entire mechanism behind shell redirection (`cmd > file.txt`) and pipelines.
+`dup2(fd3, 1)` does **not** copy bytes or create a new `struct file`. It simply makes `fdt->fd[1]` point at the **same `struct file`** that `fdt->fd[3]` points at (bumping its refcount). This is the entire mechanism behind shell redirection (`cmd > file.txt`) and pipelines.
 
 Kernel step trace for `open()`:
 ```
@@ -301,7 +323,7 @@ struct file {
 };
 ```
 
-`read(fd, buf, 100)` always resolves, deep inside the kernel, to `file->f_op->read(file, buf, 100)` — the kernel's generic syscall handler has **zero knowledge** of what kind of resource `fd` actually refers to. This is exactly how a single `epoll`/`select` event loop can multiplex sockets, pipes, and regular files identically: it just calls the same generic operation and lets the vtable dispatch to the correct implementation.
+`read(fd, buf, 100)` always resolves, deep inside the kernel, to `file->f_op->read(file, buf, 100)`. The kernel's generic syscall handler has **zero knowledge** of what kind of resource `fd` actually refers to. This is exactly how a single `epoll`/`select` event loop can multiplex sockets, pipes, and regular files identically: it just calls the same generic operation and lets the vtable dispatch to the correct implementation.
 
 ```
 task_struct -> files_struct -> fd_array[]
@@ -319,7 +341,7 @@ private_data->inode private_data->socket private_data->pipe_inode
 [Hard Drive/SSD]  [Network Card (NIC)]  [Ring Buffer in RAM]
 ```
 
-The resource-specific state each `private_data` pointer refers to is a completely different struct depending on the resource type — the `file_operations` vtable is the only thing they have in common:
+The resource-specific state each `private_data` pointer refers to is a completely different struct depending on the resource type. The `file_operations` vtable is the only thing they have in common:
 
 ```c
 struct socket {
@@ -354,15 +376,15 @@ Full pointer map across all three resource types coexisting in one process:
                                    └───────────────┼──┼───┼────┘
 ```
 
-**Why this matters in practice**: any C++ event-driven server (Boost.Asio, libuv, a hand-rolled `epoll` loop) leans on exactly this polymorphism — it can register a listening socket fd, a pipe fd used for internal wakeups, and a regular file fd (for `inotify`) in the *same* `epoll_wait()` call, because the kernel treats them uniformly at the `struct file` level.
+**Why this matters in practice**: any C++ event-driven server (Boost.Asio, libuv, a hand-rolled `epoll` loop) leans on exactly this polymorphism. It can register a listening socket fd, a pipe fd used for internal wakeups, and a regular file fd (for `inotify`) in the *same* `epoll_wait()` call, because the kernel treats them uniformly at the `struct file` level.
 
 ---
 
 #### 5.7 Passing a File Descriptor Between Processes (SCM_RIGHTS)
 
-**Common myth, stated and busted explicitly**: "the file descriptor integer is sent across the socket." This is **false** — an integer like `3` is meaningless outside the process that owns it (it's just an index into *that* process's `fd_array`). What actually crosses the Unix domain socket is a **kernel pointer** to the `struct file`, plus a bumped reference count.
+**Common myth, stated and busted explicitly**: "the file descriptor integer is sent across the socket." This is **false**. An integer like `3` is meaningless outside the process that owns it (it's just an index into *that* process's `fd_array`). What actually crosses the Unix domain socket is a **kernel pointer** to the `struct file`, plus a bumped reference count.
 
-**Sender (Process A)** — uses ancillary data (`SCM_RIGHTS`) via `sendmsg()`, not the main payload:
+**Sender (Process A)**: uses ancillary data (`SCM_RIGHTS`) via `sendmsg()`, not the main payload.
 ```c
 struct msghdr msg = {0};
 char control_buf[CMSG_SPACE(sizeof(int))];
@@ -410,15 +432,15 @@ void scm_detach_fds(struct msghdr *msg, struct scm_fp_list *fpl) {
 ```
 
 **The three invariants worth memorizing:**
-1. The integer is **translated**: fd 3 in process A can — and usually will — become fd 7 (or whatever happens to be free) in process B.
+1. The integer is **translated**: fd 3 in process A can, and usually will, become fd 7 (or whatever happens to be free) in process B.
 2. `get_file()` bumps the reference count, so process A closing fd 3 immediately after sending does **not** free the underlying `struct file` while it's mid-flight to B.
-3. A and B now genuinely **share** the same `struct file` — same `f_pos`, same `f_op`, same permissions — exactly as if one had `dup()`'d the other's descriptor, except across a process boundary that shares no memory at all. This is how privileged helper processes (e.g., a root-owned daemon opening a low port and handing the connected socket to an unprivileged worker) commonly drop privileges while keeping the resource.
+3. A and B now genuinely **share** the same `struct file`: same `f_pos`, same `f_op`, same permissions. This is exactly as if one had `dup()`'d the other's descriptor, except across a process boundary that shares no memory at all. It is how privileged helper processes (e.g., a root-owned daemon opening a low port and handing the connected socket to an unprivileged worker) commonly drop privileges while keeping the resource.
 
 ---
 
 #### 5.8 IPC Beyond File Descriptors: Pipes and Shared Memory
 
-Because every process has an **isolated** virtual address space (Topic 4), processes cannot simply read each other's memory — they need the kernel to broker the exchange, or to deliberately alias physical memory into both address spaces.
+Because every process has an **isolated** virtual address space (Topic 4), processes cannot simply read each other's memory. They need the kernel to broker the exchange, or to deliberately alias physical memory into both address spaces.
 
 **Anonymous pipes (`pipe()`):**
 ```c
@@ -429,11 +451,18 @@ pipe(pipefds); // pipefds[0]=Read End, pipefds[1]=Write End
 2. Creates an "anonymous" in-memory VFS inode (it doesn't exist on disk).
 3. Two Open File Table entries are created: read end + write end, both pointing at the same ring buffer.
 
-`ls | grep main` shell-pipeline mechanics: the shell calls `pipe()` once, then `fork()`s twice; each child `dup2()`s its stdout/stdin onto the pipe's fds, then `execve()`s its program. **Synchronization is automatic and free**: if the 64 KB buffer fills up, the writer (`ls`) is put to sleep by the kernel until the reader (`grep`) drains it; if the buffer is empty, the reader blocks on `read()` until data arrives. No explicit locking required in user code — the kernel's ring-buffer implementation handles it.
+`ls | grep main` shell-pipeline mechanics:
+1. The shell calls `pipe()` once, then `fork()`s twice.
+2. Each child `dup2()`s its stdout/stdin onto the pipe's fds, then `execve()`s its program.
 
-**Shared memory (`mmap`/`shm_open`) — zero-copy IPC:**
+**Synchronization is automatic and free**:
+- If the 64 KB buffer fills up, the writer (`ls`) is put to sleep by the kernel until the reader (`grep`) drains it.
+- If the buffer is empty, the reader blocks on `read()` until data arrives.
+- No explicit locking is required in user code. The kernel's ring-buffer implementation handles it.
 
-Pipes require **two copies** for every byte transferred: writer's user buffer → kernel ring buffer → reader's user buffer. Shared memory avoids **both** copies entirely: the kernel configures **both** processes' page tables so their (different!) virtual addresses point at the **exact same physical RAM frame**.
+**Shared memory (`mmap`/`shm_open`): zero-copy IPC.**
+
+Pipes require **two copies** for every byte transferred: writer's user buffer, then kernel ring buffer, then reader's user buffer. Shared memory avoids **both** copies entirely: the kernel configures **both** processes' page tables so their (different!) virtual addresses point at the **exact same physical RAM frame**.
 
 ```
 [ PROCESS 1 PAGE TABLE ]                    [ PROCESS 2 PAGE TABLE ]
@@ -442,8 +471,8 @@ Pipes require **two copies** for every byte transferred: writer's user buffer �
                      [ PHYSICAL RAM: Frame X ]
 ```
 
-- **Zero syscall overhead for data transfer** once mapped — a raw memory write on one side is instantly visible via a raw read on the other, with no kernel involvement at all.
-- **Synchronization is NOT automatic** — because the kernel isn't mediating the transfer (it isn't even aware when a write happens), the processes **must** place POSIX mutexes/semaphores *inside the shared region itself* to avoid races. This is the direct trade-off for the zero-copy speed.
+- **Zero syscall overhead for data transfer** once mapped: a raw memory write on one side is instantly visible via a raw read on the other, with no kernel involvement at all.
+- **Synchronization is NOT automatic.** The kernel isn't mediating the transfer (it isn't even aware when a write happens), so the processes **must** place POSIX mutexes/semaphores *inside the shared region itself* to avoid races. This is the direct trade-off for the zero-copy speed.
 
 **IPC comparison table:**
 
@@ -453,7 +482,7 @@ Pipes require **two copies** for every byte transferred: writer's user buffer �
 | Unix Domain Sockets | Medium (via socket layer) | Fast | Local IPC between unrelated processes; only mechanism that can pass fds |
 | Shared Memory (mmap) | Zero after setup | Blazing fast (direct RAM) | High-throughput, low-latency exchange (e.g. market-data fan-out, ring buffers between a producer and consumer process) |
 
-**Why this matters for low-latency systems**: a shared-memory ring buffer with a lock-free single-producer/single-consumer protocol (rather than a mutex) is the standard pattern for passing messages between processes on the same host with sub-microsecond latency — exactly because it skips both the data copy *and* the kernel round-trip that pipes and sockets both pay for on every message.
+**Why this matters for low-latency systems**: a shared-memory ring buffer with a lock-free single-producer/single-consumer protocol (rather than a mutex) is the standard pattern for passing messages between processes on the same host with sub-microsecond latency. It achieves this precisely because it skips both the data copy *and* the kernel round-trip that pipes and sockets both pay for on every message.
 
 ---
 

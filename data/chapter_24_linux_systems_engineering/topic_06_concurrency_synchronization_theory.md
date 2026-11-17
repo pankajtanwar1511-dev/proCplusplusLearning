@@ -2,13 +2,32 @@
 
 ### THEORY_SECTION: How Linux Lets Multiple Threads Safely Touch the Same RAM
 
-Every multi-threaded program eventually asks the same question: *two threads want to touch the same memory at the same time — who wins, and how does the kernel make sure nobody sees garbage?* This topic builds the full answer from the ground up: spinlocks vs mutexes vs read-write locks, the `futex()` mechanism that makes `std::mutex` cheap when there's no contention, deadlocks and how to avoid them, condition variables, lock-free atomics, RCU, and priority inversion. Everything here builds directly on two facts already established earlier in this chapter: a **thread context switch costs ~100-300 ns** (cache-warm, no CR3 reload), and **`LOCK`-prefixed instructions like `LOCK CMPXCHG` are the CPU's atomic read-modify-write primitive**. Keep both numbers in your head — they are the reason every design decision in this topic exists.
+Every multi-threaded program eventually asks the same question: *two threads want to touch the same memory at the same time. Who wins, and how does the kernel make sure nobody sees garbage?*
+
+This topic builds the full answer from the ground up:
+- Spinlocks vs mutexes vs read-write locks
+- The `futex()` mechanism that makes `std::mutex` cheap when there's no contention
+- Deadlocks and how to avoid them
+- Condition variables
+- Lock-free atomics
+- RCU
+- Priority inversion
+
+Everything here builds directly on two facts already established earlier in this chapter:
+- A **thread context switch costs ~100-300 ns** (cache-warm, no CR3 reload)
+- **`LOCK`-prefixed instructions like `LOCK CMPXCHG`** are the CPU's atomic read-modify-write primitive
+
+Keep both numbers in mind: they are the reason every design decision in this topic exists.
 
 ---
 
 #### 6.1 Spinlock vs Mutex vs Read-Write Lock — The Core Decision
 
-**The fundamental trade-off:** when a thread can't get a lock, it has exactly two choices — **keep the CPU and burn cycles checking in a tight loop** (spinlock), or **give the CPU back to the scheduler and go to sleep** (mutex). Which is correct depends entirely on *how long the lock will be held*.
+**The fundamental trade-off:** when a thread can't get a lock, it has exactly two choices:
+- **Keep the CPU and burn cycles checking in a tight loop** (spinlock)
+- **Give the CPU back to the scheduler and go to sleep** (mutex)
+
+Which is correct depends entirely on *how long the lock will be held*.
 
 **1. Spinlock — busy-wait, zero context switch**
 
@@ -30,10 +49,14 @@ void spin_unlock(spinlock_t *lock) {
 }
 ```
 
-- No syscall, no context switch — just a tight `LOCK CMPXCHG` retry loop.
+- No syscall, no context switch: just a tight `LOCK CMPXCHG` retry loop.
 - The waiting thread **never leaves the CPU**. It stays scheduled, spinning, using 100% of its core the entire time it waits.
-- Only makes sense if the critical section is **shorter than the cost of a context switch** (~100-300 ns for a thread switch, more like 1,000-3,000 ns for a process switch — both established in Topic 1/3 of this chapter). If the lock is typically held for 50 ns, spinning for 50 ns beats sleeping (sleeping costs you a syscall entry ~100 ns *plus* a context switch *plus* a context switch back later).
-- This is exactly why the **Linux kernel itself uses spinlocks internally** for extremely short critical sections (e.g. protecting a few-instruction update to a run-queue), but application code almost never should — kernel code runs with preemption/interrupts controlled, user-space code does not, and the OS scheduler can preempt a spinning user thread at the worst possible moment (see Common Pitfall below).
+- Only makes sense if the critical section is **shorter than the cost of a context switch** (~100-300 ns for a thread switch, more like 1,000-3,000 ns for a process switch, both established in Topic 1/3 of this chapter).
+  - If the lock is typically held for 50 ns, spinning for 50 ns beats sleeping.
+  - Sleeping costs a syscall entry (~100 ns), plus a context switch out, plus a context switch back later.
+- This is exactly why the **Linux kernel itself uses spinlocks internally** for extremely short critical sections (e.g. protecting a few-instruction update to a run-queue), but application code almost never should:
+  - Kernel code runs with preemption/interrupts controlled; user-space code does not.
+  - The OS scheduler can preempt a spinning user thread at the worst possible moment (see Common Pitfall below).
 
 **2. Mutex — sleep, kernel-mediated**
 
@@ -45,8 +68,10 @@ pthread_mutex_lock(&lock);   // Blocks the calling thread if contended
 pthread_mutex_unlock(&lock);
 ```
 
-- If uncontended: resolves via a single atomic instruction in **user space**, no syscall at all (see §6.2 — this is the whole point of `futex`).
-- If contended: the waiting thread is put to sleep (`TASK_INTERRUPTIBLE`, the same state introduced for blocking I/O earlier in this chapter) and **removed from the CPU entirely** — zero CPU burned while waiting, but paying a syscall + two context switches (one out, one back in when woken) when it actually blocks.
+- If uncontended: resolves via a single atomic instruction in **user space**, no syscall at all (see §6.2, this is the whole point of `futex`).
+- If contended: the waiting thread is put to sleep (`TASK_INTERRUPTIBLE`, the same state introduced for blocking I/O earlier in this chapter) and **removed from the CPU entirely**.
+  - Zero CPU burned while waiting.
+  - Pays a syscall plus two context switches (one out, one back in when woken) when it actually blocks.
 - Correct choice when the critical section is long, or contention is common/unpredictable.
 
 **3. Read-Write Lock — many readers, one writer**
@@ -64,8 +89,8 @@ pthread_rwlock_unlock(&rwlock);
 ```
 
 - Correct when reads vastly outnumber writes (e.g. a config table read on every request, updated once a minute).
-- Internally still uses the same futex-style fast/slow path machinery as a mutex — a reader "lock" is really just an atomic increment of a shared reader-count, with a writer needing that count to hit zero.
-- **Not automatically faster than a plain mutex** — if writes are frequent, the extra bookkeeping (tracking reader counts, avoiding writer starvation) can make an `rwlock` *slower* than a simple mutex. Always benchmark before assuming.
+- Internally still uses the same futex-style fast/slow path machinery as a mutex. A reader "lock" is really just an atomic increment of a shared reader-count, with a writer needing that count to hit zero.
+- **Not automatically faster than a plain mutex.** If writes are frequent, the extra bookkeeping (tracking reader counts, avoiding writer starvation) can make an `rwlock` *slower* than a simple mutex. Always benchmark before assuming.
 
 **Decision table:**
 
@@ -77,13 +102,17 @@ pthread_rwlock_unlock(&rwlock);
 | Read-heavy, near-zero reader overhead required, writer latency less critical | RCU (§6.7) | Readers pay literally nothing — no atomic instruction at all |
 | Multiple threads producing/waiting on a state change (not just protecting data) | Mutex + Condition Variable (§6.5) | Locks alone can't make a thread *wait for an event* efficiently |
 
-**Common Pitfall — the "preempted lock holder" spinlock trap:** if Thread A grabs a spinlock and then gets **preempted by the scheduler** (its timeslice simply ran out, unrelated to the lock), every other thread spinning on that lock keeps burning CPU for the *entire remainder of Thread A's involuntary wait* — potentially milliseconds, not nanoseconds. This is why user-space spinlocks are dangerous without real-time scheduling guarantees: the OS gives no promise about *when* the lock holder resumes running.
+**Common Pitfall: the "preempted lock holder" spinlock trap.**
+- If Thread A grabs a spinlock and then gets **preempted by the scheduler** (its timeslice simply ran out, unrelated to the lock), every other thread spinning on that lock keeps burning CPU for the *entire remainder of Thread A's involuntary wait*, potentially milliseconds, not nanoseconds.
+- This is why user-space spinlocks are dangerous without real-time scheduling guarantees: the OS gives no promise about *when* the lock holder resumes running.
 
 ---
 
 #### 6.2 Fast Userspace Mutexes — `sys_futex()`
 
-**The core insight `futex` is built on:** most lock acquisitions in real programs are **uncontended** — nobody else wants the lock right now. Paying a syscall (a Ring 3 → Ring 0 transition, easily 100+ ns) on *every single lock/unlock*, even when nothing is contended, would be wasteful. `futex` ("fast userspace mutex") is designed so the **overwhelmingly common uncontended case never enters the kernel at all**.
+**The core insight `futex` is built on:** most lock acquisitions in real programs are **uncontended**. Nobody else wants the lock right now.
+- Paying a syscall (a Ring 3 → Ring 0 transition, easily 100+ ns) on *every single lock/unlock*, even when nothing is contended, would be wasteful.
+- `futex` ("fast userspace mutex") is designed so the **overwhelmingly common uncontended case never enters the kernel at all**.
 
 **The uncontended fast path (100% user space):**
 
@@ -101,7 +130,7 @@ void fast_lock(atomic_int *lock_word) {
 }
 ```
 
-1. `pthread_mutex_lock()` executes a single `LOCK CMPXCHG` on the mutex's memory word — atomically: "if the word is 0 (unlocked), set it to 1 (locked) and tell me it worked."
+1. `pthread_mutex_lock()` executes a single `LOCK CMPXCHG` on the mutex's memory word, atomically: "if the word is 0 (unlocked), set it to 1 (locked) and tell me it worked."
 2. If the CAS succeeds → **done**. This is the entire cost of acquiring an uncontended lock: one atomic instruction, no syscall, no context switch, a handful of nanoseconds.
 
 **The contended slow path (enters the kernel):**
@@ -159,7 +188,9 @@ Thread B: wakes up inside the futex() syscall, returns to slow_lock(),
           loops back, CASes lock_word from 0 to 1 -> succeeds -> lock acquired
 ```
 
-**Why the kernel keys the wait queue by physical address, not a kernel object:** this is what makes futex "fast" and lightweight — there is no persistent kernel object (no kernel-allocated semaphore/mutex structure) until contention actually happens. The "lock" *is* just 4 bytes of ordinary user-space memory; the kernel only builds a temporary wait-queue entry for it at the moment a thread actually calls `FUTEX_WAIT`.
+**Why the kernel keys the wait queue by physical address, not a kernel object:** this is what makes futex "fast" and lightweight.
+- There is no persistent kernel object (no kernel-allocated semaphore/mutex structure) until contention actually happens.
+- The "lock" *is* just 4 bytes of ordinary user-space memory. The kernel only builds a temporary wait-queue entry for it at the moment a thread actually calls `FUTEX_WAIT`.
 
 **Uncontended vs contended cost comparison:**
 
@@ -170,7 +201,7 @@ Thread B: wakes up inside the futex() syscall, returns to slow_lock(),
 | Contended lock (waiter) | CAS fails, `futex(FUTEX_WAIT)` syscall, thread parked, later woken, context switch back in | ~1-10 µs (syscall + scheduling latency) |
 | Contended unlock (waking someone) | Atomic store + `futex(FUTEX_WAKE)` syscall | syscall cost (~100s of ns) + wakeup scheduling |
 
-This is precisely why `std::mutex`/`pthread_mutex_t` are described as "cheap when uncontended" — in the common case they cost about as much as a couple of atomic instructions, nowhere near a full syscall.
+This is precisely why `std::mutex`/`pthread_mutex_t` are described as "cheap when uncontended": in the common case they cost about as much as a couple of atomic instructions, nowhere near a full syscall.
 
 ---
 
@@ -189,15 +220,15 @@ void critical_section() {
 }   // lock_guard destructor -> mtx.unlock() -> pthread_mutex_unlock() -> atomic decrement, futex(FUTEX_WAKE) only if needed
 ```
 
-**Nothing about `std::mutex` is special C++ machinery** — it is a RAII wrapper around exactly the `futex`-backed `pthread_mutex_t` mechanism above. This is why `std::mutex` (uncontended) and a raw `std::atomic<int>` CAS loop have **similar best-case cost** — they bottom out in the same `LOCK`-prefixed hardware instruction.
+**Nothing about `std::mutex` is special C++ machinery.** It is a RAII wrapper around exactly the `futex`-backed `pthread_mutex_t` mechanism above. This is why `std::mutex` (uncontended) and a raw `std::atomic<int>` CAS loop have **similar best-case cost**: they bottom out in the same `LOCK`-prefixed hardware instruction.
 
-`std::atomic` operations (`.compare_exchange_strong`, `.fetch_add`, etc.) compile directly to the CPU's `LOCK`-prefixed read-modify-write instructions (`LOCK CMPXCHG`, `LOCK XADD`, `LOCK INC`) already introduced earlier in this chapter — no futex, no kernel involvement at all, ever, for a plain atomic. A mutex adds the futex fallback *on top of* an atomic CAS specifically so a thread that truly can't proceed gets **off the CPU** instead of spinning.
+`std::atomic` operations (`.compare_exchange_strong`, `.fetch_add`, etc.) compile directly to the CPU's `LOCK`-prefixed read-modify-write instructions (`LOCK CMPXCHG`, `LOCK XADD`, `LOCK INC`) already introduced earlier in this chapter. No futex, no kernel involvement at all, ever, for a plain atomic. A mutex adds the futex fallback *on top of* an atomic CAS specifically so a thread that truly can't proceed gets **off the CPU** instead of spinning.
 
 ---
 
 #### 6.4 Deadlocks — The 4 Coffman Conditions and How to Avoid Them
 
-A deadlock requires **all four** of these conditions simultaneously — remove any one, and deadlock becomes impossible:
+A deadlock requires **all four** of these conditions simultaneously. Remove any one, and deadlock becomes impossible:
 
 | # | Condition | Meaning |
 |---|---|---|
@@ -239,11 +270,14 @@ Thread A: [holds mutex1] --waiting for--> mutex2 [held by B]
                                               |
 Thread B: [holds mutex2] --waiting for--> mutex1 [held by A]
 ```
-Neither thread can ever proceed. Both are asleep in the kernel's futex wait queue forever — no CPU is burned (they're not spinning), but no forward progress happens either. `strace`/`gdb` on either PID would show it permanently blocked inside a `futex()` syscall.
+Neither thread can ever proceed. Both are asleep in the kernel's futex wait queue forever:
+- No CPU is burned (they're not spinning).
+- No forward progress happens either.
+- `strace`/`gdb` on either PID would show it permanently blocked inside a `futex()` syscall.
 
-**Fix 1 — Consistent lock ordering:** if *every* thread in the program always acquires `mutex1` before `mutex2` (never the reverse), circular wait becomes structurally impossible — Thread B in the example above would instead block on `mutex1` *before* taking `mutex2`, so it never holds `mutex2` while waiting on `mutex1`.
+**Fix 1: Consistent lock ordering.** If *every* thread in the program always acquires `mutex1` before `mutex2` (never the reverse), circular wait becomes structurally impossible. Thread B in the example above would instead block on `mutex1` *before* taking `mutex2`, so it never holds `mutex2` while waiting on `mutex1`.
 
-**Fix 2 — `std::lock` / `std::scoped_lock` (C++17+):** acquire multiple locks atomically as a single operation using a deadlock-avoidance algorithm internally, so lock *order* no longer matters:
+**Fix 2: `std::lock` / `std::scoped_lock` (C++17+).** Acquire multiple locks atomically as a single operation using a deadlock-avoidance algorithm internally, so lock *order* no longer matters:
 
 ```cpp
 std::mutex mutex1, mutex2;
@@ -259,7 +293,7 @@ void thread_A_safe() {
 
 #### 6.5 Condition Variables — Waiting for a Change, Not Just Protecting Data
 
-A mutex alone answers "can I touch this data right now?" — it does **not** answer "has the data reached the state I care about yet?" For that you need a **condition variable**, which lets a thread sleep efficiently until another thread explicitly signals a change.
+A mutex alone answers "can I touch this data right now?" It does **not** answer "has the data reached the state I care about yet?" For that you need a **condition variable**, which lets a thread sleep efficiently until another thread explicitly signals a change.
 
 **Why polling with just a mutex is wasteful:**
 
@@ -298,7 +332,10 @@ void signal_ready() {
 }
 ```
 
-**Why `cv.wait` takes a predicate lambda — the spurious wakeup problem:** `pthread_cond_wait` (which `std::condition_variable::wait` wraps) is permitted by POSIX to occasionally wake up **with no corresponding `notify` call at all** — a "spurious wakeup," an artifact of how the underlying futex-based wakeup mechanism is implemented (it's cheaper for the kernel to allow rare spurious wakeups than to guarantee perfect precision). **This is why you must always re-check the actual condition in a loop, never assume "I woke up, therefore the condition is true":**
+**Why `cv.wait` takes a predicate lambda: the spurious wakeup problem.**
+- `pthread_cond_wait` (which `std::condition_variable::wait` wraps) is permitted by POSIX to occasionally wake up **with no corresponding `notify` call at all**, a "spurious wakeup."
+- This is an artifact of how the underlying futex-based wakeup mechanism is implemented: it's cheaper for the kernel to allow rare spurious wakeups than to guarantee perfect precision.
+- **This is why you must always re-check the actual condition in a loop, never assume "I woke up, therefore the condition is true":**
 
 ```cpp
 // What cv.wait(lock, predicate) actually does internally:
@@ -307,13 +344,13 @@ while (!predicate()) {
 }
 ```
 
-**How this relates to futex:** `pthread_cond_wait` is, at the kernel level, ultimately another `futex(FUTEX_WAIT, ...)` call on an internal counter associated with the condition variable — the same wait-queue machinery from §6.2, just layered with the extra mutex-release-then-reacquire dance (the mutex must be released *while* sleeping, so other threads can modify `ready` and call `notify`, then reacquired automatically before `wait()` returns).
+**How this relates to futex:** `pthread_cond_wait` is, at the kernel level, ultimately another `futex(FUTEX_WAIT, ...)` call on an internal counter associated with the condition variable. It is the same wait-queue machinery from §6.2, just layered with the extra mutex-release-then-reacquire dance: the mutex must be released *while* sleeping (so other threads can modify `ready` and call `notify`), then reacquired automatically before `wait()` returns.
 
 ---
 
 #### 6.6 Atomics and Compare-And-Swap — Building Blocks for Lock-Free Code
 
-Every synchronization primitive in this topic — spinlocks, futex's fast path, `std::mutex`'s uncontended path — bottoms out in a `LOCK`-prefixed **read-modify-write** instruction:
+Every synchronization primitive in this topic (spinlocks, futex's fast path, `std::mutex`'s uncontended path) bottoms out in a `LOCK`-prefixed **read-modify-write** instruction:
 
 | Instruction | C++ equivalent | What it guarantees atomically |
 |---|---|---|
@@ -354,7 +391,12 @@ void lock_free_push(int value) {
 }
 ```
 
-Step by step: (1) build the new node, pointing its `next` at whatever `head` currently is; (2) attempt to atomically swap `head` from that remembered value to the new node; (3) if some other thread pushed in between our read and our CAS, the CAS fails, `new_node->next` is automatically refreshed to the *new* current `head`, and we retry — no lock ever taken, no thread ever sleeps, progress is guaranteed for *some* thread on every retry round (this is the definition of "lock-free": the system as a whole always makes progress, even if one individual thread could in theory retry many times under heavy contention).
+Step by step:
+1. Build the new node, pointing its `next` at whatever `head` currently is.
+2. Attempt to atomically swap `head` from that remembered value to the new node.
+3. If some other thread pushed in between our read and our CAS, the CAS fails, `new_node->next` is automatically refreshed to the *new* current `head`, and we retry.
+
+No lock is ever taken, no thread ever sleeps, and progress is guaranteed for *some* thread on every retry round. This is the definition of "lock-free": the system as a whole always makes progress, even if one individual thread could in theory retry many times under heavy contention.
 
 **Common Pitfall — the ABA problem:** if `head` is read as pointer `A`, another thread pops `A`, frees it, and a *new* allocation happens to reuse the exact same memory address for a new node — the CAS in the code above would see "head is still `A`" and succeed, even though the actual list contents changed underneath it. Real lock-free implementations guard against this with tagged pointers (a version counter packed alongside the pointer) or hazard pointers — a full treatment is out of scope here, but knowing the ABA problem exists is a common interview checkpoint.
 

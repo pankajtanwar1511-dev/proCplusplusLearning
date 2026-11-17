@@ -2,13 +2,13 @@
 
 ### THEORY_SECTION: A Container Is Just a Process Wearing Six Disguises
 
-#### 10.1 The Core Insight — There Is No "Container" in the Kernel
+#### 10.1 The Core Insight: There Is No "Container" in the Kernel
 
-The single most important fact to internalize before anything else: **the Linux kernel has no concept of a "container."** There is no `struct container`, no container scheduler, no container syscall. When you run `docker run nginx`, the kernel creates exactly the same thing it always creates for any new program: a `task_struct` (see Topic 3 of this chapter — Process Management). The "container" is 100% a user-space illusion, built entirely out of three primitives you can use yourself with zero Docker installed:
+The single most important fact to internalize before anything else: **the Linux kernel has no concept of a "container."** There is no `struct container`, no container scheduler, no container syscall. When you run `docker run nginx`, the kernel creates exactly the same thing it always creates for any new program: a `task_struct` (see Topic 3 of this chapter: Process Management). The "container" is 100% a user-space illusion, built entirely out of three primitives you can use yourself with zero Docker installed:
 
-1. **Namespaces** — make the process *see* a private, filtered view of a global kernel resource (its own PID tree, its own network stack, its own mounts, ...).
-2. **cgroups** — put a hard ceiling on how much of a *shared* physical resource (CPU, RAM, disk I/O) that process (and its children) may consume.
-3. **A filesystem trick (OverlayFS + `chroot`/`pivot_root`)** — make `/` inside the process look like a totally different, isolated directory tree.
+1. **Namespaces**: make the process *see* a private, filtered view of a global kernel resource (its own PID tree, its own network stack, its own mounts, ...).
+2. **cgroups**: put a hard ceiling on how much of a *shared* physical resource (CPU, RAM, disk I/O) that process (and its children) may consume.
+3. **A filesystem trick (OverlayFS + `chroot`/`pivot_root`)**: make `/` inside the process look like a totally different, isolated directory tree.
 
 Nothing here is hardware virtualization. Compare directly against a VM:
 

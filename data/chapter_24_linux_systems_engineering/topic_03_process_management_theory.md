@@ -2,13 +2,20 @@
 
 ### THEORY_SECTION: The Kernel's Process Control Block, Copy-on-Write, and the CFS Scheduler
 
-Every running program on Linux — whether it's a single-threaded `hello.c` or a 500-thread trading engine — is represented inside the kernel by exactly one kind of object: `struct task_struct`. Linux does not have a separate "thread" object and a separate "process" object the way Windows does. There is only `task_struct` ("the task"), and whether two tasks *feel* like independent processes or like threads of the same process comes down entirely to which internal pointers they share versus which they own privately. This topic builds the full mental model: what `task_struct` actually contains, how `fork()`/`execve()`/`clone()` populate it, and how the CFS scheduler decides, moment to moment, which `task_struct` gets the CPU next.
+Every running program on Linux is represented inside the kernel by exactly one kind of object: `struct task_struct`. This is true whether it's a single-threaded `hello.c` or a 500-thread trading engine.
+
+Linux does not have a separate "thread" object and a separate "process" object the way Windows does. There is only `task_struct` ("the task"). Whether two tasks *feel* like independent processes or like threads of the same process comes down entirely to which internal pointers they share versus which they own privately.
+
+This topic builds the full mental model:
+- What `task_struct` actually contains
+- How `fork()`/`execve()`/`clone()` populate it
+- How the CFS scheduler decides, moment to moment, which `task_struct` gets the CPU next
 
 ---
 
-#### 3.1 task_struct — The Process Control Block
+#### 3.1 task_struct: The Process Control Block
 
-`struct task_struct` (declared in `<linux/sched.h>`) is one of the largest structures in the kernel — commonly **4KB-8KB** depending on kernel config, with 100+ fields. Rather than being one monolithic blob, it acts as a **central hub with pointers out to specialized sub-structures**, each owning one concern:
+`struct task_struct` (declared in `<linux/sched.h>`) is one of the largest structures in the kernel: commonly **4KB-8KB** depending on kernel config, with 100+ fields. Rather than being one monolithic blob, it acts as a **central hub with pointers out to specialized sub-structures**, each owning one concern:
 
 ```
                         ┌──────────────────────────────────────────┐
@@ -41,35 +48,51 @@ Every running program on Linux — whether it's a single-threaded `hello.c` or a
 
 **Six core functional areas** every `task_struct` owns or references:
 
-1. **Execution State** (`volatile long state`) — where the task currently sits in its lifecycle.
-2. **Memory Layout** (`struct mm_struct *mm`) — virtual memory map: page table root, VMA boundaries. Covered in depth in Topic 4 (Virtual Memory Management) of this chapter.
-3. **Open File Descriptors** (`struct files_struct *files`) — maps integer FDs to kernel `struct file*`. Covered in depth in Topic 5 (VFS & I/O System).
-4. **Credentials & Security** (`struct cred *cred`) — real/effective/saved UID/GID, POSIX capabilities.
-5. **Scheduler Entity** (`struct sched_entity se`) — `vruntime` and the Red-Black tree node used by CFS.
-6. **Process Hierarchy** — `real_parent`, `children`, `sibling` — the doubly-linked kernel lists that form the process tree.
+1. **Execution State** (`volatile long state`): where the task currently sits in its lifecycle.
+2. **Memory Layout** (`struct mm_struct *mm`): virtual memory map (page table root, VMA boundaries). Covered in depth in Topic 4 (Virtual Memory Management) of this chapter.
+3. **Open File Descriptors** (`struct files_struct *files`): maps integer FDs to kernel `struct file*`. Covered in depth in Topic 5 (VFS & I/O System).
+4. **Credentials & Security** (`struct cred *cred`): real/effective/saved UID/GID, POSIX capabilities.
+5. **Scheduler Entity** (`struct sched_entity se`): `vruntime` and the Red-Black tree node used by CFS.
+6. **Process Hierarchy**: `real_parent`, `children`, `sibling`, the doubly-linked kernel lists that form the process tree.
 
 ##### Execution states in depth
 
 | State | Meaning | Woken by |
 |---|---|---|
-| `TASK_RUNNING` (0) | Actually executing on a CPU, **or** sitting in a runqueue waiting for a CPU slot | N/A — already runnable |
+| `TASK_RUNNING` (0) | Actually executing on a CPU, **or** sitting in a runqueue waiting for a CPU slot | N/A (already runnable) |
 | `TASK_INTERRUPTIBLE` | Sleeping/blocked on an event (keyboard input, network data, a timer) | The event **or** a signal (SIGKILL, SIGINT) |
-| `TASK_UNINTERRUPTIBLE` | Deep sleep, almost always waiting on **direct disk hardware I/O** | **Only** the I/O completing — signals are ignored |
+| `TASK_UNINTERRUPTIBLE` | Deep sleep, almost always waiting on **direct disk hardware I/O** | **Only** the I/O completing (signals are ignored) |
 | `EXIT_ZOMBIE` | Process has finished executing, but its parent has not yet called `waitpid()` to collect its exit status | Parent reaping it via `wait()`/`waitpid()` |
 
-This directly explains a classic production mystery: **why `kill -9` sometimes appears to do nothing.** A process stuck in `TASK_UNINTERRUPTIBLE` ("D state" in `ps`/`top` output) is waiting on hardware — a hung NFS mount, a failing disk — and the kernel has deliberately made this state immune to signal delivery, because interrupting a task mid-hardware-transaction could leave a device driver or filesystem in a corrupted state. `kill -9` queues `SIGKILL` in `task_struct->pending`, but delivery only happens the next time the task checks its signal queue — which, in `TASK_UNINTERRUPTIBLE`, is **only after the I/O finally completes or times out.** The process is not ignoring you; it is architecturally unreachable until the hardware responds.
+This directly explains a classic production mystery: **why `kill -9` sometimes appears to do nothing.**
 
-A process that has called `exit()` becomes `EXIT_ZOMBIE`: the kernel has already freed its memory (`mm_struct`), file descriptors, and most other resources — but keeps the `task_struct` itself alive, holding just the exit status, so the parent can retrieve it. A parent that never calls `wait()`/`waitpid()` leaks zombie `task_struct`s (a well-known interview "what causes zombie processes" question) — they don't consume RAM or CPU, but they do consume a PID slot and the small `task_struct` allocation itself until reaped or until the parent dies (at which point `init`/PID 1 adopts and reaps them).
+- A process stuck in `TASK_UNINTERRUPTIBLE` ("D state" in `ps`/`top` output) is waiting on hardware (a hung NFS mount, a failing disk).
+- The kernel deliberately makes this state immune to signal delivery, because interrupting a task mid-hardware-transaction could leave a device driver or filesystem in a corrupted state.
+- `kill -9` queues `SIGKILL` in `task_struct->pending`, but delivery only happens the next time the task checks its signal queue.
+- In `TASK_UNINTERRUPTIBLE`, that check **only happens after the I/O finally completes or times out.**
+- The process is not ignoring you. It is architecturally unreachable until the hardware responds.
 
-##### The `current` macro — "who is asking?"
+A process that has called `exit()` becomes `EXIT_ZOMBIE`:
+- The kernel has already freed its memory (`mm_struct`), file descriptors, and most other resources.
+- It keeps the `task_struct` itself alive, holding just the exit status, so the parent can retrieve it.
 
-Kernel code constantly needs to answer "which task called into me right now?" — for example, `sys_read()` needs `current->files->fd_array` to resolve the FD it was given. Linux does **not** do a lookup or search for this. On x86-64, the kernel keeps a pointer to the currently-running `task_struct` in a **per-CPU register/memory offset** (accessed via the GS segment register). Reading `current->pid` or `current->mm` costs essentially **0 extra cycles** — it's a direct per-CPU memory read, not a search through any list or table.
+A parent that never calls `wait()`/`waitpid()` leaks zombie `task_struct`s (a well-known interview "what causes zombie processes" question):
+- They don't consume RAM or CPU.
+- They do consume a PID slot and the small `task_struct` allocation itself, until reaped or until the parent dies (at which point `init`/PID 1 adopts and reaps them).
+
+##### The `current` macro: "who is asking?"
+
+Kernel code constantly needs to answer "which task called into me right now?" For example, `sys_read()` needs `current->files->fd_array` to resolve the FD it was given.
+
+- Linux does **not** do a lookup or search for this.
+- On x86-64, the kernel keeps a pointer to the currently-running `task_struct` in a **per-CPU register/memory offset** (accessed via the GS segment register).
+- Reading `current->pid` or `current->mm` costs essentially **0 extra cycles**: it's a direct per-CPU memory read, not a search through any list or table.
 
 ---
 
-#### 3.2 Thread (TID) vs Process (PID/TGID) — the structural difference
+#### 3.2 Thread (TID) vs Process (PID/TGID): the structural difference
 
-There is no kernel-level distinction between a "thread" and a "process" — both are `task_struct`. What differs is which fields are shared:
+There is no kernel-level distinction between a "thread" and a "process". Both are `task_struct`. What differs is which fields are shared:
 
 ```c
 struct task_struct {
@@ -81,7 +104,11 @@ struct task_struct {
 };
 ```
 
-Every thread — including the very first ("main") thread of a process — gets its **own unique `pid`** and its **own `task_struct`**. What makes a set of threads belong to "one process" from a user's point of view is that they all share the **same `tgid`**. `getpid()` in user space actually returns `tgid`, not `pid` — a deliberate naming collision that trips people up constantly. `gettid()` (Linux-specific) returns the true per-thread `pid`.
+Every thread, including the very first ("main") thread of a process, gets its **own unique `pid`** and its **own `task_struct`**.
+
+- What makes a set of threads belong to "one process" from a user's point of view is that they all share the **same `tgid`**.
+- `getpid()` in user space actually returns `tgid`, not `pid`: a deliberate naming collision that trips people up constantly.
+- `gettid()` (Linux-specific) returns the true per-thread `pid`.
 
 ```
 ==========================================================================================
@@ -112,15 +139,23 @@ Two threads, visualized: each has its *own* `task_struct` and its *own* saved re
                 (Shared fd_array)   (Shared Page Tables)
 ```
 
-**Why threads communicate fast**: because `*mm` is shared, a write by Thread A to a global variable is instantly visible to Thread B on its very next read — no copy, no syscall, no IPC mechanism needed. **The danger of the same sharing**: `*files` is also shared, so Thread A calling `close(3)` closes file descriptor 3 for **every** thread in the process, including ones still using it — a classic multi-threaded-server bug class.
+**Why threads communicate fast**: because `*mm` is shared, a write by Thread A to a global variable is instantly visible to Thread B on its very next read. No copy, no syscall, no IPC mechanism needed.
 
-All of this is controlled at creation time by `clone()` flags — `pthread_create()` is, under the hood, a `clone()` call with `CLONE_VM | CLONE_FILES | CLONE_SIGHAND | ...` set, while plain `fork()` clears all of those, forcing a fresh (Copy-on-Write) `mm_struct` and a fresh (pointer-copied) `files_struct`.
+**The danger of the same sharing**: `*files` is also shared, so Thread A calling `close(3)` closes file descriptor 3 for **every** thread in the process, including ones still using it. This is a classic multi-threaded-server bug class.
 
-**Scheduler-level consequence** (this matters for the CFS material in §3.7): the scheduler picks `task_struct`s, full stop — it has no separate concept of "process" at all. Migrating a **thread** to another core updates its saved registers but does **not** require reloading CR3 (its `mm_struct` is shared with wherever it's already running), whereas migrating a **single-threaded process** requires a full CR3 reload — this cost difference is why thread context switches are measured at roughly ~100-300ns and full process switches at ~1,000-3,000ns (the CR3 reload flushes the TLB; see Topic 1 of this chapter for the full register-save mechanics).
+All of this is controlled at creation time by `clone()` flags:
+- `pthread_create()` is, under the hood, a `clone()` call with `CLONE_VM | CLONE_FILES | CLONE_SIGHAND | ...` set.
+- Plain `fork()` clears all of those, forcing a fresh (Copy-on-Write) `mm_struct` and a fresh (pointer-copied) `files_struct`.
+
+**Scheduler-level consequence** (this matters for the CFS material in §3.7): the scheduler picks `task_struct`s, full stop. It has no separate concept of "process" at all.
+
+- Migrating a **thread** to another core updates its saved registers but does **not** require reloading CR3, since its `mm_struct` is shared with wherever it's already running.
+- Migrating a **single-threaded process** requires a full CR3 reload, which flushes the TLB.
+- This cost difference is why thread context switches are measured at roughly ~100-300ns and full process switches at ~1,000-3,000ns (see Topic 1 of this chapter for the full register-save mechanics).
 
 ---
 
-#### 3.3 Process Hierarchy — Parent, Children, and the `list_head` Pattern
+#### 3.3 Process Hierarchy: Parent, Children, and the `list_head` Pattern
 
 ```c
 struct list_head {
@@ -164,7 +199,11 @@ struct task_struct {
 └───────────────────────────────┘                        └───────────────────────────────┘
 ```
 
-**The `list_head` embedding paradigm** — this is worth internalizing since it appears throughout the kernel, not just here: unlike a typical user-space linked list (`struct Node { void *data; struct Node *next; }`, where the list node *wraps* the data), the kernel **embeds** a plain `struct list_head` directly as a field *inside* the struct it's linking. To go from a `list_head` pointer back to the containing `task_struct`, the kernel uses the `container_of()` macro:
+**The `list_head` embedding paradigm**: worth internalizing since it appears throughout the kernel, not just here.
+
+- A typical user-space linked list wraps the data: `struct Node { void *data; struct Node *next; }` (the list node wraps the data).
+- The kernel instead **embeds** a plain `struct list_head` directly as a field *inside* the struct it's linking.
+- To go from a `list_head` pointer back to the containing `task_struct`, the kernel uses the `container_of()` macro:
 
 ```
 Address of task_struct  =  Address of list_head  −  Offset of list_head within task_struct
@@ -172,11 +211,15 @@ Address of task_struct  =  Address of list_head  −  Offset of list_head within
 
 This lets one generic `list_head` implementation link *any* kernel struct without void-pointer casts or per-type list code.
 
-**`real_parent` vs `parent` — a genuine, interview-relevant distinction**: normally identical — both point at whoever called `fork()`. They diverge specifically when a debugger attaches via `ptrace()` (e.g. `gdb attach <pid>` or `strace -p <pid>`): the debugger temporarily becomes `parent` so that it — not the original spawning shell — receives `SIGCHLD` and can intercept the tracee's signals, while `real_parent` continues to point at the true original creator throughout.
+**`real_parent` vs `parent`: a genuine, interview-relevant distinction.** Normally identical: both point at whoever called `fork()`.
+
+They diverge specifically when a debugger attaches via `ptrace()` (e.g. `gdb attach <pid>` or `strace -p <pid>`):
+- The debugger temporarily becomes `parent`, not the original spawning shell, so it receives `SIGCHLD` and can intercept the tracee's signals.
+- `real_parent` continues to point at the true original creator throughout.
 
 Every thread's `group_leader` field points directly at the `task_struct` of the process's original main thread (the one whose `pid == tgid`).
 
-**User-space demonstration** — while direct `task_struct` access requires a Linux Kernel Module, you can observe the tree it builds via ordinary `fork()`:
+**User-space demonstration**: direct `task_struct` access requires a Linux Kernel Module, but you can observe the tree it builds via ordinary `fork()`:
 
 ```c
 #include <stdio.h>
@@ -214,7 +257,7 @@ int main() {
 }
 ```
 
-**Kernel-module-level traversal** (not user-space-callable — shown for completeness, since it's exactly what a kernel module debugging a hung process tree would do):
+**Kernel-module-level traversal** (not user-space-callable, shown for completeness since it's exactly what a kernel module debugging a hung process tree would do):
 
 ```c
 #include <linux/sched/signal.h> // For for_each_process macro
@@ -239,9 +282,11 @@ list_for_each(list, &current->children) {
 
 #### 3.4 fork() and Copy-on-Write
 
-`fork()` needs to give the child process what *looks like* a complete, independent copy of the parent's entire address space — potentially gigabytes. Actually copying that much RAM synchronously, on every `fork()`, would make `fork()` catastrophically slow. Linux avoids this entirely with **Copy-on-Write (CoW)**.
+`fork()` needs to give the child process what *looks like* a complete, independent copy of the parent's entire address space, potentially gigabytes. Actually copying that much RAM synchronously, on every `fork()`, would make `fork()` catastrophically slow. Linux avoids this entirely with **Copy-on-Write (CoW)**.
 
-**Immediately after `fork()` returns** — parent and child share the *same physical pages*, and the kernel marks every one of those shared pages **read-only** in **both** page tables, even pages that were writable a moment ago in the parent:
+**Immediately after `fork()` returns**:
+- Parent and child share the *same physical pages*.
+- The kernel marks every one of those shared pages **read-only** in **both** page tables, even pages that were writable a moment ago in the parent:
 
 ```
 [ PARENT (PID 100) PAGE TABLE ]                    [ CHILD (PID 101) PAGE TABLE ]
@@ -250,7 +295,7 @@ Page 2 (0x2000) -> RAM Frame B  (Read-Only)         Page 2 (0x2000) -> RAM Frame
 [ PHYSICAL RAM ] (Zero RAM copied!) Frame A/B ref-count = 2
 ```
 
-`fork()` completes in **nanoseconds regardless of the parent's RAM size**, because only the (much smaller) **page table** is duplicated — not the physical memory it describes.
+`fork()` completes in **nanoseconds regardless of the parent's RAM size**, because only the (much smaller) **page table** is duplicated, not the physical memory it describes.
 
 **The CoW trap, step by step, when either process writes to a shared page:**
 
@@ -274,9 +319,12 @@ Kernel VMM realizes: "Ah, this is a shared COW page."
 CPU retries instruction -> Write succeeds safely!
 ```
 
-Net effect: **`fork()` never copies a single byte of data until an actual write occurs on one side.** Read-only workloads after `fork()` (a very common pattern — e.g. pre-fork worker pools that inherit a large read-only cache) pay essentially zero extra memory cost.
+Net effect: **`fork()` never copies a single byte of data until an actual write occurs on one side.** Read-only workloads after `fork()` (a very common pattern: pre-fork worker pools that inherit a large read-only cache) pay essentially zero extra memory cost.
 
-**Why this can spike memory or trigger the OOM Killer**: if the parent (or child) writes to memory *rapidly* after `fork()`, CoW pages duplicate en masse, and total memory usage can approach 2x the original working set. A textbook real-world trigger: in CPython, **garbage collection touches the reference count of nearly every live object** — after `fork()`ing worker processes (a common pattern in Gunicorn/uWSGI), a GC cycle in any worker forces widespread write-faults across almost the entire heap it inherited, silently doubling that worker's resident memory and, at scale, triggering the **OOM Killer**.
+**Why this can spike memory or trigger the OOM Killer**:
+- If the parent (or child) writes to memory *rapidly* after `fork()`, CoW pages duplicate en masse, and total memory usage can approach 2x the original working set.
+- A textbook real-world trigger: in CPython, **garbage collection touches the reference count of nearly every live object**. After `fork()`ing worker processes (a common pattern in Gunicorn/uWSGI), a GC cycle in any worker forces widespread write-faults across almost the entire heap it inherited.
+- This silently doubles that worker's resident memory and, at scale, triggers the **OOM Killer**.
 
 ##### execve() after fork() — replacing the program image
 

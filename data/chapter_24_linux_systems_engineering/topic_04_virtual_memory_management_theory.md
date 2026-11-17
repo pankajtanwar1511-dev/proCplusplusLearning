@@ -2,7 +2,13 @@
 
 ### THEORY_SECTION: How a Process's Virtual Address Space Maps to Physical RAM
 
-Every Linux process operates under the illusion that it owns the entire address space. On a 64-bit architecture this is a vast virtual memory space — but nothing physical backs it until the kernel is forced to. This topic builds the complete mental model from the ground up: the layout of that address space, how the kernel tracks it (`mm_struct` / `vm_area_struct`), how `malloc`/`mmap`/`brk` actually pull memory from the kernel, and the full hardware+software pipeline (TLB → page table walk → page fault handler → cache) that runs on every single memory access.
+Every Linux process operates under the illusion that it owns the entire address space. On a 64-bit architecture this is a vast virtual memory space, but nothing physical backs it until the kernel is forced to.
+
+This topic builds the complete mental model from the ground up:
+- The layout of that address space
+- How the kernel tracks it (`mm_struct` / `vm_area_struct`)
+- How `malloc`/`mmap`/`brk` actually pull memory from the kernel
+- The full hardware+software pipeline that runs on every single memory access: TLB → page table walk → page fault handler → cache
 
 ---
 
@@ -30,7 +36,7 @@ Every Linux process operates under the illusion that it owns the entire address 
 +-----------------------------------+ Low Address (0x0040...)
 ```
 
-This is the textbook picture — but it's incomplete. Once you account for shared libraries and large allocations, the real layout has one more region:
+This is the textbook picture, but it's incomplete. Once you account for shared libraries and large allocations, the real layout has one more region:
 
 **The refined layout** (with the Memory Mapping Segment):
 
@@ -56,12 +62,12 @@ VIRTUAL ADDRESS SPACE (High Addresses -> Low Addresses)
 
 **Why this matters**: a common misconception is that *every* `malloc()` call grows the Heap segment. It doesn't. Large allocations (glibc's default threshold is **≥ 128 KB**) are served from the Memory Mapping Segment via `mmap()`, entirely separate from the Heap's `brk` boundary. §4.3 covers exactly why.
 
-**Segment permission rules** (hardware-enforced via Page Table Entry bits — not just a software convention):
+**Segment permission rules** (hardware-enforced via Page Table Entry bits, not just a software convention):
 
 | Segment | Permissions | What happens on violation |
 |---|---|---|
 | Text (`.text`) | Read-Only + Execute (R-X) | Writing to it → `SIGSEGV` |
-| Stack & Heap | Read + Write + **No-Execute** (RW-) | Executing data on it → `SIGSEGV` — this is the hardware basis of NX/DEP (prevents classic stack-smashing shellcode injection) |
+| Stack & Heap | Read + Write + **No-Execute** (RW-) | Executing data on it → `SIGSEGV` (the hardware basis of NX/DEP, preventing classic stack-smashing shellcode injection) |
 | Shared libraries (code section) | Read-Only | Shared in physical RAM across every process using that library |
 
 **Vocabulary established here, used for the rest of this chapter:**
@@ -75,16 +81,16 @@ VIRTUAL ADDRESS SPACE (High Addresses -> Low Addresses)
 
 #### 4.2 Page Faults (Lazy Allocation)
 
-When you allocate memory (`malloc`, `mmap`), the kernel does **not** immediately assign physical RAM. It only updates the process's page table to say "this virtual range is valid" — nothing physical is touched yet.
+When you allocate memory (`malloc`, `mmap`), the kernel does **not** immediately assign physical RAM. It only updates the process's page table to say "this virtual range is valid." Nothing physical is touched yet.
 
-1. When your code reads/writes to that virtual address for the **first time**, the MMU triggers a **Page Fault** — a hardware interrupt.
+1. When your code reads/writes to that virtual address for the **first time**, the MMU triggers a **Page Fault** (a hardware interrupt).
 2. The kernel's page-fault handler traps the interrupt.
 3. The kernel allocates a physical 4 KB page frame, updates the page table, and resumes your instruction.
 
 - **Major Page Fault**: requires reading data from disk (e.g. swap, or reading a binary file into memory). Costs **~5-10 ms**.
 - **Minor Page Fault**: memory is already in RAM, just not mapped into *this* process's page table yet (e.g. allocating zeroed memory, or a code page another process already loaded).
 
-**Sequence diagram — "why is allocation fast but the first *use* slow?"**
+**Sequence diagram: "why is allocation fast but the first *use* slow?"**
 
 ```
 sequenceDiagram
@@ -120,12 +126,12 @@ sequenceDiagram
 
 ---
 
-#### 4.3 brk vs mmap — How malloc Actually Gets Memory From the Kernel
+#### 4.3 brk vs mmap: How malloc Actually Gets Memory From the Kernel
 
-`malloc` (or C++ `operator new`) is a **user-space memory manager** (the glibc allocator). It is not a syscall itself — it requests virtual memory from the kernel via two underlying syscalls:
+`malloc` (or C++ `operator new`) is a **user-space memory manager** (the glibc allocator). It is not a syscall itself: it requests virtual memory from the kernel via two underlying syscalls:
 
 - **`brk` / `sbrk`**: moves the *program break* to expand/contract the Heap. Used for small allocations (glibc default threshold **< 128 KB**).
-- **`mmap`**: requests an independent block of virtual memory *outside* the heap. Used for large allocations (**≥ 128 KB**). Freed via `munmap` — memory is **instantly** returned to the OS (unlike `brk`, which can suffer heap fragmentation — see below).
+- **`mmap`**: requests an independent block of virtual memory *outside* the heap. Used for large allocations (**≥ 128 KB**). Freed via `munmap`: memory is **instantly** returned to the OS (unlike `brk`, which can suffer heap fragmentation, see below).
 
 **Code + strace demonstration:**
 
@@ -189,7 +195,12 @@ Low Address                                                   High Address
                                                             New Program Break
 ```
 
-**Why "bypassing the heap" (mmap) exists — the heap fragmentation problem.** If a 100 MB allocation sat at the end of the brk-heap, and a small 4-byte variable was allocated *above* it, freeing the 100 MB later can never shrink `brk` back down (glibc can only move the break down from the very top) — **the 100 MB stays trapped inside the heap** ("heap fragmentation"). So glibc bypasses the heap entirely for allocations ≥ 128 KB via `mmap`:
+**Why "bypassing the heap" (mmap) exists: the heap fragmentation problem.**
+
+Consider a 100 MB allocation sitting at the end of the brk-heap, with a small 4-byte variable allocated *above* it:
+- Freeing the 100 MB later can never shrink `brk` back down (glibc can only move the break down from the very top)
+- **The 100 MB stays trapped inside the heap** ("heap fragmentation")
+- So glibc bypasses the heap entirely for allocations ≥ 128 KB via `mmap`:
 
 ```
                                                 [ Separate Allocated Chunk ]
@@ -215,9 +226,9 @@ free(b);                      // Slot 2 becomes a 32-byte "hole"
 char* d = (char*) malloc(16); // glibc REUSES Slot 2! (lower address than 'c')
 ```
 
-glibc maintains internal bins/free-lists per size class and reuses holes — so sequential mallocs can look scattered even though the underlying kernel-given heap chunk is one continuous span.
+glibc maintains internal bins/free-lists per size class and reuses holes. Sequential mallocs can therefore look scattered even though the underlying kernel-given heap chunk is one continuous span.
 
-**Full byte-level walkthrough** — this exact step-tracked format ("this much heap available and reused until this operation then brk allocates new memory") is the reference shape for tracing *any* mutable-structure-over-time question in this chapter:
+**Full byte-level walkthrough.** This exact step-tracked format ("this much heap available and reused until this operation then brk allocates new memory") is the reference shape for tracing *any* mutable-structure-over-time question in this chapter:
 
 Setup: page size 4 KB; mmap threshold 128 KB; heap starts at 0 KB, program break = `0x1000`.
 
@@ -237,9 +248,9 @@ Setup: page size 4 KB; mmap threshold 128 KB; heap starts at 0 KB, program break
 
 A natural question: "won't repeated small allocations be *continuous* in address?" Answer: **mostly yes for virtual addresses**, with two nuances.
 
-**Nuance A — Metadata/alignment**: malloc stores a small header before each block and aligns to 8/16 bytes, so `ptr2 != ptr1 + requested_size` exactly, but order is still sequential.
+**Nuance A (metadata/alignment)**: malloc stores a small header before each block and aligns to 8/16 bytes, so `ptr2 != ptr1 + requested_size` exactly, but order is still sequential.
 
-**Nuance B — Virtual contiguity ≠ physical contiguity**: Virtual addresses are 100% sequential within one heap block. Physical RAM frames backing those virtual pages **do not need to be contiguous** — the kernel maps each 4 KB virtual page to whatever physical frame happens to be free:
+**Nuance B (virtual contiguity ≠ physical contiguity)**: Virtual addresses are 100% sequential within one heap block. Physical RAM frames backing those virtual pages **do not need to be contiguous**: the kernel maps each 4 KB virtual page to whatever physical frame happens to be free:
 
 ```
 Virtual Heap Space (Continuous):
@@ -251,7 +262,7 @@ Physical RAM (Scattered):
 [ Frame 89 ]     [ Frame 12 ]     [ Frame 204 ]
 ```
 
-**Important correction, validated as correct**: within ONE 4 KB page, physical bytes ARE contiguous 1:1 with virtual bytes in that page — so small objects packed into the same page are physically adjacent (cache-friendly). Crossing a page boundary is the only place adjacency can "break" physically:
+**Important correction, validated as correct**: within ONE 4 KB page, physical bytes ARE contiguous 1:1 with virtual bytes in that page, so small objects packed into the same page are physically adjacent (cache-friendly). Crossing a page boundary is the only place adjacency can "break" physically:
 
 ```
 VIRTUAL PAGE (4096 Bytes)
@@ -263,15 +274,22 @@ PHYSICAL RAM FRAME (4096 Bytes in RAM)
 [ Obj 1 ][ Obj 2 ][ Obj 3 ][ Obj 4 ][ Obj 5 ] ...
 ```
 
-Also worth knowing: **Stack and Heap always sit on different virtual pages → different physical frames**, even though both are "active" simultaneously; the CPU handles this fine (separate TLB entries, separate cache lines, both accessed with no conflict).
+Also worth knowing:
+- **Stack and Heap always sit on different virtual pages**, mapping to different physical frames, even though both are "active" simultaneously
+- The CPU handles this fine: separate TLB entries, separate cache lines, both accessed with no conflict
 
 ---
 
-#### 4.5 Memory Commit vs Resident Set — the 10GB malloc / 4GB RAM Interview Question
+#### 4.5 Memory Commit vs Resident Set: the 10GB malloc / 4GB RAM Interview Question
 
 **Classic interview scenario**: "A process calls `malloc(10GB)` on a machine with 4GB RAM. The call succeeds. Why? What happens on `memset(ptr, 0, 10GB)`?"
 
-**Answer**: `malloc` checks against the **Memory Commit Limit** (RAM + Swap), **not** current free physical RAM — a returned pointer is just a virtual grant, and the kernel **overcommits** by design (most large allocations are never fully touched). `memset` forces real page faults across the entire range; once physical RAM (4GB) fills, the kernel must swap inactive pages to disk; if swap also runs out, the **OOM Killer** kills the process.
+**Answer**: `malloc` checks against the **Memory Commit Limit** (RAM + Swap), **not** current free physical RAM. A returned pointer is just a virtual grant, and the kernel **overcommits** by design (most large allocations are never fully touched).
+
+What happens on `memset(ptr, 0, 10GB)`:
+- Forces real page faults across the entire range
+- Once physical RAM (4GB) fills, the kernel must swap inactive pages to disk
+- If swap also runs out, the **OOM Killer** kills the process
 
 ```
 Physical RAM: 4GB, Swap: 8GB ⇒ ~12GB "Possible" commit.
@@ -325,7 +343,9 @@ struct vm_area_struct {
 };
 ```
 
-**Why a process's VMAs are tracked in BOTH a linked list and a red-black tree simultaneously**: a doubly linked list `*mmap` AND a Red-Black tree `*mm_rb` both point at the *same* VMAs. The list exists for sequential iteration (e.g. printing `/proc/PID/maps`); the RB-tree exists for **O(log N)** lookup during a page fault, instead of an O(N) list walk through every VMA:
+**Why a process's VMAs are tracked in BOTH a linked list and a red-black tree simultaneously:** a doubly linked list `*mmap` AND a Red-Black tree `*mm_rb` both point at the *same* VMAs.
+- The list exists for sequential iteration (e.g. printing `/proc/PID/maps`)
+- The RB-tree exists for **O(log N)** lookup during a page fault, instead of an O(N) list walk through every VMA
 
 ```
                    mm_struct (Memory Descriptor)
@@ -345,7 +365,7 @@ file:     /bin/app    file:     NULL        file:     NULL
 
 `cat /proc/PID/maps` literally just loops this VMA list and prints it as text.
 
-Two-process view — every process's `task_struct → mm → its own VMA list`, completely isolated:
+Two-process view: every process's `task_struct → mm → its own VMA list`, completely isolated:
 
 ```
 [ PROCESS 1: Nginx (PID 1001) ]                   [ PROCESS 2: Python App (PID 1002) ]
@@ -373,11 +393,11 @@ Two-process view — every process's `task_struct → mm → its own VMA list`, 
 
 #### 4.7 What Happens on mmap() vs the First Write (Demand Paging)
 
-**What happens on `mmap(..., 1 MB)` — the syscall returns almost instantly:**
+**What happens on `mmap(..., 1 MB)`: the syscall returns almost instantly:**
 1. **VMM Lookup**: searches the RB-tree for an unused 1 MB gap in the virtual address space.
 2. **VMA Creation**: creates a new `vm_area_struct` (e.g. `vm_start=0x7f8a10000000`, `vm_end=0x7f8a10100000`).
-3. **No page table updates yet** — the VMM only registers the VMA, it does NOT allocate physical frames.
-4. Returns the address immediately — nanoseconds.
+3. **No page table updates yet**: the VMM only registers the VMA, it does NOT allocate physical frames.
+4. Returns the address immediately, in nanoseconds.
 
 **What happens on the first WRITE to that region (Demand Paging / Page Fault):**
 1. **Hardware trap**: MMU checks TLB/page table → Present Bit = 0 → Page Fault exception.
@@ -392,12 +412,12 @@ Two-process view — every process's `task_struct → mm → its own VMA list`, 
 
 ---
 
-#### 4.8 Page Fault vs Cache Miss — NOT the Same Thing
+#### 4.8 Page Fault vs Cache Miss: NOT the Same Thing
 
 A recurring source of confusion worth resolving precisely, since interviewers love this exact boundary question:
 
-- **Page Fault** (virtual memory level): the PTE Present Bit = 0. This is a **software** interrupt — the kernel's VMM must allocate a physical frame (or pull from swap/disk). Cost: **~microseconds and up** (milliseconds if disk-backed).
-- **Cache Miss** (physical data level): the page IS present in RAM, but the 64-byte cache line isn't in L1/L2/L3 SRAM yet. This is **pure hardware** — the kernel is completely unaware it happened. Cost: **~100 ns**.
+- **Page Fault** (virtual memory level): the PTE Present Bit = 0. This is a **software** interrupt: the kernel's VMM must allocate a physical frame (or pull from swap/disk). Cost: **~microseconds and up** (milliseconds if disk-backed).
+- **Cache Miss** (physical data level): the page IS present in RAM, but the 64-byte cache line isn't in L1/L2/L3 SRAM yet. This is **pure hardware**: the kernel is completely unaware it happened. Cost: **~100 ns**.
 
 ```
 1. MMU & Page Table Check:
@@ -458,8 +478,8 @@ STEP 5: Physical Data Retrieval via CPU Cache Hierarchy
 
 **Four corrections worth internalizing precisely (each was a real, validated point of confusion):**
 1. **The TLB caches translations only, not data.** CPU data/instruction caches (L1/L2/L3) cache actual byte contents. Mixing these up is the single most common confusion in this area.
-2. **The Hardware Page Table Walker does NOT bring pages back from swap.** It only *walks the in-RAM page-table tree* on a TLB miss to find a PTE. If the PTE says `Present=0` (whether never allocated OR swapped out), it hands off to the **Kernel's software Page Fault Handler** — which is the thing that actually reads from swap/disk.
-3. Data flow is strictly **Registers ← L1 ← L2 ← L3 ← RAM** — the CPU always checks caches *before* ever touching physical RAM.
+2. **The Hardware Page Table Walker does NOT bring pages back from swap.** It only *walks the in-RAM page-table tree* on a TLB miss to find a PTE. If the PTE says `Present=0` (whether never allocated OR swapped out), it hands off to the **Kernel's software Page Fault Handler**, which is the thing that actually reads from swap/disk.
+3. Data flow is strictly **Registers ← L1 ← L2 ← L3 ← RAM**: the CPU always checks caches *before* ever touching physical RAM.
 4. It's a **64-bit** virtual address space (not "64-byte"); modern x86_64 Linux exposes a 48-bit (256 TB) or 57-bit user address space per process, not literally "the full 64 bits" of a pointer.
 
 *Note: the deeper mechanics of L1/L2/L3 caches themselves — including why L1 uses a VIPT (Virtually Indexed, Physically Tagged) trick to run in parallel with the TLB lookup — belong to Topic 2 (Caches, Memory Ordering, Speculative Execution & NUMA) of this chapter; this topic focuses on the paging/TLB side of the pipeline.*

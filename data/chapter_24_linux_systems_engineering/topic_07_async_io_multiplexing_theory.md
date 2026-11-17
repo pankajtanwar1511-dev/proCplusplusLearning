@@ -2,13 +2,19 @@
 
 ### THEORY_SECTION: From Blocking Reads to Zero-Syscall Ring Buffers
 
-A server that has to watch thousands of sockets at once cannot afford to block on any single one of them, and it cannot afford to burn a full OS thread per connection either. This topic covers the four generations of Linux answers to that problem — `select()`, `poll()`, `epoll()`, and `io_uring` — and how high-level C++/Python async frameworks sit on top of them.
+A server that has to watch thousands of sockets at once cannot afford to block on any single one of them, and it cannot afford to burn a full OS thread per connection either.
+
+This topic covers four generations of Linux answers to that problem, and how high-level C++/Python async frameworks sit on top of them:
+- `select()`
+- `poll()`
+- `epoll()`
+- `io_uring`
 
 ---
 
-#### 7.1 Blocking vs Non-Blocking I/O — the Starting Problem
+#### 7.1 Blocking vs Non-Blocking I/O: The Starting Problem
 
-**Blocking `read()`** on an empty socket does not busy-wait — it puts the calling task to sleep:
+**Blocking `read()`** on an empty socket does not busy-wait. It puts the calling task to sleep:
 
 ```c
 ssize_t n = read(sock_fd, buf, sizeof(buf));
@@ -22,7 +28,7 @@ ssize_t n = read(sock_fd, buf, sizeof(buf));
 //   6. Scheduler eventually picks it, read() returns with the data.
 ```
 
-This is efficient for ONE socket — the thread costs nothing while blocked. It falls apart the moment you need to watch many sockets **at once** in a single thread: `read()` on socket A blocks the thread even while socket B has data ready and waiting.
+This is efficient for ONE socket: the thread costs nothing while blocked. It falls apart the moment you need to watch many sockets **at once** in a single thread, because `read()` on socket A blocks the thread even while socket B has data ready and waiting.
 
 **Non-blocking mode** (`fcntl(fd, F_SETFL, O_NONBLOCK)`) changes the contract: `read()` never sleeps. If the receive buffer is empty, it returns immediately with `-1` and `errno = EAGAIN` (or `EWOULDBLOCK`, the same value on Linux):
 
@@ -38,24 +44,24 @@ if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
 }
 ```
 
-Non-blocking mode alone just turns "sleep until ready" into "poll and burn CPU checking constantly" — which is worse. The real fix is **multiplexing**: ask the kernel "wake me up when ANY of these N sockets is ready," so a single thread can service thousands of connections, sleeping only when truly nothing is ready.
+Non-blocking mode alone just turns "sleep until ready" into "poll and burn CPU checking constantly," which is worse. The real fix is **multiplexing**: ask the kernel "wake me up when ANY of these N sockets is ready," so a single thread can service thousands of connections, sleeping only when truly nothing is ready.
 
 | Model | Thread cost per connection | CPU while idle | Scales to 10,000 connections? |
 |---|---|---|---|
-| One blocking thread per socket | 1 OS thread (~8 MB stack reserved, ~kilobytes-MB committed) each | 0% (each thread sleeps) | No — thread/context-switch overhead dominates |
-| Busy-loop non-blocking poll | 1 thread total | 100% (constant spinning) | No — wastes an entire core |
-| Multiplexed (select/poll/epoll/io_uring) | 1 thread, N sockets | 0% while nothing ready | Yes (varies by mechanism — see below) |
+| One blocking thread per socket | 1 OS thread (~8 MB stack reserved, ~kilobytes-MB committed) each | 0% (each thread sleeps) | No (thread/context-switch overhead dominates) |
+| Busy-loop non-blocking poll | 1 thread total | 100% (constant spinning) | No (wastes an entire core) |
+| Multiplexed (select/poll/epoll/io_uring) | 1 thread, N sockets | 0% while nothing ready | Yes (varies by mechanism, see below) |
 
 ---
 
-#### 7.2 `select()` — the Original Multiplexer
+#### 7.2 `select()`: The Original Multiplexer
 
 ```c
 int select(int nfds, fd_set *readfds, fd_set *writefds,
            fd_set *exceptfds, struct timeval *timeout);
 ```
 
-`fd_set` is a fixed-size **bitmask** — bit `i` set means "watch fd `i`." `FD_SETSIZE` (typically **1024**) is a hard compile-time ceiling: you cannot watch fd 1025 no matter what, a real limitation for high-connection-count servers.
+`fd_set` is a fixed-size **bitmask**: bit `i` set means "watch fd `i`." `FD_SETSIZE` (typically **1024**) is a hard compile-time ceiling. You cannot watch fd 1025 no matter what, a real limitation for high-connection-count servers.
 
 ```c
 fd_set readfds;

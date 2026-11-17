@@ -2,13 +2,19 @@
 
 ### THEORY_SECTION: Watching the Kernel Without Crashing Production
 
-Everything a running process does eventually crosses the User Space / Kernel Space boundary — every file read, every allocation, every network packet. Observability tooling exists to let you watch that boundary from the outside, at wildly different price points: some tools pause the target process on every single syscall (fine in a debugger session on your laptop, catastrophic on a live trading server), others read passive kernel bookkeeping that already exists in RAM, and the newest generation runs your inspection code *inside* the kernel itself at native speed. Picking the wrong tool for the job is itself a production incident waiting to happen — this topic is about knowing exactly which one to reach for, and precisely why each one costs what it costs.
+Everything a running process does eventually crosses the User Space / Kernel Space boundary: every file read, every allocation, every network packet. Observability tooling exists to let you watch that boundary from the outside, at wildly different price points:
+
+- Some tools pause the target process on every single syscall (fine in a debugger session on your laptop, catastrophic on a live trading server)
+- Others read passive kernel bookkeeping that already exists in RAM
+- The newest generation runs your inspection code *inside* the kernel itself at native speed
+
+Picking the wrong tool for the job is itself a production incident waiting to happen. This topic is about knowing exactly which one to reach for, and precisely why each one costs what it costs.
 
 ---
 
-#### 9.1 `strace` — Syscall Tracing via `ptrace()`
+#### 9.1 `strace`: Syscall Tracing via `ptrace()`
 
-`strace` is not kernel magic — it is an ordinary user-space program that uses the `ptrace()` syscall to make the kernel pause your target process at every syscall boundary and hand control to `strace` instead.
+`strace` is not kernel magic. It is an ordinary user-space program that uses the `ptrace()` syscall to make the kernel pause your target process at every syscall boundary and hand control to `strace` instead.
 
 ```
 [ USER SPACE ]
@@ -24,21 +30,25 @@ Everything a running process does eventually crosses the User Space / Kernel Spa
 
 **Step-by-step mechanism:**
 
-1. `strace` calls `ptrace(PTRACE_ATTACH, target_pid)` — kernel marks the target as a traced child of `strace`.
-2. `strace` calls `ptrace(PTRACE_SYSCALL, target_pid)` — arms a trap for the *next* syscall entry or exit.
+1. `strace` calls `ptrace(PTRACE_ATTACH, target_pid)`: the kernel marks the target as a traced child of `strace`.
+2. `strace` calls `ptrace(PTRACE_SYSCALL, target_pid)`, arming a trap for the *next* syscall entry or exit.
 3. **Entry trap**: just before the tracee actually enters kernel mode for a syscall, the CPU hits the trap. The kernel freezes the tracee and delivers `SIGTRAP` to `strace`.
-4. `strace` reads the tracee's CPU registers directly (via another `ptrace(PTRACE_GETREGS, ...)` call): `RAX` = syscall number, `RDI`/`RSI`/`RDX` = the first three arguments (System V ABI — the same register convention established for ordinary function calls). It decodes and prints e.g. `write(1, "hello", 5)`.
+4. `strace` reads the tracee's CPU registers directly (via another `ptrace(PTRACE_GETREGS, ...)` call): `RAX` = syscall number, `RDI`/`RSI`/`RDX` = the first three arguments (System V ABI, the same register convention established for ordinary function calls). It decodes and prints e.g. `write(1, "hello", 5)`.
 5. `strace` resumes the tracee with `ptrace(PTRACE_SYSCALL, ...)` again, arming the **exit** trap.
 6. **Exit trap**: the kernel pauses the tracee again the instant the syscall returns, before control goes back to user code. `strace` reads `RAX` (now holding the return value) and prints `= 5`.
 7. Repeat for every single syscall, for the life of the process.
 
-**Common Pitfall:** each syscall now costs **two extra context switches** (into `strace`, back out) instead of zero. Measured overhead is commonly **10x–100x** slower depending on syscall density. **Never run raw `strace` against a hot path in production** — you will not just observe the slowdown, you may cause the very timeout or SLA breach you were trying to diagnose. `strace -c` (aggregate counts only, no live printing) and running against a *non-production* replica are the standard workarounds.
+**Common Pitfall:**
+- Each syscall now costs **two extra context switches** (into `strace`, back out) instead of zero
+- Measured overhead is commonly **10x–100x** slower depending on syscall density
+- **Never run raw `strace` against a hot path in production.** You will not just observe the slowdown: you may cause the very timeout or SLA breach you were trying to diagnose
+- `strace -c` (aggregate counts only, no live printing) and running against a *non-production* replica are the standard workarounds
 
 ---
 
-#### 9.2 `/proc` — The Kernel's Live State, Exposed as a Filesystem
+#### 9.2 `/proc`: The Kernel's Live State, Exposed as a Filesystem
 
-`/proc` is a **pseudo-filesystem**: nothing under it exists on disk. Every read is generated on the fly by walking live kernel structures — `cat /proc/1234/maps` routes through the VFS to the `procfs` driver, which reads PID 1234's `task_struct` → `mm_struct` → walks its VMA list and formats it as text, right at the moment you read it.
+`/proc` is a **pseudo-filesystem**: nothing under it exists on disk. Every read is generated on the fly by walking live kernel structures. For example, `cat /proc/1234/maps` routes through the VFS to the `procfs` driver, which reads PID 1234's `task_struct` → `mm_struct`, walks its VMA list, and formats it as text right at the moment you read it.
 
 ```
 ADDRESS                   PERMS OFFSET  DEV   INODE      PATH
@@ -48,7 +58,7 @@ ADDRESS                   PERMS OFFSET  DEV   INODE      PATH
 7ffda5a22000-7ffda5a43000 rw-p 00000000 00:00 0          [stack]
 ```
 
-Because there's no disk I/O and no context switch into a traced target's syscall path, reading `/proc` costs **near zero** overhead — it's the safest observability tool that exists, safe to script against production continuously.
+Because there's no disk I/O and no context switch into a traced target's syscall path, reading `/proc` costs **near zero** overhead. It's the safest observability tool that exists, safe to script against production continuously.
 
 Key files worth memorizing:
 
@@ -58,14 +68,14 @@ Key files worth memorizing:
 | `/proc/PID/cmdline` | The exact argv the process was launched with |
 | `/proc/PID/fd/` | One symlink per open file descriptor, pointing at the real target |
 | `/proc/PID/status` | Human-readable summary: `VmSize` (virtual size), `VmRSS` (resident/physical), state |
-| `/proc/PID/smaps` | Per-VMA breakdown of dirty/clean/shared/swap bytes — the tool for "why is RSS so high" |
-| `/proc/PID/mem` | The process's actual memory, byte-addressable (requires `ptrace` permission — this is how `gdb` reads variables) |
+| `/proc/PID/smaps` | Per-VMA breakdown of dirty/clean/shared/swap bytes: the tool for "why is RSS so high" |
+| `/proc/PID/mem` | The process's actual memory, byte-addressable (requires `ptrace` permission; this is how `gdb` reads variables) |
 
 ---
 
-#### 9.3 `perf` and `eBPF` — Near-Zero-Overhead Kernel-Resident Tracing
+#### 9.3 `perf` and `eBPF`: Near-Zero-Overhead Kernel-Resident Tracing
 
-`perf` reads hardware Performance Monitoring Unit (PMU) counters directly from CPU silicon (cache misses, branch mispredicts, instructions retired) plus static kernel tracepoints — very low overhead (**<1-2%**) because it's mostly *sampling*, not trapping every event.
+`perf` reads hardware Performance Monitoring Unit (PMU) counters directly from CPU silicon (cache misses, branch mispredicts, instructions retired) plus static kernel tracepoints. Overhead is very low (**<1-2%**) because it's mostly *sampling*, not trapping every event.
 
 **eBPF** goes further: it lets you load a small, verified program that runs **inside the kernel itself**, attached directly to the event you care about, with **zero context switches** to user space at all.
 
@@ -87,10 +97,10 @@ Key files worth memorizing:
 **Step-by-step mechanism:**
 
 1. Write a small script (C, Python via `bcc`, or a dedicated language like `bpftrace`) that compiles down to eBPF bytecode.
-2. The kernel's **eBPF Verifier** statically analyzes the bytecode before allowing it to load — proves it terminates (no unbounded loops), never dereferences an unchecked pointer, and stays within a bounded instruction budget. This is what makes it safe to run arbitrary tracing code in kernel context at all.
+2. The kernel's **eBPF Verifier** statically analyzes the bytecode before allowing it to load. It proves the program terminates (no unbounded loops), never dereferences an unchecked pointer, and stays within a bounded instruction budget. This is what makes it safe to run arbitrary tracing code in kernel context at all.
 3. The verified bytecode is **JIT-compiled** to native machine code for the host CPU.
 4. It's attached to a `kprobe` (a dynamic hook on almost any kernel function), a static `tracepoint` (a hook the kernel developers deliberately placed at a stable point), or a `raw_tracepoint`/syscall entry.
-5. On the hooked event, the compiled program runs **inline, in kernel context, at native speed** — no context switch, no pausing the target process — and writes results into a lock-free ring buffer that user space reads asynchronously.
+5. On the hooked event, the compiled program runs **inline, in kernel context, at native speed**: no context switch, no pausing the target process. It writes results into a lock-free ring buffer that user space reads asynchronously.
 
 This is why `eBPF`-based tools (e.g. `bpftrace`, Cilium, Falco) are the modern standard for **production** tracing and security monitoring: you get `strace`-level visibility into kernel behavior with none of the `strace`-level cost.
 

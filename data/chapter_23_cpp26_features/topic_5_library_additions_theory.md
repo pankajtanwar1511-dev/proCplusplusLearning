@@ -2,17 +2,33 @@
 
 ### THEORY_SECTION: Numerics, SIMD, and Lock-Free Memory Reclamation for C++26
 
-C++26 is not finalized at the time of writing — the ISO C++ committee (WG21) is still landing papers into the working draft, with final ratification expected around 2026. Every feature below has been **voted into the C++26 working draft** by its accepted WG21 proposal number, but wording can still be refined by further papers before final publication. Where a detail is more likely to shift, this section says so explicitly rather than asserting false precision.
+C++26 is not finalized at the time of writing. The ISO C++ committee (WG21) is still landing papers into the working draft, with final ratification expected around 2026.
 
-This topic rounds out the C++26 chapter's library additions: a BLAS-style linear algebra library, a fixed-capacity vector, portable explicit SIMD types, and two complementary lock-free memory-reclamation techniques for concurrent data structures. `std::execution` (senders/receivers, P2300) is covered in its own dedicated topic in this chapter and is not repeated here.
+- Every feature below has been **voted into the C++26 working draft** by its accepted WG21 proposal number, but wording can still be refined by further papers before final publication.
+- Where a detail is more likely to shift, this section says so explicitly rather than asserting false precision.
+
+This topic rounds out the C++26 chapter's library additions:
+- A BLAS-style linear algebra library
+- A fixed-capacity vector
+- Portable explicit SIMD types
+- Two complementary lock-free memory-reclamation techniques for concurrent data structures
+
+`std::execution` (senders/receivers, P2300) is covered in its own dedicated topic in this chapter and is not repeated here.
 
 ---
 
 #### 1. `std::linalg` — BLAS-Style Linear Algebra on Top of `std::mdspan` (P1673)
 
-**The problem:** Linear algebra is everywhere in scientific computing, robotics, graphics, and machine learning, yet C++ has never had a standard way to express "multiply this matrix by this vector." Projects either hand-roll nested loops (slow, easy to get index math wrong) or link against an external BLAS (Basic Linear Algebra Subprograms) implementation (OpenBLAS, MKL, Eigen) with its own API, its own build dependency, and its own data ownership model.
+**The problem:** Linear algebra is everywhere in scientific computing, robotics, graphics, and machine learning, yet C++ has never had a standard way to express "multiply this matrix by this vector." Projects are left with two options:
+- Hand-roll nested loops: slow, easy to get index math wrong
+- Link against an external BLAS (Basic Linear Algebra Subprograms) implementation (OpenBLAS, MKL, Eigen): brings its own API, its own build dependency, and its own data ownership model
 
-**The C++26 answer:** `std::linalg` (`<linalg>`) is a set of **free functions** implementing the standard BLAS operation levels — vector-vector (Level 1: dot products, norms, scaling), matrix-vector (Level 2), and matrix-matrix (Level 3: `matrix_product`) — but instead of inventing a new matrix *type*, it operates directly on `std::mdspan`, the non-owning multidimensional array view introduced in C++23.
+**The C++26 answer:** `std::linalg` (`<linalg>`) is a set of **free functions** implementing the standard BLAS operation levels:
+- Level 1 (vector-vector): dot products, norms, scaling
+- Level 2 (matrix-vector)
+- Level 3 (matrix-matrix): `matrix_product`
+
+Instead of inventing a new matrix *type*, it operates directly on `std::mdspan`, the non-owning multidimensional array view introduced in C++23.
 
 ```cpp
 #include <linalg>
@@ -59,9 +75,9 @@ Because `mdspan` carries a **layout policy** as a template parameter, `std::lina
 
 #### 2. `std::inplace_vector<T, N>` — Fixed-Capacity, Vector-Like Container (P0843)
 
-**The problem:** `std::vector` is dynamically resizable but always heap-allocates its buffer. `std::array<T, N>` avoids heap allocation but has a *fixed size* — all `N` elements are always constructed, and there's no notion of "logically empty slots" without a wrapper like `std::optional<T>` per element.
+**The problem:** `std::vector` is dynamically resizable but always heap-allocates its buffer. `std::array<T, N>` avoids heap allocation but has a *fixed size*: all `N` elements are always constructed, and there's no notion of "logically empty slots" without a wrapper like `std::optional<T>` per element.
 
-Many programs — embedded systems, real-time audio/control loops, small hot-path buffers — want the `std::vector` *interface* (dynamic `size()` up to some bound, `push_back`, `emplace_back`, iterators) but with the *storage* of `std::array`: contiguous, inline, no heap allocation, no allocator.
+Many programs (embedded systems, real-time audio/control loops, small hot-path buffers) want the `std::vector` *interface* (dynamic `size()` up to some bound, `push_back`, `emplace_back`, iterators) but with the *storage* of `std::array`: contiguous, inline, no heap allocation, no allocator.
 
 **The C++26 answer:** `std::inplace_vector<T, N>` is exactly that: a vector-like container whose capacity `N` is a **compile-time template parameter** (storage lives inline inside the object, e.g. on the stack or embedded in another struct), but whose `size()` can vary at runtime from `0` up to `N`. Exceeding capacity throws (or is a precondition violation, depending on the member function used) rather than silently reallocating.
 
@@ -95,7 +111,9 @@ void process_batch() {
 | Exceeding capacity | N/A (size is fixed) | Throws / precondition violation | Reallocates transparently |
 | Element construction | All `N` elements always live | Only constructed elements live | Only constructed elements live |
 
-**Motivating use case:** Real-time or embedded code that cannot tolerate heap allocation (or the latency/fragmentation risk of `malloc`) but still needs a variable-length collection bounded by a known worst case — for example, a fixed-size scratch buffer for accumulating up to `N` sensor readings per control cycle, or a small local buffer inside a function that avoids allocation entirely for the common case.
+**Motivating use case:** real-time or embedded code that cannot tolerate heap allocation (or the latency/fragmentation risk of `malloc`) but still needs a variable-length collection bounded by a known worst case. Examples:
+- A fixed-size scratch buffer for accumulating up to `N` sensor readings per control cycle
+- A small local buffer inside a function that avoids allocation entirely for the common case
 
 ---
 
@@ -103,8 +121,8 @@ void process_batch() {
 
 **The problem:** Modern CPUs have SIMD (Single Instruction, Multiple Data) vector registers (SSE/AVX on x86, NEON on ARM) that can perform the same arithmetic operation on multiple values ("lanes") in a single instruction. Historically, using this from C++ meant either:
 
-- **Compiler-specific intrinsics** (`__m256`, `_mm256_add_ps`, ...) — fast, but non-portable and unreadable.
-- **Relying on auto-vectorization** — the compiler *might* vectorize a scalar loop, but this is heuristic-driven and easily defeated by small changes to the code.
+- **Compiler-specific intrinsics** (`__m256`, `_mm256_add_ps`, ...): fast, but non-portable and unreadable.
+- **Relying on auto-vectorization**: the compiler *might* vectorize a scalar loop, but this is heuristic-driven and easily defeated by small changes to the code.
 
 **The C++26 answer:** `std::simd<T>` (and fixed-size variants like `std::simd<T, N>`, plus a native-width alias) is a **portable, explicit** data-parallel type. Arithmetic on `simd` objects is lowered by the implementation to the appropriate vector instructions for the target architecture, while the *source code* stays standard, portable C++ with no intrinsics.
 
@@ -127,7 +145,7 @@ void add_arrays(const float* a, const float* b, float* result, std::size_t n) {
 }
 ```
 
-Here, `va + vb` performs `width` (e.g. 8) scalar additions in the time of roughly one vector instruction — the "one expression, many lanes" model is the entire point of the type.
+Here, `va + vb` performs `width` (e.g. 8) scalar additions in the time of roughly one vector instruction. The "one expression, many lanes" model is the entire point of the type.
 
 **Contrast with C++17 execution policies:** it's easy to conflate this with the parallel algorithm execution policies (`std::execution::par`, `par_unseq`) covered in an earlier chapter, but they parallelize at a different *level*:
 
@@ -137,15 +155,21 @@ Here, `va + vb` performs `width` (e.g. 8) scalar additions in the time of roughl
 | `std::execution::par_unseq` (C++17) | Across elements, threads **and/or** vectorization | Same call site; permits (but does not guarantee) SIMD use under the hood |
 | `std::simd<T>` (C++26) | Within a single core, across **vector-register lanes** | Explicit `simd` arithmetic expressions the programmer writes directly |
 
-In short: execution policies are a *request* to the algorithm implementation ("feel free to parallelize/vectorize this"), while `std::simd` is an *explicit data type* the programmer computes with directly — you control exactly which operations are vectorized and how, at the cost of writing lane-width-aware code yourself (including handling the "tail" of a loop that doesn't divide evenly by the vector width, as shown above).
+In short:
+- Execution policies are a *request* to the algorithm implementation ("feel free to parallelize/vectorize this")
+- `std::simd` is an *explicit data type* the programmer computes with directly: you control exactly which operations are vectorized and how, at the cost of writing lane-width-aware code yourself (including handling the "tail" of a loop that doesn't divide evenly by the vector width, as shown above)
 
 ---
 
 #### 4. Hazard Pointers — `std::hazard_pointer` (P2530)
 
-**The problem lock-free data structures face:** in a lock-free stack or queue, one thread might read a pointer to a node while another thread concurrently removes and deallocates that same node. Without synchronization, the reader can dereference freed memory (a use-after-free) — but adding a lock defeats the point of being lock-free, and a full tracing garbage collector is not something C++ programs generally have available.
+**The problem lock-free data structures face:** in a lock-free stack or queue, one thread might read a pointer to a node while another thread concurrently removes and deallocates that same node. Without synchronization, the reader can dereference freed memory (a use-after-free). Adding a lock would fix this, but defeats the point of being lock-free, and a full tracing garbage collector is not something C++ programs generally have available.
 
-**The technique:** hazard pointers are a **lock-free memory-reclamation scheme**. Before a reading thread dereferences a shared pointer to a node, it first publishes that pointer's address into a globally visible "hazard pointer" slot associated with itself, announcing "I am currently using this object; do not reclaim it." A thread that wants to free a node it has unlinked from the structure first scans the hazard pointer slots of all other threads; if none of them list that node's address as a hazard, it's safe to reclaim. If some thread *does* have it hazarded, reclamation is deferred (typically onto a small per-thread retirement list) until a later scan finds it's no longer hazarded by anyone.
+**The technique:** hazard pointers are a **lock-free memory-reclamation scheme**:
+1. Before a reading thread dereferences a shared pointer to a node, it first publishes that pointer's address into a globally visible "hazard pointer" slot associated with itself, announcing "I am currently using this object, do not reclaim it."
+2. A thread that wants to free a node it has unlinked from the structure first scans the hazard pointer slots of all other threads.
+3. If none of them list that node's address as a hazard, it's safe to reclaim.
+4. If some thread *does* have it hazarded, reclamation is deferred (typically onto a small per-thread retirement list) until a later scan finds it's no longer hazarded by anyone.
 
 ```cpp
 #include <hazard_pointer>  // std::hazard_pointer, exact header TBD as the paper is finalized
@@ -159,13 +183,19 @@ use(n);
 // hp released (e.g. at scope exit) -> node no longer protected by this thread
 ```
 
-**What problem this solves conceptually:** it gives concurrent, lock-free data structures a way to safely defer and eventually perform memory reclamation, without a stop-the-world garbage collector and without introducing a mutex that would serialize what was meant to be a lock-free path. The cost is per-access bookkeeping: every protected read publishes/clears a hazard pointer slot.
+**What problem this solves conceptually:** it gives concurrent, lock-free data structures a way to safely defer and eventually perform memory reclamation:
+- No stop-the-world garbage collector needed
+- No mutex needed that would serialize what was meant to be a lock-free path
+- The cost is per-access bookkeeping: every protected read publishes/clears a hazard pointer slot
 
 ---
 
 #### 5. RCU — Read-Copy-Update, `std::rcu` (P2545)
 
-**The technique:** RCU targets **read-mostly** data — data read far more often than it's modified. Readers access the shared data with **no synchronization overhead at all** (no atomics, no locks, no published hazard pointers on the read path). A writer that wants to modify the data does not mutate it in place; instead it allocates a **new copy** with the update applied, and atomically swaps a pointer so new readers see the new copy. The *old* copy is not immediately freed — reclamation is deferred until the implementation can prove no reader that started before the swap could still be using it (conceptually, until all pre-existing readers have passed a "grace period" / quiescent point).
+**The technique:** RCU targets **read-mostly** data: data read far more often than it's modified.
+- Readers access the shared data with **no synchronization overhead at all** (no atomics, no locks, no published hazard pointers on the read path)
+- A writer that wants to modify the data does not mutate it in place. Instead it allocates a **new copy** with the update applied, and atomically swaps a pointer so new readers see the new copy
+- The *old* copy is not immediately freed. Reclamation is deferred until the implementation can prove no reader that started before the swap could still be using it (conceptually, until all pre-existing readers have passed a "grace period"/quiescent point)
 
 ```cpp
 // Conceptual sketch — exact std::rcu API is still being finalized in committee:
@@ -190,9 +220,13 @@ Both are lock-free reclamation strategies for concurrent data structures; the ri
 
 #### 6. `std::text_encoding` — Querying the System Text Encoding (P1885)
 
-**The problem:** programs frequently need to know what text encoding they're operating in — is the environment's "narrow" text encoding UTF-8, Shift-JIS, Latin-1, or something else? Historically this has meant querying platform-specific APIs (`nl_langinfo(CODESET)` on POSIX, `GetACP()`/console code pages on Windows) with no portable, standard vocabulary type to represent the answer.
+**The problem:** programs frequently need to know what text encoding they're operating in. Is the environment's "narrow" text encoding UTF-8, Shift-JIS, Latin-1, or something else? Historically this has meant querying platform-specific APIs (`nl_langinfo(CODESET)` on POSIX, `GetACP()`/console code pages on Windows) with no portable, standard vocabulary type to represent the answer.
 
-**The proposed answer:** `std::text_encoding` gives a standard type representing a text encoding (with an enumerated identifier for well-known encodings such as UTF-8, plus a name string), and a way to query the encoding the environment/locale is currently using, so code can make an informed decision (e.g. "assume UTF-8 fast path" vs. "fall back to a conversion routine") instead of hard-coding an assumption or reaching for non-portable platform calls.
+**The proposed answer:** `std::text_encoding` gives:
+- A standard type representing a text encoding (with an enumerated identifier for well-known encodings such as UTF-8, plus a name string)
+- A way to query the encoding the environment/locale is currently using
+
+This lets code make an informed decision (e.g. "assume UTF-8 fast path" vs. "fall back to a conversion routine") instead of hard-coding an assumption or reaching for non-portable platform calls.
 
 ```cpp
 #include <text_encoding>  // header name/contents still subject to refinement
