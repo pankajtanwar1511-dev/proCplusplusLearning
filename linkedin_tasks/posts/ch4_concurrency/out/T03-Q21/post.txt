@@ -1,0 +1,12 @@
+=== POST TEXT ===
+p50 latency is normal. p99.9 jumps to milliseconds.
+A reporting thread holds the order-book mutex for 5 to 8 ms.
+
+What do you change? Comment A, B, C or D, then swipe ➜
+
+A classic low-latency design question. The tempting answer fixes the wrong thing.
+
+#cpp #cplusplus #concurrency #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+👉 Pick A, B, C or D below, then swipe right to check your answer.

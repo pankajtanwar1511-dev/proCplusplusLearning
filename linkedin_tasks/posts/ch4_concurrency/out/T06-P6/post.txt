@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two threads. Two flags. Four possible outputs.
+Only some of them can actually happen. 🧵
+
+Pick all that apply, then swipe ➜
+
+This is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.
+
+#cpp #cplusplus #memorymodel #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

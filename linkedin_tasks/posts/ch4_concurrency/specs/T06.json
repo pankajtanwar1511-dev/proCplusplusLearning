@@ -1,0 +1,458 @@
+[
+  {
+    "id": "T06-TH",
+    "type": "theory",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 theory",
+    "text": {
+      "hook": "Memory ordering is where C++ interview answers get vague fastest.\n\nHere is the mental model, plus the 6 myths that fail interviews. Save it for your next interview. 📌",
+      "body": "Inside:\n1. The two questions every atomic answers\n2. The three layers you must never mix\n3. The happens-before chain to say out loud\n4. Why \"thread 1 ran first\" proves nothing\n5. The exact definition of a data race\n6. Six myths, busted (slides 7-8)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: what happens with `flag.store(true, std::memory_order_acquire)`? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Undefined behaviour: acquire is not a valid order for a store (precondition violation). GCC and Clang compile it silently; `-D_GLIBCXX_ASSERTIONS` aborts.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Memory ordering:<br>the mental model<br>+ 6 myths",
+        "lead": "What interviewers are actually checking for, and the answers that fail.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Every atomic operation answers two separate questions",
+        "cards": [
+          {
+            "label": "Atomicity",
+            "text": "Can threads touch *this variable* without races, torn values or lost updates?"
+          },
+          {
+            "label": "Ordering",
+            "text": "What does it guarantee about *other* memory around it?"
+          }
+        ],
+        "takeaway": "Atomicity is always there, even with `relaxed`. The memory order only changes the ordering answer."
+      },
+      {
+        "layout": "table",
+        "kicker": "Three layers",
+        "title": "Never mix these in one answer",
+        "rows": [
+          [
+            "C++ standard",
+            "sequenced-before, synchronizes-with, happens-before, data race"
+          ],
+          [
+            "Compiler",
+            "instruction selection, compiler reordering, compiler barriers"
+          ],
+          [
+            "CPU",
+            "store buffers, MESI, fences (`mfence`, `dmb`), `lock` prefix"
+          ]
+        ],
+        "takeaway": "Answer at the C++ level first. Hardware is one possible implementation."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Say this out loud",
+        "title": "The happens-before chain",
+        "steps": [
+          "`data = 42` *sequenced-before* `ready.store(true, release)`",
+          "that store *synchronizes-with* `ready.load(acquire)`, if it reads `true`",
+          "the load *sequenced-before* `read(data)`",
+          "so `data = 42` *happens-before* `read(data)`: no race, must see 42"
+        ]
+      },
+      {
+        "layout": "statement",
+        "hero": "\"Thread 1 ran first\"<br>proves nothing.",
+        "lead": "Execution order is not synchronization. Only a happens-before edge makes the later read safe."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Data race, precisely",
+        "title": "The standard's definition",
+        "items": [
+          "Same memory location, different threads",
+          "At least one write",
+          "At least one non-atomic access",
+          "Neither happens-before the other"
+        ],
+        "warn": "Result: undefined behaviour for the whole program, not \"a stale value\"."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Release flushes the store buffer. Acquire invalidates the cache.\"",
+            "truth": "Possible hardware effects. The C++ guarantee is a synchronizes-with edge when the acquire reads the released value."
+          },
+          {
+            "myth": "\"Acquire waits for the release.\"",
+            "truth": "Acquire never waits. A load that runs first just reads the old value and synchronizes with nothing."
+          },
+          {
+            "myth": "\"Relaxed is unsafe.\"",
+            "truth": "Relaxed is still fully atomic. It is exactly right for counters and flags that publish nothing."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"seq_cst decides which thread runs first.\"",
+            "truth": "It constrains which outcomes are allowed, not scheduling."
+          },
+          {
+            "myth": "\"Any memory barrier makes the code correct.\"",
+            "truth": "You need a matched pair: release side and acquire side, on the same atomic object."
+          },
+          {
+            "myth": "\"volatile is fine for a flag between threads.\"",
+            "truth": "volatile gives no atomicity and no inter-thread ordering. Use std::atomic."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Atomic:<br>\"this operation is safe.\"<br><br>Memory order:<br>\"how it relates to everything else.\"",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T06-P2",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 practice Q2",
+    "text": {
+      "hook": "The consumer was \"fixed\" to use memory_order_acquire.\nThe producer was left alone. 🧵\n\nIs it thread-safe now? Think it through, comment your answer, then swipe ➜",
+      "body": "This is the most common half-fix in memory ordering code reviews. Look at both sides before you answer.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: fix it with fences instead. Does `atomic_thread_fence(release)` go before or after `ready.store(true, relaxed)`? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Before the store. A release fence placed after the publishing store lets `payload = 500` still be reordered after the flag.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory ordering",
+        "title": "The consumer now uses acquire.<br>Is it thread-safe?",
+        "options": [
+          "Yes, always prints 500",
+          "Prints 100 or 500",
+          "Data race: undefined behaviour",
+          "Does not compile"
+        ],
+        "cta": "Work it out, then swipe ➜",
+        "code": "int payload = 100;\nstd::atomic<bool> ready{false};\n\n// Producer thread\npayload = 500;\nready.store(true, std::memory_order_relaxed);\n\n// Consumer thread\nwhile (!ready.load(std::memory_order_acquire))\n    ;\nstd::cout << payload;"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Still a data race",
+        "verdict_sub": "undefined behaviour, not \"maybe 100\"",
+        "bullets": [
+          "An acquire load synchronizes-with a **release** store whose value it reads.",
+          "A relaxed store has no release semantics: no happens-before edge.",
+          "So `payload = 500` and the read race: UB for the whole program.",
+          "\"The producer probably runs first\" is irrelevant. Execution order is not synchronization."
+        ],
+        "wrong": "\"acquire on the consumer is enough\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Release and acquire are a pair",
+        "bullets": [
+          "Half-fix: a relaxed store gives the acquire load nothing to pair with.",
+          "The release store synchronizes-with the acquire load that reads `true`.",
+          "So `payload = 500` happens-before the read: no race, always 500."
+        ],
+        "takeaway": "Release on the store, acquire on the load, same atomic. Fixing only one side is the classic half-fix.",
+        "code": "// Producer\npayload = 500;\nready.store(true, std::memory_order_release);\n\n// Consumer (unchanged)\nwhile (!ready.load(std::memory_order_acquire))\n    ;\nstd::cout << payload;"
+      }
+    ]
+  },
+  {
+    "id": "T06-P5",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 practice Q5",
+    "text": {
+      "hook": "Everything is memory_order_relaxed.\nOne writer stores 10 then 20. One reader loads twice. 🧵\n\nWhich outputs are possible? Pick all that apply, then swipe ➜",
+      "body": "\"Relaxed means anything goes\" is the answer that fails here. Slide 3 shows where relaxed really does surprise you.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: a shared_ptr-style reference count. Which memory order does the increment need, and which does the decrement need? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Increment: relaxed (you already hold a reference, so the object cannot die). Decrement: release, plus acquire in the thread that reaches zero before `delete`: `fetch_sub(1, acq_rel)`.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory ordering",
+        "title": "All relaxed. Which `a b`<br>outputs are possible?",
+        "shared_code": "std::atomic<int> x{0};\nint a = 0, b = 0;      // printed after both join\n// relaxed = std::memory_order_relaxed",
+        "columns": [
+          {
+            "label": "Writer",
+            "code": "x.store(10, relaxed);\nx.store(20, relaxed);"
+          },
+          {
+            "label": "Reader",
+            "code": "a = x.load(relaxed);\nb = x.load(relaxed);"
+          }
+        ],
+        "options": [
+          "0 20",
+          "20 20",
+          "20 10",
+          "10 0"
+        ],
+        "cta": "Pick all that apply, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A and B only",
+        "verdict_sub": "\"20 10\" and \"10 0\" are impossible, even with relaxed",
+        "bullets": [
+          "Modification order of `x`: `0 → 10 → 20` (same thread, so sequenced-before fixes it).",
+          "Read-read coherence: once a thread has read a value, a later load of the **same** object cannot return an older one.",
+          "Full allowed set: `0 0`, `0 10`, `0 20`, `10 10`, `10 20`, `20 20`."
+        ],
+        "wrong": "\"relaxed means any order is possible\"",
+        "cta": "Where relaxed does bite ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "One atomic vs two atomics",
+        "columns": [
+          {
+            "label": "One atomic",
+            "code": "x.store(10, relaxed);\nx.store(20, relaxed);",
+            "verdict": "reader never sees 20, then 10",
+            "verdict_ok": true
+          },
+          {
+            "label": "Two atomics",
+            "code": "x.store(10, relaxed);\ny.store(1, relaxed);",
+            "verdict": "reader can see `y == 1`, then `x == 0`"
+          }
+        ],
+        "bullets": [
+          "Each atomic has its own modification order. Nothing links `x` and `y`.",
+          "All atomic, so no data race: the stale `0` is defined, just unwanted.",
+          "This is the classic `data` + `ready` flag bug. Fix: release store on the flag, acquire load of it."
+        ],
+        "takeaway": "One modification order **per object**. Relaxed drops ordering between different objects, never per-object coherence."
+      }
+    ]
+  },
+  {
+    "id": "T06-P6",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 practice Q6",
+    "text": {
+      "hook": "Two threads. Two flags. Four possible outputs.\nOnly some of them can actually happen. 🧵\n\nPick all that apply, then swipe ➜",
+      "body": "This is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: if only Thread 1 uses release/acquire and Thread 2 stays seq_cst, is \"nothing\" possible? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Yes. The single total order covers only seq_cst operations. Weakening one side's operations brings the \"nothing printed\" outcome back.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory ordering",
+        "title": "Two threads, two flags.<br>Which outputs are possible?",
+        "shared_code": "std::atomic<bool> x{false}, y{false};\nbool p1 = false, p2 = false;\n// every operation: seq_cst (default)",
+        "columns": [
+          {
+            "label": "Thread 1",
+            "code": "x.store(true);\np1 = y.load();\nif (p1) print(\"T1\");"
+          },
+          {
+            "label": "Thread 2",
+            "code": "y.store(true);\np2 = x.load();\nif (p2) print(\"T2\");"
+          }
+        ],
+        "options": [
+          "nothing",
+          "T1",
+          "T2",
+          "T1 T2"
+        ],
+        "cta": "Pick all that apply, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B, C and D",
+        "verdict_sub": "\"Nothing printed\" is impossible with seq_cst",
+        "bullets": [
+          "Nothing printed would need both loads to read `false`.",
+          "Then each load comes before the other thread's store in the single seq_cst order.",
+          "With program order that forms a **cycle**. Impossible.",
+          "\"T1 T2\" is fine: `x.store, y.store, y.load, x.load`."
+        ],
+        "wrong": "\"only one thread can print\"",
+        "cta": "Now change it to release / acquire ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "Same code, weaker ordering",
+        "columns": [
+          {
+            "label": "seq_cst",
+            "code": "x.store(true);\np1 = y.load();",
+            "verdict": "\"nothing\" impossible",
+            "verdict_ok": true
+          },
+          {
+            "label": "release / acquire",
+            "code": "x.store(true, release);\np1 = y.load(acquire);",
+            "verdict": "\"nothing\" really happens"
+          }
+        ],
+        "takeaway": "Store then load on two different variables (Dekker pattern) needs seq_cst. Release/acquire does not forbid it."
+      }
+    ]
+  },
+  {
+    "id": "T06-Q11",
+    "type": "concept",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 qa Q11",
+    "text": {
+      "hook": "\"A flag shared by two threads needs volatile. Otherwise the compiler caches it in a register.\"\n\nAgree? 🧠 Comment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "Half of this claim is true. That is exactly why it is dangerous.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: which flag type may a signal handler write, traditionally declared `volatile`? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`volatile std::sig_atomic_t`. Signal handlers and memory-mapped hardware registers are what `volatile` is for, not other threads.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "\"A flag shared by two threads needs `volatile`.\" Do you agree?",
+        "options": [
+          "No. `volatile` forces every access, but gives no atomicity, no race freedom, no ordering.",
+          "Yes. It stops the compiler caching the flag, which is all a flag needs.",
+          "Yes. `volatile` means \"don't reorder\": a lightweight memory barrier.",
+          "Yes. It works on MSVC, so it is portable enough."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. No, use std::atomic",
+        "verdict_sub": "volatile is for hardware and signal handlers, not threads",
+        "bullets": [
+          "`volatile`: every read and write is performed. That is all.",
+          "No atomic RMW: `volatile int n; ++n;` from two threads still loses increments.",
+          "Concurrent access is still a data race: UB.",
+          "No release/acquire, no happens-before. Relaxed `std::atomic<bool>` is enough for a pure stop flag."
+        ],
+        "cta": "Why not B, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "B: re-reading is not enough. It is still a data race, and it publishes no other data.",
+          "C: volatile accesses stay ordered only among themselves. Plain accesses move across them, and the CPU can reorder.",
+          "D: MSVC `/volatile:ms` is a non-standard extension (default on x86/x64, not ARM). GCC and Clang give no such guarantee."
+        ],
+        "takeaway": "Senior answer: \"hardware register or signal handler: `volatile`. Another C++ thread: `std::atomic` or a mutex.\""
+      }
+    ]
+  },
+  {
+    "id": "T06-Q14",
+    "type": "concept",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 qa Q14",
+    "text": {
+      "hook": "\"Release works because it flushes the store buffer, and MESI pushes the line to the other core.\"\n\nSounds senior. Is it right? 🧠\nComment A, B, C or D, then swipe ➜",
+      "body": "The best answer here is about layers, not about hardware.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymodel",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: on x86-64 with GCC, what does a seq_cst `store` compile to, and why is it the costly one? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`xchg` (implicitly locked): a full barrier that drains the store buffer. Release and relaxed stores are a plain `mov`.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "\"Release works by flushing the store buffer, and MESI pushes the line to the other core.\" Agree?",
+        "options": [
+          "Yes. That is how the C++ standard defines release.",
+          "No. Store buffers and MESI have nothing to do with memory ordering.",
+          "Not as a definition. Release is a happens-before guarantee; hardware is one way to implement it.",
+          "Yes on x86: a release store compiles to `mfence`."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Not as a definition",
+        "verdict_sub": "If an acquire reads the released value, everything before the release happens-before everything after the acquire",
+        "bullets": [
+          "On x86 a release store is a plain `mov`: no flush at all. On ARMv8 it is `stlr`.",
+          "Coherence (MESI) alone does not give ordering: a core can still delay its stores in a store buffer.",
+          "Answer in 3 layers: C++ (happens-before), compiler, hardware. Go to hardware only if asked."
+        ],
+        "cta": "Why not A, B or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: a flush is one possible hardware effect, not the C++ guarantee.",
+          "B: overcorrection. Coherence is part of how hardware implements atomicity and visibility.",
+          "D: x86 is TSO, stores already stay in order: a release store is a plain `mov`. `mfence` shows up for seq_cst fences."
+        ],
+        "takeaway": "Senior answer: \"define release/acquire with happens-before. Store buffers and MESI are implementation details.\""
+      }
+    ]
+  }
+]

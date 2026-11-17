@@ -1,0 +1,18 @@
+=== POST TEXT ===
+Still writing mutex + condition_variable + counter for every handoff?
+
+C++20 gave you latch, barrier, semaphore and jthread. The mental model, plus 6 myths. Save it. 📌
+
+Inside:
+1. What state each primitive owns
+2. Latch vs barrier in one slide
+3. Semaphore vs mutex vs condition variable
+4. The atomic::wait rules
+5. What jthread really does at shutdown
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

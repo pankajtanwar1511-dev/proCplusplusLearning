@@ -1,0 +1,12 @@
+=== POST TEXT ===
+One alignas(64) on head. Problem solved? 🧱
+
+Three layouts for the two indices of an SPSC queue. Which ones really stop false sharing?
+Think it through, comment your answer, then swipe ➜
+
+x86-64, GCC or Clang. Work out the three sizeofs first: they give the answer away.
+
+#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

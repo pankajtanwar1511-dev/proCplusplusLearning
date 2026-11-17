@@ -1,0 +1,131 @@
+[
+  {
+    "id": "EX-PUZZLE",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 practice Q2",
+    "text": {
+      "hook": "This lock_guard protects nothing. 🔒\n\nThe author expects 200000. What does it actually print?\nComment your guess first, then swipe ➜ for the answer.",
+      "body": "This exact bug shows up in code reviews and interviews. The compiler even warns about it, and people still miss it.",
+      "hashtags": ["cpp", "cplusplus", "concurrency", "multithreading", "interviewprep"]
+    },
+    "first_comment": "🧠 Bonus: braces fixed, but each thread locks a different mutex. What prints now? Answer in tomorrow's post.",
+    "slides": [
+      {"layout": "puzzle", "kicker": "Puzzle · Data races", "title": "The author expects 200000.<br>What is printed?",
+       "code": "int counter = 0;\nstd::mutex mtx;\n\nvoid worker() {\n    for (int i = 0; i < 100000; ++i)\n        std::lock_guard<std::mutex> lock(mtx);\n        ++counter;\n}\n\nint main() {\n    std::thread t1(worker), t2(worker);\n    t1.join(); t2.join();\n    std::cout << counter;\n}",
+       "cta": "Guess first, then swipe ➜"},
+      {"layout": "answer", "verdict": "It prints **2**", "verdict_sub": "and it is a data race (undefined behaviour)",
+       "bullets": ["No braces: the loop body is **only** the `lock_guard` declaration.",
+                   "The guard locks and unlocks 100000 times, protecting nothing.",
+                   "`++counter` runs once per thread, **after** the loop, unlocked."],
+       "wrong": "\"a bit less than 200000\"", "cta": "The fix ➜"},
+      {"layout": "code", "kicker": "The fix",
+       "code": "void worker() {\n    for (int i = 0; i < 100000; ++i) {\n        std::lock_guard<std::mutex> lock(mtx);\n        ++counter;\n    }\n}",
+       "tip": "GCC warns with `-Wall` (-Wmisleading-indentation). Treat warnings as errors in concurrent code.",
+       "takeaway": "A lock protects exactly the scope of its guard object. Always check where that scope ends."}
+    ]
+  },
+  {
+    "id": "EX-SIDE",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 practice Q6",
+    "text": {
+      "hook": "Two threads. Two flags. Four possible outputs.\nOnly some of them can actually happen. 🧵\n\nPick all that apply, then swipe ➜",
+      "body": "This is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.",
+      "hashtags": ["cpp", "cplusplus", "memorymodel", "concurrency", "interviewprep"]
+    },
+    "first_comment": "🧠 Bonus: if only Thread 1 uses release/acquire and Thread 2 stays seq_cst, is \"nothing\" possible? Reply below.",
+    "slides": [
+      {"layout": "puzzle", "kicker": "Puzzle · Memory ordering", "title": "Two threads, two flags.<br>Which outputs are possible?",
+       "shared_code": "std::atomic<bool> x{false}, y{false};\nbool p1 = false, p2 = false;\n// every operation: seq_cst (default)",
+       "columns": [{"label": "Thread 1", "code": "x.store(true);\np1 = y.load();\nif (p1) print(\"T1\");"},
+                   {"label": "Thread 2", "code": "y.store(true);\np2 = x.load();\nif (p2) print(\"T2\");"}],
+       "options": ["nothing", "T1", "T2", "T1 T2"], "cta": "Pick all that apply, then swipe ➜"},
+      {"layout": "answer", "verdict": "B, C and D", "verdict_sub": "\"Nothing printed\" is impossible with seq_cst",
+       "bullets": ["Nothing printed would need both loads to read `false`.",
+                   "Then each load comes before the other thread's store in the single seq_cst order.",
+                   "With program order that forms a **cycle**. Impossible.",
+                   "\"T1 T2\" is fine: `x.store, y.store, y.load, x.load`."],
+       "wrong": "\"only one thread can print\"", "cta": "Now change it to release / acquire ➜"},
+      {"layout": "code", "kicker": "The twist", "title": "Same code, weaker ordering",
+       "columns": [{"label": "seq_cst", "code": "x.store(true);\np1 = y.load();", "verdict": "\"nothing\" impossible", "verdict_ok": true},
+                   {"label": "release / acquire", "code": "x.store(true, release);\np1 = y.load(acquire);", "verdict": "\"nothing\" really happens"}],
+       "takeaway": "Store then load on two different variables (Dekker pattern) needs seq_cst. Release/acquire does not forbid it."}
+    ]
+  },
+  {
+    "id": "EX-CONCEPT",
+    "type": "concept",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 qa Q2",
+    "text": {
+      "hook": "\"We use only std::atomic, no mutex. So our code is lock-free.\"\n\nInterviewers love this one. True or false?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "Most people pick A. The real answer changes how you talk about lock-free code in interviews.",
+      "hashtags": ["cpp", "cplusplus", "lockfree", "concurrency", "interviewprep"]
+    },
+    "first_comment": "🧠 Follow-up an interviewer would ask next: \"Your lock-free push calls new every time. Is it still lock-free?\" Drop your answer below.",
+    "slides": [
+      {"layout": "question", "title": "Our code uses only std::atomic and no mutex. Is it lock-free?",
+       "options": ["Yes. No mutex means lock-free.", "Yes, if every atomic reports `is_lock_free()`.",
+                   "Not necessarily. A thread may still wait on another thread's state.", "Only if it uses `compare_exchange_weak`."],
+       "cta": "Pick one, then swipe ➜"},
+      {"layout": "answer", "verdict": "C. Not necessarily.", "verdict_sub": "Lock-free is about who can stall whom, not which headers you include.",
+       "bullets": ["`while (flag.test_and_set()) {}` is a lock. Preempt the holder and everyone spins.",
+                   "`std::atomic<BigStruct>` may hide an internal lock.",
+                   "`new` / `malloc` inside a push can take allocator locks."],
+       "cta": "Why not A, B or D ➜"},
+      {"layout": "wrong_options",
+       "items": ["A: locks can be hand-rolled from atomics, or hidden in library calls.",
+                 "B: every atomic can be lock-free and the algorithm can still wait.",
+                 "D: weak vs strong CAS is about spurious failure, not progress."],
+       "takeaway": "Senior answer: \"every failed CAS implies another thread's CAS succeeded, and no step waits on another thread's state.\""}
+    ]
+  },
+  {
+    "id": "EX-THEORY",
+    "type": "theory",
+    "topic_no": 6,
+    "topic_short": "Memory Ordering",
+    "source": "topic_06 theory",
+    "text": {
+      "hook": "Memory ordering is the C++ topic most engineers bluff through in interviews.\n\nHere is the mental model, plus the 6 myths that fail interviews. Save it for your next interview. 📌",
+      "body": "Inside:\n1. The two questions every atomic answers\n2. The three layers you must never mix\n3. The happens-before chain to say out loud\n4. Why \"thread 1 ran first\" proves nothing\n5. The exact definition of a data race\n6. Six myths, busted (slides 7-8)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": ["cpp", "cplusplus", "memorymodel", "concurrency", "interviewprep"]
+    },
+    "first_comment": "🧠 Test yourself: the producer uses a relaxed store and the consumer an acquire load. Is the data safely published? Answer below.",
+    "slides": [
+      {"layout": "cover", "hero": "Memory ordering:<br>the mental model<br>+ 6 myths", "lead": "What interviewers are actually checking for, and the answers that fail.", "cta": "Swipe ➜"},
+      {"layout": "cards", "kicker": "The core idea", "title": "Every atomic operation answers two separate questions",
+       "cards": [{"label": "Atomicity", "text": "Can threads touch *this variable* without races, torn values or lost updates?"},
+                 {"label": "Ordering", "text": "What does it guarantee about *other* memory around it?"}],
+       "takeaway": "Atomicity is always there, even with `relaxed`. The memory order only changes the ordering answer."},
+      {"layout": "table", "kicker": "Three layers", "title": "Never mix these in one answer",
+       "rows": [["C++ standard", "sequenced-before, synchronizes-with, happens-before, data race"],
+                ["Compiler", "instruction selection, compiler reordering, compiler barriers"],
+                ["CPU", "store buffers, MESI, fences (`mfence`, `dmb`), `lock` prefix"]],
+       "takeaway": "Answer at the C++ level first. Hardware is one possible implementation."},
+      {"layout": "chain", "kicker": "Say this out loud", "title": "The happens-before chain",
+       "steps": ["`data = 42` *sequenced-before* `ready.store(true, release)`",
+                 "that store *synchronizes-with* `ready.load(acquire)`, if it reads `true`",
+                 "the load *sequenced-before* `read(data)`",
+                 "so `data = 42` *happens-before* `read(data)`: no race, must see 42"]},
+      {"layout": "statement", "hero": "\"Thread 1 ran first\"<br>proves nothing.", "lead": "Execution order is not synchronization. Only a happens-before edge makes the later read safe."},
+      {"layout": "checklist", "kicker": "Data race, precisely", "title": "The standard's definition",
+       "items": ["Same memory location, different threads", "At least one write", "At least one non-atomic access", "Neither happens-before the other"],
+       "warn": "Result: undefined behaviour for the whole program, not \"a stale value\"."},
+      {"layout": "myths", "items": [
+        {"myth": "\"Release flushes the store buffer. Acquire invalidates the cache.\"", "truth": "Possible hardware effects. The C++ guarantee is a synchronizes-with edge when the acquire reads the released value."},
+        {"myth": "\"Acquire waits for the release.\"", "truth": "Acquire never waits. A load that runs first just reads the old value and synchronizes with nothing."},
+        {"myth": "\"Relaxed is unsafe.\"", "truth": "Relaxed is still fully atomic. It is exactly right for counters and flags that publish nothing."}]},
+      {"layout": "myths", "items": [
+        {"myth": "\"seq_cst decides which thread runs first.\"", "truth": "It constrains which outcomes are allowed, not scheduling."},
+        {"myth": "\"Any memory barrier makes the code correct.\"", "truth": "You need a matched pair: release side and acquire side, on the same atomic object."},
+        {"myth": "\"volatile is fine for a flag between threads.\"", "truth": "volatile gives no atomicity and no inter-thread ordering. Use std::atomic."}]},
+      {"layout": "takeaway", "hero": "Atomic:<br>\"this operation is safe.\"<br><br>Memory order:<br>\"how it relates to everything else.\"", "lead": "Save this. Follow for a C++ interview puzzle every day."}
+    ]
+  }
+]

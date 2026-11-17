@@ -1,0 +1,12 @@
+=== POST TEXT ===
+notify_one(): inside the lock, or after unlocking?
+
+Code reviewers argue about this all the time.
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The right answer separates correctness from performance, then adds one important exception.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.

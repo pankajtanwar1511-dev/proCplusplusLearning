@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"Data race" and "race condition" are not synonyms.
+Can you explain the difference in one sentence?
+
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+A classic opener in C++ concurrency interviews. The precise answer is short.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

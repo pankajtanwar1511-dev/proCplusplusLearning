@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two threads. One mutex. 100000 locked increments each. 🔒
+
+The author expects 200000. What does it actually print?
+Lock in your answer below, then swipe ➜ to verify.
+
+This exact bug shows up in code reviews and interviews. The compiler even warns about it, and people still miss it.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

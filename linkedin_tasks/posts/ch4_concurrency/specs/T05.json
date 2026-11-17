@@ -1,0 +1,468 @@
+[
+  {
+    "id": "T05-TH",
+    "type": "theory",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 theory",
+    "text": {
+      "hook": "\"It's std::atomic, so it's thread-safe.\"\nThat answer stops most C++ interviews short.\n\nHere is what atomics and CAS really guarantee, plus 6 myths. Save it. 📌",
+      "body": "Inside:\n1. The three-part contract of std::atomic\n2. Which expressions are really one atomic step\n3. CAS on failure, and the retry loop\n4. Lock-free is not guaranteed\n5. Atomic or mutex?\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: `std::atomic<int> a{0};` then `std::atomic<int> b = a;` Does it compile? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. std::atomic is not copyable or movable. `std::atomic<int> b = 0;` is fine since C++17 (guaranteed copy elision).",
+    "slides": [
+      {
+        "layout": "cover",
+        "kicker": "C++ Concurrency",
+        "hero": "std::atomic & CAS:<br>what it really<br>guarantees + 6 myths",
+        "lead": "The contract interviewers check, and the answers that fail.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "table",
+        "kicker": "The contract",
+        "title": "`std::atomic<T>` promises three separate things",
+        "header": [
+          "Property",
+          "Question it answers"
+        ],
+        "rows": [
+          [
+            "Atomicity",
+            "No torn values. No lost updates on a read-modify-write (RMW)."
+          ],
+          [
+            "Modification order",
+            "One order of all writes to *this one object*, agreed by every thread."
+          ],
+          [
+            "Ordering",
+            "What it says about *other* memory. Set by the `memory_order` argument."
+          ]
+        ],
+        "takeaway": "Each **operation** on **one object** is indivisible. Not a sequence, not two objects."
+      },
+      {
+        "layout": "table",
+        "kicker": "One atomic step?",
+        "title": "For `std::atomic<int> x`",
+        "header": [
+          "Expression",
+          "Verdict"
+        ],
+        "rows": [
+          [
+            "`++x`, `x += 4`, `x.fetch_add(4)`",
+            "✅ one atomic RMW, never loses updates"
+          ],
+          [
+            "`x = x + 4`",
+            "❌ atomic load, then atomic store: lost updates, no UB"
+          ],
+          [
+            "`v = x.load(); x.store(v + 4);`",
+            "❌ same gap between two atomic operations"
+          ],
+          [
+            "same code on a plain `int`",
+            "❌ data race: undefined behaviour"
+          ]
+        ],
+        "takeaway": "A race condition (lost update) is a logic bug. A data race is UB. Know which one you have."
+      },
+      {
+        "layout": "code",
+        "kicker": "Most asked detail",
+        "title": "`compare_exchange_strong(expected, desired)`",
+        "code": "// performed as one atomic step\nif (current == expected) {\n    current = desired;   return true;\n} else {\n    expected = current;  return false;\n}",
+        "bullets": [
+          "`expected` is taken **by reference** and **overwritten** on failure.",
+          "Compares bits, not `operator==`: `+0.0` and `-0.0` do not match."
+        ],
+        "takeaway": "Value 15, expected 10, CAS to 20: fails, value stays 15, `expected` becomes 15."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "The CAS loop",
+        "title": "Build any atomic update `x = f(x)`",
+        "items": [
+          "Recompute `desired` from `expected` **inside** the loop.",
+          "Keep the body short and side-effect free: it may run many times.",
+          "`weak` may fail spuriously: use it in loops. `strong` for one-shot decisions.",
+          "Lock-free, **not** wait-free: one unlucky thread can retry forever."
+        ],
+        "code": "int expected = x.load();\nint desired;\ndo {\n    desired = f(expected);\n} while (!x.compare_exchange_weak(\n             expected, desired));"
+      },
+      {
+        "layout": "statement",
+        "kicker": "The trap",
+        "hero": "`std::atomic<T>`<br>is not lock-free<br>by definition.",
+        "lead": "Only `std::atomic_flag` is guaranteed. Large types can hide a lock. Check `is_always_lock_free`."
+      },
+      {
+        "layout": "table",
+        "kicker": "Atomic or mutex?",
+        "title": "Pick by what must be protected",
+        "header": [
+          "Atomic",
+          "Mutex"
+        ],
+        "rows": [
+          [
+            "**One** independent value",
+            "An invariant spans **several** variables"
+          ],
+          [
+            "A single RMW or a short CAS loop",
+            "Several steps or complex logic"
+          ],
+          [
+            "Flag, counter, sequence number, pointer swap",
+            "Waiting threads should sleep, not burn CPU"
+          ]
+        ],
+        "takeaway": "An uncontended mutex stays in user space. A contended atomic bounces cache lines. Measure."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Only `load` and `store` are atomic. `++counter` is not.\"",
+            "truth": "`++`, `+=`, `fetch_*`, `exchange` and CAS are all atomic RMWs."
+          },
+          {
+            "myth": "\"`relaxed` atomics can tear.\"",
+            "truth": "Memory order never affects atomicity. `relaxed` only drops ordering of other memory."
+          },
+          {
+            "myth": "\"Atomic means the store buffer is flushed.\"",
+            "truth": "Not a C++ guarantee. A relaxed store on x86 is a plain `mov`."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`weak` is faster than `strong`.\"",
+            "truth": "Identical on x86 (`lock cmpxchg`). Choose by whether you already loop."
+          },
+          {
+            "myth": "\"A CAS loop is wait-free.\"",
+            "truth": "It is lock-free: someone always succeeds, but one thread can starve."
+          },
+          {
+            "myth": "\"Atomic always beats a mutex. A mutex always enters the kernel.\"",
+            "truth": "Uncontended mutexes stay in user space. Contended atomics bounce cache lines."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "An atomic makes<br>**one operation**<br>on **one object**<br>indivisible.",
+        "lead": "Not a sequence. Not two variables. Save this, and follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T05-P3",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 practice Q3",
+    "text": {
+      "hook": "`counter` is a std::atomic<int>.\nTwo threads add 4 to it, 1000 times each. 🧵\n\nWhat can it print? Comment your answer, then swipe ➜ to check it.",
+      "body": "Two questions in one: the printed value, and whether this is a data race. Both parts matter.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: can you declare a `std::atomic<std::string>`? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. std::atomic<T> requires a trivially copyable T, and std::string is not, so it fails to compile. Protect the string with a mutex instead.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Atomics",
+        "title": "Expected 8000.<br>What can it print?",
+        "code": "std::atomic<int> counter{0};\n\nint main() {\n    auto work = [] {\n        for (int i = 0; i < 1000; ++i)\n            counter = counter + 4;\n    };\n    std::thread t1(work), t2(work);\n    t1.join(); t2.join();\n    std::cout << counter << '\\n';\n}",
+        "options": [
+          "Always 8000",
+          "≤ 8000, and a data race (UB)",
+          "≤ 8000, but no data race",
+          "Does not compile"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. No data race, but updates get lost",
+        "verdict_sub": "any multiple of 4 from 8 to 8000, run-dependent",
+        "bullets": [
+          "`counter = counter + 4` is an atomic **load**, an add in a register, then an atomic **store**.",
+          "Both threads load 40, both store 44: one `+4` is lost.",
+          "Each half is atomic, so no UB. It is a race condition, not a data race.",
+          "Some runs print 8000. A passing run proves nothing."
+        ],
+        "wrong": "\"always 8000, counter is atomic\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "One operator changes everything",
+        "columns": [
+          {
+            "label": "Buggy",
+            "code": "counter = counter + 4;",
+            "verdict": "load + store: lost updates"
+          },
+          {
+            "label": "Fixed",
+            "code": "counter += 4;",
+            "verdict": "one atomic RMW: always 8000",
+            "verdict_ok": true
+          }
+        ],
+        "bullets": [
+          "`x = x + 4` calls `operator int()` (a load), then `operator=` (a store).",
+          "Each half is atomic, so no sanitizer reports a data race. Only the result is wrong.",
+          "`+=`, `++` and `fetch_add` read and write in one indivisible step."
+        ],
+        "takeaway": "`x += 4` is one atomic RMW. `x = x + 4` is two atomic operations with a gap in between."
+      }
+    ]
+  },
+  {
+    "id": "T05-P4",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 practice Q4",
+    "text": {
+      "hook": "The single most asked detail about compare-and-swap.\nWhat happens to `expected` when CAS fails? 🧠\n\nComment your answer, then swipe ➜ to check it.",
+      "body": "Two CAS calls, two lines of output. Read the second call carefully.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: how do you atomically raise `std::atomic<int> m` to `v`, but only if `v` is larger? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "A CAS loop that re-checks every refreshed value: `int e = m.load(); while (e < v && !m.compare_exchange_weak(e, v)) {}`. `if (v > m.load()) m.store(v);` can lose the larger value.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Compare-and-swap",
+        "title": "What does it print?",
+        "code": "std::atomic<int> v{10};\nint expected = 10;\n\nv.store(15);  // another thread won\n\nif (v.compare_exchange_strong(expected, 20))\n    std::cout << \"success: \";\nelse\n    std::cout << \"failed: \";\nstd::cout << \"value=\" << v\n          << \" expected=\" << expected << '\\n';\n\nif (v.compare_exchange_strong(expected, 20))\n    std::cout << \"retry success: value=\" << v\n              << \" expected=\" << expected;",
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "`failed: value=15 expected=15`",
+        "verdict_sub": "then `retry success: value=20 expected=15`",
+        "bullets": [
+          "15 != 10, so the first CAS fails and `value` stays 15.",
+          "On failure CAS **writes the current value** into `expected`: now 15.",
+          "The retry matches, `value` becomes 20. On success `expected` is untouched."
+        ],
+        "wrong": "\"failed: value=15 expected=10\"",
+        "cta": "Why this is a feature ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The payoff",
+        "title": "The refresh is what makes CAS loops work",
+        "code": "int expected = x.load();\nint desired;\ndo {\n    desired = f(expected);\n} while (!x.compare_exchange_weak(\n             expected, desired));",
+        "bullets": [
+          "A failed CAS hands you fresh data: no extra `load()` needed.",
+          "Recompute `desired` from the refreshed `expected` on every try.",
+          "`weak` inside a loop, `strong` for a one-shot decision."
+        ],
+        "takeaway": "CAS failure: returns `false`, atomic unchanged, `expected` = current value."
+      }
+    ]
+  },
+  {
+    "id": "T05-P9",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 practice Q9",
+    "text": {
+      "hook": "Wrap any struct in std::atomic and it is lock-free, right?\n\nx86-64, GCC. Three types, three booleans. 🧩\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "This one decides whether your \"lock-free\" design really is.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: x86-64, GCC, and the CPU has `cmpxchg16b`. Is a 16-byte `std::atomic` lock-free? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "With GCC, `is_lock_free()` reports false: the operations go through `libatomic` (link `-latomic`), even though the CPU has `cmpxchg16b`.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Lock-free atomics",
+        "title": "x86-64, GCC.<br>What does it print?",
+        "code": "struct Small { int a, b; };      // 8 bytes\nstruct Large { long a, b, c; };  // 24 bytes\n\nusing std::atomic;\nstd::cout << std::boolalpha\n  << atomic<int*>::is_always_lock_free << ' '\n  << atomic<Small>::is_always_lock_free << ' '\n  << atomic<Large>::is_always_lock_free;",
+        "options": [
+          "true true true",
+          "true true false",
+          "true false false",
+          "Large: compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `true true false`",
+        "verdict_sub": "`std::atomic<Large>` compiles, but hides a lock",
+        "bullets": [
+          "Pointers and 8-byte trivially copyable structs fit one native atomic instruction.",
+          "24 bytes do not: GCC uses a lock inside `libatomic` (link with `-latomic`).",
+          "Still fully atomic. Just not lock-free.",
+          "Platform-specific: only `std::atomic_flag` is guaranteed lock-free."
+        ],
+        "wrong": "\"std::atomic always means lock-free\"",
+        "cta": "Protect your design ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Make it a compile error",
+        "title": "Do not assume. Assert.",
+        "code": "static_assert(\n    std::atomic<Small>::is_always_lock_free,\n    \"design assumes lock-free Small\");",
+        "bullets": [
+          "`a.is_lock_free()`: runtime, per object.",
+          "`std::atomic<T>::is_always_lock_free`: `constexpr`, C++17.",
+          "`ATOMIC_INT_LOCK_FREE` etc.: 0 never, 1 sometimes, 2 always."
+        ],
+        "takeaway": "A \"lock-free\" algorithm built on `std::atomic<Large>` silently contains a lock."
+      }
+    ]
+  },
+  {
+    "id": "T05-Q6",
+    "type": "concept",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 qa Q6",
+    "text": {
+      "hook": "\"It's just a bool stop flag. The CPU writes a bool atomically.\"\n\nDoes it still need std::atomic<bool>? 🧠\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "The code is 5 lines. What the optimizer does with it surprises a lot of people.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up: the flag publishes no other data. Which memory order is enough for its load and store? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`memory_order_relaxed`. It is still fully atomic; release/acquire is only needed when the flag publishes other data.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "A plain `bool` stop flag. Does it need `std::atomic<bool>`?",
+        "code": "bool running = true;\nlong work = 0;\n\nstd::thread t([&] { while (running) { ++work; } });\nstd::this_thread::sleep_for(100ms);\nrunning = false;\nt.join();",
+        "options": [
+          "No. A bool write is atomic on every CPU.",
+          "Yes. It is a data race (UB). The loop may read `running` only once.",
+          "No. The worker sees `false` within an iteration or two.",
+          "No, as long as it is declared `volatile bool`."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Yes, it needs std::atomic",
+        "verdict_sub": "Plain concurrent read + write is a data race: undefined behaviour",
+        "bullets": [
+          "Same location, two threads, one writes, not atomic, no sync: **data race**.",
+          "GCC `-O2`: reads `running` once, then loops forever. At `-O0` it stops.",
+          "`std::atomic<bool>` forces a real load on every iteration."
+        ],
+        "cta": "Why not A, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: hardware atomicity is not C++ synchronization. The optimizer reasons with the language rules.",
+          "C: there is no such guarantee. The loop may never re-read the flag.",
+          "D: `volatile` forces re-reads in practice, but it is still a data race with no ordering."
+        ],
+        "takeaway": "Senior answer: \"any variable written by one thread and read by another needs an atomic or a lock, even a bool.\""
+      }
+    ]
+  },
+  {
+    "id": "T05-Q17",
+    "type": "concept",
+    "topic_no": 5,
+    "topic_short": "Atomics",
+    "source": "topic_05 qa Q17",
+    "text": {
+      "hook": "One std::atomic<long> counter, shared by every thread.\nAdd more threads and it gets slower, not faster. Why? 🧠\n\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "No mutex, no lock, and it still does not scale. The reason lives below the C++ level.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: on x86-64 (GCC -O2), `x.fetch_add(1)` is one `lock xadd`. What does `x.fetch_or(m)` compile to when its result is used? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "A `lock cmpxchg` retry loop. x86 has no single instruction that ORs and returns the old value, so this fetch_or is not wait-free there.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Many threads call `hits.fetch_add(1)` on one `std::atomic<long>`. Why does it not scale?",
+        "options": [
+          "`std::atomic<long>` takes a hidden lock on every `fetch_add`.",
+          "Atomics cause false sharing.",
+          "Every contended `fetch_add` enters the kernel.",
+          "Every `fetch_add` needs exclusive ownership of one cache line, which ping-pongs between cores."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Cache-line ping-pong",
+        "verdict_sub": "Contention lives at the cache-line level",
+        "bullets": [
+          "Every RMW needs the line in exclusive state: other copies are invalidated.",
+          "Operations serialize on line transfers. Throughput can drop as threads are added.",
+          "Fix: per-thread slots on separate lines, summed on read."
+        ],
+        "code": "struct alignas(64) Slot {\n    std::atomic<long> v{0};\n};\nSlot slots[16];  // one cache line each\nslots[tid % 16].v.fetch_add(1,\n    std::memory_order_relaxed);",
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: `atomic<long>` is lock-free on x86-64 (`lock xadd`). The cost is the cache line, not a lock.",
+          "B: false sharing is *independent* hot data in one line. Here all threads share one variable.",
+          "C: `fetch_add` is one locked instruction. It never enters the kernel."
+        ],
+        "takeaway": "Senior answer: \"scale writes by not sharing them. Pad per-thread state to separate cache lines.\""
+      }
+    ]
+  }
+]

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+counter is a std::atomic<int>.
+Two threads add 4 to it, 1000 times each. 🧵
+
+What can it print? Comment your answer, then swipe ➜ to check it.
+
+Two questions in one: the printed value, and whether this is a data race. Both parts matter.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

@@ -1,0 +1,18 @@
+=== POST TEXT ===
+Condition variables look simple. Then the interviewer asks what happens to the mutex inside wait().
+
+Here is the mental model, plus 6 myths that fail interviews. 📌
+
+Inside:
+1. The three pieces and their jobs
+2. What wait() does, step by step
+3. Why the predicate loop is mandatory
+4. notify_one vs notify_all, and clean shutdown
+5. Six myths, busted (slides 8-9)
+
+Save it for your next interview.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

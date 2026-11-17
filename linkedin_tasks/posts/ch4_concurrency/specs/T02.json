@@ -1,0 +1,442 @@
+[
+  {
+    "id": "T02-TH",
+    "type": "theory",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 theory",
+    "text": {
+      "hook": "Data race. Race condition. Deadlock.\nThree different bugs that get mixed up in interviews all the time.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Three failures, three layers\n2. The exact definition of a data race\n3. Why ++counter loses updates\n4. Coffman's four conditions, and how to break them\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: two threads write two different `int` members of the same struct, no lock. Data race or not? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No: different members are different memory locations (it may still cause false sharing). Adjacent bit-fields are different: they form one memory location, so that is a data race.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Data races,<br>race conditions,<br>deadlocks",
+        "lead": "Three different bugs. The mental model to tell them apart, plus 6 myths.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three failures, three different layers",
+        "cards": [
+          {
+            "label": "Data race",
+            "text": "A language rule broken: unsynchronized conflicting access. UB for the whole program."
+          },
+          {
+            "label": "Race condition",
+            "text": "A logic bug: correct only for some interleavings. Possible with zero data races."
+          },
+          {
+            "label": "Deadlock",
+            "text": "A progress failure: threads wait on each other in a cycle, forever."
+          }
+        ],
+        "takeaway": "Answer at the C++ level first. Hardware stories are just one possible execution."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Data race, precisely",
+        "title": "All four, at the same time",
+        "items": [
+          "Same memory location, at least one write (they *conflict*)",
+          "Potentially concurrent",
+          "At least one access is not atomic",
+          "Neither happens-before the other"
+        ],
+        "warn": "Result: undefined behaviour for the entire program, not \"a slightly wrong value\"."
+      },
+      {
+        "layout": "table",
+        "kicker": "The lost update",
+        "title": "Why `++counter` is not atomic",
+        "header": [
+          "Thread A",
+          "Thread B"
+        ],
+        "rows": [
+          [
+            "load 100",
+            ""
+          ],
+          [
+            "",
+            "load 100"
+          ],
+          [
+            "store 101",
+            ""
+          ],
+          [
+            "",
+            "store 101 (one increment lost)"
+          ]
+        ],
+        "takeaway": "Even x86 `add [mem], 1` without `lock` is load, add, store. The compiler may also keep `counter` in a register."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Race condition",
+        "hero": "Data-race-free<br>is not<br>deterministic.",
+        "lead": "`x = 10` vs `x = 20` under one mutex: no data race, final value 10 or 20. A mutex never decides who goes first."
+      },
+      {
+        "layout": "table",
+        "kicker": "Deadlock",
+        "title": "Coffman: all four must hold. Break one.",
+        "header": [
+          "Condition",
+          "Break it by"
+        ],
+        "rows": [
+          [
+            "Mutual exclusion",
+            "lock-free or immutable data, single owner"
+          ],
+          [
+            "Hold and wait",
+            "acquire all at once: `std::scoped_lock`"
+          ],
+          [
+            "No preemption",
+            "`try_lock` and back off"
+          ],
+          [
+            "Circular wait",
+            "one global lock order"
+          ]
+        ],
+        "takeaway": "\"No preemption\" is about resources. The OS preempting a thread never releases its mutex."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Prevention",
+        "title": "Rules that keep you deadlock-free",
+        "items": [
+          "Impose one global lock order (not creation order)",
+          "Runtime-chosen pairs: `std::scoped_lock(a.m, b.m)`",
+          "Never call unknown code (callbacks, virtuals) while holding a lock",
+          "Never block on another thread (`join`, `future.get()`) while holding a lock"
+        ],
+        "warn": "Timeouts (`try_lock_for`) are diagnostics and escape hatches, not prevention."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"I joined both threads, so it is safe.\"",
+            "truth": "`join()` orders each worker before the code after it. It does not protect the workers from each other."
+          },
+          {
+            "myth": "\"x86 is cache coherent, so a plain shared `int` is fine.\"",
+            "truth": "C++ rules and the compiler apply first. Coherence does not make RMW atomic or stop hoisting."
+          },
+          {
+            "myth": "\"A read racing with a write just reads a stale value.\"",
+            "truth": "It is UB: torn values, hoisted loads and deleted loops are all real outcomes."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"If every variable is atomic, my class is thread-safe.\"",
+            "truth": "Multi-step invariants still need one critical section or one RMW."
+          },
+          {
+            "myth": "\"`lock_guard` notices a deadlock and backs off.\"",
+            "truth": "RAII wrappers just call `lock()`. They detect nothing."
+          },
+          {
+            "myth": "\"TSan finds data races, but not deadlocks.\"",
+            "truth": "TSan also reports lock-order inversions. For a live hang, use a debugger."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Data race:<br>undefined program.<br><br>Race condition:<br>wrong program.<br><br>Deadlock:<br>stuck program.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T02-P2",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 practice Q2",
+    "text": {
+      "hook": "Two threads. One mutex. 100000 locked increments each. 🔒\n\nThe author expects 200000. What does it actually print?\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "This exact bug shows up in code reviews and interviews. The compiler even warns about it, and people still miss it.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: braces fixed, but each thread locks a different mutex. What prints now? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Still a data race, so undefined behaviour: two different mutexes give no mutual exclusion between the threads. In practice the result is usually less than 200000.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Data races",
+        "title": "The author expects 200000.<br>What is printed?",
+        "code": "int counter = 0;\nstd::mutex mtx;\n\nvoid worker() {\n    for (int i = 0; i < 100000; ++i)\n        std::lock_guard<std::mutex> lock(mtx);\n        ++counter;\n}\n\nint main() {\n    std::thread t1(worker), t2(worker);\n    t1.join(); t2.join();\n    std::cout << counter;\n}",
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "In practice it prints **2**",
+        "verdict_sub": "and it is a data race (undefined behaviour)",
+        "bullets": [
+          "No braces: the loop body is **only** the `lock_guard` declaration.",
+          "The guard locks and unlocks 100000 times, protecting nothing.",
+          "`++counter` runs once per thread, **after** the loop, unlocked."
+        ],
+        "wrong": "\"a bit less than 200000\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "code": "void worker() {\n    for (int i = 0; i < 100000; ++i) {\n        std::lock_guard<std::mutex> lock(mtx);\n        ++counter;\n    }\n}",
+        "tip": "GCC warns with `-Wall` (-Wmisleading-indentation). Treat warnings as errors in concurrent code.",
+        "takeaway": "A lock protects exactly the scope of its guard object. Always check where that scope ends."
+      }
+    ]
+  },
+  {
+    "id": "T02-Q7",
+    "type": "concept",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 qa Q7",
+    "text": {
+      "hook": "\"Data race\" and \"race condition\" are not synonyms.\nCan you explain the difference in one sentence?\n\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "A classic opener in C++ concurrency interviews. The precise answer is short.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: does marking a shared `bool` flag `volatile` fix a data race on it? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. volatile is not a synchronization primitive in C++: it gives no atomicity and no inter-thread ordering. Use std::atomic<bool>.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "What is the difference between a data race and a race condition?",
+        "options": [
+          "Data race: unsynchronized conflicting access, UB. Race condition: logic that depends on timing.",
+          "None. A data race is just one kind of race condition.",
+          "Make every shared variable `std::atomic` and both are gone.",
+          "A data race only matters on weakly ordered CPUs like ARM."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A.",
+        "verdict_sub": "Data race = undefined program. Race condition = wrong program.",
+        "bullets": [
+          "Data race: a property of memory accesses. TSan can catch it.",
+          "Race condition: a property of the algorithm. Every access may be legal.",
+          "Race condition, no data race: `if (stock.load() > 0) stock.fetch_sub(1);`",
+          "Data race, no race condition: two threads store `true` to a plain `bool done`. Still UB."
+        ],
+        "cta": "Why not B, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "B: a data race can exist where the logic does not depend on order at all. It is a language rule, not a logic bug.",
+          "C: atomics remove data races, not check-then-act races.",
+          "D: a data race is UB by the C++ rules on any hardware. The compiler relies on it."
+        ],
+        "takeaway": "Senior answer: \"Data-race-free is the minimum bar for a defined program. Race-condition-free is the bar for a correct one.\""
+      }
+    ]
+  },
+  {
+    "id": "T02-P10",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 practice Q10",
+    "text": {
+      "hook": "Only one mutex in the whole program.\nSo a deadlock is impossible. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The usual suspect is two mutexes locked in opposite order. This one hides somewhere else.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: on failure to lock the second mutex, release the first and retry. Deadlock is gone. What new problem can appear? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Livelock: two threads with symmetric timing can lock, fail, release and retry in lockstep forever at 100% CPU. Add randomized back-off or keep one consistent lock order.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Deadlocks",
+        "title": "Only one mutex exists.<br>Can this program deadlock?",
+        "code": "std::mutex m;\nint result = 0;\n\nint main() {\n    std::lock_guard<std::mutex> g(m);\n    std::thread worker([] {\n        std::lock_guard<std::mutex> wg(m);\n        result = 42;\n    });\n    std::cout << \"main: joining\\n\";\n    worker.join();\n    std::cout << \"result \" << result << '\\n';\n}",
+        "options": [
+          "No: a deadlock needs two mutexes",
+          "Only with unlucky timing",
+          "Yes, always",
+          "No: prints `result 42`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Yes, always",
+        "verdict_sub": "Prints `main: joining`, then hangs forever",
+        "bullets": [
+          "`main` owns `m` (`g` lives until the end of `main`), then waits in `join()`.",
+          "The worker blocks in `lock()` on `m`, so it can never finish.",
+          "Circular wait with one mutex: the second \"resource\" is *the worker has finished*."
+        ],
+        "wrong": "\"Impossible, there is only one mutex\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Never join while holding a lock",
+        "code": "int main() {\n    std::thread worker([] {\n        std::lock_guard<std::mutex> wg(m);\n        result = 42;\n    });\n    std::cout << \"main: joining\\n\";\n    worker.join();          // no lock held\n    std::cout << \"result \" << result << '\\n';\n}",
+        "tip": "Same shape: `future.get()` or waiting on a full queue while holding a lock the other thread needs.",
+        "takeaway": "A deadlock needs a cycle of waits, not two mutexes."
+      }
+    ]
+  },
+  {
+    "id": "T02-Q12",
+    "type": "concept",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 qa Q12",
+    "text": {
+      "hook": "\"Every member is std::atomic, so the class is thread-safe.\"\n\nTrue or false?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "A favourite design question. The answer is about invariants, not variables.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up an interviewer would ask next: \"notify() holds the class's std::mutex while it calls subscriber callbacks. One callback calls subscribe(), which locks the same mutex. What happens?\" Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "The same thread locks a std::mutex it already owns: undefined behaviour, in practice a self-deadlock. Copy the subscriber list under the lock, release it, then call out.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "You make every member of a class `std::atomic`. Is the class now thread-safe?",
+        "options": [
+          "Yes: atomics make every access safe.",
+          "Yes, if you use acquire/release instead of relaxed.",
+          "Not necessarily: multi-step invariants can still break.",
+          "No: atomics still race under heavy contention."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Not necessarily",
+        "verdict_sub": "Data-race-free, but invariants can still break",
+        "code": "// lastApplied is std::atomic<uint64_t>\nif (lastApplied == seq - 1) {\n    apply(msg);\n    lastApplied = seq;\n}",
+        "bullets": [
+          "Two threads both read 103, both decide 104 is next.",
+          "Both apply message 104: duplicate processing, **zero** data races.",
+          "Fix: one critical section for check + apply + publish, or one owner thread."
+        ],
+        "cta": "Why not A, B or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: each atomic operation is indivisible. A check followed by an act is two operations.",
+          "B: memory ordering controls visibility, not the logic of a multi-step algorithm.",
+          "D: operations on the same atomic object are never a data race, under any contention."
+        ],
+        "takeaway": "Senior answer: \"Thread safety is about invariants, not individual variables. Single-owner state plus queues often beats sprinkling atomics.\""
+      }
+    ]
+  },
+  {
+    "id": "T02-P9",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Data Races",
+    "source": "topic_02 practice Q9",
+    "text": {
+      "hook": "std::scoped_lock is deadlock-free.\nSo a self-transfer is harmless... right? ⚠️\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One aliasing case that \"deadlock-free\" code forgets. Self-transfers, self-swaps and self-merges all hit it.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: how can a debug build turn a lock-order violation into an immediate error instead of a rare production hang? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "A hierarchical mutex: each mutex gets a level, a thread_local remembers the level this thread currently holds, and locking a mutex whose level is not lower throws.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Deadlocks",
+        "title": "scoped_lock is deadlock-free.<br>What happens here?",
+        "code": "struct Account {\n  std::mutex m; long balance = 100;\n};\nvoid transfer(Account& from, Account& to,\n              long n) {\n  std::scoped_lock lk(from.m, to.m);\n  from.balance -= n; to.balance += n;\n}\nint main() {\n  Account a;\n  std::cout << \"start\\n\";\n  transfer(a, a, 10);  // self-transfer\n  std::cout << \"done \" << a.balance << '\\n';\n}",
+        "options": [
+          "`start`, `done 100`",
+          "UB: in practice `start`, then 100% CPU forever",
+          "`start`, then a classic deadlock (0% CPU)",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Undefined behaviour",
+        "verdict_sub": "libstdc++: prints `start`, then spins at 100% CPU forever",
+        "bullets": [
+          "The same `std::mutex` is passed twice: `std::lock(m, m)`.",
+          "It locks `m`, then calls `try_lock` on `m`, which it already owns: UB.",
+          "libstdc++: `try_lock` fails, it unlocks and retries forever. A one-thread livelock.",
+          "Deadlock avoidance only works for **distinct** mutexes."
+        ],
+        "wrong": "\"start, done 100\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Handle aliasing before you lock",
+        "code": "void transfer(Account& from, Account& to, long n) {\n    if (&from == &to) return;   // nothing to move\n    std::scoped_lock lk(from.m, to.m);\n    from.balance -= n;\n    to.balance += n;\n}",
+        "tip": "Aliasing is common: self-transfers, swapping an object with itself, merging a container into itself.",
+        "takeaway": "Always handle aliasing before multi-locking. Now it prints `done 100`."
+      }
+    ]
+  }
+]

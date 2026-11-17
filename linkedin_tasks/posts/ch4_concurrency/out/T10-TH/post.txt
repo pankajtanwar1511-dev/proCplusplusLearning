@@ -1,0 +1,19 @@
+=== POST TEXT ===
+std::async, futures, thread_local, call_once: easy to use, easy to get wrong in an interview.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 📌
+
+Inside:
+1. The shared state behind promise and future
+2. The three launch policies of std::async
+3. The blocking destructor trap
+4. thread_local: one instance per thread
+5. Once-only init: what actually works
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

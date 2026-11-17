@@ -1,0 +1,12 @@
+=== POST TEXT ===
+std::scoped_lock is deadlock-free.
+So a self-transfer is harmless... right? ⚠️
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One aliasing case that "deadlock-free" code forgets. Self-transfers, self-swaps and self-merges all hit it.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

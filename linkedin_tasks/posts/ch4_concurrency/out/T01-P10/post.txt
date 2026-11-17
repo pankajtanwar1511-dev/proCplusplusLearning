@@ -1,0 +1,12 @@
+=== POST TEXT ===
+main reads *ptr only after join().
+join() synchronizes everything. So this is correct?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two separate questions hide in this program. Most answers only check one of them.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

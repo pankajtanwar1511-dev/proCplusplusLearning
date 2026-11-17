@@ -1,0 +1,12 @@
+=== POST TEXT ===
+One std::async per incoming market-data message.
+
+Clean, modern C++. Would you ship it in a low-latency hot path?
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+Think about what each call really costs on Linux, not what the code looks like.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

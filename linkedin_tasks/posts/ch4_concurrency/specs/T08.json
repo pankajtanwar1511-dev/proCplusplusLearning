@@ -1,0 +1,398 @@
+[
+  {
+    "id": "T08-TH",
+    "type": "theory",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 theory",
+    "text": {
+      "hook": "\"Lock-free\" does not mean \"no mutex\".\nAnd it does not mean \"fast\".\n\nThe real definition, ABA in one slide, plus 6 myths that fail interviews. Save it. 📌",
+      "body": "Inside:\n1. The one test that defines lock-free and wait-free\n2. The three problems stacked in every lock-free structure\n3. ABA, step by step\n4. When lock-free is NOT faster\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "lockfree",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: is `if (stack.size() > 0) stack.pop();` safe on a lock-free stack? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. size() is only a snapshot: another thread can pop between the check and the pop. Lock-free APIs return the status from the operation itself, e.g. `std::optional<T> try_pop()`.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Lock-free:<br>a progress guarantee<br>+ 6 myths",
+        "lead": "Not \"no mutex\". Not \"fast\". Here is what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "statement",
+        "kicker": "The one test",
+        "hero": "Freeze one thread<br>forever.<br>Can the others<br>still finish?",
+        "lead": "Blocking: no, if it holds the lock. Lock-free: yes, some thread keeps completing. Wait-free: yes, every thread, in bounded steps."
+      },
+      {
+        "layout": "table",
+        "kicker": "Progress guarantees",
+        "title": "Strongest at the bottom",
+        "header": [
+          "Class",
+          "Guarantee",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Blocking",
+            "None if a lock holder is delayed",
+            "`std::mutex`, spinlock"
+          ],
+          [
+            "Obstruction-free",
+            "Completes if it runs in isolation",
+            "Some STM designs"
+          ],
+          [
+            "Lock-free",
+            "**Some** thread always completes",
+            "CAS retry loop, Treiber stack"
+          ],
+          [
+            "Wait-free",
+            "**Every** thread, bounded steps",
+            "SPSC `try_push` / `try_pop`"
+          ]
+        ],
+        "takeaway": "Lock-freedom covers the whole path: the atomics (`is_always_lock_free`) and every call, including the allocator."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Three problems, stacked",
+        "title": "Every lock-free structure must answer",
+        "cards": [
+          {
+            "label": "1. CAS",
+            "text": "Is the shared word still what I based my update on?"
+          },
+          {
+            "label": "2. ABA",
+            "text": "Did it change away and come back while I was not looking?"
+          },
+          {
+            "label": "3. Reclamation",
+            "text": "Can another thread still be dereferencing the node I just removed?"
+          }
+        ],
+        "takeaway": "The CAS loop is the easy 10 percent. ABA and reclamation are where real lock-free code breaks."
+      },
+      {
+        "layout": "chain",
+        "kicker": "ABA in a stack pop",
+        "title": "Start: head -> A -> B -> C",
+        "final_ok": false,
+        "steps": [
+          "T1 reads `old = A`, `next = B`, then is preempted",
+          "T2 pops A, pops B (frees B), pushes A back: head → A → C",
+          "T1 resumes: `CAS(head, A, B)` succeeds, head is A as expected",
+          "head -> B, a **freed** node. The stack is corrupted"
+        ],
+        "takeaway": "CAS compares values, not history. The bug is the cached `next`, computed from a state that no longer exists."
+      },
+      {
+        "layout": "table",
+        "kicker": "The fixes",
+        "title": "ABA and reclamation are different problems",
+        "rows": [
+          [
+            "Tagged pointer",
+            "CAS on {pointer, version}. Fixes ABA, **not** use-after-free"
+          ],
+          [
+            "Hazard pointers",
+            "Publish the pointer, re-validate. Bounded garbage, a fence per access"
+          ],
+          [
+            "Epochs (EBR)",
+            "Very cheap reads. One stalled thread blocks all reclamation"
+          ],
+          [
+            "RCU",
+            "Readers almost free. Writers wait a grace period"
+          ]
+        ],
+        "takeaway": "Tags answer \"did it change?\". Reclamation answers \"may I free it?\" and fixes ABA as a side effect."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Reality check",
+        "title": "When lock-free is NOT faster",
+        "items": [
+          "One hot word: every op CASes the same `head`",
+          "Retry storms: up to N-1 failed CASes per success",
+          "An uncontended mutex is just two atomic RMWs",
+          "`new Node` per push may take allocator locks",
+          "Hazard pointers cost a full fence per access"
+        ],
+        "takeaway": "What it does buy: no stalling behind a preempted holder, no priority inversion, often better tail latency."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Lock-free means no mutex in the code.\"",
+            "truth": "It is a progress guarantee. A spinlock built from atomics is still blocking."
+          },
+          {
+            "myth": "\"Lock-free means every thread makes progress.\"",
+            "truth": "Only the system does. Progress for every thread is wait-free."
+          },
+          {
+            "myth": "\"A CAS loop is wait-free because nobody waits on a lock.\"",
+            "truth": "Unbounded retries make it lock-free only."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Lock-free is automatically faster than a mutex.\"",
+            "truth": "Often equal or slower in throughput. The win is progress and tail latency."
+          },
+          {
+            "myth": "\"ABA can be fixed with a timestamp.\"",
+            "truth": "Use a monotonic version counter inside the CAS word, or safe reclamation."
+          },
+          {
+            "myth": "\"Check `p != nullptr` before using a popped node.\"",
+            "truth": "A dangling pointer is not null. `delete` does not touch other threads' copies."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Lock-free is about<br>who can stall whom,<br>not which headers<br>you include.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T08-P9",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 practice Q9",
+    "text": {
+      "hook": "Your ABA-safe stack uses a tagged pointer.\nNo mutex anywhere in the source. 🧐\n\nIs it really lock-free? Three values decide it.\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "x86-64, GCC. One of these three values breaks the lock-free claim.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "lockfree",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: is std::atomic<int>::fetch_add always wait-free? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "The standard promises no wait-freedom. On x86-64 it is one lock xadd, but on ARMv8.0 without LSE it is an LL/SC retry loop.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Lock-free",
+        "title": "x86-64, GCC.<br>What does this print?",
+        "code": "struct Node;\nstruct TaggedPtr {\n  Node* ptr;\n  std::uint64_t tag;\n};\nusing AT = std::atomic<TaggedPtr>;\nusing AU = std::atomic<std::uint64_t>;\nint main() {\n  std::cout << sizeof(TaggedPtr) << ' '\n    << std::boolalpha\n    << AT::is_always_lock_free << ' '\n    << AU::is_always_lock_free << '\\n';\n}",
+        "options": [
+          "16 true true",
+          "16 false true",
+          "8 true true",
+          "16 true false"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. 16 false true",
+        "verdict_sub": "the 16-byte atomic is not reported lock-free",
+        "bullets": [
+          "`{pointer, 64-bit tag}` is 16 bytes.",
+          "The CPU has `cmpxchg16b`, but GCC routes 16-byte atomics through `libatomic` (link with `-latomic`).",
+          "So a Treiber stack on `std::atomic<TaggedPtr>` may hide a lock, with no mutex in sight."
+        ],
+        "wrong": "\"A: x86-64 has cmpxchg16b, so true\"",
+        "cta": "What to do instead ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Fit the CAS word in 8 bytes. Assert it.",
+        "code": "// preallocated node pool:\n// 32-bit index + 32-bit tag = 8 bytes\nstruct Head {\n  std::uint32_t idx;\n  std::uint32_t tag;\n};\nstatic_assert(\n  std::atomic<Head>::is_always_lock_free);",
+        "bullets": [
+          "Or put the tag in the unused upper bits of a 48-bit x86-64 pointer (narrower, can wrap).",
+          "Results depend on compiler and flags (Clang may inline `cmpxchg16b` with `-mcx16`)."
+        ],
+        "takeaway": "Verify the lock-freedom of every atomic your algorithm depends on. Make the compiler check it."
+      }
+    ]
+  },
+  {
+    "id": "T08-Q2",
+    "type": "concept",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 qa Q2",
+    "text": {
+      "hook": "\"We use only std::atomic, no mutex. So our code is lock-free.\"\n\nA classic interview question. True or false?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "The real answer changes how you talk about lock-free code in interviews.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "lockfree",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up an interviewer would ask next: \"This push does `Node* old = head.load(); n->next = old;` once, then loops on `head.compare_exchange_weak(old, n)`. What is the bug?\" Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "A failed CAS refreshes old but not n->next, so the retry links n to a stale head and nodes pushed in between are lost. Pass n->next itself as `expected`.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Our code uses only std::atomic and no mutex. Is it lock-free?",
+        "options": [
+          "Yes. No mutex means lock-free.",
+          "Yes, if every atomic reports `is_lock_free()`.",
+          "Not necessarily. A thread may still wait on another thread's state.",
+          "Only if it uses `compare_exchange_weak`."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Not necessarily.",
+        "verdict_sub": "Lock-free is about who can stall whom, not which headers you include.",
+        "bullets": [
+          "`while (flag.test_and_set()) {}` is a lock. Preempt the holder and everyone spins.",
+          "`std::atomic<BigStruct>` may hide an internal lock.",
+          "`new` / `malloc` inside a push can take allocator locks."
+        ],
+        "cta": "Why not A, B or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: locks can be hand-rolled from atomics, or hidden in library calls.",
+          "B: every atomic can be lock-free and the algorithm can still wait.",
+          "D: weak vs strong CAS is about spurious failure, not progress."
+        ],
+        "takeaway": "Senior answer: \"every failed CAS implies another thread's CAS succeeded, and no step waits on another thread's state.\""
+      }
+    ]
+  },
+  {
+    "id": "T08-Q6",
+    "type": "concept",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 qa Q6",
+    "text": {
+      "hook": "Your lock-free pop's CAS succeeded.\nThe stack is still corrupted. 🧩\n\nThis is the ABA problem. Can you explain it?\nComment A, B, C or D, then swipe ➜",
+      "body": "Slide 2 walks through the exact interleaving, step by step.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "lockfree",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: ARM's LL/SC fails if the word was written at all, even back to A. Why can't portable C++ code rely on that to avoid ABA? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "C++ exposes only value-based compare_exchange (x86 has only cmpxchg). Even where it is built on LL/SC, a value that came back to A still matches. Use tags or safe reclamation.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Pop reads head `A` and `next = B`, then does `CAS(head, A, B)`. What is the ABA problem?",
+        "options": [
+          "CAS succeeds because head is A again, but the cached `next` is stale.",
+          "Nothing: CAS guarantees head did not change since you read it.",
+          "Two threads' CASes on head succeed at the same moment.",
+          "A memory ordering bug: `seq_cst` on the CAS prevents it."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. CAS compares values, not history",
+        "verdict_sub": "the value went A, then B, then A again",
+        "code": "stack: head -> A -> B -> C\nT1: old = A, next = B\n    (preempted)\nT2: pop A, pop B (free B)\nT2: push A   => head -> A -> C\nT1: CAS(head, A, B) succeeds\n    => head = B (freed!)",
+        "bullets": [
+          "The recycled A comes from a node pool, or `malloc` reusing the freed address.",
+          "For a plain counter, A to B to A is harmless: nothing hides behind the value."
+        ],
+        "cta": "Why not B, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "B: CAS only checks equality at the moment of the CAS, not that nothing happened in between.",
+          "C: only one CAS wins. The problem is a stale CAS that wins.",
+          "D: this interleaving is legal even with `seq_cst`. Ordering does not add history."
+        ],
+        "takeaway": "Senior answer: ABA matters when the CAS value stands for more state. Fix it with a version tag, or never reuse a node while it is referenced."
+      }
+    ]
+  },
+  {
+    "id": "T08-Q13",
+    "type": "concept",
+    "topic_no": 8,
+    "topic_short": "Lock-Free",
+    "source": "topic_08 qa Q13",
+    "text": {
+      "hook": "Lock-free stack vs mutex-protected stack.\nWhich one is faster? 🏁\n\nThe obvious answer is the one interviewers wait to correct.\nComment A, B, C or D, then swipe ➜",
+      "body": "Slide 2 has a real measurement.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "lockfree",
+        "concurrency",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: why not just use std::atomic<std::shared_ptr> for the nodes of a lock-free stack? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "It fixes lifetime, but every access pays contended atomic refcount traffic, and atomic<shared_ptr> is usually not lock-free itself.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Is a lock-free data structure faster than a mutex-protected one?",
+        "options": [
+          "Yes, always: lock-free code never enters the kernel.",
+          "Not necessarily: it buys a progress guarantee and tail latency, not raw throughput.",
+          "Yes, especially under high contention on one word.",
+          "No, never: CAS retries always make it slower."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Not necessarily.",
+        "verdict_sub": "Choose lock-free for its progress guarantee, not for assumed speed.",
+        "bullets": [
+          "Both versions serialize on the same hot cache line.",
+          "Lock-free adds failed-CAS retries, allocation and reclamation fences.",
+          "An uncontended mutex is just two atomic RMWs, no syscall.",
+          "Measured, 4 threads push/pop: both ≈ 20x slower than single-threaded. Lock-free only modestly faster."
+        ],
+        "cta": "Why not A, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: an uncontended mutex does not enter the kernel either.",
+          "C: high contention on one word means retry storms. Throughput can fall as threads grow.",
+          "D: it often ties or wins modestly, and wins clearly when a mutex holder gets preempted."
+        ],
+        "takeaway": "Senior answer: the bigger win is usually removing sharing (sharding, an SPSC queue per pair). Decide by requirements, measure p50 and p99."
+      }
+    ]
+  }
+]

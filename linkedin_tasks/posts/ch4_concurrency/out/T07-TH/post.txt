@@ -1,0 +1,18 @@
+=== POST TEXT ===
+"Spinlocks are faster than mutexes."
+That one-liner fails C++ interviews.
+
+The mental model, plus 6 myths to unlearn. Save it for later. 📌
+
+Inside:
+1. Spinlock vs mutex: what each wait really costs
+2. The minimal correct spinlock (and its memory orders)
+3. Why TAS hurts and TTAS helps
+4. When spinning wins, and the priority inversion trap
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #multithreading #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

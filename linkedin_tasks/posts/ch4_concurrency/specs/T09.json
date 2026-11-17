@@ -1,0 +1,473 @@
+[
+  {
+    "id": "T09-TH",
+    "type": "theory",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 theory",
+    "text": {
+      "hook": "Ring buffers come up in almost every low-latency C++ interview.\n\nHere is the mental model, plus the 6 myths that fail interviews. Save it for your next interview. 📌",
+      "body": "Inside:\n1. A queue as a slot-ownership protocol\n2. SPSC, MPSC, SPMC, MPMC in one table\n3. Full vs empty with monotonic indices\n4. The two acquire/release edges of an SPSC ring\n5. Full-queue policies and what they lose\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: in an SPSC ring, why may the producer load its own `tail` with memory_order_relaxed? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "It is the only writer of `tail`, so it always reads its own latest value. Acquire is needed only when loading the other side's index (`head`).",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Concurrent queues:<br>the mental model<br>+ 6 myths",
+        "lead": "SPSC rings, blocking queues and full-queue policy: what interviewers are actually checking.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "A queue is a protocol for handing over slot ownership",
+        "cards": [
+          {
+            "label": "Producer",
+            "text": "Owns a free slot, writes the element, then **publishes** it."
+          },
+          {
+            "label": "Consumer",
+            "text": "Observes the publication, reads the element, then **frees** the slot."
+          },
+          {
+            "label": "Producer again",
+            "text": "Observes the free slot. Only now may it reuse it."
+          }
+        ],
+        "takeaway": "Every design question: who may write each index, and how is each hand-over made visible to the other thread?"
+      },
+      {
+        "layout": "table",
+        "kicker": "Four shapes",
+        "title": "Difficulty grows with the number of writers",
+        "header": [
+          "Shape",
+          "Typical mechanism"
+        ],
+        "rows": [
+          [
+            "SPSC",
+            "one writer per index: acquire/release loads and stores, **no CAS**"
+          ],
+          [
+            "MPSC",
+            "atomic reservation (CAS or `fetch_add`) + per-slot publication"
+          ],
+          [
+            "SPMC",
+            "per-slot publication + CAS on the dequeue index"
+          ],
+          [
+            "MPMC",
+            "per-slot sequence numbers (Vyukov style) or a mutex"
+          ]
+        ],
+        "takeaway": "Bounded = allocated once, no growth in the hot path. You must define what happens when it is full."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "SPSC ring layout",
+        "title": "Monotonic indices, masked only on access",
+        "items": [
+          "`tail`: next slot to write, written **only** by the producer",
+          "`head`: next slot to read, written **only** by the consumer",
+          "Empty: `tail == head`. Full: `tail - head == N`",
+          "Slot: `buf[i & (N - 1)]`, N a power of two (`static_assert` it)"
+        ],
+        "takeaway": "Each index has one writer, so no CAS and no mutex. Atomics are needed only because the other side reads it."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Say this out loud",
+        "title": "Two synchronizes-with edges",
+        "steps": [
+          "Producer writes `buf[t]`, then `tail.store(t + 1, release)`",
+          "Consumer's `tail.load(acquire)` reads it: the element write *happens-before* the read",
+          "Consumer reads `buf[h]`, then `head.store(h + 1, release)`",
+          "Producer's `head.load(acquire)` sees it: the read *happens-before* the slot is reused"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Backpressure",
+        "title": "The queue is full. Now what?",
+        "header": [
+          "Policy",
+          "What you lose"
+        ],
+        "rows": [
+          [
+            "Block / spin producer",
+            "nothing here, but latency moves upstream"
+          ],
+          [
+            "Fail (`try_push` false)",
+            "nothing yet: the caller decides, counts, alarms"
+          ],
+          [
+            "Drop newest",
+            "the incoming item"
+          ],
+          [
+            "Overwrite oldest",
+            "an **unprocessed** item; only for \"latest value wins\" data"
+          ]
+        ],
+        "takeaway": "Incremental market data: any drop is a sequence gap. Keep up, or detect and resync."
+      },
+      {
+        "layout": "statement",
+        "hero": "Reservation<br>is not publication.",
+        "lead": "With many producers, a CAS on the tail only reserves a slot. The data is ready when that slot's own state says so."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Only the producer's store needs release.\"",
+            "truth": "The consumer's `head` store must be release too, or the producer may overwrite a slot that is still being read."
+          },
+          {
+            "myth": "\"`alignas(64)` makes the indices thread-safe.\"",
+            "truth": "It only prevents false sharing. Atomics and memory orders provide synchronization."
+          },
+          {
+            "myth": "\"`cv.wait` keeps the mutex while sleeping.\"",
+            "truth": "It releases the mutex atomically. After a notify it must reacquire it and recheck the predicate."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"In MPSC, a successful CAS on the tail means the slot is ready.\"",
+            "truth": "Reservation is not publication. Use per-slot state."
+          },
+          {
+            "myth": "\"A queue without a mutex is lock-free.\"",
+            "truth": "Mutex-free is not lock-free. In a bounded MPMC ring, a producer stalled after reserving a slot blocks every consumer."
+          },
+          {
+            "myth": "\"SPSC is always faster than a mutex queue.\"",
+            "truth": "It is more predictable, not free: busy polling costs a whole core."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "One writer per index.<br>Release publishes,<br>acquire observes.",
+        "lead": "And a queue absorbs bursts, never a sustained overload. Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T09-P1",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 practice Q1",
+    "text": {
+      "hook": "This ring buffer \"full\" check looks correct. 🔁\n\nPush 4 items into a 4-slot ring. What prints?\nComment your answer, then swipe ➜ to check it.",
+      "body": "Single-threaded on purpose: no races, just index arithmetic. The bug is the same in a lock-free SPSC queue.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: in an SPSC ring, why does the producer keep a private cached copy of `head` instead of loading the atomic on every push? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Loading head pulls the consumer's cache line across cores. A stale head can only make the ring look fuller, so the producer reloads it only when its copy says full.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Ring buffers",
+        "title": "Four pushes, N = 4. What prints?",
+        "code": "constexpr size_t N = 4, MASK = N - 1;\nint buf[N]; size_t head = 0, tail = 0;\nbool full() {\n  return (tail & MASK) + 1 == (head & MASK);\n}\nbool empty() {\n  return (tail & MASK) == (head & MASK);\n}\nbool push(int v) {\n  if (full()) return false;\n  buf[tail++ & MASK] = v; return true;\n}\nint n = 0;\nfor (int i = 1; i <= 4; ++i) n += push(i);\nstd::cout << \"accepted=\" << n << \" empty=\"\n          << std::boolalpha << empty();",
+        "options": [
+          "accepted=4 empty=false",
+          "accepted=3 empty=false",
+          "accepted=4 empty=true",
+          "accepted=3 empty=true"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C: `accepted=4 empty=true`",
+        "verdict_sub": "A full queue now looks empty: 4 items silently lost",
+        "bullets": [
+          "At `tail == 3`: `(3) + 1 == 0` compares `4 == 0`. False, so the 4th push is accepted.",
+          "`tail` becomes 4, and `4 & MASK == 0 == head & MASK`: the ring reports **empty**.",
+          "The left side can reach `N`, which no masked value ever equals. The check can never fire at the wrap point."
+        ],
+        "wrong": "\"accepted=3 empty=false\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Pick one scheme and stick to it",
+        "code": "// Monotonic indices: all N slots usable\nbool full()  { return tail - head == N; }\nbool empty() { return tail == head; }\n// write buf[tail & MASK], then ++tail\n\n// Wrapped indices: one slot sacrificed\nbool full() {\n  return ((tail + 1) & MASK) == head;\n}",
+        "bullets": [
+          "Monotonic version, pushing 1..5: `accepted=4 empty=false`."
+        ],
+        "tip": "With `size_t` indices and N a power of two, `tail - head` stays correct across wraparound.",
+        "takeaway": "A masked index plus one can equal N. Never compare it with another masked index."
+      }
+    ]
+  },
+  {
+    "id": "T09-P13",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 practice Q13",
+    "text": {
+      "hook": "One alignas(64) on head. Problem solved? 🧱\n\nThree layouts for the two indices of an SPSC queue. Which ones really stop false sharing?\nThink it through, comment your answer, then swipe ➜",
+      "body": "x86-64, GCC or Clang. Work out the three sizeofs first: they give the answer away.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: data slots near the point where producer and consumer meet also share cache lines. Is that a bug to pad away? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. That sharing is the actual data transfer and is unavoidable. The goal is to stop the metadata (`head`/`tail`) bouncing on every operation.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · False sharing",
+        "title": "What are the three sizeofs?<br>Which layout avoids false sharing?",
+        "code": "struct Packed {\n    std::atomic<std::size_t> head{0};\n    std::atomic<std::size_t> tail{0};\n};\nstruct HeadOnly {\n    alignas(64) std::atomic<std::size_t> head{0};\n    std::atomic<std::size_t> tail{0};\n};\nstruct Both {\n    alignas(64) std::atomic<std::size_t> head{0};\n    alignas(64) std::atomic<std::size_t> tail{0};\n};",
+        "options": [
+          "16, 64, 128 · only Both",
+          "16, 128, 128 · HeadOnly and Both",
+          "16, 72, 128 · HeadOnly and Both",
+          "16, 64, 128 · HeadOnly and Both"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A: 16, 64, 128",
+        "verdict_sub": "Only `Both` puts head and tail on different cache lines",
+        "bullets": [
+          "`Packed`: two adjacent 8-byte atomics, normally on one line.",
+          "`HeadOnly`: aligned and padded to 64, but `tail` sits at offset 8, on the **same** line as `head`.",
+          "`Both`: `tail` starts at offset 64, a different line.",
+          "None of the three changes synchronization."
+        ],
+        "wrong": "\"alignas on head pushes tail to the next line\"",
+        "cta": "Why it matters ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "One alignas per independently written variable",
+        "columns": [
+          {
+            "label": "HeadOnly",
+            "code": "alignas(64) A head;\nA tail;",
+            "verdict": "tail at offset 8: false sharing"
+          },
+          {
+            "label": "Both",
+            "code": "alignas(64) A head;\nalignas(64) A tail;",
+            "verdict": "tail at offset 64: own line",
+            "verdict_ok": true
+          }
+        ],
+        "bullets": [
+          "`A` = `std::atomic<std::size_t>`. Producer writes `tail`, consumer writes `head`."
+        ],
+        "tip": "Portable size: `std::hardware_destructive_interference_size` (C++17, `<new>`), guarded by `__cpp_lib_hardware_interference_size`.",
+        "takeaway": "`alignas` aligns the start of one member. It buys layout, never synchronization."
+      }
+    ]
+  },
+  {
+    "id": "T09-Q4",
+    "type": "concept",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 qa Q4",
+    "text": {
+      "hook": "Why is a ring buffer's capacity almost always a power of two?\n\nThe popular answer is half right.\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "Bonus points if you know when the compiler already does the trick for you.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: your ring uses 32-bit index counters at market-data rates. Is \"it will never wrap\" a safe assumption? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. A 32-bit counter wraps after about 4 billion operations, minutes at market-data rates. Use 64-bit counters; with N a power of two, `tail - head` stays correct across wraparound.",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Ring buffers",
+        "title": "Why is a ring buffer's capacity usually a power of two?",
+        "options": [
+          "Masking is required for correctness: `%` cannot wrap an index.",
+          "So `i % N` becomes `i & (N - 1)`: one AND instead of a division.",
+          "Any N works with `& (N - 1)`; a power of two just saves memory.",
+          "The compiler can never optimize `% N`, even for a constant N."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. A mask instead of a division",
+        "verdict_sub": "`i & (N - 1) == i % N` only for unsigned `i` and N a power of two",
+        "bullets": [
+          "A 64-bit division costs tens of cycles on many CPUs; an AND costs one.",
+          "For a compile-time constant N, compilers already turn unsigned `% N` into a mask.",
+          "The mask matters when N is a runtime value or the index is signed.",
+          "Power-of-two N also keeps monotonic `size_t` indices correct across 2^64 wraparound."
+        ],
+        "cta": "Why not A, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: a true `%`, or `if (++i == N) i = 0;`, is also correct. The power of two buys speed and wrap safety.",
+          "C: with N = 6, `i & 5` maps 0..7 to 0,1,0,1,4,5,4,5. Slots collide, others are never used.",
+          "D: for a constant power-of-two N, unsigned `% N` already compiles to an AND."
+        ],
+        "takeaway": "Senior answer: \"power of two makes wrapping a mask, so `static_assert` it. The cost: need 1100 slots, get 2048.\""
+      }
+    ]
+  },
+  {
+    "id": "T09-Q14",
+    "type": "concept",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 qa Q14",
+    "text": {
+      "hook": "Your market-data SPSC ring is full. The feed handler has one more message.\n\nWhat do you do?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "There is no free option here. Every choice loses something: the question is what, and who finds out.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: in an ordered MPSC ring, slot 100 is reserved but not yet published, while 101 and 102 are ready. Why can't the consumer skip 100? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Producers use head to decide which slots are free: moving past 100 could let a producer reuse its storage while its owner is still writing, and FIFO breaks. The consumer waits (head-of-line blocking).",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Backpressure",
+        "title": "The SPSC ring is full and the next incremental market-data message arrives. What do you do?",
+        "options": [
+          "Overwrite the oldest slot, so the consumer sees the newest data first.",
+          "Block the feed handler until a slot frees up. Nothing is lost.",
+          "Drop it: UDP gap recovery and sequence numbers will handle it.",
+          "Never lose it silently: flag the overflow, alarm, resync from a snapshot, fix the consumer."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Overflow means resync",
+        "verdict_sub": "The full policy comes from the data semantics",
+        "bullets": [
+          "Incremental feed: each message updates book state. Dropping or overwriting creates a sequence gap.",
+          "Count the overflow, raise the gap, resynchronise from a snapshot.",
+          "Conflating per instrument is only valid if messages are full snapshots.",
+          "A ring that stays full means the consumer's sustained rate is too low: profile and fix it."
+        ],
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: the consumer still reads in order. You destroyed a message it had not processed, and `head` now has two writers: a race.",
+          "B: backpressure moves upstream. The socket buffer fills and the kernel drops UDP packets instead.",
+          "C: gap recovery handles **network** loss. Internal overflow is a capacity problem in your own pipeline."
+        ],
+        "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental feeds, overflow means resync, not silent loss.\""
+      }
+    ]
+  },
+  {
+    "id": "T09-Q16",
+    "type": "concept",
+    "topic_no": 9,
+    "topic_short": "Queues",
+    "source": "topic_09 qa Q16",
+    "text": {
+      "hook": "\"The queue keeps filling up. Just make it 10x bigger.\"\n\nWhy is that usually the wrong fix?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "Memory is cheap. That is not what this question is about.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "lockfree",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: 50k msgs/s arrive, the consumer handles 20k/s, the ring holds 100k. How long until it is full? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Backlog grows at 30k/s, so about 3.33 s (not 4 s). Once full, a new message waits about 5 s (100k / 20k).",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Capacity",
+        "title": "Why not simply make the ring buffer huge so it never fills?",
+        "options": [
+          "Under sustained overload it only postpones overflow, and queue depth becomes latency.",
+          "No reason: the queued data stays valid, so bigger is pure upside.",
+          "It is fine, as long as you also throttle the producer.",
+          "It is fine: queue depth does not change per-message latency."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Bigger only delays the failure",
+        "verdict_sub": "and turns overload into latency",
+        "bullets": [
+          "If sustained arrival > service, any finite queue fills. Size only changes **when**.",
+          "Depth is delay (Little's law): 90k queued at 20k/s means acting on prices 4.5 s old.",
+          "Valid but stale: correct records of the past, useless for a decision now.",
+          "A huge ring also hurts locality and hides overload from monitoring."
+        ],
+        "cta": "Why not B, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "B: \"valid\" is not \"useful\". Seconds-old prices are correct and still worthless.",
+          "C: you cannot throttle an exchange feed. Consumer capacity must be ≥ the arrival rate.",
+          "D: a new message waits ≈ depth / service rate. Depth **is** latency."
+        ],
+        "takeaway": "Senior answer: \"size for legitimate bursts, export depth and high-water mark, alarm on them, and watch p99/p99.9.\""
+      }
+    ]
+  }
+]

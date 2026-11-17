@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The worker thread finished 100 ms ago.
+So leaving main is safe, right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One of the most common std::thread bugs. The fix is one line, but the reason is what interviewers ask about.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

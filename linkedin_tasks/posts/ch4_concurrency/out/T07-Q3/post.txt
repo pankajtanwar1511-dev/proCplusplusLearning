@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"Spinlocks are faster than mutexes."
+
+Agree or disagree? Most answers miss the condition that decides it.
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+Slide 2 has real measurements: same work, 8 threads vs 80 threads.
+
+#cpp #cplusplus #concurrency #multithreading #performance #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Lock-free stack vs mutex-protected stack.
+Which one is faster? 🏁
+
+The obvious answer is the one interviewers wait to correct.
+Comment A, B, C or D, then swipe ➜
+
+Slide 2 has a real measurement.
+
+#cpp #cplusplus #lockfree #concurrency #performance #interviewprep
+
+=== FIRST COMMENT ===
+👉 Pick A, B, C or D below, then swipe right to check your answer.

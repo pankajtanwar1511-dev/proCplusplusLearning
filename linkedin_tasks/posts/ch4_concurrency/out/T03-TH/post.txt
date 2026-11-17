@@ -1,0 +1,17 @@
+=== POST TEXT ===
+Everyone uses std::mutex. Few can explain what it actually guarantees.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it for your next interview. 📌
+
+Inside:
+1. The three properties of a mutex
+2. The UB traps and the four lock wrappers
+3. What a blocked thread really does
+4. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

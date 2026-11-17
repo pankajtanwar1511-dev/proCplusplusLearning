@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Only one mutex in the whole program.
+So a deadlock is impossible. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The usual suspect is two mutexes locked in opposite order. This one hides somewhere else.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

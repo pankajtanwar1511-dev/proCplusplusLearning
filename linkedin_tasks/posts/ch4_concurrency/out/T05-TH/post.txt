@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"It's std::atomic, so it's thread-safe."
+That answer stops most C++ interviews short.
+
+Here is what atomics and CAS really guarantee, plus 6 myths. Save it. 📌
+
+Inside:
+1. The three-part contract of std::atomic
+2. Which expressions are really one atomic step
+3. CAS on failure, and the retry loop
+4. Lock-free is not guaranteed
+5. Atomic or mutex?
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #lockfree #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

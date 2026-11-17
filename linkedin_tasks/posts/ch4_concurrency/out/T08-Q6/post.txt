@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Your lock-free pop's CAS succeeded.
+The stack is still corrupted. 🧩
+
+This is the ABA problem. Can you explain it?
+Comment A, B, C or D, then swipe ➜
+
+Slide 2 walks through the exact interleaving, step by step.
+
+#cpp #cplusplus #lockfree #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

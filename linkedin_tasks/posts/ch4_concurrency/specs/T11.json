@@ -1,0 +1,362 @@
+[
+  {
+    "id": "T11-TH",
+    "type": "theory",
+    "topic_no": 11,
+    "topic_short": "C++20 Sync",
+    "source": "topic_11 theory",
+    "text": {
+      "hook": "Still writing mutex + condition_variable + counter for every handoff?\n\nC++20 gave you latch, barrier, semaphore and jthread. The mental model, plus 6 myths. Save it. 📌",
+      "body": "Inside:\n1. What state each primitive owns\n2. Latch vs barrier in one slide\n3. Semaphore vs mutex vs condition variable\n4. The atomic::wait rules\n5. What jthread really does at shutdown\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "cpp20",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: can `latch.try_wait()` return false after the counter has already reached 0? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Yes, with very low probability: the standard allows it. Fine in a `while (!l.try_wait())` loop, wrong as an \"is it done?\" check.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "C++20 sync:<br>latch, barrier,<br>semaphore, jthread",
+        "lead": "Primitives that carry their own state, and the myths that fail interviews.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "table",
+        "kicker": "The mental model",
+        "title": "Each primitive owns its own state",
+        "header": [
+          "Primitive",
+          "State it owns",
+          "Reusable?"
+        ],
+        "rows": [
+          [
+            "`std::latch`",
+            "Countdown to 0",
+            "No, one-shot"
+          ],
+          [
+            "`std::barrier`",
+            "Per-phase arrivals + completion step",
+            "Yes, phases"
+          ],
+          [
+            "`counting_semaphore`",
+            "Non-negative permit count",
+            "Yes"
+          ],
+          [
+            "`atomic<T>::wait`",
+            "The atomic's own value",
+            "Yes"
+          ]
+        ],
+        "takeaway": "All of them synchronize memory: writes before the signal are visible after the wait returns."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Latch vs barrier",
+        "title": "One countdown vs repeated phases",
+        "cards": [
+          {
+            "label": "std::latch",
+            "text": "Any thread may `count_down()` or `wait()`. No reset: once at 0 it stays open forever."
+          },
+          {
+            "label": "std::barrier",
+            "text": "The same N threads arrive every phase. A completion step runs once per phase, on one participant."
+          }
+        ],
+        "takeaway": "Workers' writes before `count_down()` are visible after `wait()`. No extra mutex to read results."
+      },
+      {
+        "layout": "code",
+        "kicker": "std::barrier",
+        "title": "Lock-step phases with a completion step",
+        "code": "std::barrier sync{4, []() noexcept {\n    // combine partial results, once per phase\n}};\n\n// in each of the 4 workers:\nfor (int step = 0; step < steps; ++step) {\n    compute_my_part(step);\n    sync.arrive_and_wait();\n}",
+        "bullets": [
+          "The completion must be `noexcept`. GCC 11 does not diagnose a missing one.",
+          "A thread leaving early must call `arrive_and_drop()`, or the others hang."
+        ],
+        "takeaway": "All arrivals happen before the completion step, so it can safely combine per-thread results."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Semaphores",
+        "title": "Permits with no owner",
+        "cards": [
+          {
+            "label": "vs mutex",
+            "text": "Any thread may `release()`. No `lock`/`unlock`, so `std::lock_guard` does not compile."
+          },
+          {
+            "label": "vs condition variable",
+            "text": "The count remembers a release. Signal before anyone waits and it is not lost."
+          },
+          {
+            "label": "Initial count",
+            "text": "`{0}` = signal not given yet. `{K}` = K permits free."
+          }
+        ],
+        "takeaway": "Semaphore for signalling and throttling. Mutex for exclusion."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "atomic::wait / notify",
+        "title": "The four rules",
+        "items": [
+          "`a.wait(old)` blocks **while** the value equals `old`",
+          "It returns only after it sees a different value",
+          "Change the value first, then notify",
+          "A to B to A can be missed: use a generation counter"
+        ],
+        "takeaway": "Lost-wakeup safe: the value check and going to sleep are atomic (futex semantics)."
+      },
+      {
+        "layout": "cards",
+        "kicker": "std::jthread",
+        "title": "RAII join + cooperative stop",
+        "cards": [
+          {
+            "label": "std::thread",
+            "text": "Joinable at destruction: `std::terminate`."
+          },
+          {
+            "label": "std::jthread",
+            "text": "Destructor runs `request_stop()`, then `join()`."
+          },
+          {
+            "label": "Cooperative",
+            "text": "Nothing is interrupted. The thread must poll its `stop_token` or wait in `condition_variable_any`."
+          }
+        ],
+        "takeaway": "As a class member, declare the `jthread` **last**: it starts last and is stopped and joined first."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A latch can be reset for the next round.\"",
+            "truth": "It is one-shot. Use a new latch per round, or a `std::barrier`."
+          },
+          {
+            "myth": "\"A latch only orders execution. I still need a mutex to read the results.\"",
+            "truth": "Latch and barrier give happens-before for writes made before arriving."
+          },
+          {
+            "myth": "\"A barrier's completion function runs on a separate thread.\"",
+            "truth": "It runs on one of the participating threads, once per phase."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`binary_semaphore` is a lightweight mutex.\"",
+            "truth": "It has no owner. Use it for signalling, `std::mutex` for mutual exclusion."
+          },
+          {
+            "myth": "\"`atomic::wait` returns when notified.\"",
+            "truth": "It returns only after it sees a value different from `old`."
+          },
+          {
+            "myth": "\"`request_stop()` interrupts the thread.\"",
+            "truth": "It sets a flag and runs callbacks. The thread must cooperate."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Let the primitive<br>own the state.<br>Then you cannot<br>forget the predicate.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T11-P1",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "C++20 Sync",
+    "source": "topic_11 practice Q1",
+    "text": {
+      "hook": "Main waits for both workers in every round with a std::latch.\nRound 1 prints the right answer. 🤔\n\nWhat about rounds 2 and 3?\nComment your answer, then swipe ➜ to check it.",
+      "body": "Find the bug before you swipe. It compiles cleanly with -Wall -Wextra.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "cpp20",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: how do you make 4 worker threads start their work at the same instant with a std::latch? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`std::latch start{1};` Each worker calls start.wait() first; main calls start.count_down() once, after creating all of them.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · C++20 latch",
+        "title": "Main wants to wait for both workers in EVERY round. What happens?",
+        "code": "std::latch done{2};\nint results[2] = {};\n\nfor (int r = 1; r <= 3; ++r) {\n  std::thread a([&] { results[0] = r * 10;\n                      done.count_down(); });\n  std::thread b([&] { results[1] = r * 10 + 1;\n                      done.count_down(); });\n  done.wait();\n  std::cout << \"round \" << r << \": \"\n            << results[0] + results[1] << '\\n';\n  a.join(); b.join();\n}",
+        "options": [
+          "21, 41, 61",
+          "Round 1 fine, then UB",
+          "Deadlock in round 1",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Round 1 fine, then UB",
+        "verdict_sub": "a latch is one-shot",
+        "bullets": [
+          "After round 1 the counter is 0 and **stays** 0. There is no reset.",
+          "Round 2: if `wait()` runs first it returns at once, and main reads `results` while workers write: data race.",
+          "`count_down()` past 0 breaks its precondition: UB. libstdc++ drives the counter negative, so a later `wait()` can block forever.",
+          "Seen with GCC 11: usually a hang right after round 1, sometimes \"round 2: 21\" (stale) first."
+        ],
+        "wrong": "\"A: the latch rearms after wait() returns\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "code": "int results[2] = {};\nfor (int r = 1; r <= 3; ++r) {\n  std::latch done{2};  // fresh each round\n  std::jthread a([&] { results[0] = r * 10;\n                       done.count_down(); });\n  std::jthread b([&] { results[1] = r * 10 + 1;\n                       done.count_down(); });\n  done.wait();\n  std::cout << \"round \" << r << \": \"\n            << results[0] + results[1] << '\\n';\n}  // jthreads join, then the latch dies",
+        "tip": "Same threads, repeated phases? That is exactly what `std::barrier` is for.",
+        "takeaway": "Latches cannot be reset. Create one per round, or use a barrier."
+      }
+    ]
+  },
+  {
+    "id": "T11-P6",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "C++20 Sync",
+    "source": "topic_11 practice Q6",
+    "text": {
+      "hook": "A std::jthread goes out of scope while its worker is still looping.\n\nWhat prints, and in what order? 🧵\nThink it through, comment your answer, then swipe ➜",
+      "body": "Slide 3 shows what changes if you swap jthread for std::thread.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "cpp20",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: in which thread does a std::stop_callback run? And what if stop was already requested when you construct it? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "In the thread calling request_stop(), before that call returns. If stop was already requested, it runs immediately, inside the constructor.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::jthread",
+        "title": "What does this print,<br>and in what order?",
+        "code": "int main() {\n  {\n    std::jthread w([](std::stop_token st) {\n      while (!st.stop_requested())\n        std::this_thread::sleep_for(1ms);\n      std::cout << \"worker: stop seen\\n\";\n    });\n    std::this_thread::sleep_for(20ms);\n    std::cout << \"leaving scope\\n\";\n  }\n  std::cout << \"after scope\\n\";\n}",
+        "options": [
+          "Hangs at the closing brace",
+          "leaving, after, stop seen",
+          "leaving, stop seen, after",
+          "terminate after \"leaving\""
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. leaving scope, worker: stop seen, after scope",
+        "verdict_sub": "",
+        "bullets": [
+          "At the closing brace `~jthread` runs `request_stop()`, then `join()`.",
+          "The worker sees `stop_requested()` within about 1 ms, prints, returns.",
+          "Only then does `join()` return and main prints \"after scope\".",
+          "The token is passed automatically: the lambda's first parameter is a `std::stop_token`."
+        ],
+        "wrong": "\"A: the loop never ends, so it hangs\"",
+        "cta": "Now use std::thread ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "Same scope, different thread type",
+        "columns": [
+          {
+            "label": "std::jthread",
+            "code": "{\n  std::jthread w(f);\n}\n// request_stop();\n// join();",
+            "verdict": "clean shutdown",
+            "verdict_ok": true
+          },
+          {
+            "label": "std::thread",
+            "code": "{\n  std::thread w(g);\n}\n// still joinable\n// at destruction",
+            "verdict": "std::terminate"
+          }
+        ],
+        "tip": "A worker blocked in `std::condition_variable::wait` ignores `request_stop()`. Use `condition_variable_any` with the token.",
+        "takeaway": "jthread = request stop + join in the destructor. Cancellation is cooperative: the loop must check the token."
+      }
+    ]
+  },
+  {
+    "id": "T11-Q7",
+    "type": "concept",
+    "topic_no": 11,
+    "topic_short": "C++20 Sync",
+    "source": "topic_11 qa Q7",
+    "text": {
+      "hook": "\"binary_semaphore is just a lighter, faster mutex.\"\n\nWould you swap your std::mutex for one? 🔒\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "The difference is one word, and it decides which tool you reach for.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "cpp20",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: two threads must print ping, pong, ping, pong... in strict alternation. How do you do it with semaphores only? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Two binary_semaphores: ping_turn{1}, pong_turn{0}. Each thread acquires its own turn, prints, then releases the other's. The releaser is never the acquirer, which a mutex forbids.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "How does std::counting_semaphore differ from std::mutex? Could binary_semaphore replace a mutex?",
+        "options": [
+          "Same thing, but faster. Swap them freely.",
+          "Identical, except a semaphore allows N holders at once.",
+          "A semaphore cannot provide mutual exclusion at all.",
+          "It counts permits with no owner: great for signalling, a poor mutex substitute."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Permits without ownership",
+        "verdict_sub": "A mutex has an owner that must unlock it. A semaphore has none.",
+        "bullets": [
+          "Any thread may `release()`, even one that never acquired.",
+          "Use cases: limit concurrency to K, count items, signal across threads (start at `{0}`).",
+          "No `lock()`/`unlock()` members, so this does not even compile:"
+        ],
+        "code": "std::binary_semaphore sem{1};\n// error: no member named 'lock'\nstd::lock_guard<std::binary_semaphore> g(sem);",
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: a stray `release()` from another thread silently \"unlocks\" it. Releasing past `max()` is UB.",
+          "B: the N holders are not the point. Ownership is: no owner, no unlock-by-owner rule, no recursion.",
+          "C: a binary semaphore starting at 1 can exclude. You just lose the ownership checks."
+        ],
+        "takeaway": "Senior answer: semaphore = permits for signalling and throttling, mutex = ownership for exclusion. The initial count is a design decision."
+      }
+    ]
+  }
+]

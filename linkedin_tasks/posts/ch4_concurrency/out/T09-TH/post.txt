@@ -1,0 +1,19 @@
+=== POST TEXT ===
+Ring buffers come up in almost every low-latency C++ interview.
+
+Here is the mental model, plus the 6 myths that fail interviews. Save it for your next interview. 📌
+
+Inside:
+1. A queue as a slot-ownership protocol
+2. SPSC, MPSC, SPMC, MPMC in one table
+3. Full vs empty with monotonic indices
+4. The two acquire/release edges of an SPSC ring
+5. Full-queue policies and what they lose
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

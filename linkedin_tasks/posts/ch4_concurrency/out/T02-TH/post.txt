@@ -1,0 +1,19 @@
+=== POST TEXT ===
+Data race. Race condition. Deadlock.
+Three different bugs that get mixed up in interviews all the time.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Three failures, three layers
+2. The exact definition of a data race
+3. Why ++counter loses updates
+4. Coffman's four conditions, and how to break them
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

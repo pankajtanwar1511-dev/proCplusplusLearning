@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The consumer waits correctly, under the lock.
+The producer just sets a bool and notifies.
+
+What is wrong? Comment A, B, C or D, then swipe ➜
+
+There are two problems here, and the first one is worse.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Pick A, B, C or D below, then swipe right to check your answer.

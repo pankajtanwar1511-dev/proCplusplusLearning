@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Wrap any struct in std::atomic and it is lock-free, right?
+
+x86-64, GCC. Three types, three booleans. 🧩
+Lock in your answer below, then swipe ➜ to verify.
+
+This one decides whether your "lock-free" design really is.
+
+#cpp #cplusplus #concurrency #lockfree #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

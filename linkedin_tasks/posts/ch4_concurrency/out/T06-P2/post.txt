@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The consumer was "fixed" to use memory_order_acquire.
+The producer was left alone. 🧵
+
+Is it thread-safe now? Think it through, comment your answer, then swipe ➜
+
+This is the most common half-fix in memory ordering code reviews. Look at both sides before you answer.
+
+#cpp #cplusplus #memorymodel #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

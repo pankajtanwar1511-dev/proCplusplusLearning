@@ -1,0 +1,453 @@
+[
+  {
+    "id": "T04-TH",
+    "type": "theory",
+    "source": "topic_04 theory",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "Condition variables look simple. Then the interviewer asks what happens to the mutex inside wait().\n\nHere is the mental model, plus 6 myths that fail interviews. 📌",
+      "body": "Inside:\n1. The three pieces and their jobs\n2. What wait() does, step by step\n3. Why the predicate loop is mandatory\n4. notify_one vs notify_all, and clean shutdown\n5. Six myths, busted (slides 8-9)\n\nSave it for your next interview.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: can two threads wait on the same `std::condition_variable` while using different mutexes? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. All threads concurrently waiting on one std::condition_variable must use the same mutex, otherwise it is undefined behaviour.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Condition variables:<br>the mental model<br>+ 6 myths",
+        "lead": "A condition variable is a doorbell, not a mailbox. Here is what that means in an interview.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "table",
+        "kicker": "The core idea",
+        "title": "Three pieces, three jobs",
+        "header": [
+          "Piece",
+          "Job"
+        ],
+        "rows": [
+          [
+            "Shared state: `ready`, `!q.empty()`",
+            "The actual condition. The **only** thing that is remembered."
+          ],
+          [
+            "`std::mutex`",
+            "Protects the state and orders its reads and writes (happens-before)."
+          ],
+          [
+            "`std::condition_variable`",
+            "Lets a thread block efficiently and be woken when the state *may* have changed."
+          ]
+        ],
+        "takeaway": "Wait for the state, not for the notification."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Inside cv.wait(lock)",
+        "title": "What happens to the mutex",
+        "steps": [
+          "**Atomically** release the mutex and register as a waiter. No gap between the two.",
+          "Block until `notify_one`, `notify_all`, a spurious wakeup, or a timeout.",
+          "Reacquire the mutex. This is a normal lock and may block again.",
+          "Return. The mutex is **always** held when `wait` returns."
+        ]
+      },
+      {
+        "layout": "code",
+        "kicker": "The predicate overload",
+        "title": "`wait(lock, pred)` is specified as a loop",
+        "code": "while (!pred())\n    wait(lock);",
+        "bullets": [
+          "**Spurious wakeup:** `wait` may return with no notify at all.",
+          "**Stolen wakeup:** another consumer got the mutex first and took the item.",
+          "**Shared CV:** the notify was about a different condition."
+        ],
+        "takeaway": "Checked **before** blocking: if `pred()` is already true, the thread never sleeps."
+      },
+      {
+        "layout": "table",
+        "kicker": "Notification rules",
+        "title": "notify_one or notify_all?",
+        "header": [
+          "Situation",
+          "Use"
+        ],
+        "rows": [
+          [
+            "One item added, waiters interchangeable",
+            "`notify_one`"
+          ],
+          [
+            "Shutdown, broadcast, batch of items",
+            "`notify_all`"
+          ],
+          [
+            "Waiters on one CV wait for different predicates",
+            "`notify_all`, or one CV per predicate"
+          ],
+          [
+            "Waiter may destroy the CV right after waking",
+            "Notify while holding the mutex"
+          ]
+        ],
+        "takeaway": "The state change must be under the mutex. Where you notify is mostly a performance choice."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Clean shutdown",
+        "title": "The worker pool pattern",
+        "code": "cv.wait(lk, [&] {\n    return !q.empty() || stopping; });\n// drain first, then exit:\nif (q.empty() && stopping) return;",
+        "items": [
+          "Put `stopping` in the predicate, or workers can never wake for it",
+          "Set `stopping` under the mutex",
+          "`notify_all`, not `notify_one`: every worker must see it",
+          "Drain or abandon queued work, on purpose",
+          "Join the threads after notifying"
+        ]
+      },
+      {
+        "layout": "statement",
+        "hero": "A CV forgets.<br>A semaphore counts.",
+        "lead": "A notify with no waiter is simply dropped. A semaphore `release()` before `acquire()` is not lost. With a CV, your predicate is the memory."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"The CV checks the condition.\"",
+            "truth": "The CV knows nothing about your state. Your predicate checks it, under the mutex."
+          },
+          {
+            "myth": "\"If I hold the mutex, how can another thread change `ready`?\"",
+            "truth": "You do not hold it while blocked in `wait`. That is the whole point."
+          },
+          {
+            "myth": "\"The CV remembers a notify that happened before I waited.\"",
+            "truth": "It is dropped. Only the predicate remembers."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Wake-up plus mutex reacquisition is one atomic step.\"",
+            "truth": "Only release-and-register is atomic. Reacquiring is a normal lock that can block."
+          },
+          {
+            "myth": "\"A spurious wakeup is a notification sent by mistake.\"",
+            "truth": "It is a return from `wait` with no matching notification. The standard allows it."
+          },
+          {
+            "myth": "\"`cv_status::no_timeout` means my condition is true.\"",
+            "truth": "It only means the time did not run out. Always re-check the state."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Mutex: protects the state.<br>Predicate: is the state.<br>CV: only the doorbell.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T04-P2",
+    "type": "code_puzzle",
+    "source": "topic_04 practice Q2",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "The producer sets ready = true and notifies.\nOnly then does the consumer start waiting.\n\nWhat is printed? Comment your answer, then swipe ➜ to check it.",
+      "body": "Four plausible outputs. One rule about notifications decides which one you will see.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: `while (!ready) cv.wait_for(lk, 1s);` is meant to wait at most 1 second. Why can it wait forever? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Every wakeup restarts the 1 s timeout, so unrelated notifications every 200 ms postpone it forever. Use `cv.wait_for(lk, 1s, pred)`: one fixed deadline.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Condition variables",
+        "title": "The producer finishes before the consumer waits.<br>What is printed?",
+        "code": "std::mutex m;\nstd::condition_variable cv;\nbool ready = false;\n\nstd::thread prod([&] {\n    { std::lock_guard lk(m); ready = true; }\n    cv.notify_one();\n});\nprod.join();\n\nstd::unique_lock lk(m);\nauto st = cv.wait_for(lk, 200ms);\nbool to = (st == std::cv_status::timeout);\nstd::cout << (to ? \"timeout\" : \"no_timeout\")\n          << \" ready=\" << ready;",
+        "options": [
+          "no_timeout ready=1",
+          "timeout ready=1",
+          "timeout ready=0",
+          "Hangs forever"
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. timeout ready=1",
+        "verdict_sub": "after blocking for the full 200 ms",
+        "bullets": [
+          "`notify_one` ran when nobody was waiting, so it was **dropped**. CVs do not remember notifications.",
+          "The raw `wait_for` blocks the full 200 ms, although `ready` was `true` the whole time.",
+          "With a plain `cv.wait(lk)` it would hang forever.",
+          "A spurious wakeup could in theory print `no_timeout`. That would not mean anything was signalled either."
+        ],
+        "wrong": "\"no_timeout: the notify was delivered\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Wait for the state, not the notification",
+        "columns": [
+          {
+            "label": "Raw wait",
+            "code": "cv.wait_for(\n  lk, 200ms);",
+            "verdict": "blocks 200 ms, misses the signal"
+          },
+          {
+            "label": "Predicate wait",
+            "code": "cv.wait_for(\n  lk, 200ms,\n  [&] { return ready; }\n);",
+            "verdict": "returns true at once",
+            "verdict_ok": true
+          }
+        ],
+        "takeaway": "The predicate is checked first. A notify that came \"too early\" is harmless with the predicate form."
+      }
+    ]
+  },
+  {
+    "id": "T04-Q9",
+    "type": "concept",
+    "source": "topic_04 qa Q9",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "The consumer waits correctly, under the lock.\nThe producer just sets a bool and notifies.\n\nWhat is wrong? Comment A, B, C or D, then swipe ➜",
+      "body": "There are two problems here, and the first one is worse.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up: readers want to wait on a condition while holding a `std::shared_lock<std::shared_mutex>`. Can std::condition_variable do that? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. It only accepts std::unique_lock<std::mutex>. Use std::condition_variable_any, which works with other lock types (and a stop_token in C++20), at some size and speed cost.",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Condition variables",
+        "title": "The producer sets `ready` and notifies without locking the mutex. What is wrong?",
+        "code": "bool ready = false;  // consumer's predicate\n\n// Producer, mutex NOT locked:\nready = true;\ncv.notify_one();",
+        "options": [
+          "Only a possible lost wakeup.",
+          "Nothing: the consumer reads `ready` under the lock.",
+          "A data race (UB), plus a lost-wakeup window.",
+          "Nothing: `notify_one` publishes `ready` to the woken thread."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. A data race, then a lost wakeup.",
+        "verdict_sub": "The mutex protects the predicate. `notify` only rings the bell.",
+        "bullets": [
+          "The write races with the consumer's read of `ready` in the predicate: undefined behaviour.",
+          "The CV gives no memory ordering for `ready`. The mutex does: unlock *synchronizes-with* the next lock.",
+          "It also reopens the lost-wakeup window.",
+          "Fix: modify `ready` while holding the mutex, then notify."
+        ],
+        "cta": "Why not A, B or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: the first problem is UB from the data race. The lost wakeup is a second, separate failure.",
+          "B: protection needs **both** sides to use the mutex.",
+          "D: `notify_one` is not specified to synchronize your data. Never use it to publish."
+        ],
+        "takeaway": "Senior answer: name both failures, then add: \"ThreadSanitizer (`-fsanitize=thread`) reports this race immediately.\""
+      }
+    ]
+  },
+  {
+    "id": "T04-P10",
+    "type": "code_puzzle",
+    "source": "topic_04 practice Q10",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "Nobody ever calls notify in this program. 🔔\n\nDoes it hang? If not, what does it print?\nComment your answer, then swipe ➜ to check it.",
+      "body": "Two numbers to predict: how often the predicate runs, and whether the lock is held at the end.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: why does `cv.wait` refuse a `std::lock_guard` and insist on `std::unique_lock`? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`wait` must unlock the mutex while blocked and relock it before returning. `lock_guard` has no `unlock()`/`lock()`, so passing it does not compile.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Condition variables",
+        "title": "Nobody ever calls notify.<br>What is printed?",
+        "code": "std::mutex m;\nstd::condition_variable cv;\nbool ready = true;\nint calls = 0;\n\nstd::unique_lock lk(m);\ncv.wait(lk, [&] { ++calls; return ready; });\nstd::cout << \"calls=\" << calls\n          << \", owns lock=\" << lk.owns_lock();",
+        "options": [
+          "Hangs forever",
+          "calls=0, owns lock=1",
+          "calls=1, owns lock=1",
+          "calls=1, owns lock=0"
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. calls=1, owns lock=1",
+        "verdict_sub": "it never blocks at all",
+        "bullets": [
+          "`wait(lk, pred)` is `while (!pred()) wait(lk);`.",
+          "The predicate runs once, **before** any blocking. It is already `true`.",
+          "So the thread never sleeps and no notification is needed.",
+          "The lock was never released, so it is still owned on return."
+        ],
+        "wrong": "\"It hangs: nobody notifies\"",
+        "cta": "Why this matters ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Why this matters",
+        "title": "The predicate form is a loop",
+        "code": "// cv.wait(lk, pred) is specified as:\nwhile (!pred())\n    cv.wait(lk);",
+        "bullets": [
+          "Checked **before** blocking: a notify sent before the wait is harmless.",
+          "Re-checked after **every** wakeup, always with the mutex held."
+        ],
+        "takeaway": "A CV wait on an already-true condition costs one function call."
+      }
+    ]
+  },
+  {
+    "id": "T04-Q11",
+    "type": "concept",
+    "source": "topic_04 qa Q11",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "notify_one(): inside the lock, or after unlocking?\n\nCode reviewers argue about this all the time.\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "The right answer separates correctness from performance, then adds one important exception.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up: five threads wait on one CV. Does notify_one wake the one that has waited longest? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Not guaranteed. Which waiter wakes is unspecified, so a CV-based queue is not FIFO-fair. If fairness matters, use a ticketed design or one CV per thread.",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Condition variables",
+        "title": "Should you call `notify_one` while holding the mutex, or after unlocking it?",
+        "options": [
+          "Either is correct. After unlock is usually cheaper.",
+          "Under the lock, otherwise the wakeup can be lost.",
+          "After unlock. Notifying under the lock is a bug.",
+          "Under the lock, so the woken thread is handed the mutex."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Either is correct.",
+        "verdict_sub": "The state change must be under the mutex. The notify need not be.",
+        "bullets": [
+          "Under the lock: the waiter may wake, find the mutex still held, and block again (\"hurry up and wait\").",
+          "After unlock: fewer wasted context switches.",
+          "Exception: if `done = true` lets the waiter delete the object holding the CV, a notify after unlock can touch freed memory. Notify under the lock."
+        ],
+        "cta": "Why not B, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "B: if the state was modified under the mutex, notifying after unlock cannot lose the wakeup.",
+          "C: it is correct, sometimes slower, and sometimes required for lifetime reasons.",
+          "D: a notify never hands over the mutex. The woken thread competes for it like anyone else."
+        ],
+        "takeaway": "Senior answer: correctness first (state under the mutex), then performance (notify after unlock), then the lifetime exception."
+      }
+    ]
+  },
+  {
+    "id": "T04-Q13",
+    "type": "concept",
+    "source": "topic_04 qa Q13",
+    "topic_no": 4,
+    "topic_short": "Condition Variables",
+    "text": {
+      "hook": "notify_all() wakes three consumers. C1 grabs the mutex and holds it for 40 seconds.\n\nWhat are C2 and C3 doing?\nComment A, B, C or D, then swipe ➜",
+      "body": "Two kinds of waiting hide in this question. Interviewers check whether you can tell them apart.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up: the whole condition is one atomic flag. Which C++20 tool lets a thread sleep on it with no mutex and no CV? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`flag.wait(old)` on the std::atomic: it blocks while the value equals old. The setter stores the new value first, then calls `flag.notify_one()` (or notify_all).",
+    "slides": [
+      {
+        "layout": "question",
+        "kicker": "Interview question · Condition variables",
+        "title": "After `notify_all`, C1 holds the mutex for 40 s. What are C2 and C3 doing?",
+        "options": [
+          "Asleep on the CV, waiting for the next notify.",
+          "Spinning on the mutex, burning CPU.",
+          "Running the code after `wait`, alongside C1.",
+          "Blocked on the mutex. No new notify needed."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Blocked on the mutex.",
+        "verdict_sub": "They were already woken from the CV.",
+        "bullets": [
+          "Waiting **on the CV** needs a notify, spurious wakeup or timeout to leave.",
+          "Waiting **for the mutex** ends as soon as the mutex is free.",
+          "When C1 unlocks, they take it one at a time and recheck. Queue empty? Back to waiting on the CV."
+        ],
+        "code": "cv.wait(lk, [&] { return !q.empty(); });\nauto item = std::move(q.front());\nq.pop();\nlk.unlock();\nprocess(item);   // fix: do the 40 s unlocked",
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: they were already notified. `notify_all` unblocks every current waiter.",
+          "B: whether a mutex spins briefly is up to the implementation. Mainstream mutexes block in the kernel.",
+          "C: `wait` returns only with the mutex held, so the post-wait code is serialized."
+        ],
+        "takeaway": "Senior answer: notification and mutex acquisition are separate events. Keep the locked region tiny: pop, unlock, then process."
+      }
+    ]
+  }
+]

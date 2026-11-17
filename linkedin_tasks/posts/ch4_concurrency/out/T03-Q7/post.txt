@@ -1,0 +1,12 @@
+=== POST TEXT ===
+T1 is started before T2. Both lock the same std::mutex.
+
+Who gets it first?
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+Most answers assume some kind of queue. The standard promises less than you think.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.

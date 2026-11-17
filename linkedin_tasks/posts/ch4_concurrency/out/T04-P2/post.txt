@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The producer sets ready = true and notifies.
+Only then does the consumer start waiting.
+
+What is printed? Comment your answer, then swipe ➜ to check it.
+
+Four plausible outputs. One rule about notifications decides which one you will see.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

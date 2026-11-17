@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A thread, a lambda taking int&, and a plain int.
+What does this program print?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+This is the question behind every std::ref you have ever written.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

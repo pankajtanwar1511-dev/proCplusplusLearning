@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Everything is memory_order_relaxed.
+One writer stores 10 then 20. One reader loads twice. 🧵
+
+Which outputs are possible? Pick all that apply, then swipe ➜
+
+"Relaxed means anything goes" is the answer that fails here. Slide 3 shows where relaxed really does surprise you.
+
+#cpp #cplusplus #memorymodel #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

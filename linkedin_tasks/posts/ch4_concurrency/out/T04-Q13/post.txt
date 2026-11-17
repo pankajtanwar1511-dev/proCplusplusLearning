@@ -1,0 +1,12 @@
+=== POST TEXT ===
+notify_all() wakes three consumers. C1 grabs the mutex and holds it for 40 seconds.
+
+What are C2 and C3 doing?
+Comment A, B, C or D, then swipe ➜
+
+Two kinds of waiting hide in this question. Interviewers check whether you can tell them apart.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Pick A, B, C or D below, then swipe right to check your answer.

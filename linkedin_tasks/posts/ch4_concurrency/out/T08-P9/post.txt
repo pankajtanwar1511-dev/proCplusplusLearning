@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Your ABA-safe stack uses a tagged pointer.
+No mutex anywhere in the source. 🧐
+
+Is it really lock-free? Three values decide it.
+Lock in your answer below, then swipe ➜ to verify.
+
+x86-64, GCC. One of these three values breaks the lock-free claim.
+
+#cpp #cplusplus #lockfree #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

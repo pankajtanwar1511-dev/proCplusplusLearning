@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Four lines. One detach(). One [&].
+Is this code safe?
+
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+It can print 42 on one machine and garbage on the next. The output does not answer the question.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

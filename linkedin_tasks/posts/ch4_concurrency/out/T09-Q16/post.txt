@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"The queue keeps filling up. Just make it 10x bigger."
+
+Why is that usually the wrong fix?
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+Memory is cheap. That is not what this question is about.
+
+#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

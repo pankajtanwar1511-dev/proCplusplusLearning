@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A "spinlock" made from a plain bool.
+Main sleeps 100 ms, sets data = 42, then unlocks. 🤔
+
+What does the waiter print?
+Comment your answer, then swipe ➜ to check it.
+
+Compiled with g++ -O2. Read it the way the optimizer does.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

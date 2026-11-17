@@ -1,0 +1,12 @@
+=== POST TEXT ===
+8 cores. Purely CPU-bound work.
+How many threads do you start?
+
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The "obvious" answer is only half right. The other half is what makes it a senior answer.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Pick A, B, C or D below, then swipe right to check your answer.

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"binary_semaphore is just a lighter, faster mutex."
+
+Would you swap your std::mutex for one? 🔒
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The difference is one word, and it decides which tool you reach for.
+
+#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.

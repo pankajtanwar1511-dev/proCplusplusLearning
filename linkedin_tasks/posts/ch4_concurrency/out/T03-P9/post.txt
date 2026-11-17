@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A reader finds the key missing, so it "upgrades" to a write lock.
+
+Only one thread runs. Can this deadlock?
+Lock in your answer below, then swipe ➜ to verify.
+
+This read-then-upgrade pattern looks natural in a cache. Slide 3 shows the version that is safe.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

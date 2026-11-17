@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"Fire and forget" with std::async. 🚀
+
+The task sleeps 200 ms. In what order do the three lines print?
+Think it through, comment your answer, then swipe ➜
+
+The answer is deterministic. GCC even warns about this line.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

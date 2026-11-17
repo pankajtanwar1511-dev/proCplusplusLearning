@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The single most asked detail about compare-and-swap.
+What happens to expected when CAS fails? 🧠
+
+Comment your answer, then swipe ➜ to check it.
+
+Two CAS calls, two lines of output. Read the second call carefully.
+
+#cpp #cplusplus #concurrency #lockfree #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

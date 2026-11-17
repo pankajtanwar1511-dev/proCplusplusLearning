@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A std::jthread goes out of scope while its worker is still looping.
+
+What prints, and in what order? 🧵
+Think it through, comment your answer, then swipe ➜
+
+Slide 3 shows what changes if you swap jthread for std::thread.
+
+#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Main waits for both workers in every round with a std::latch.
+Round 1 prints the right answer. 🤔
+
+What about rounds 2 and 3?
+Comment your answer, then swipe ➜ to check it.
+
+Find the bug before you swipe. It compiles cleanly with -Wall -Wextra.
+
+#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

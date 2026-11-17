@@ -1,0 +1,18 @@
+=== POST TEXT ===
+"Lock-free" does not mean "no mutex".
+And it does not mean "fast".
+
+The real definition, ABA in one slide, plus 6 myths that fail interviews. Save it. 📌
+
+Inside:
+1. The one test that defines lock-free and wait-free
+2. The three problems stacked in every lock-free structure
+3. ABA, step by step
+4. When lock-free is NOT faster
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #lockfree #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

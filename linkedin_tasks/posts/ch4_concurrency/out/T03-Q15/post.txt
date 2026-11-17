@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"A mutex always goes through the kernel, so it is slow."
+
+You hear this in many interviews. Is it true?
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"We use only std::atomic, no mutex. So our code is lock-free."
+
+A classic interview question. True or false?
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The real answer changes how you talk about lock-free code in interviews.
+
+#cpp #cplusplus #lockfree #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+Which option did you pick? Reply with the letter, then swipe right for the answer ➜

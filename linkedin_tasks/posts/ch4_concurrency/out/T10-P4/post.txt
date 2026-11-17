@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The producer thread finishes without ever setting the promise. 🤝
+
+Does main hang forever in get()?
+Lock in your answer below, then swipe ➜ to verify.
+
+A classic error-path bug. What the standard library does here is worth knowing by heart.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

@@ -1,0 +1,463 @@
+[
+  {
+    "id": "T01-TH",
+    "type": "theory",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 theory",
+    "text": {
+      "hook": "std::thread looks simple.\nInterviewers use it to test lifetime, ownership and argument passing.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Two objects, two lifetimes\n2. What joinable() really means\n3. How arguments reach the thread\n4. Exceptions and jthread\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Test yourself: `Task` is a function object. Does `std::thread t(Task());` start a thread? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "No. Most vexing parse: it declares a function named t, so t.join() fails to compile. Write std::thread t{Task{}}; instead.",
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "std::thread:<br>the mental model<br>+ 6 myths",
+        "lead": "Lifetime, joinable() and argument passing: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Two objects, two separate lifetimes",
+        "cards": [
+          {
+            "label": "Thread of execution",
+            "text": "The OS thread that runs your callable."
+          },
+          {
+            "label": "std::thread object",
+            "text": "An owning handle to it, like `std::unique_ptr`. Move-only: one owner joins."
+          }
+        ],
+        "takeaway": "Before the handle dies: `join()` (wait) or `detach()` (give up ownership). Forget, and the destructor calls `std::terminate()`."
+      },
+      {
+        "layout": "table",
+        "kicker": "Lifetime",
+        "title": "What `joinable()` really tracks",
+        "header": [
+          "Event",
+          "`joinable()` after"
+        ],
+        "rows": [
+          [
+            "constructed with a callable",
+            "`true`"
+          ],
+          [
+            "`join()` (blocks until finished)",
+            "`false`"
+          ],
+          [
+            "`detach()` (thread keeps running)",
+            "`false`"
+          ],
+          [
+            "thread function returns",
+            "still `true` (until join or detach)"
+          ]
+        ],
+        "takeaway": "`joinable()` means \"owns an unjoined, undetached thread\", not \"is running\"."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Creation, step by step",
+        "title": "What is guaranteed, and when",
+        "steps": [
+          "`f` and `args` are copied **in the creating thread**",
+          "the constructor returns: the new thread may not have run anything yet",
+          "constructor completion *synchronizes-with* the start of `f`",
+          "`join()` returns: every write the worker made is visible"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Argument passing",
+        "title": "Decay-copied, then passed as rvalues",
+        "header": [
+          "Parameter + argument",
+          "Result"
+        ],
+        "rows": [
+          [
+            "`int x` + `value`",
+            "✅ copy, original untouched"
+          ],
+          [
+            "`int& x` + `value`",
+            "❌ compile error"
+          ],
+          [
+            "`const int& x` + `value`",
+            "⚠️ binds to the thread's **internal copy**"
+          ],
+          [
+            "`int& x` + `std::ref(value)`",
+            "✅ the original (must outlive the use)"
+          ]
+        ],
+        "takeaway": "`char buf[]` is copied as a pointer. Convert first: `std::thread t(f, std::string(buf));`"
+      },
+      {
+        "layout": "cards",
+        "kicker": "Exceptions",
+        "title": "Exceptions do not cross threads",
+        "cards": [
+          {
+            "label": "Escapes the worker",
+            "text": "`std::terminate()`. Never delivered to the thread that joins."
+          },
+          {
+            "label": "Transport it",
+            "text": "Catch, store `std::current_exception()`, `std::rethrow_exception` after `join()`. Or use a future."
+          },
+          {
+            "label": "Creator throws first",
+            "text": "Unwinding destroys a joinable `t`: terminate. Use a join guard or `std::jthread`."
+          }
+        ]
+      },
+      {
+        "layout": "statement",
+        "kicker": "std::jthread (C++20)",
+        "hero": "`request_stop()`<br>never kills<br>a thread.",
+        "lead": "The `jthread` destructor calls `request_stop()`, then `join()`. The worker must check its `stop_token` and return."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"The worker already finished, so destroying the `std::thread` is fine.\"",
+            "truth": "The destructor checks `joinable()`, not \"still running\". Unjoined means terminate."
+          },
+          {
+            "myth": "\"Forgetting `join()` throws an exception.\"",
+            "truth": "It calls `std::terminate()`. There is nothing to catch."
+          },
+          {
+            "myth": "\"Passing `value` to an `int&` parameter creates a temporary that dangles.\"",
+            "truth": "It does not compile. Use `std::ref`."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A `const T&` parameter sees the caller's variable.\"",
+            "truth": "It sees the thread's private copy unless you pass `std::ref`."
+          },
+          {
+            "myth": "\"`detach()` makes the thread safe and independent.\"",
+            "truth": "It only removes the owner. Every lifetime problem is still yours."
+          },
+          {
+            "myth": "\"A `bool` stop flag is atomic on x86, so it is fine.\"",
+            "truth": "Unsynchronized read + write is a data race: UB in C++, on any hardware."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Every `std::thread`:<br>join it or detach it.<br><br>Every argument:<br>copied, unless `std::ref`.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "T01-P1",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 practice Q1",
+    "text": {
+      "hook": "The worker thread finished 100 ms ago.\nSo leaving main is safe, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One of the most common std::thread bugs. The fix is one line, but the reason is what interviewers ask about.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: you call `t.join()` twice on the same thread. What happens on the second call? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "The second join() throws std::system_error (invalid_argument), because t is no longer joinable. Unlike destroying a joinable thread, this is a catchable exception.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::thread",
+        "title": "The worker finishes long before main ends.<br>What happens?",
+        "code": "int main() {\n    std::thread t([] {\n        std::cout << \"worker done\\n\";\n    });\n    std::this_thread::sleep_for(\n        std::chrono::milliseconds(100));\n    std::cout << \"main done\\n\";\n}",
+        "options": [
+          "Both lines, exit code 0",
+          "Only `main done`",
+          "Both lines, then a crash",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Both lines, then **std::terminate()**",
+        "verdict_sub": "libstdc++: \"terminate called without an active exception\", abort",
+        "bullets": [
+          "`t` was never joined or detached.",
+          "`~thread()` checks `joinable()`, not \"still running\". It is still `true`.",
+          "Finished thread + unjoined handle = joinable = terminate.",
+          "Extra trap: `abort()` does not flush stdio. Piped to a file, both lines may vanish."
+        ],
+        "wrong": "\"Fine, the worker already finished\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "code": "int main() {\n    std::thread t([] {\n        std::cout << \"worker done\\n\";\n    });\n    std::this_thread::sleep_for(\n        std::chrono::milliseconds(100));\n    t.join();\n    std::cout << \"main done\\n\";\n}",
+        "tip": "C++20 `std::jthread` joins in its destructor, so this bug cannot happen.",
+        "takeaway": "Finishing the thread does not make the `std::thread` object non-joinable. Only `join()`, `detach()` or a move do."
+      }
+    ]
+  },
+  {
+    "id": "T01-Q12",
+    "type": "concept",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 qa Q12",
+    "text": {
+      "hook": "Four lines. One detach(). One [&].\nIs this code safe?\n\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "It can print 42 on one machine and garbage on the next. The output does not answer the question.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: four threads are created in a loop with `[&] { std::cout << i; }` and joined after the loop. What is wrong? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "All four lambdas share the same loop variable i: main's ++i races with their reads (UB), and i dies after the loop while threads may still read it. Capture [i] by value.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Is this code safe?",
+        "code": "void foo() {\n    int value = 42;\n    std::thread t([&] { std::cout << value; });\n    t.detach();\n}",
+        "options": [
+          "Yes: the new thread starts running immediately.",
+          "No: `foo()` may return and destroy `value` first.",
+          "Yes: the thread stores its own copy of the lambda.",
+          "Yes, if it prints 42 in testing."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Not safe",
+        "verdict_sub": "Detached thread + `[&]` capture of a local = dangling reference",
+        "bullets": [
+          "`[&]` stores a **reference** to `value`, not a copy.",
+          "After `detach()`, `foo()` can return and destroy `value`.",
+          "A read after that is undefined behaviour, even if it prints 42.",
+          "Fixes: capture `[value]`, `join()` before returning, or pass owning data."
+        ],
+        "cta": "Why not A, C or D ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: no guarantee the new thread has run anything when the constructor returns.",
+          "C: the lambda is stored in the thread, but its `[&]` capture still refers to `foo`'s stack.",
+          "D: a passing test proves nothing. In practice `foo()` usually returns before the thread even starts."
+        ],
+        "takeaway": "Senior answer: \"`detach()` plus `[&]` is almost always a bug. ASan reports `stack-use-after-return` when that detection is enabled.\""
+      }
+    ]
+  },
+  {
+    "id": "T01-P3",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 practice Q3",
+    "text": {
+      "hook": "A thread, a lambda taking int&, and a plain int.\nWhat does this program print?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "This is the question behind every std::ref you have ever written.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: `obj` is a `Worker` with a member function `run(int)`. How do you start a std::thread that runs `obj.run(42)` without writing a lambda? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "`std::thread t(&Worker::run, &obj, 42);` member pointer, then object pointer, then the arguments (std::invoke rules). `&obj` is non-owning, so obj must outlive the thread.",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Argument passing",
+        "title": "Does this compile?<br>If yes, what does it print?",
+        "code": "int main() {\n    int value = 42;\n\n    std::thread t([](int& x) {\n        x++;\n        std::cout << x << '\\n';\n    }, value);\n\n    t.join();\n    std::cout << value << '\\n';\n}",
+        "options": [
+          "43, then 43",
+          "Compile error",
+          "43, then 42",
+          "UB: `x` dangles"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Compile error",
+        "verdict_sub": "libstdc++: \"std::thread arguments must be invocable after conversion to rvalues\"",
+        "bullets": [
+          "`std::thread` stores a **copy** of `value`.",
+          "It passes that copy to the lambda as an **rvalue**.",
+          "An rvalue cannot bind to a non-const `int&`.",
+          "No silent binding to a hidden copy, nothing dangles. It just fails."
+        ],
+        "wrong": "\"43, then 42\" (a reference to a hidden copy)",
+        "cta": "The fix, and a twist ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Fix and twist",
+        "title": "`std::ref` vs `const int&`",
+        "columns": [
+          {
+            "label": "std::ref",
+            "code": "std::thread t(\n  [](int& x) { x++; },\n  std::ref(value));",
+            "verdict": "modifies `value`: 43",
+            "verdict_ok": true
+          },
+          {
+            "label": "const int&",
+            "code": "std::thread t(\n  [](const int& x) {\n    use(x);\n  },\n  value);",
+            "verdict": "compiles, sees a copy"
+          }
+        ],
+        "takeaway": "`std::thread` never keeps references implicitly. Want the original? Pass `std::ref`, and keep the object alive."
+      }
+    ]
+  },
+  {
+    "id": "T01-Q16",
+    "type": "concept",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 qa Q16",
+    "text": {
+      "hook": "8 cores. Purely CPU-bound work.\nHow many threads do you start?\n\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "body": "The \"obvious\" answer is only half right. The other half is what makes it a senior answer.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Follow-up an interviewer would ask next: \"Why not create a new std::thread for each of 10,000 tasks per second?\" Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "Each create+join costs tens of microseconds (clone, stack mapping, TLS setup, scheduling) and thousands of threads oversubscribe the CPUs. Use a fixed pool of long-lived workers fed by a queue.",
+    "slides": [
+      {
+        "layout": "question",
+        "title": "Purely CPU-bound tasks on 8 cores. How many worker threads?",
+        "options": [
+          "100 or more: more threads, more parallelism.",
+          "Exactly 8. That is always optimal.",
+          "Whatever `hardware_concurrency()` returns. It is exact.",
+          "About one per available logical CPU, then benchmark."
+        ],
+        "cta": "Pick one, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. One per available logical CPU, then measure",
+        "verdict_sub": "A starting point, not a law",
+        "bullets": [
+          "N logical CPUs execute at most N threads at the same time.",
+          "Extra threads add context switches, cache and TLB pollution, preempted lock holders.",
+          "With SMT, 8 logical CPUs may be only 4 physical cores.",
+          "I/O-bound work differs: blocked threads leave the CPU free."
+        ],
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: more threads never add CPU capacity. The OS just time-slices them.",
+          "B: memory bandwidth, SMT, contention and other load move the optimum. Measure.",
+          "C: it is a hint. It may return 0, and on Linux ignores affinity masks and container CPU quotas."
+        ],
+        "takeaway": "Senior answer: \"For latency-critical work, pin a small number of threads to isolated cores and avoid oversubscription entirely.\""
+      }
+    ]
+  },
+  {
+    "id": "T01-P10",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "Threads",
+    "source": "topic_01 practice Q10",
+    "text": {
+      "hook": "main reads *ptr only after join().\njoin() synchronizes everything. So this is correct?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Two separate questions hide in this program. Most answers only check one of them.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "concurrency",
+        "multithreading",
+        "interviewprep"
+      ]
+    },
+    "first_comment": "🧠 Bonus: `t` still owns an unjoined thread, and you write `t = std::thread(g);`. What happens? Reply with your answer 👇 I'll post the answer here tomorrow.",
+    "bonus_answer": "std::terminate(), exactly like destroying a joinable thread: move assignment does not join the old one. Join or detach first (std::jthread instead requests stop and joins).",
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Thread lifetime",
+        "title": "main reads `*ptr` only after `join()`.<br>Is this correct?",
+        "code": "int* ptr = nullptr;\nvoid worker() {\n    int value = 42;\n    ptr = &value;\n}\n\nint main() {\n    std::thread t(worker);\n    t.join();\n    std::cout << *ptr << '\\n';\n}",
+        "options": [
+          "Yes, prints 42",
+          "Data race on `ptr`",
+          "Compile error",
+          "UB: dead object"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Undefined behaviour",
+        "verdict_sub": "`ptr` points to a destroyed object: 42, garbage or a crash",
+        "bullets": [
+          "`value` dies when `worker()` **returns**, before `join()` returns.",
+          "The write to `ptr` is fine: thread completion synchronizes-with `join()`.",
+          "So no data race on `ptr`. The object it points to is just dead.",
+          "`join()` waits. It never extends the worker's locals."
+        ],
+        "wrong": "\"Safe, join() synchronizes\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Let the longer-lived thread own the object",
+        "code": "int main() {\n    int result = 0;             // owned by main\n    std::thread t([&result] {\n        result = 42;\n    });\n    t.join();     // write is visible after join\n    std::cout << result << '\\n';\n}",
+        "takeaway": "Synchronization and object lifetime are separate questions. A correct answer checks both."
+      }
+    ]
+  }
+]

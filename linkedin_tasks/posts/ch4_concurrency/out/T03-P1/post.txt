@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Every increment is "locked". Two threads, 100000 each.
+
+Is this code correct? What does it print?
+Think it through, comment your answer, then swipe ➜
+
+One missing word changes everything. The compiler even tells you, if you read the warning.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on slide 2 ➜ Comment your answer first, then compare.

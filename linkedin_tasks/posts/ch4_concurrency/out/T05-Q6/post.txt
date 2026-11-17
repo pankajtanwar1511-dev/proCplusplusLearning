@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"It's just a bool stop flag. The CPU writes a bool atomically."
+
+Does it still need std::atomic<bool>? 🧠
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+The code is 5 lines. What the optimizer does with it surprises a lot of people.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.

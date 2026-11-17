@@ -1,0 +1,19 @@
+=== POST TEXT ===
+Memory ordering is where C++ interview answers get vague fastest.
+
+Here is the mental model, plus the 6 myths that fail interviews. Save it for your next interview. 📌
+
+Inside:
+1. The two questions every atomic answers
+2. The three layers you must never mix
+3. The happens-before chain to say out loud
+4. Why "thread 1 ran first" proves nothing
+5. The exact definition of a data race
+6. Six myths, busted (slides 7-8)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #memorymodel #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

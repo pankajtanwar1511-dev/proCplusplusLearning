@@ -1,0 +1,12 @@
+=== POST TEXT ===
+One std::atomic<long> counter, shared by every thread.
+Add more threads and it gets slower, not faster. Why? 🧠
+
+Comment A, B, C or D, then swipe ➜ for the answer.
+
+No mutex, no lock, and it still does not scale. The reason lives below the C++ level.
+
+#cpp #cplusplus #concurrency #performance #interviewprep
+
+=== FIRST COMMENT ===
+Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.
