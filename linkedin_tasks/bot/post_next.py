@@ -8,6 +8,7 @@ Usage (normally run by .github/workflows/linkedin_post.yml):
   python3 post_next.py --force         # ignore the minimum gap between posts
   python3 post_next.py --simulate      # full flow without calling LinkedIn (local testing)
   python3 post_next.py --status        # print the series status and exit
+  python3 post_next.py --comment-missing  # add the first comment to posted items where it failed
 
 Writes GitHub Actions outputs (posted_id, low_buffer, token_warning) when
 GITHUB_OUTPUT is set, so the workflow can commit and open reminder issues.
@@ -46,6 +47,7 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--id")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--comment-missing", action="store_true")
     ap.add_argument("--posted-file", help="override posted.json (testing)")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -70,6 +72,29 @@ def main():
         log.warning(token_warning)
     if a.status:
         return 0
+
+    if a.comment_missing:
+        from linkedin_client import LinkedInClient
+        missing = [p for p in view["posts"] if p["status"] == "posted" and not posted[p["id"]].get("comment_ok")]
+        if a.id:
+            missing = [p for p in missing if p["id"] == a.id]
+        if not missing:
+            log.info("No posted item is missing its first comment.")
+            return 0
+        client = LinkedInClient()
+        client.check_token()
+        failed = 0
+        for p in missing:
+            try:
+                client.add_comment(posted[p["id"]]["post_urn"], p["first_comment"])
+                posted[p["id"]]["comment_ok"] = True
+                series.save_posted(posted, a.posted_file)
+                log.info("✅ Comment added to %s", p["id"])
+            except Exception as e:  # noqa: BLE001
+                failed += 1
+                log.error("%s: %s", p["id"], e)
+        gh_output(posted_id="comments")
+        return 1 if failed else 0
 
     if s["paused"] and not a.id:
         log.info("Series is paused (series.json). Nothing to do.")

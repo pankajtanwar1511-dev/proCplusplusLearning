@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'post = post now; dry-run = check token + preview, change nothing; status = print series status'
+        description: 'post = post now; dry-run = check token + preview, change nothing; status = print series status; comment = add missing first comments'
         type: choice
-        options: [dry-run, post, status]
+        options: [dry-run, post, status, comment]
         default: dry-run
       post_id:
         description: 'Optional: post this id instead of the next one (e.g. T02-P2)'
@@ -66,6 +66,7 @@ jobs:
           case "$MODE" in
             dry-run) args="--dry-run" ;;
             status)  args="--status" ;;
+            comment) args="--comment-missing" ;;
           esac
           [ -n "$POST_ID" ] && args="$args --id $POST_ID"
           [ "$FORCE" = "true" ] && args="$args --force"

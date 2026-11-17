@@ -109,12 +109,25 @@ class LinkedInClient:
         return urn
 
     def add_comment(self, post_urn, text):
-        url = f"{REST}/socialActions/{quote(post_urn, safe='')}/comments"
-        r = self._request("POST", url, headers=self._headers(),
-                          json={"actor": self.author, "object": post_urn, "message": {"text": text}})
-        if r.status_code not in (200, 201):
-            raise RuntimeError(f"Comment failed: {r.status_code} {r.text[:300]}")
-        log.info("First comment added")
+        """Comment as the member. Self-serve apps (Share on LinkedIn, w_member_social) use the
+        unversioned /v2 endpoint; the versioned /rest one needs Community Management API
+        access and returns 403 otherwise. Try /v2 first, then /rest."""
+        enc = quote(post_urn, safe="")
+        attempts = [
+            ("v2", f"https://api.linkedin.com/v2/socialActions/{enc}/comments",
+             {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json",
+              "X-Restli-Protocol-Version": "2.0.0"}),
+            ("rest", f"{REST}/socialActions/{enc}/comments", self._headers()),
+        ]
+        errors = []
+        for name, url, headers in attempts:
+            r = self._request("POST", url, headers=headers,
+                              json={"actor": self.author, "object": post_urn, "message": {"text": text}})
+            if r.status_code in (200, 201):
+                log.info("First comment added (%s endpoint)", name)
+                return
+            errors.append(f"{name}: {r.status_code} {r.text[:300]}")
+        raise RuntimeError("Comment failed. " + " | ".join(errors))
 
 
 def post_url(post_urn):
