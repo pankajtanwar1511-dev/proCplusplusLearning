@@ -6,8 +6,10 @@ Render with:
 ```bash
 cd linkedin_tasks/generator
 python3 render.py ../posts/ch4_concurrency/specs ../posts/ch4_concurrency/out [POST_ID ...]
-python3 build_queue.py ../posts/ch4_concurrency      # schedule + queue.json for the app
+python3 build_queue.py ../posts/ch4_concurrency      # posting order (queue.json); dates come from ../bot/series.py
 ```
+
+Posting, schedule and adding chapters to the series: `../bot/README.md`.
 
 Full working examples: `examples/examples.json` (code puzzle, side-by-side puzzle, concept question, theory carousel).
 

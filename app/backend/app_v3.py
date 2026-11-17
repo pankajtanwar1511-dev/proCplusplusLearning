@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 import os
+import sys
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
 CORS(app)
@@ -503,37 +504,33 @@ def get_topic_examples_by_id(topic_id):
     return jsonify({'error': 'Invalid topic ID'}), 404
 
 # ============================================================
-# LINKEDIN POSTS (review queue rendered by linkedin_tasks/generator)
+# LINKEDIN SERIES (bot state + rendered posts; see linkedin_tasks/bot/series.py)
 # ============================================================
 
-LINKEDIN_POSTS_DIR = Path(__file__).parent.parent.parent / 'linkedin_tasks' / 'posts'
+LINKEDIN_DIR = Path(__file__).parent.parent.parent / 'linkedin_tasks'
+sys.path.insert(0, str(LINKEDIN_DIR / 'bot'))
+try:
+    import series as linkedin_series   # shared with the posting bot
+except ImportError:                     # linkedin_tasks not deployed
+    linkedin_series = None
 
-@app.route('/api/linkedin/chapters')
-def linkedin_chapters():
-    """List chapters that have a rendered post queue."""
-    out = []
-    if LINKEDIN_POSTS_DIR.is_dir():
-        for d in sorted(LINKEDIN_POSTS_DIR.iterdir()):
-            q = d / 'queue.json'
-            if q.is_file():
-                with open(q, 'r', encoding='utf-8') as f:
-                    out.append({'chapter': d.name, 'summary': json.load(f)['summary']})
-    return jsonify({'chapters': out})
+@app.route('/api/linkedin/series')
+def linkedin_series_view():
+    """Every chapter's posts in posting order, with posted status (posted.json,
+    written by the GitHub Actions bot) and projected times for upcoming posts."""
+    if linkedin_series is None:
+        return jsonify({'error': 'LinkedIn series not available'}), 404
+    try:
+        return jsonify(linkedin_series.build_view())
+    except (FileNotFoundError, ValueError) as e:
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/linkedin/<chapter>/queue')
-def linkedin_queue(chapter):
-    q = LINKEDIN_POSTS_DIR / chapter / 'queue.json'
-    if '/' in chapter or not q.is_file():
-        return jsonify({'error': 'Queue not found'}), 404
-    with open(q, 'r', encoding='utf-8') as f:
-        return jsonify(json.load(f))
-
-@app.route('/api/linkedin/<chapter>/file/<path:subpath>')
+@app.route('/api/linkedin/file/<chapter>/<path:subpath>')
 def linkedin_file(chapter, subpath):
     """Serve a rendered slide PNG or PDF (send_from_directory blocks path traversal)."""
-    if '/' in chapter:
+    if '/' in chapter or '..' in chapter:
         return jsonify({'error': 'Not found'}), 404
-    return send_from_directory(LINKEDIN_POSTS_DIR / chapter / 'out', subpath)
+    return send_from_directory(LINKEDIN_DIR / 'posts' / chapter / 'out', subpath)
 
 # ============================================================
 # QUIZ ENDPOINTS

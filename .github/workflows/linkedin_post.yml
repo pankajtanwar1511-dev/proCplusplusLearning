@@ -1,0 +1,116 @@
+name: LinkedIn post
+
+# Posts the next carousel of the LinkedIn series (linkedin_tasks/series.json),
+# records it in linkedin_tasks/posted.json and pushes that to main, so the app's
+# LinkedIn Posts page shows it as posted with time and link.
+# Setup and controls: linkedin_tasks/bot/README.md
+
+on:
+  schedule:
+    - cron: '30 3 * * *'    # 09:00 IST
+    - cron: '30 15 * * *'   # 21:00 IST
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'post = post now; dry-run = check token + preview, change nothing; status = print series status'
+        type: choice
+        options: [dry-run, post, status]
+        default: dry-run
+      post_id:
+        description: 'Optional: post this id instead of the next one (e.g. T02-P2)'
+        required: false
+        default: ''
+      force:
+        description: 'Ignore the minimum gap / start date (manual catch-up)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: linkedin-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Natural posting time (scheduled runs only)
+        if: github.event_name == 'schedule'
+        run: sleep $(( RANDOM % 900 ))      # 0-15 min jitter
+
+      - name: Run bot
+        id: bot
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MODE: ${{ inputs.mode || 'post' }}
+          POST_ID: ${{ inputs.post_id }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          cd linkedin_tasks/bot
+          args=""
+          case "$MODE" in
+            dry-run) args="--dry-run" ;;
+            status)  args="--status" ;;
+          esac
+          [ -n "$POST_ID" ] && args="$args --id $POST_ID"
+          [ "$FORCE" = "true" ] && args="$args --force"
+          python3 post_next.py $args
+
+      - name: Commit posted.json
+        # always(): even if the bot failed after posting, the record must be saved
+        # or the next run could post the same item again.
+        if: always()
+        run: |
+          if git diff --quiet -- linkedin_tasks/posted.json; then echo "Nothing posted"; exit 0; fi
+          git config user.name "linkedin-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add linkedin_tasks/posted.json
+          git commit -m "chore(linkedin): posted ${{ steps.bot.outputs.posted_id || 'update' }}"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          echo "::error::Could not push posted.json. The post IS live; add it to posted.json manually." && exit 1
+
+      - name: Warn if the first comment failed
+        if: steps.bot.outputs.comment_ok == 'false'
+        run: echo "::warning::Post ${{ steps.bot.outputs.posted_id }} is live but the first comment failed. Add it by hand."
+
+      - name: Reminder issues
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOW: ${{ steps.bot.outputs.low_buffer }}
+          DAYS: ${{ steps.bot.outputs.days_left }}
+          TOKEN_WARN: ${{ steps.bot.outputs.token_warning }}
+          TOKEN_ERR: ${{ steps.bot.outputs.token_error }}
+        run: |
+          open_issue() {  # title, body: create once, never duplicate an open issue
+            if [ -z "$(gh issue list --state open --search "in:title \"$1\"" --json number -q '.[].number')" ]; then
+              gh issue create --title "$1" --body "$2"
+            fi
+          }
+          if [ "$LOW" = "true" ]; then
+            open_issue "LinkedIn queue running low" "Only $DAYS day(s) of posts left. Build the next chapter and add it to linkedin_tasks/series.json."
+          fi
+          if [ -n "$TOKEN_WARN" ]; then
+            open_issue "LinkedIn token expiring soon" "$TOKEN_WARN. Renew it (linkedin_tasks/bot/README.md), update the LINKEDIN_ACCESS_TOKEN secret and token_expires_on in series.json."
+          fi
+          if [ "$TOKEN_ERR" = "true" ]; then
+            open_issue "LinkedIn token invalid or expired" "The bot could not authenticate. Renew the token (linkedin_tasks/bot/README.md) and update the LINKEDIN_ACCESS_TOKEN secret. Posting is stopped until then."
+          fi

@@ -1,0 +1,17 @@
+{
+  "_help": "Edit this file to control the LinkedIn series. chapters: posted in this order (paths relative to linkedin_tasks/). paused: true stops posting. skip: post ids never to post. slots: posting times in 'timezone'. start_date: first day posts may go out. token_expires_on: set when you renew the LinkedIn token (generated date + 60 days).",
+  "paused": false,
+  "chapters": [
+    "posts/ch4_concurrency"
+  ],
+  "timezone": "Asia/Kolkata",
+  "slots": [
+    "09:00",
+    "21:00"
+  ],
+  "start_date": "2026-11-23",
+  "min_gap_hours": 6,
+  "low_buffer_days": 7,
+  "skip": [],
+  "token_expires_on": "2027-01-16"
+}
