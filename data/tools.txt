@@ -1,0 +1,738 @@
+> Is it this much easy to use address sanitizer or do we need to do something else? g++ -std=c++20 -O2 -g \
+    -Wall -Wextra -Wpedantic -Werror \
+    -fsanitize=address,undefined \
+    -fno-omit-frame-pointer \
+    program.cpp
+....how about valgrind, core dumps, UB sanitizer etc.... 
+
+● Great question! Yes, AddressSanitizer is that easy, but let me give you the complete picture of all debugging tools and when to use each.
+
+  1. AddressSanitizer (ASan) - Your Command Is Good!
+
+  # ✅ Your command is perfect for development
+  g++ -std=c++20 -O2 -g \
+      -Wall -Wextra -Wpedantic -Werror \
+      -fsanitize=address,undefined \
+      -fno-omit-frame-pointer \
+      program.cpp
+
+  ./a.out  # Just run it - errors reported automatically
+
+  What You Get:
+
+  - Heap buffer overflow detection
+  - Stack buffer overflow detection
+  - Use-after-free detection
+  - Use-after-return detection
+  - Memory leaks (on exit)
+  - Undefined behavior (from UBSan you added)
+
+  Performance Cost:
+
+  - ~2x slowdown (very reasonable for testing)
+  - 2-3x memory overhead
+
+  Example Output:
+
+  int main() {
+      int* arr = new int[5];
+      arr[10] = 42;  // ❌ Heap buffer overflow
+      delete[] arr;
+  }
+
+  =================================================================
+  ==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000000068
+  WRITE of size 4 at 0x603000000068 thread T0
+      #0 0x4012ab in main program.cpp:3
+      #1 0x7f8b1234abcd in __libc_start_main
+
+  0x603000000068 is located 28 bytes to the right of 20-byte region
+  allocated by thread T0 here:
+      #0 0x4567ef in operator new[](unsigned long)
+      #1 0x4012a3 in main program.cpp:2
+  =================================================================
+
+  2. All the Sanitizers Compared
+
+  2.1 UndefinedBehaviorSanitizer (UBSan)
+
+  # Already in your command! -fsanitize=undefined
+  g++ -fsanitize=undefined program.cpp
+
+  Detects:
+  - Signed integer overflow
+  - Division by zero
+  - Null pointer dereference
+  - Misaligned pointers
+  - Invalid enum values
+  - Array bounds (runtime-checked)
+
+  int main() {
+      int x = INT_MAX;
+      x = x + 1;  // ❌ UBSan detects signed overflow
+
+      int* p = nullptr;
+      *p = 42;    // ❌ UBSan detects null dereference
+  }
+
+  Output:
+  program.cpp:2:9: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'
+  program.cpp:5:5: runtime error: store to null pointer of type 'int'
+
+  2.2 ThreadSanitizer (TSan)
+
+  # For data races in multithreaded code
+  g++ -fsanitize=thread -g program.cpp
+
+  Detects:
+  - Data races
+  - Deadlocks (limited)
+
+  ⚠️ Cannot combine with ASan! (Choose one)
+
+  int shared = 0;
+
+  void thread1() { shared = 1; }  // ❌ Data race
+  void thread2() { shared = 2; }  // ❌ Data race
+
+  int main() {
+      std::thread t1(thread1);
+      std::thread t2(thread2);
+      t1.join(); t2.join();
+  }
+
+  2.3 MemorySanitizer (MSan)
+
+  # For uninitialized memory reads
+  g++ -fsanitize=memory -g program.cpp
+
+  Detects:
+  - Reads of uninitialized memory
+
+  ⚠️ Requires rebuilding ALL libraries (hard to use)
+
+  int main() {
+      int x;
+      if (x > 0) { }  // ❌ MSan detects uninitialized read
+  }
+
+  2.4 LeakSanitizer (LSan)
+
+  # Included with ASan automatically, or standalone:
+  g++ -fsanitize=leak program.cpp
+
+  Detects:
+  - Memory leaks
+
+  int main() {
+      int* p = new int(42);
+      // Missing delete
+  }  // ❌ LSan reports leak
+
+  Output:
+  =================================================================
+  ==12345==ERROR: LeakSanitizer: detected memory leaks
+
+  Direct leak of 4 byte(s) in 1 object(s) allocated from:
+      #0 0x456789 in operator new(unsigned long)
+      #1 0x401234 in main program.cpp:2
+  =================================================================
+
+  3. Valgrind (Different Approach)
+
+  Valgrind Memcheck
+
+  # Compile with debug symbols (NO sanitizer flags!)
+  g++ -g -O1 program.cpp
+
+  # Run under Valgrind
+  valgrind --leak-check=full \
+           --show-leak-kinds=all \
+           --track-origins=yes \
+           --verbose \
+           ./a.out
+
+  Valgrind vs ASan
+
+  | Feature         | ASan                     | Valgrind                      |
+  |-----------------|--------------------------|-------------------------------|
+  | Speed           | ~2x slower               | ~10-50x slower                |
+  | Recompile?      | ✅ Yes                    | ❌ No (binary instrumentation) |
+  | Detection       | Heap/stack overflow, UAF | Same + uninitialized reads    |
+  | Platforms       | Linux, macOS, Windows    | Mainly Linux                  |
+  | False positives | Very few                 | Some                          |
+  | Container-aware | Better                   | Limited                       |
+
+  When to Use Valgrind:
+
+  # ✅ Use Valgrind when:
+  # - You don't have source code
+  # - Testing third-party binaries
+  # - Need to check system libraries
+  # - Want uninitialized memory detection (without MSan complexity)
+
+  valgrind --tool=memcheck ./third_party_binary
+
+  # ✅ Use Valgrind's other tools:
+  valgrind --tool=cachegrind ./a.out    # Cache profiling
+  valgrind --tool=callgrind ./a.out     # Call graph profiling
+  valgrind --tool=helgrind ./a.out      # Thread error detection
+
+  4. Core Dumps (Post-Mortem Debugging)
+
+  Enable Core Dumps:
+
+  # Check current limit
+  ulimit -c
+  # unlimited or 0
+
+  # Enable unlimited core dumps
+  ulimit -c unlimited
+
+  # Set core dump pattern (Linux)
+  echo "core.%e.%p" | sudo tee /proc/sys/kernel/core_pattern
+  # %e = executable name, %p = PID
+
+  Generate and Analyze:
+
+  // crash.cpp
+  int main() {
+      int* p = nullptr;
+      *p = 42;  // Segfault → core dump
+  }
+
+  g++ -g crash.cpp
+  ./a.out
+  # Segmentation fault (core dumped)
+
+  # Analyze with GDB
+  gdb ./a.out core.a.out.12345
+
+  (gdb) bt              # Backtrace
+  (gdb) info registers  # Register state
+  (gdb) x/10i $rip      # Disassemble around crash
+  (gdb) print p         # Examine variables
+
+  When to Use Core Dumps:
+
+  ✅ Production crashes (save state for later analysis)✅ Difficult-to-reproduce bugs (one chance to capture)✅ Post-mortem analysis (no rerun needed)
+
+  5. Comprehensive Debugging Strategy
+
+  Development Phase:
+
+  # Use ASan + UBSan for ALL testing
+  g++ -std=c++20 -O2 -g \
+      -Wall -Wextra -Wpedantic -Werror \
+      -fsanitize=address,undefined \
+      -fno-omit-frame-pointer \
+      program.cpp
+
+  # Run tests
+  ./a.out
+
+  Multithreaded Testing:
+
+  # Separate build with TSan (can't mix with ASan)
+  g++ -std=c++20 -O2 -g \
+      -fsanitize=thread \
+      -fno-omit-frame-pointer \
+      multithreaded_program.cpp
+
+  ./a.out
+
+  CI/CD Pipeline:
+
+  # Example GitHub Actions
+  jobs:
+    test-asan:
+      - name: Build with ASan+UBSan
+        run: |
+          g++ -fsanitize=address,undefined -g test.cpp
+          ./a.out
+
+    test-tsan:
+      - name: Build with TSan
+        run: |
+          g++ -fsanitize=thread -g test.cpp
+          ./a.out
+
+    test-valgrind:
+      - name: Run Valgrind
+        run: |
+          g++ -g -O1 test.cpp
+          valgrind --leak-check=full ./a.out
+
+  Production Environment:
+
+  # Enable core dumps
+  ulimit -c unlimited
+
+  # Optionally: Build with sanitizers for canary deployments
+  # (2x slowdown usually acceptable for 1-5% of traffic)
+  g++ -fsanitize=address -O2 program.cpp
+
+  6. Practical Workflow
+
+  My Recommended Setup:
+
+  # 1. Development (everyday coding)
+  alias g++dev='g++ -std=c++20 -O2 -g -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer'
+
+  g++dev mycode.cpp && ./a.out
+
+  # 2. Before committing (full check)
+  make clean
+  make SANITIZE=address test    # ASan build
+  make SANITIZE=thread test     # TSan build
+  make SANITIZE=undefined test  # UBSan only
+
+  # 3. Weekly deep check
+  g++ -g -O1 mycode.cpp
+  valgrind --leak-check=full --track-origins=yes ./a.out
+
+  # 4. Production deployment
+  # - Normal optimized build
+  # - Enable core dumps on servers
+  # - Monitor crash logs
+
+  7. Quick Reference Card
+
+  # ═══════════════════════════════════════════════════════
+  # SANITIZERS (compile-time instrumentation)
+  # ═══════════════════════════════════════════════════════
+
+  # AddressSanitizer (memory errors) - USE THIS ALWAYS
+  -fsanitize=address
+
+  # UndefinedBehaviorSanitizer (UB detection) - USE THIS ALWAYS
+  -fsanitize=undefined
+
+  # ThreadSanitizer (data races) - USE FOR MULTITHREADED CODE
+  -fsanitize=thread  # ⚠️ Don't combine with address
+
+  # MemorySanitizer (uninitialized reads) - HARD TO USE
+  -fsanitize=memory  # ⚠️ Requires rebuilding everything
+
+  # LeakSanitizer (memory leaks) - INCLUDED WITH ASAN
+  -fsanitize=leak
+
+  # ═══════════════════════════════════════════════════════
+  # VALGRIND (runtime binary instrumentation)
+  # ═══════════════════════════════════════════════════════
+
+  valgrind --leak-check=full ./a.out              # Memory leaks
+  valgrind --tool=helgrind ./a.out                # Thread errors
+  valgrind --tool=cachegrind ./a.out              # Cache profiling
+
+  # ═══════════════════════════════════════════════════════
+  # CORE DUMPS (post-mortem)
+  # ═══════════════════════════════════════════════════════
+
+  ulimit -c unlimited                              # Enable
+  gdb ./a.out core.12345                          # Analyze
+
+  # ═══════════════════════════════════════════════════════
+  # COMPLETE DEVELOPMENT COMMAND
+  # ═══════════════════════════════════════════════════════
+
+  g++ -std=c++20 -O2 -g \
+      -Wall -Wextra -Wpedantic -Werror \
+      -fsanitize=address,undefined \
+      -fno-omit-frame-pointer \
+      program.cpp
+
+  TL;DR
+
+  ✅ Your command is perfect - use it for all development✅ Add TSan for multithreaded code (separate build)✅ Use Valgrind occasionally for deep analysis or third-party binaries✅ Enable core dumps
+  in production for crash analysis✅ ASan is ~2x slower (acceptable), Valgrind is ~20x slower (use sparingly)
+
+  Start simple: Just use ASan+UBSan everywhere. It catches 95% of issues with minimal overhead.
+
+> Okay Can you just share what I need to do in my colcon command, this is what I am using.....export MAKEFLAGS="-j 4"; colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release 
+--parallel-workers 4 ......Can you tell me how can I use tools with colcon? 
+
+● Great question! Here's how to integrate sanitizers and debugging tools with your colcon workflow for ROS 2:
+
+  1. AddressSanitizer + UBSan with Colcon
+
+  Development Build (Recommended):
+
+  # Build with ASan + UBSan
+  colcon build --symlink-install \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4
+
+  # Run your nodes
+  source install/setup.bash
+  ros2 run your_package your_node
+  # Errors printed automatically to stderr
+
+  Why RelWithDebInfo instead of Release?
+
+  - Release: -O3 optimization, no debug symbols
+  - RelWithDebInfo: -O2 optimization + debug symbols (-g)
+  - Debug: -O0 (no optimization) + debug symbols
+
+  For sanitizers, you want optimizations (find real bugs) + debug symbols (readable stack traces).
+
+  2. ThreadSanitizer (for Multithreaded ROS Nodes)
+
+  # TSan build (cannot combine with ASan!)
+  colcon build --symlink-install \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+          -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+      --parallel-workers 4
+
+  3. Build Different Profiles (Workspace Organization)
+
+  Create Build Profiles:
+
+  # Profile 1: Normal development (your current setup)
+  colcon build --symlink-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=Release \
+      --parallel-workers 4
+
+  # Profile 2: ASan build (separate build directory)
+  colcon build --symlink-install \
+      --build-base build-asan \
+      --install-base install-asan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4
+
+  # Profile 3: TSan build
+  colcon build --symlink-install \
+      --build-base build-tsan \
+      --install-base install-tsan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+      --parallel-workers 4
+
+  # Use different profiles:
+  source install-asan/setup.bash    # ASan build
+  source install-tsan/setup.bash    # TSan build
+
+  4. Colcon Test with Sanitizers
+
+  # Build with ASan
+  colcon build --symlink-install \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4
+
+  # Run tests (sanitizer errors will fail tests)
+  colcon test --parallel-workers 4
+
+  # View test results
+  colcon test-result --all
+  colcon test-result --verbose
+
+  5. Valgrind with ROS 2 Nodes
+
+  Option A: Valgrind on Specific Node
+
+  # Build normally (with debug symbols)
+  colcon build --symlink-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      --parallel-workers 4
+
+  source install/setup.bash
+
+  # Run node under valgrind
+  valgrind --leak-check=full \
+           --show-leak-kinds=all \
+           --track-origins=yes \
+           --log-file=valgrind_output.txt \
+           ros2 run your_package your_node
+
+  # Check results
+  cat valgrind_output.txt
+
+  Option B: Valgrind in Launch File
+
+  # your_launch.py
+  from launch import LaunchDescription
+  from launch.actions import ExecuteProcess
+  from launch_ros.actions import Node
+
+  def generate_launch_description():
+      return LaunchDescription([
+          ExecuteProcess(
+              cmd=[
+                  'valgrind',
+                  '--leak-check=full',
+                  '--show-leak-kinds=all',
+                  '--log-file=/tmp/valgrind_node.log',
+                  'ros2', 'run', 'your_package', 'your_node'
+              ],
+              output='screen'
+          )
+      ])
+
+  6. Practical Workflow for ROS 2
+
+  Shell Aliases (Add to ~/.bashrc):
+
+  # Colcon build profiles
+  alias colcon-dev='colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --parallel-workers 4'
+
+  alias colcon-asan='colcon build --symlink-install \
+      --build-base build-asan --install-base install-asan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4'
+
+  alias colcon-tsan='colcon build --symlink-install \
+      --build-base build-tsan --install-base install-tsan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+      --parallel-workers 4'
+
+  alias colcon-debug='colcon build --symlink-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=Debug \
+      --parallel-workers 4'
+
+  # Source different builds
+  alias source-dev='source install/setup.bash'
+  alias source-asan='source install-asan/setup.bash'
+  alias source-tsan='source install-tsan/setup.bash'
+
+  Daily Workflow:
+
+  # 1. Normal development
+  cd ~/ros2_ws
+  colcon-dev
+  source-dev
+  ros2 run your_package your_node
+
+  # 2. Before committing - run with ASan
+  colcon-asan
+  source-asan
+  ros2 run your_package your_node  # Check for memory errors
+
+  # 3. Test multithreaded code
+  colcon-tsan
+  source-tsan
+  ros2 run your_package your_node  # Check for data races
+
+  # 4. Run all tests with ASan
+  colcon-asan
+  colcon test --parallel-workers 4
+  colcon test-result --verbose
+
+  7. Build Specific Packages Only
+
+  # Build only one package with ASan
+  colcon build --symlink-install \
+      --packages-select your_package \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+  # Build package + dependencies with ASan
+  colcon build --symlink-install \
+      --packages-up-to your_package \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+  8. CMakeLists.txt Approach (Package-Specific)
+
+  If you want sanitizers only for specific packages, modify their CMakeLists.txt:
+
+  # In your_package/CMakeLists.txt
+
+  cmake_minimum_required(VERSION 3.8)
+  project(your_package)
+
+  # Default to C++17
+  if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+  endif()
+
+  # Compiler warnings
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+  endif()
+
+  # Optional: Add sanitizers via CMake option
+  option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+  option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+
+  if(ENABLE_ASAN)
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address,undefined)
+    message(STATUS "AddressSanitizer enabled for ${PROJECT_NAME}")
+  endif()
+
+  if(ENABLE_TSAN)
+    add_compile_options(-fsanitize=thread -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=thread)
+    message(STATUS "ThreadSanitizer enabled for ${PROJECT_NAME}")
+  endif()
+
+  # ... rest of CMakeLists.txt
+
+  Then build with:
+
+  colcon build --symlink-install \
+      --cmake-args -DENABLE_ASAN=ON \
+      --parallel-workers 4
+
+  9. ROS 2 Launch with GDB
+
+  # Debug with GDB
+  colcon build --cmake-args -DCMAKE_BUILD_TYPE=Debug --parallel-workers 4
+  source install/setup.bash
+
+  # Run node in GDB
+  ros2 run --prefix 'gdb -ex run --args' your_package your_node
+
+  # Or with launch file
+  ros2 launch --prefix 'gdb -ex run --args' your_package your_launch.py
+
+  10. Complete CI/CD Example
+
+  # .github/workflows/ci.yml (GitHub Actions)
+  name: ROS 2 CI with Sanitizers
+
+  on: [push, pull_request]
+
+  jobs:
+    build-and-test:
+      runs-on: ubuntu-22.04
+      steps:
+        - uses: actions/checkout@v3
+
+        - name: Setup ROS 2
+          uses: ros-tooling/setup-ros@v0.6
+          with:
+            required-ros-distributions: humble
+
+        - name: Build with ASan
+          run: |
+            source /opt/ros/humble/setup.bash
+            colcon build --symlink-install \
+              --cmake-args \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g" \
+                -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+        - name: Test with ASan
+          run: |
+            source install/setup.bash
+            colcon test --parallel-workers 1
+            colcon test-result --verbose
+
+        - name: Build with TSan
+          run: |
+            rm -rf build install
+            colcon build --symlink-install \
+              --cmake-args \
+                -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
+                -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+
+        - name: Test with TSan
+          run: |
+            source install/setup.bash
+            colcon test --parallel-workers 1
+            colcon test-result --verbose
+
+  Quick Reference Card for Your Setup
+
+  # ═══════════════════════════════════════════════════════════════
+  # YOUR CURRENT COMMAND (Release build)
+  # ═══════════════════════════════════════════════════════════════
+  export MAKEFLAGS="-j 4"
+  colcon build --symlink-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=Release \
+      --parallel-workers 4
+
+  # ═══════════════════════════════════════════════════════════════
+  # RECOMMENDED: ASan + UBSan (everyday development)
+  # ═══════════════════════════════════════════════════════════════
+  colcon build --symlink-install \
+      --build-base build-asan \
+      --install-base install-asan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4
+
+  source install-asan/setup.bash
+  ros2 run your_package your_node
+
+  # ═══════════════════════════════════════════════════════════════
+  # TSan (for multithreaded nodes)
+  # ═══════════════════════════════════════════════════════════════
+  colcon build --symlink-install \
+      --build-base build-tsan \
+      --install-base install-tsan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+      --parallel-workers 4
+
+  source install-tsan/setup.bash
+  ros2 run your_package your_node
+
+  # ═══════════════════════════════════════════════════════════════
+  # Valgrind (occasional deep check)
+  # ═══════════════════════════════════════════════════════════════
+  colcon build --symlink-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      --parallel-workers 4
+
+  source install/setup.bash
+  valgrind --leak-check=full ros2 run your_package your_node
+
+  TL;DR
+
+  Add to your current workflow:
+
+  # Step 1: Create ASan build (in addition to your Release build)
+  colcon build --symlink-install \
+      --build-base build-asan \
+      --install-base install-asan \
+      --cmake-args \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      --parallel-workers 4
+
+  # Step 2: Test with it
+  source install-asan/setup.bash
+  ros2 run your_package your_node
+
+  # Errors printed to terminal automatically!
+
+  This gives you memory safety checking with ~2x slowdown - totally acceptable for development/testing!
+
+● How is Claude doing this session? (optional)
+  1: Bad    2: Fine   3: Good   0: Dismiss
+
