@@ -60,26 +60,25 @@ def format_chapter_name(slug):
     return chapter_names.get(slug, slug.replace('_', ' ').title())
 
 def load_catalogs():
-    """Load all available catalogs"""
+    """Load all available catalogs.
+
+    `json_output/` is the C++ catalog; every `json_output_<name>/` folder
+    holding a master_index.json becomes catalog `<name>` (ros2, interview, ...).
+    Catalog names must not contain '_' (topic ids are "<catalog>_<ch>_<idx>").
+    """
     catalogs = {}
+    candidates = [('cpp', BASE_DATA_DIR / 'json_output')]
+    for d in sorted(BASE_DATA_DIR.glob('json_output_*')):
+        candidates.append((d.name[len('json_output_'):], d))
 
-    # Load C++ catalog
-    cpp_index_path = BASE_DATA_DIR / 'json_output' / 'master_index.json'
-    if cpp_index_path.exists():
-        with open(cpp_index_path, 'r', encoding='utf-8') as f:
-            catalogs['cpp'] = {
-                'master_index': json.load(f),
-                'data_dir': BASE_DATA_DIR / 'json_output'
-            }
-
-    # Load ROS2 catalog
-    ros2_index_path = BASE_DATA_DIR / 'json_output_ros2' / 'master_index.json'
-    if ros2_index_path.exists():
-        with open(ros2_index_path, 'r', encoding='utf-8') as f:
-            catalogs['ros2'] = {
-                'master_index': json.load(f),
-                'data_dir': BASE_DATA_DIR / 'json_output_ros2'
-            }
+    for name, data_dir in candidates:
+        index_path = data_dir / 'master_index.json'
+        if index_path.is_file():
+            with open(index_path, 'r', encoding='utf-8') as f:
+                catalogs[name] = {
+                    'master_index': json.load(f),
+                    'data_dir': data_dir
+                }
 
     return catalogs
 
@@ -391,7 +390,7 @@ def get_overview():
             })
 
     return jsonify({
-        'catalogs': ['cpp', 'ros2'],
+        'catalogs': list(CATALOGS.keys()),
         'chapters': chapters_list
     })
 
@@ -429,10 +428,7 @@ def get_all_topics():
     all_topics = []
 
     # Include topics from all available catalogs
-    for catalog_name in ['cpp', 'ros2']:
-        if catalog_name not in CATALOGS:
-            continue
-
+    for catalog_name in CATALOGS:
         master_index = CATALOGS[catalog_name]['master_index']
 
         for chapter_info in master_index['chapters']:
@@ -505,6 +501,39 @@ def get_topic_examples_by_id(topic_id):
         return jsonify({'examples': topic['code_examples']})
 
     return jsonify({'error': 'Invalid topic ID'}), 404
+
+# ============================================================
+# LINKEDIN POSTS (review queue rendered by linkedin_tasks/generator)
+# ============================================================
+
+LINKEDIN_POSTS_DIR = Path(__file__).parent.parent.parent / 'linkedin_tasks' / 'posts'
+
+@app.route('/api/linkedin/chapters')
+def linkedin_chapters():
+    """List chapters that have a rendered post queue."""
+    out = []
+    if LINKEDIN_POSTS_DIR.is_dir():
+        for d in sorted(LINKEDIN_POSTS_DIR.iterdir()):
+            q = d / 'queue.json'
+            if q.is_file():
+                with open(q, 'r', encoding='utf-8') as f:
+                    out.append({'chapter': d.name, 'summary': json.load(f)['summary']})
+    return jsonify({'chapters': out})
+
+@app.route('/api/linkedin/<chapter>/queue')
+def linkedin_queue(chapter):
+    q = LINKEDIN_POSTS_DIR / chapter / 'queue.json'
+    if '/' in chapter or not q.is_file():
+        return jsonify({'error': 'Queue not found'}), 404
+    with open(q, 'r', encoding='utf-8') as f:
+        return jsonify(json.load(f))
+
+@app.route('/api/linkedin/<chapter>/file/<path:subpath>')
+def linkedin_file(chapter, subpath):
+    """Serve a rendered slide PNG or PDF (send_from_directory blocks path traversal)."""
+    if '/' in chapter:
+        return jsonify({'error': 'Not found'}), 404
+    return send_from_directory(LINKEDIN_POSTS_DIR / chapter / 'out', subpath)
 
 # ============================================================
 # QUIZ ENDPOINTS

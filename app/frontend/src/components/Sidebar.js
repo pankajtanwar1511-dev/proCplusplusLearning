@@ -10,10 +10,11 @@ import {
   X,
   Code2,
   Flame,
-  Radio,
   Library,
+  Linkedin,
 } from 'lucide-react';
 import './Sidebar.css';
+import { getCatalogConfig } from '../utils/catalogs';
 
 const Sidebar = ({ isOpen, onToggle, user }) => {
   const location = useLocation();
@@ -28,6 +29,10 @@ const Sidebar = ({ isOpen, onToggle, user }) => {
         { path: `/catalog/${catalog}/chapters`, icon: Library, label: 'Chapters' },
         { path: `/catalog/${catalog}/topics`, icon: BookOpen, label: 'Topics' },
         { path: `/catalog/${catalog}/search`, icon: Search, label: 'Search' },
+        // Review queue for the LinkedIn series built from this catalog.
+        ...(catalog === 'interview'
+          ? [{ path: `/catalog/${catalog}/linkedin`, icon: Linkedin, label: 'LinkedIn Posts' }]
+          : []),
         { path: `/catalog/${catalog}/profile`, icon: User, label: 'Profile' },
       ];
     }
@@ -43,17 +48,8 @@ const Sidebar = ({ isOpen, onToggle, user }) => {
 
   const navItems = getNavItems();
 
-  const getCatalogIcon = () => {
-    if (catalog === 'cpp') return Code2;
-    if (catalog === 'ros2') return Radio;
-    return Code2;
-  };
-
-  const getCatalogTitle = () => {
-    if (catalog === 'cpp') return 'C++ Master';
-    if (catalog === 'ros2') return 'ROS 2 Master';
-    return 'C++ Master';
-  };
+  const getCatalogIcon = () => (catalog ? getCatalogConfig(catalog).icon : Code2);
+  const getCatalogTitle = () => getCatalogConfig(catalog).shortTitle;
 
   const isActive = (path) => location.pathname === path;
 

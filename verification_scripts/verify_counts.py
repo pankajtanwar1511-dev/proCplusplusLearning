@@ -4,6 +4,7 @@ Verification #2: Count Verification
 Compare question/task counts between MD and JSON
 """
 
+import os
 import re
 import json
 from pathlib import Path
@@ -29,8 +30,8 @@ def count_md_patterns(content, section_name):
 
 def verify_counts():
     base_dir = Path('/home/pankaj/cplusplus/proCplusplus')
-    data_dir = base_dir / 'data'
-    json_dir = base_dir / 'processed_data' / 'json_output'
+    data_dir = Path(os.environ.get('VERIFY_DATA_DIR', base_dir / 'data'))
+    json_dir = Path(os.environ.get('VERIFY_JSON_DIR', base_dir / 'processed_data' / 'json_output'))
 
     print("="*100)
     print("COUNT VERIFICATION - MD vs JSON")

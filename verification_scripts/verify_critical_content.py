@@ -4,12 +4,13 @@ Verification #4: Critical Content Check
 Verify important C++ keywords and patterns are preserved
 """
 
+import os
 import json
 from pathlib import Path
 
 def verify_critical_content():
     base_dir = Path('/home/pankaj/cplusplus/proCplusplus')
-    json_dir = base_dir / 'processed_data' / 'json_output'
+    json_dir = Path(os.environ.get('VERIFY_JSON_DIR', base_dir / 'processed_data' / 'json_output'))
 
     print("="*100)
     print("CRITICAL CONTENT VERIFICATION - C++ Keywords & Patterns")

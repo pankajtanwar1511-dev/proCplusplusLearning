@@ -294,6 +294,14 @@ class MarkdownParser:
             # Extract key takeaway
             takeaway_match = re.search(r'\*\*Key takeaway:\*\*\s*(.+?)(?=\n---|$)', rest_body, re.DOTALL)
 
+            # Full answer body as authored (metadata tag lines and trailing
+            # separator removed), for UIs that render the whole answer as
+            # markdown instead of the individual extracted fields.
+            full_content = re.sub(
+                r'^\*\*(?:Difficulty|Category|Concepts):\*\*[^\n]*\n?', '',
+                rest_body, flags=re.MULTILINE)
+            full_content = re.sub(r'\n---\s*$', '', full_content.strip()).strip()
+
             questions.append({
                 "question_number": int(question_num),
                 "question": question_text,
@@ -303,7 +311,8 @@ class MarkdownParser:
                 "answer": answer_match.group(1).strip() if answer_match else "",
                 "explanation": explanation_match.group(1).strip() if explanation_match else body.strip(),
                 "code_examples": [code.strip() for code in code_blocks],
-                "key_takeaway": takeaway_match.group(1).strip() if takeaway_match else ""
+                "key_takeaway": takeaway_match.group(1).strip() if takeaway_match else "",
+                "full_content": full_content
             })
 
         return questions
@@ -730,6 +739,18 @@ class MarkdownParser:
                 "chapters": [],
                 "catalog": "cpp"
             }
+            # Reusing this parser for another catalog (e.g. --output-dir
+            # ../json_output_interview): keep that catalog's identity from
+            # its existing index instead of stamping it as "cpp".
+            if index_file.exists():
+                try:
+                    with open(index_file, 'r', encoding='utf-8') as f:
+                        old = json.load(f)
+                    for key in ("version", "description", "catalog"):
+                        if key in old:
+                            master_index[key] = old[key]
+                except (json.JSONDecodeError, OSError):
+                    pass
 
         # Recompute statistics from the final chapter set so counts stay correct.
         stats = {

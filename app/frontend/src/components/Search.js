@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Search as SearchIcon, BookOpen, Code, Brain, ArrowRight, X } from 'lucide-react';
 import { search } from '../utils/api';
 import './Search.css';
+import { getCatalogConfig } from '../utils/catalogs';
 
 const Search = () => {
   const { catalog } = useParams();
@@ -25,11 +26,7 @@ const Search = () => {
     return catalog ? `/catalog/${catalog}/topics` : '/topics';
   };
 
-  const getCatalogTitle = () => {
-    if (catalog === 'cpp') return 'C++ Master';
-    if (catalog === 'ros2') return 'ROS 2 Master';
-    return 'C++ Master';
-  };
+  const getCatalogTitle = () => getCatalogConfig(catalog).shortTitle;
 
   useEffect(() => {
     const delaySearch = setTimeout(() => {

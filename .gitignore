@@ -67,3 +67,9 @@ a.out
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Private source material (personal chat exports): never commit
+ChatGPT_export_*/
+ChatGPT_export_*.zip
+data_interview/raw/
+data_interview/topics/

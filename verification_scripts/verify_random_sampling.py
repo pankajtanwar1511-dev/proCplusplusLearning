@@ -4,6 +4,7 @@ Verification #3: Random Sampling
 Check 10 random topics for specific content presence
 """
 
+import os
 import re
 import json
 import random
@@ -92,8 +93,8 @@ def check_content_presence(md_content, json_topic):
 
 def verify_random_sampling():
     base_dir = Path('/home/pankaj/cplusplus/proCplusplus')
-    data_dir = base_dir / 'data'
-    json_dir = base_dir / 'processed_data' / 'json_output'
+    data_dir = Path(os.environ.get('VERIFY_DATA_DIR', base_dir / 'data'))
+    json_dir = Path(os.environ.get('VERIFY_JSON_DIR', base_dir / 'processed_data' / 'json_output'))
 
     print("="*100)
     print("RANDOM SAMPLING VERIFICATION - 10 Random Topics")

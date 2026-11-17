@@ -16,6 +16,7 @@ instead of re-implementing it here. The counting/sampling checks themselves stay
 independent in each verifier.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -33,8 +34,8 @@ from markdown_to_json import MarkdownParser  # noqa: E402
 # effects (the constructor mkdir's output_dir).
 _BASE_DIR = Path(__file__).resolve().parent.parent
 _PARSER = MarkdownParser(
-    data_dir=str(_BASE_DIR / 'data'),
-    output_dir=str(_BASE_DIR / 'processed_data' / 'json_output'),
+    data_dir=os.environ.get('VERIFY_DATA_DIR', str(_BASE_DIR / 'data')),
+    output_dir=os.environ.get('VERIFY_JSON_DIR', str(_BASE_DIR / 'processed_data' / 'json_output')),
 )
 
 

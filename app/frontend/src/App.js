@@ -7,11 +7,13 @@ import Dashboard from './components/Dashboard';
 import TopicsList from './components/TopicsList';
 import TopicDetail from './components/TopicDetail';
 import Quiz from './components/Quiz';
+import LinkedInQueue from './components/LinkedInQueue';
 import LearningPaths from './components/LearningPaths';
 import Search from './components/Search';
 import Profile from './components/Profile';
 import { getUserProfile } from './utils/api';
 import './App.css';
+import { getCatalogConfig } from './utils/catalogs';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -33,7 +35,7 @@ function App() {
       // Determine user name based on current catalog context
       const pathMatch = window.location.pathname.match(/^\/catalog\/(\w+)/);
       const catalog = pathMatch ? pathMatch[1] : null;
-      const userName = catalog === 'ros2' ? 'ROS2 Learner' : 'C++ Learner';
+      const userName = getCatalogConfig(catalog).learner;
 
       setUser({
         name: userName,
@@ -81,6 +83,7 @@ function App() {
                   <Route path="topic/:id" element={<TopicDetail />} />
                   <Route path="quiz/:topicId" element={<Quiz />} />
                   <Route path="search" element={<Search />} />
+                  <Route path="linkedin" element={<LinkedInQueue />} />
                   <Route path="profile" element={<Profile user={user} onUserUpdate={setUser} />} />
                 </Routes>
               </main>

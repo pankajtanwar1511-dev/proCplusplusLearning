@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, Radio, BookOpen, TrendingUp, ArrowRight, Cpu } from 'lucide-react';
+import { BookOpen, TrendingUp, ArrowRight, Cpu } from 'lucide-react';
 import './MainSelection.css';
+import { getCatalogConfig } from '../utils/catalogs';
 
 const MainSelection = () => {
   const navigate = useNavigate();
@@ -26,23 +27,9 @@ const MainSelection = () => {
     }
   };
 
-  const getCatalogIcon = (name) => {
-    if (name === 'cpp') return Code2;
-    if (name === 'ros2') return Radio;
-    return BookOpen;
-  };
-
-  const getCatalogColor = (name) => {
-    if (name === 'cpp') return '#3b82f6'; // Blue
-    if (name === 'ros2') return '#10b981'; // Green
-    return '#8b5cf6'; // Purple
-  };
-
-  const getCatalogTitle = (name) => {
-    if (name === 'cpp') return 'C++ Programming';
-    if (name === 'ros2') return 'ROS 2 Robotics';
-    return name.toUpperCase();
-  };
+  const getCatalogIcon = (name) => getCatalogConfig(name).icon;
+  const getCatalogColor = (name) => getCatalogConfig(name).color;
+  const getCatalogTitle = (name) => getCatalogConfig(name).title;
 
   const handleCatalogSelect = (catalogName) => {
     navigate(`/catalog/${catalogName}/dashboard`);

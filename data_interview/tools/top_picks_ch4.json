@@ -1,0 +1,18 @@
+{
+  "chapter_dir": "chapter_4_concurrency",
+  "output_slug": "topic_00_top_picks",
+  "title": "Top 50: Must-Know Concurrency Interview Questions",
+  "picks": {
+    "01": {"practice": [1, 3, 10], "qa": [12, 16], "edge": [1], "example": []},
+    "02": {"practice": [2, 9, 10], "qa": [7, 12], "edge": [1], "example": [3]},
+    "03": {"practice": [1, 9], "qa": [7, 15, 21], "edge": [1], "example": [6]},
+    "04": {"practice": [2, 10], "qa": [9, 11, 13], "edge": [1], "example": [2]},
+    "05": {"practice": [3, 4, 9], "qa": [6, 17], "edge": [1], "example": []},
+    "06": {"practice": [2, 5, 6], "qa": [11, 14], "edge": [1], "example": [1]},
+    "07": {"practice": [4], "qa": [3, 5], "edge": [4], "example": []},
+    "08": {"practice": [9], "qa": [2, 6, 13], "edge": [1], "example": []},
+    "09": {"practice": [1, 13], "qa": [4, 14, 16], "edge": [1], "example": [2]},
+    "10": {"practice": [1, 2, 4], "qa": [8, 14], "edge": [1], "example": [7]},
+    "11": {"practice": [1, 6], "qa": [7], "edge": [7], "example": []}
+  }
+}

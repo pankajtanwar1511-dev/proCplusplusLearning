@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Terminal,
   FileText,
+  MessageSquare,
 } from 'lucide-react';
 // Removed Prism.js to avoid compatibility issues
 // Using simple CSS-based syntax highlighting instead
@@ -38,7 +39,8 @@ const TopicDetail = () => {
 
   // Read section from URL query parameter (e.g., ?section=practice)
   const urlParams = new URLSearchParams(window.location.search);
-  const urlSection = urlParams.get('section') || 'theory';
+  // Interview Prep topics open on their Q&A tab by default.
+  const urlSection = urlParams.get('section') || (catalog === 'interview' ? 'interview' : 'theory');
 
   // Determine back link based on whether we're in a catalog context
   // Add chapter parameter to preserve scroll position
@@ -163,42 +165,42 @@ const TopicDetail = () => {
     // C++ keywords
     const keywords = /\b(int|double|float|char|bool|void|class|struct|public|private|protected|virtual|const|static|return|if|else|for|while|do|switch|case|break|continue|new|delete|this|nullptr|true|false|auto|using|namespace|std|include|define|ifdef|endif|typedef|typename|template|inline|friend|operator|explicit|mutable|volatile|extern|register|goto|sizeof|throw|try|catch|constexpr|decltype|noexcept|override|final|enum|union|unsigned|signed|short|long|wchar_t)\b/g;
 
-    // Strings
-    const strings = /(["'])(?:(?=(\\?))\2.)*?\1/g;
-
-    // Single line comments
-    const singleLineComments = /(\/\/.*?)$/gm;
-
-    // Multi-line comments
-    const multiLineComments = /(\/\*[\s\S]*?\*\/)/g;
-
     // Numbers
     const numbers = /\b(\d+\.?\d*[fFuUlL]?)\b/g;
 
-    // Store matched strings and comments to avoid double-processing
+    // Strings AND comments, matched together in a SINGLE linear left-to-right
+    // pass over the RAW (un-escaped) code. This has to be one combined regex,
+    // not separate sequential passes: if strings were protected first, a
+    // quoted word used for emphasis INSIDE a comment (e.g. "the 'this'
+    // pointer") would get replaced with a placeholder before the comment
+    // regex ever runs -- the comment match would then swallow that
+    // still-unresolved placeholder whole into its OWN saved span content,
+    // which is frozen before the final restore pass ever substitutes the
+    // inner placeholder back in, leaking literal "§§STRING0§§"-style text
+    // onto the page. Matching both in one pass over the original text means
+    // whichever construct (string, //, or /* */) starts earliest at a given
+    // position wins outright, so no placeholder can ever end up nested
+    // inside another.
+    const stringsAndComments = /(\/\*[\s\S]*?\*\/)|(\/\/.*?)$|((["'])(?:(?=(\\?))\5.)*?\4)/gm;
+
+    // Placeholder tokens are letters-fused-with-digits (not bare digits
+    // between delimiters) on purpose: the numbers regex below is
+    // `\b\d+\b`, and `§` counts as a non-word character, so a placeholder
+    // like `§0§` would itself present a word-bounded digit run -- the
+    // numbers pass would wrap just the "0" in its own <span>, corrupting
+    // the exact-string token the restore step below searches for, and
+    // silently leaving a mangled placeholder on the page.
     const savedMatches = [];
-    let processedCode = escapeHtml(code);
-
-    // Protect strings
-    processedCode = processedCode.replace(strings, (match) => {
+    let processedCode = code.replace(stringsAndComments, (match, mlComment, slComment) => {
       const idx = savedMatches.length;
-      savedMatches.push(`<span class="string">${match}</span>`);
-      return `§§STRING${idx}§§`;
+      const cssClass = (mlComment !== undefined || slComment !== undefined) ? 'comment' : 'string';
+      savedMatches.push(`<span class="${cssClass}">${escapeHtml(match)}</span>`);
+      return `§PH${idx}HP§`;
     });
 
-    // Protect multi-line comments
-    processedCode = processedCode.replace(multiLineComments, (match) => {
-      const idx = savedMatches.length;
-      savedMatches.push(`<span class="comment">${match}</span>`);
-      return `§§COMMENT${idx}§§`;
-    });
-
-    // Protect single-line comments
-    processedCode = processedCode.replace(singleLineComments, (match) => {
-      const idx = savedMatches.length;
-      savedMatches.push(`<span class="comment">${match}</span>`);
-      return `§§COMMENT${idx}§§`;
-    });
+    // Only NOW escape whatever code is left (placeholders use § which
+    // escapeHtml never touches, so they survive intact).
+    processedCode = escapeHtml(processedCode);
 
     // Highlight keywords
     processedCode = processedCode.replace(keywords, '<span class="keyword">$&</span>');
@@ -208,8 +210,7 @@ const TopicDetail = () => {
 
     // Restore saved strings and comments
     savedMatches.forEach((item, idx) => {
-      processedCode = processedCode.replace(`§§STRING${idx}§§`, item);
-      processedCode = processedCode.replace(`§§COMMENT${idx}§§`, item);
+      processedCode = processedCode.replace(`§PH${idx}HP§`, () => item);
     });
 
     return processedCode;
@@ -237,8 +238,16 @@ const TopicDetail = () => {
     codeBlocks.forEach((codeElement, index) => {
       const preElement = codeElement.parentElement;
 
-      // Skip if already enhanced
+      // Skip if already enhanced. Two checks on purpose: the wrapper-class
+      // check catches normal re-runs, but the dataset flag is set
+      // synchronously (before any DOM restructuring) so a second effect
+      // invocation racing in before the wrapper exists yet (e.g. React
+      // StrictMode's dev-mode double-invoke) still can't re-highlight
+      // already-highlighted markup -- which would otherwise re-escape its
+      // own output and leave literal "&#39;"-style text on screen.
       if (preElement.parentElement?.classList.contains('code-block-wrapper')) return;
+      if (codeElement.dataset.highlighted === 'true') return;
+      codeElement.dataset.highlighted = 'true';
 
       const code = codeElement.textContent;
       const codeId = `markdown-code-${index}`;
@@ -313,7 +322,9 @@ const TopicDetail = () => {
       : `/quiz/${id}?from=${activeTab}`;
   };
 
+  const interviewTab = { id: 'interview', label: 'Interview Q&A', icon: MessageSquare };
   const tabs = [
+    ...(catalog === 'interview' ? [interviewTab] : []),
     { id: 'theory', label: 'Theory', icon: BookOpen },
     { id: 'edge-cases', label: 'Edge Cases', icon: AlertTriangle },
     { id: 'examples', label: 'Code Examples', icon: Code },
@@ -763,6 +774,80 @@ const TopicDetail = () => {
               <div className="empty-state">
                 <Terminal size={48} className="empty-state-icon" />
                 <p>No practice tasks available yet</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Interview Q&A Tab (interview catalog): question first, full answer on reveal */}
+        {activeTab === 'interview' && (
+          <div className="practice-content" ref={practiceContentRef}>
+            {topic.interview_qa && topic.interview_qa.length > 0 ? (
+              <>
+                <div className="practice-header-actions">
+                  <button className="btn btn-outline" onClick={toggleAllAnswers}>
+                    <CheckCircle size={18} />
+                    {showAllAnswers ? 'Hide All Answers' : 'Show All Answers'}
+                  </button>
+                </div>
+                {topic.interview_qa.map((qa, index) => {
+                  const full = qa.full_content || '';
+                  const cut = full.indexOf('**Answer:**');
+                  const setup = cut > 0 ? full.slice(0, cut).trim() : '';
+                  const reveal = cut > 0 ? full.slice(cut) : full;
+                  return (
+                  <div key={index} className="example-card">
+                    <div className="example-header">
+                      <h3>
+                        <MessageSquare size={20} style={{ display: 'inline', marginRight: '8px' }} />
+                        Q{qa.question_number || index + 1}.{' '}
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{ p: ({ children }) => <span>{children}</span> }}
+                        >
+                          {qa.question || ''}
+                        </ReactMarkdown>
+                      </h3>
+                      {qa.difficulty && qa.difficulty.length > 0 && (
+                        <div className="topic-badges">
+                          {qa.difficulty.map((d) => (
+                            <span key={d} className={`badge ${{ beginner: 'badge-success', intermediate: 'badge-warning', advanced: 'badge-danger' }[d] || 'badge-gray'}`}>{d}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {setup && (
+                      <div className="example-explanation markdown-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                          {setup}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                    <details className="practice-answer-section">
+                      <summary className="practice-answer-toggle">
+                        <CheckCircle size={16} />
+                        Show Answer
+                      </summary>
+                      <div className="practice-answer-content">
+                        <div className="markdown-content">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                            {(qa.full_content && reveal) ||
+                              [qa.answer && `**Answer:**\n${qa.answer}`,
+                               qa.explanation && `**Explanation:**\n${qa.explanation}`,
+                               qa.key_takeaway && `**Key takeaway:** ${qa.key_takeaway}`]
+                                .filter(Boolean).join('\n\n')}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="empty-state">
+                <MessageSquare size={48} className="empty-state-icon" />
+                <p>No interview questions available yet</p>
               </div>
             )}
           </div>

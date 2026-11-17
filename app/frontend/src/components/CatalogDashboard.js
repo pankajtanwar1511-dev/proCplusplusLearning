@@ -10,10 +10,9 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
-  Code2,
-  Radio,
 } from 'lucide-react';
 import './Dashboard.css';
+import { getCatalogConfig } from '../utils/catalogs';
 
 const CatalogDashboard = ({ user }) => {
   const { catalog } = useParams();
@@ -88,23 +87,9 @@ const CatalogDashboard = ({ user }) => {
     loadDashboard();
   }, [loadDashboard]);
 
-  const getCatalogTitle = () => {
-    if (catalog === 'cpp') return 'C++ Programming';
-    if (catalog === 'ros2') return 'ROS 2 Robotics';
-    return catalog.toUpperCase();
-  };
-
-  const getCatalogIcon = () => {
-    if (catalog === 'cpp') return Code2;
-    if (catalog === 'ros2') return Radio;
-    return BookOpen;
-  };
-
-  const getCatalogColor = () => {
-    if (catalog === 'cpp') return '#3b82f6';
-    if (catalog === 'ros2') return '#10b981';
-    return '#8b5cf6';
-  };
+  const getCatalogTitle = () => getCatalogConfig(catalog).title;
+  const getCatalogIcon = () => getCatalogConfig(catalog).icon;
+  const getCatalogColor = () => getCatalogConfig(catalog).color;
 
   if (loading) {
     return (

@@ -10,7 +10,7 @@ from pathlib import Path
 
 def check_section_completeness():
     base_dir = Path('/home/pankaj/cplusplus/proCplusplus')
-    json_dir = base_dir / 'processed_data' / 'json_output'
+    json_dir = Path(os.environ.get('VERIFY_JSON_DIR', base_dir / 'processed_data' / 'json_output'))
 
     print("="*100)
     print("SECTION COMPLETENESS VERIFICATION - ALL TOPICS")
