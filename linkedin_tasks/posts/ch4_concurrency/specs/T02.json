@@ -386,7 +386,12 @@
         ],
         "takeaway": "Senior answer: \"Thread safety is about invariants, not individual variables. Single-owner state plus queues often beats sprinkling atomics.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\n\"Every member is std::atomic, so the class is thread-safe.\"\n\nTrue or false?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "A favourite design question. The answer is about invariants, not variables."
+    }
   },
   {
     "id": "T02-P9",

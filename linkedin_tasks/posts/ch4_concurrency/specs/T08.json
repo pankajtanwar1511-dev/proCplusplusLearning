@@ -285,7 +285,12 @@
         ],
         "takeaway": "Senior answer: \"every failed CAS implies another thread's CAS succeeded, and no step waits on another thread's state.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\n\"We use only std::atomic, no mutex. So our code is lock-free.\"\n\nA classic interview question. True or false?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "The real answer changes how you talk about lock-free code in interviews."
+    }
   },
   {
     "id": "T08-Q6",
@@ -338,7 +343,12 @@
         ],
         "takeaway": "Senior answer: ABA matters when the CAS value stands for more state. Fix it with a version tag, or never reuse a node while it is referenced."
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nYour lock-free pop's CAS succeeded.\nThe stack is still corrupted. 🧩\n\nThis is the ABA problem. Can you explain it?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "Slide 2 walks through the exact interleaving, step by step."
+    }
   },
   {
     "id": "T08-Q13",
@@ -393,6 +403,11 @@
         ],
         "takeaway": "Senior answer: the bigger win is usually removing sharing (sharding, an SPSC queue per pair). Decide by requirements, measure p50 and p99."
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nLock-free stack vs mutex-protected stack.\nWhich one is faster? 🏁\n\nThe obvious answer is the one interviewers wait to correct.\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "Slide 2 has a real measurement."
+    }
   }
 ]

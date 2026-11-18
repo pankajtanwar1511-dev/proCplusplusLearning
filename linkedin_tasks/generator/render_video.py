@@ -57,15 +57,17 @@ def slide_pngs(post, tmp):
     p = copy.deepcopy(post)
     for s in p["slides"]:
         s.pop("cta", None)
-    # keep the top 120 px clear for the timer row (slides are vertically centred)
-    css = render.CSS
-    render.CSS = css + "\n.pg { padding-top: 130px; }"
-    try:
-        html_text = render.build_html(p)
-    finally:
-        render.CSS = css
+    # Slides render exactly like the carousel (same fit); the timer sits in the footer.
+    html_text = render.build_html(p)
     html = Path(tmp) / "v.html"
     html.write_text(html_text)
+    dom = render.chrome(["--dump-dom", f"file://{html}"]).stdout
+    import html as _h
+    fits = [json.loads(_h.unescape(m)) for m in re.findall(r'data-fit="([^"]*)"', dom)]
+    bad = [f for f in fits if f.get("overflow") or (f.get("code_px") and f["code_px"] < render.MIN_CODE_PX)
+           or f.get("zoom", 1) < render.MIN_ZOOM]
+    if bad:
+        raise RuntimeError(f"{post['id']}: video slides do not fit: {bad}")
     pdf = Path(tmp) / "v.pdf"
     render.chrome([f"--print-to-pdf={pdf}", f"file://{html}"])
     subprocess.run(["pdftoppm", "-r", "96", "-png", str(pdf), str(Path(tmp) / "s")], check=True,
@@ -74,7 +76,7 @@ def slide_pngs(post, tmp):
 
 
 def overlay(base, left, total, label):
-    """Top-right timer pill  [ Answer in 9s ]  plus a thin progress bar on the top edge."""
+    """Bottom-right timer pill  [ Answer in 9s ]  plus a thin progress bar on the top edge."""
     im = base.copy()
     d = ImageDraw.Draw(im)
     # progress bar across the top edge (time elapsed on this slide)
@@ -84,7 +86,7 @@ def overlay(base, left, total, label):
     num = f"{left}s"
     label = (label + " ") if label else ""
     lw, nw = d.textlength(label, font=lab_f), d.textlength(num, font=num_f)
-    y1, y2 = 30, 96
+    y1, y2 = H - 112, H - 46          # bottom right, over the footer's unused page number
     x2 = W - 40
     x1 = int(x2 - (lw + nw + 48))
     d.rounded_rectangle([x1, y1, x2, y2], radius=22, fill=(30, 41, 59), outline=AMBER, width=3)

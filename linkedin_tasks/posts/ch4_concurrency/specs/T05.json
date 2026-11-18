@@ -409,7 +409,12 @@
         ],
         "takeaway": "Senior answer: \"any variable written by one thread and read by another needs an atomic or a lock, even a bool.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\n\"It's just a bool stop flag. The CPU writes a bool atomically.\"\n\nDoes it still need std::atomic<bool>? 🧠\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "The code is 5 lines. What the optimizer does with it surprises a lot of people."
+    }
   },
   {
     "id": "T05-Q17",
@@ -463,6 +468,11 @@
         ],
         "takeaway": "Senior answer: \"scale writes by not sharing them. Pad per-thread state to separate cache lines.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nOne std::atomic<long> counter, shared by every thread.\nAdd more threads and it gets slower, not faster. Why? 🧠\n\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "No mutex, no lock, and it still does not scale. The reason lives below the C++ level."
+    }
   }
 ]

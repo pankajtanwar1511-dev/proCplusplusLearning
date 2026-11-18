@@ -64,3 +64,5 @@
 .lq-post.st-next { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.25); }
 .lq-post.st-posted .lq-carousel { opacity: .85; }
 .lq-sub a { color: #0a66c2; font-weight: 600; }
+.lq-video { display: block; width: 100%; aspect-ratio: 1 / 1; background: #0f172a; border-radius: 10px; align-self: start; }
+.lq-type.t-video { background: rgba(220,38,38,.12); color: #dc2626; border-color: rgba(220,38,38,.45); }

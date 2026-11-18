@@ -280,7 +280,12 @@
         ],
         "takeaway": "Senior answer: name both failures, then add: \"ThreadSanitizer (`-fsanitize=thread`) reports this race immediately.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nThe consumer waits correctly, under the lock.\nThe producer just sets a bool and notifies.\n\nWhat is wrong? Comment A, B, C or D. The answer appears at 0:36.",
+      "body": "There are two problems here, and the first one is worse."
+    }
   },
   {
     "id": "T04-P10",
@@ -393,7 +398,12 @@
         ],
         "takeaway": "Senior answer: correctness first (state under the mutex), then performance (notify after unlock), then the lifetime exception."
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nnotify_one(): inside the lock, or after unlocking?\n\nCode reviewers argue about this all the time.\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "The right answer separates correctness from performance, then adds one important exception."
+    }
   },
   {
     "id": "T04-Q13",
@@ -448,6 +458,11 @@
         ],
         "takeaway": "Senior answer: notification and mutex acquisition are separate events. Keep the locked region tiny: pop, unlock, then process."
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nnotify_all() wakes three consumers. C1 grabs the mutex and holds it for 40 seconds.\n\nWhat are C2 and C3 doing?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "Two kinds of waiting hide in this question. Interviewers check whether you can tell them apart."
+    }
   }
 ]

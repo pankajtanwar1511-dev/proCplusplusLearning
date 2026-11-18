@@ -357,7 +357,12 @@
         ],
         "takeaway": "Senior answer: \"power of two makes wrapping a mask, so `static_assert` it. The cost: need 1100 slots, get 2048.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nWhy is a ring buffer's capacity almost always a power of two?\n\nThe popular answer is half right.\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "Bonus points if you know when the compiler already does the trick for you."
+    }
   },
   {
     "id": "T09-Q14",
@@ -413,7 +418,12 @@
         ],
         "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental feeds, overflow means resync, not silent loss.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\nYour market-data SPSC ring is full. The feed handler has one more message.\n\nWhat do you do?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "There is no free option here. Every choice loses something: the question is what, and who finds out."
+    }
   },
   {
     "id": "T09-Q16",
@@ -469,6 +479,11 @@
         ],
         "takeaway": "Senior answer: \"size for legitimate bursts, export depth and high-water mark, alarm on them, and watch p99/p99.9.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\n\"The queue keeps filling up. Just make it 10x bigger.\"\n\nWhy is that usually the wrong fix?\nComment A, B, C or D. The answer appears at 0:36.",
+      "body": "Memory is cheap. That is not what this question is about."
+    }
   }
 ]

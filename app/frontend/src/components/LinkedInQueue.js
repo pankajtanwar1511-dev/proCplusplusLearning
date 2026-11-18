@@ -83,12 +83,18 @@ const PostCard = ({ p, tz }) => {
         <div className="lq-when"><b>#{p.seq}</b> <StatusBadge p={p} tz={tz} /></div>
         <div className="lq-tags">
           <span className={`lq-type t-${p.type}`}>{TYPE_LABEL[p.type] || p.type}</span>
+          {p.format === 'video' && <span className="lq-type t-video">30 s video</span>}
           <span className="lq-topic">{p.chapter_title} · T{p.topic_no} {p.topic_short}</span>
           <span className="lq-id">{p.id}</span>
         </div>
       </header>
       <div className="lq-grid">
-        <Carousel chapter={p.chapter_name} slides={p.slides} v={p.rendered_at} />
+        {p.format === 'video' && p.video ? (
+          <video className="lq-video" controls muted playsInline preload="metadata"
+            src={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.video}?v=${p.rendered_at}`} />
+        ) : (
+          <Carousel chapter={p.chapter_name} slides={p.slides} v={p.rendered_at} />
+        )}
         <div className="lq-text">
           <div className="lq-label">Post text <small>({p.post_text.length} chars)</small></div>
           <div className="lq-postbody">
@@ -101,9 +107,15 @@ const PostCard = ({ p, tz }) => {
           <div className="lq-actions">
             <CopyButton text={p.post_text} label="Copy post" />
             <CopyButton text={p.first_comment} label="Copy comment" />
-            <a className="lq-btn" href={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.pdf}?v=${p.rendered_at}`} download={`${p.id}.pdf`}>
-              <Download size={15} /> PDF ({p.slide_count} slides)
-            </a>
+            {p.format === 'video' && p.video ? (
+              <a className="lq-btn" href={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.video}?v=${p.rendered_at}`} download={`${p.id}.mp4`}>
+                <Download size={15} /> Video (MP4)
+              </a>
+            ) : (
+              <a className="lq-btn" href={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.pdf}?v=${p.rendered_at}`} download={`${p.id}.pdf`}>
+                <Download size={15} /> PDF ({p.slide_count} slides)
+              </a>
+            )}
           </div>
         </div>
       </div>
