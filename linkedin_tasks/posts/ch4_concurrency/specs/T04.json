@@ -182,8 +182,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Condition variables",
-        "title": "The producer finishes before the consumer waits.<br>What is printed?",
-        "code": "std::mutex m;\nstd::condition_variable cv;\nbool ready = false;\n\nstd::thread prod([&] {\n    { std::lock_guard lk(m); ready = true; }\n    cv.notify_one();\n});\nprod.join();\n\nstd::unique_lock lk(m);\nauto st = cv.wait_for(lk, 200ms);\nbool to = (st == std::cv_status::timeout);\nstd::cout << (to ? \"timeout\" : \"no_timeout\")\n          << \" ready=\" << ready;",
+        "title": "Producer finishes first. Output?",
+        "code": "std::mutex m; std::condition_variable cv;\nbool ready = false;\nstd::thread prod([&] {\n  { std::lock_guard lk(m); ready = true; }\n  cv.notify_one();\n});\nprod.join();\nstd::unique_lock lk(m);\nauto st = cv.wait_for(lk, 200ms);\nbool to = st == std::cv_status::timeout;\nstd::cout << (to ? \"timeout\" : \"no_timeout\")\n          << \" ready=\" << ready;",
         "options": [
           "no_timeout ready=1",
           "timeout ready=1",
@@ -249,13 +249,13 @@
       {
         "layout": "question",
         "kicker": "Interview question · Condition variables",
-        "title": "The producer sets `ready` and notifies without locking the mutex. What is wrong?",
-        "code": "bool ready = false;  // consumer's predicate\n\n// Producer, mutex NOT locked:\nready = true;\ncv.notify_one();",
+        "title": "The producer skips the mutex.<br>What is wrong?",
+        "code": "// Producer, mutex NOT locked:\nready = true;\ncv.notify_one();",
         "options": [
           "Only a possible lost wakeup.",
-          "Nothing: the consumer reads `ready` under the lock.",
+          "Nothing: the consumer locks.",
           "A data race (UB), plus a lost-wakeup window.",
-          "Nothing: `notify_one` publishes `ready` to the woken thread."
+          "Nothing: `notify_one` publishes `ready`."
         ],
         "cta": "Pick one, then swipe ➜"
       },

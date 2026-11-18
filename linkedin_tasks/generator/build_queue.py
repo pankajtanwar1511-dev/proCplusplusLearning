@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from comments import first_comment  # noqa: E402
+from render import with_pause_page  # noqa: E402
 
 
 def plain(t):
@@ -78,8 +79,8 @@ def main():
             "id": pid, "type": p["type"], "topic_no": p["topic_no"], "topic_short": p.get("topic_short", ""),
             "source": p.get("source", ""), "hook": t["hook"], "body": t.get("body", ""),
             "hashtags": t.get("hashtags", []), "post_text": full, "first_comment": first_comment(p),
-            "slide_count": len(p["slides"]), "slides": [f"{pid}/{n}" for n in pngs],
-            "pdf": f"{pid}/slides.pdf", "rendered": len(pngs) == len(p["slides"]),
+            "slide_count": len(with_pause_page(p)), "slides": [f"{pid}/{n}" for n in pngs],
+            "pdf": f"{pid}/slides.pdf", "rendered": len(pngs) == len(with_pause_page(p)),
             **({"skip": True} if p.get("skip") else {}),
         })
 

@@ -81,8 +81,8 @@
       {
         "layout": "code",
         "kicker": "Most asked detail",
-        "title": "`compare_exchange_strong(expected, desired)`",
-        "code": "// performed as one atomic step\nif (current == expected) {\n    current = desired;   return true;\n} else {\n    expected = current;  return false;\n}",
+        "title": "What `compare_exchange_strong` does",
+        "code": "// one atomic step\nif (current == expected) {\n  current = desired;   return true;\n} else {\n  expected = current;  return false;\n}",
         "bullets": [
           "`expected` is taken **by reference** and **overwritten** on failure.",
           "Compares bits, not `operator==`: `+0.0` and `-0.0` do not match."
@@ -94,12 +94,12 @@
         "kicker": "The CAS loop",
         "title": "Build any atomic update `x = f(x)`",
         "items": [
-          "Recompute `desired` from `expected` **inside** the loop.",
-          "Keep the body short and side-effect free: it may run many times.",
-          "`weak` may fail spuriously: use it in loops. `strong` for one-shot decisions.",
-          "Lock-free, **not** wait-free: one unlucky thread can retry forever."
+          "Recompute `desired` **inside** the loop.",
+          "Keep the body short and side-effect free.",
+          "`weak` may fail spuriously, so use it in a loop.",
+          "Lock-free, **not** wait-free: a thread can retry forever."
         ],
-        "code": "int expected = x.load();\nint desired;\ndo {\n    desired = f(expected);\n} while (!x.compare_exchange_weak(\n             expected, desired));"
+        "code": "int expected = x.load(), desired;\ndo {\n  desired = f(expected);\n} while (!x.compare_exchange_weak(\n           expected, desired));"
       },
       {
         "layout": "statement",
@@ -196,12 +196,12 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Atomics",
         "title": "Expected 8000.<br>What can it print?",
-        "code": "std::atomic<int> counter{0};\n\nint main() {\n    auto work = [] {\n        for (int i = 0; i < 1000; ++i)\n            counter = counter + 4;\n    };\n    std::thread t1(work), t2(work);\n    t1.join(); t2.join();\n    std::cout << counter << '\\n';\n}",
+        "code": "std::atomic<int> counter{0};\nint main() {\n  auto work = [] {\n    for (int i = 0; i < 1000; ++i)\n      counter = counter + 4;\n  };\n  std::thread t1(work), t2(work);\n  t1.join(); t2.join();\n  std::cout << counter << '\\n';\n}",
         "options": [
           "Always 8000",
-          "≤ 8000, and a data race (UB)",
-          "≤ 8000, but no data race",
-          "Does not compile"
+          "≤ 8000<br>(UB)",
+          "≤ 8000<br>(no UB)",
+          "Won't compile"
         ],
         "cta": "Work it out, then swipe ➜"
       },
@@ -286,12 +286,12 @@
       {
         "layout": "code",
         "kicker": "The payoff",
-        "title": "The refresh is what makes CAS loops work",
-        "code": "int expected = x.load();\nint desired;\ndo {\n    desired = f(expected);\n} while (!x.compare_exchange_weak(\n             expected, desired));",
+        "title": "Why CAS refreshes `expected`",
+        "code": "int expected = x.load(), desired;\ndo {\n  desired = f(expected);\n} while (!x.compare_exchange_weak(\n           expected, desired));",
         "bullets": [
-          "A failed CAS hands you fresh data: no extra `load()` needed.",
-          "Recompute `desired` from the refreshed `expected` on every try.",
-          "`weak` inside a loop, `strong` for a one-shot decision."
+          "A failed CAS hands you fresh data: no extra `load()`.",
+          "Recompute `desired` from it on every try.",
+          "`weak` in a loop, `strong` for one-shot decisions."
         ],
         "takeaway": "CAS failure: returns `false`, atomic unchanged, `expected` = current value."
       }
@@ -379,13 +379,13 @@
     "slides": [
       {
         "layout": "question",
-        "title": "A plain `bool` stop flag. Does it need `std::atomic<bool>`?",
-        "code": "bool running = true;\nlong work = 0;\n\nstd::thread t([&] { while (running) { ++work; } });\nstd::this_thread::sleep_for(100ms);\nrunning = false;\nt.join();",
+        "title": "Does this flag need `std::atomic`?",
+        "code": "bool running = true; long work = 0;\nstd::thread t([&] { while (running) ++work; });\nstd::this_thread::sleep_for(100ms);\nrunning = false; t.join();",
         "options": [
           "No. A bool write is atomic on every CPU.",
-          "Yes. It is a data race (UB). The loop may read `running` only once.",
-          "No. The worker sees `false` within an iteration or two.",
-          "No, as long as it is declared `volatile bool`."
+          "Yes. It is a data race (UB).",
+          "No. It stops within an iteration or two.",
+          "No, if declared `volatile bool`."
         ],
         "cta": "Pick one, then swipe ➜"
       },

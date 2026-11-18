@@ -195,7 +195,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Mutexes",
         "title": "Every increment is \"locked\".<br>What is printed?",
-        "code": "std::mutex mtx;\nlong counter = 0;\n\nvoid worker() {\n    for (int i = 0; i < 100000; ++i) {\n        std::unique_lock<std::mutex>(mtx);\n        ++counter;\n    }\n}\n\nint main() {\n    std::thread t1(worker), t2(worker);\n    t1.join(); t2.join();\n    std::cout << counter << '\\n';\n}",
+        "code": "std::mutex mtx;\nlong counter = 0;\nvoid worker() {\n  for (int i = 0; i < 100000; ++i) {\n    std::unique_lock<std::mutex>(mtx);\n    ++counter;\n  }\n}\nint main() {\n  std::thread t1(worker), t2(worker);\n  t1.join(); t2.join();\n  std::cout << counter << '\\n';\n}",
         "cta": "Work it out, then swipe ➜"
       },
       {
@@ -299,11 +299,11 @@
         "layout": "puzzle",
         "kicker": "Puzzle · shared_mutex",
         "title": "One thread only.<br>Can this deadlock?",
-        "code": "std::shared_mutex m;\nstd::unordered_map<std::string, int> table;\n\nint get_or_create(const std::string& key) {\n    std::shared_lock read(m);\n    auto it = table.find(key);\n    if (it != table.end()) return it->second;\n\n    std::cout << \"key missing, upgrading\\n\";\n    std::unique_lock write(m);\n    return table[key] = 1;\n}\n\n// main: get_or_create(\"AAPL\");",
+        "code": "std::shared_mutex m;\nstd::unordered_map<std::string, int> tbl;\nint get_or_create(const std::string& key) {\n  std::shared_lock read(m);\n  auto it = tbl.find(key);\n  if (it != tbl.end()) return it->second;\n  std::cout << \"key missing, upgrading\\n\";\n  std::unique_lock write(m);\n  return tbl[key] = 1;\n}\n// main: get_or_create(\"AAPL\");",
         "options": [
-          "No, only one thread",
+          "No, one thread",
           "Yes, every time",
-          "Only with other readers",
+          "Only with readers",
           "No, it throws"
         ],
         "cta": "Pick one, then swipe ➜"
@@ -324,9 +324,9 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Release, lock exclusively, re-check",
-        "code": "int get_or_create(const std::string& key) {\n    {\n        std::shared_lock read(m);\n        auto it = table.find(key);\n        if (it != table.end())\n            return it->second;\n    }   // shared lock released\n    std::unique_lock write(m);\n    auto [it, ok] = table.try_emplace(key, 1);\n    return it->second;\n}",
-        "tip": "The re-check matters: another writer may insert the key in the gap. `try_emplace` does the check and the insert in one step.",
-        "takeaway": "Shared to exclusive is release, acquire, re-check. Never an in-place upgrade."
+        "code": "int get_or_create(const std::string& key) {\n  {\n    std::shared_lock read(m);\n    auto it = tbl.find(key);\n    if (it != tbl.end()) return it->second;\n  }  // shared lock released\n  std::unique_lock write(m);\n  auto [it, ok] = tbl.try_emplace(key, 1);\n  return it->second;\n}",
+        "tip": "Re-check: a writer may insert the key in the gap. `try_emplace` handles it.",
+        "takeaway": "Shared to exclusive: release, acquire, re-check."
       }
     ]
   },
@@ -422,11 +422,11 @@
         "verdict": "A. Shrink the critical section.",
         "verdict_sub": "The lock is not slow. The hold time is.",
         "bullets": [
-          "Only the tail suffers: most messages never collide with a report, the few that do wait milliseconds.",
-          "Copy only the needed state under the lock, release, format the private copy.",
-          "Better: the hot path publishes snapshots or events to the reporter through a queue."
+          "Most messages never meet a report. The few that do wait ms: only the tail suffers.",
+          "Copy under the lock, release, then format the private copy.",
+          "Better: publish snapshots or events to the reporter via a queue."
         ],
-        "code": "std::map<std::string, long> snapshot;\n{\n    std::lock_guard<std::mutex> g(m);\n    snapshot = book;              // one copy\n}\nreturn build_report(snapshot);    // no lock held",
+        "code": "std::map<std::string, long> snap;\n{ std::lock_guard g(m); snap = book; }\nreturn build_report(snap);  // unlocked",
         "cta": "Why not B, C or D ➜"
       },
       {

@@ -7,8 +7,12 @@ name: LinkedIn post
 
 on:
   schedule:
+    # Several tries per slot: GitHub can start scheduled runs late (even hours).
+    # The bot posts once per slot and only within series.json "window_minutes".
     - cron: '30 3 * * *'    # 09:00 IST
+    - cron: '0,30 4 * * *'  # 09:30, 10:00 IST
     - cron: '30 15 * * *'   # 21:00 IST
+    - cron: '0,30 16 * * *' # 21:30, 22:00 IST
   workflow_dispatch:
     inputs:
       mode:
@@ -49,7 +53,7 @@ jobs:
 
       - name: Natural posting time (scheduled runs only)
         if: github.event_name == 'schedule'
-        run: sleep $(( RANDOM % 900 ))      # 0-15 min jitter
+        run: sleep $(( RANDOM % 300 ))      # 0-5 min jitter
 
       - name: Run bot
         id: bot

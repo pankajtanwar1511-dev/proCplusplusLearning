@@ -9,4 +9,4 @@ Which outputs are possible? Pick all that apply, then swipe ➜
 #cpp #cplusplus #memorymodel #concurrency #interviewprep
 
 === FIRST COMMENT ===
-The answer is on slide 2 ➜ Comment your answer first, then compare.
+The answer is on page 3 ➜ Comment your answer first, then compare.

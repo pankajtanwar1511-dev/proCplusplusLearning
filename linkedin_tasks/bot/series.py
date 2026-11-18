@@ -32,7 +32,8 @@ def load_config():
     cfg.setdefault("paused", False)
     cfg.setdefault("timezone", "Asia/Kolkata")
     cfg.setdefault("slots", ["09:00", "21:00"])
-    cfg.setdefault("min_gap_hours", 6)
+    cfg.setdefault("min_gap_hours", 4)
+    cfg.setdefault("window_minutes", 120)   # scheduled runs post only this long after a slot
     cfg.setdefault("low_buffer_days", 7)
     cfg.setdefault("skip", [])
     cfg.setdefault("chapters", [])
@@ -85,6 +86,21 @@ def slot_times_from(start, cfg):
             if t >= start:
                 yield t
         day += timedelta(days=1)
+
+
+def current_slot(cfg, now):
+    """Latest slot time at or before `now` (searches today and yesterday)."""
+    z = tz(cfg)
+    now = now.astimezone(z)
+    best = None
+    for back in (0, 1):
+        day = (now - timedelta(days=back)).date()
+        for s in cfg["slots"]:
+            h, m = map(int, s.split(":"))
+            t = datetime(day.year, day.month, day.day, h, m, tzinfo=z)
+            if t <= now and (best is None or t > best):
+                best = t
+    return best
 
 
 def build_view(cfg=None, posted=None, now=None):

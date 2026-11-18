@@ -62,13 +62,12 @@
       {
         "layout": "code",
         "kicker": "Minimal and correct",
-        "title": "Acquire on lock, release on unlock",
-        "code": "class SpinLock {\n  std::atomic_flag f_;  // C++20: starts clear\npublic:\n  void lock() {\n    while (f_.test_and_set(\n             std::memory_order_acquire)) {}\n  }\n  void unlock() {\n    f_.clear(std::memory_order_release);\n  }\n};",
+        "title": "Acquire to lock, release to unlock",
+        "code": "struct SpinLock {\n  std::atomic_flag f;  // C++20: clear\n  void lock() {\n    while (f.test_and_set(\n             std::memory_order_acquire)) {}\n  }\n  void unlock() {\n    f.clear(std::memory_order_release);\n  }\n};",
         "bullets": [
-          "`relaxed` keeps the flag exclusive but the protected data races.",
-          "Name them `lock`/`unlock` so `std::lock_guard` works. Never lock by hand without RAII."
+          "`relaxed` here lets the protected data race."
         ],
-        "takeaway": "Two threads never both win: RMWs on one atomic are totally ordered, so only one reads `false`."
+        "takeaway": "RMWs on one atomic are totally ordered: one winner."
       },
       {
         "layout": "cards",
@@ -191,12 +190,12 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Spinlocks",
-        "title": "Compiled with g++ -O2.<br>What does it print?",
-        "code": "bool locked = true;  // main \"holds\" it\nint data = 0;\nvoid waiter() {\n  while (locked) { /* spin */ }\n  std::cout << \"waiter sees data=\"\n            << data << '\\n';\n}\nint main() {\n  std::thread t(waiter);\n  std::this_thread::sleep_for(100ms);\n  data = 42; locked = false;  // \"unlock\"\n  t.join();\n}",
+        "title": "g++ -O2. What does it print?",
+        "code": "bool locked = true;  // \"held\"\nint data = 0;\nvoid waiter() {\n  while (locked) {}\n  std::cout << \"data=\" << data;\n}\nint main() {\n  std::thread t(waiter);\n  std::this_thread::sleep_for(100ms);\n  data = 42; locked = false;\n  t.join();\n}",
         "options": [
-          "data=42, after 100 ms",
-          "data=0, after 100 ms",
-          "It hangs forever",
+          "data=42 after 100 ms",
+          "data=0 after 100 ms",
+          "Hangs forever",
           "Undefined behaviour"
         ],
         "cta": "Work it out, then swipe ➜"
@@ -217,9 +216,9 @@
       {
         "layout": "code",
         "kicker": "The fix",
-        "code": "std::atomic<bool> locked{true};\nint data = 0;\n\nvoid waiter() {\n  while (locked.load(\n           std::memory_order_acquire)) {}\n  std::cout << \"waiter sees data=\"\n            << data << '\\n';  // always 42\n}\n\n// main:\ndata = 42;\nlocked.store(false,\n             std::memory_order_release);",
-        "tip": "Both outcomes of the racy version are \"correct\" compilations. Tests passing proves nothing.",
-        "takeaway": "Any flag shared between threads must be `std::atomic`. With release/acquire it also publishes the data written before it."
+        "code": "std::atomic<bool> locked{true};\nint data = 0;\nvoid waiter() {\n  while (locked.load(\n           std::memory_order_acquire)) {}\n  std::cout << \"data=\" << data;  // 42\n}\n// main:\ndata = 42;\nlocked.store(false,\n             std::memory_order_release);",
+        "tip": "Both racy outcomes are \"correct\" compilations. Passing tests prove nothing.",
+        "takeaway": "Shared flags must be `std::atomic`. Release/acquire also publishes the data written before."
       }
     ]
   },
@@ -301,13 +300,13 @@
     "slides": [
       {
         "layout": "question",
-        "title": "32 threads wait like this. What happens at the hardware level?",
+        "title": "32 threads spin like this. What happens in hardware?",
         "code": "while (locked.exchange(true)) {}",
         "options": [
-          "Nothing much: waiters only read the value until it changes.",
-          "Each `exchange` is a write: the cache line bounces between cores and the unlock is delayed.",
-          "The OS notices the spinning and puts waiters to sleep.",
-          "It is fine if the `exchange` uses `memory_order_relaxed`."
+          "Nothing much: waiters only read until it changes.",
+          "Each `exchange` is a write: the cache line ping-pongs and delays the unlock.",
+          "The OS sees the spinning and sleeps the waiters.",
+          "Fine if `exchange` uses `memory_order_relaxed`."
         ],
         "cta": "Pick one, then swipe ➜"
       },
@@ -317,9 +316,9 @@
         "verdict_sub": "Fix: test-and-test-and-set (TTAS)",
         "bullets": [
           "Every waiter keeps demanding exclusive ownership of the line.",
-          "TTAS spins on a **load**: a shared local copy, no traffic while the lock is held."
+          "TTAS: one RMW to try, then spin on a **load** (shared copy, no traffic)."
         ],
-        "code": "while (true) {\n  // try: one RMW\n  if (!locked.exchange(true,\n        std::memory_order_acquire))\n    break;\n  // test: read-only spin\n  while (locked.load(\n           std::memory_order_relaxed))\n    cpu_relax();\n}",
+        "code": "while (locked.exchange(true,\n         std::memory_order_acquire)) {\n  while (locked.load(\n           std::memory_order_relaxed))\n    cpu_relax();\n}",
         "cta": "Why not A, C or D ➜"
       },
       {

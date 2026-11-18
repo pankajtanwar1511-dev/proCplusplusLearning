@@ -9,4 +9,4 @@ This is the most common half-fix in memory ordering code reviews. Look at both s
 #cpp #cplusplus #memorymodel #concurrency #interviewprep
 
 === FIRST COMMENT ===
-The answer is on slide 2 ➜ Comment your answer first, then compare.
+The answer is on page 3 ➜ Comment your answer first, then compare.

@@ -5,8 +5,12 @@ Usage:
   python3 render.py <specs_dir> <out_dir> [post_id ...]
 
 Each spec file holds one post (or a list of posts). Per post the renderer writes
-  <out_dir>/<id>/slides.pdf      1080x1350 vector PDF (upload to LinkedIn as a document)
-  <out_dir>/<id>/s-NN.png        1080x1350 PNG per slide (preview / review)
+  <out_dir>/<id>/slides.pdf      1080x1080 vector PDF (upload to LinkedIn as a document)
+  <out_dir>/<id>/s-NN.png        1080x1080 PNG per slide (preview / review)
+
+Pages are square: in the LinkedIn mobile feed a square page shows nearly full width
+with only a sliver of the next page. Q&A posts get an automatic "Lock in your
+answer" pause page as page 2, so that sliver never reveals the answer.
   <out_dir>/<id>/post.txt        post text + first comment, ready to paste
 and <out_dir>/render_report.json with fit results. Any slide that still
 overflows after auto-fit is reported as an error (exit code 1).
@@ -26,6 +30,8 @@ from comments import first_comment  # noqa: E402
 
 CHROME = "google-chrome"
 MIN_CODE_PX = 28   # below this, code is hard to read on a phone
+MIN_ZOOM = 0.82    # below this, slide text has shrunk too much to read comfortably
+PAGE_W, PAGE_H = 1080, 1080
 BRAND = "C++ Interview Prep"
 FMT = HtmlFormatter(nowrap=True, style="monokai")
 
@@ -206,6 +212,15 @@ def s_myths(s):
     return h
 
 
+def s_pause(s):
+    """Page 2 of every Q&A post: hides the answer from the feed's next-page sliver."""
+    h = kicker(s.get("kicker", "Your turn"), "#f59e0b")
+    h += '<div class="pause-emoji">🤔</div>'
+    h += f'<div class="hero">{md(s.get("hero", "Lock in your answer."))}</div>'
+    h += f'<p class="lead">{md(s.get("lead", "Comment it below, then swipe ➜ to see if you were right."))}</p>'
+    return h
+
+
 def s_takeaway(s):
     h = kicker(s.get("kicker", "Takeaway"))
     h += f'<div class="hero sm">{md(s["hero"])}</div>'
@@ -218,8 +233,16 @@ LAYOUTS = {
     "puzzle": s_puzzle, "question": s_question, "answer": s_answer, "code": s_code,
     "wrong_options": s_wrong_options, "cover": s_cover, "cards": s_cards, "table": s_table,
     "chain": s_chain, "statement": s_statement, "checklist": s_checklist, "myths": s_myths,
-    "takeaway": s_takeaway,
+    "takeaway": s_takeaway, "pause": s_pause,
 }
+
+
+def with_pause_page(post):
+    """Q&A posts get the pause page inserted as page 2 (specs stay unchanged)."""
+    slides = post["slides"]
+    if post.get("type") == "theory" or any(s["layout"] == "pause" for s in slides):
+        return slides
+    return [slides[0], {"layout": "pause", "cta": "Swipe for the answer ➜"}] + slides[1:]
 
 
 def render_page(slide, n, total, topic_label):
@@ -230,7 +253,8 @@ def render_page(slide, n, total, topic_label):
             f'<footer>{left}<span>{n}/{total}</span></footer></section>')
 
 
-CSS = (Path(__file__).with_name("slides.css")).read_text() + HtmlFormatter(style="monokai").get_style_defs(".code")
+CSS = ((Path(__file__).with_name("slides.css")).read_text().replace("1350px", f"{PAGE_H}px")
+       + HtmlFormatter(style="monokai").get_style_defs(".code"))
 
 FIT_JS = """<script>
 const report = [];
@@ -256,7 +280,7 @@ for (const pg of document.querySelectorAll('.pg')) {
 
 
 def build_html(post):
-    slides = post["slides"]
+    slides = with_pause_page(post)
     pages = "".join(render_page(s, i + 1, len(slides), post.get("topic_short", "Concurrency"))
                     for i, s in enumerate(slides))
     return f"""<!doctype html><html><head><meta charset="utf-8">
@@ -303,9 +327,10 @@ def render_post(post, out_dir, tmp):
     txt = post_text(post)
     (d / "post.txt").write_text(
         f"=== POST TEXT ===\n{txt}\n\n=== FIRST COMMENT ===\n{first_comment(post)}\n")
-    return {"id": pid, "slides": len(post["slides"]), "fit": fits,
+    return {"id": pid, "slides": len(with_pause_page(post)), "fit": fits,
             "overflow": [f["n"] for f in fits if f.get("overflow")],
             "small_code": [f["n"] for f in fits if f.get("code_px") and f["code_px"] < MIN_CODE_PX],
+            "small_text": [f["n"] for f in fits if f.get("zoom", 1) < MIN_ZOOM],
             "chars": len(txt), "png": len(list(d.glob("s-*.png")))}
 
 
@@ -334,7 +359,9 @@ def main():
             flag = "OVERFLOW slides " + str(r["overflow"]) if r["overflow"] else "ok"
             if r["small_code"]:
                 flag += f" SMALL CODE (<{MIN_CODE_PX}px) slides {r['small_code']}"
-            if r["overflow"] or r["small_code"] or r["png"] != r["slides"]:
+            if r["small_text"]:
+                flag += f" SMALL TEXT (zoom<{MIN_ZOOM}) slides {r['small_text']}"
+            if r["overflow"] or r["small_code"] or r["small_text"] or r["png"] != r["slides"]:
                 bad += 1
             zooms = [f["zoom"] for f in r["fit"] if f["zoom"] < 1]
             print(f'{p["id"]:12s} {r["slides"]} slides  text {r["chars"]:4d} chars  '

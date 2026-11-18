@@ -49,7 +49,9 @@ Every slide may have `cta` (footer text, e.g. "Swipe ➜"). Text fields accept `
 
 ## Fit rules
 
-- Slides are 1080x1350. The renderer shrinks code first, then the whole slide (down to 74%), and reports anything that still overflows.
+- Slides are 1080x1080 squares: on the LinkedIn mobile feed a square page shows nearly full width, with only a sliver of the next page.
+- Q&A posts (code_puzzle, concept) get an automatic "Lock in your answer" pause page as rendered page 2, so the sliver never reveals the answer. Do not add it to specs. Render reports use rendered page numbers.
+- The renderer shrinks code first, then the whole slide, and reports overflow, code < 28px and text shrunk below 82% (`SMALL TEXT`).
 - Keep code on a slide to about 16 lines; use `columns` for two-thread code and before/after comparisons.
 - Aim for zoom 1.0 on text slides: if the report shows zoom below ~0.9, shorten the text.
 - Code must render at 28px or more (phone readability); the renderer reports smaller code as a problem. Fix by shortening lines (aim ≤ 46 characters), using `columns`, moving comments into bullets, or splitting code over two slides.

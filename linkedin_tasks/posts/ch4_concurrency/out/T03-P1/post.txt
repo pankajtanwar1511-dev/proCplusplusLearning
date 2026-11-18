@@ -9,4 +9,4 @@ One missing word changes everything. The compiler even tells you, if you read th
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-The answer is on slide 2 ➜ Comment your answer first, then compare.
+The answer is on page 3 ➜ Comment your answer first, then compare.

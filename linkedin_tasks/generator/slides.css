@@ -66,3 +66,5 @@ ul.checks li { font-size: 38px; margin: 20px 0; }
 .myth .mo { background: rgba(22,163,74,.12); color: #d1fae5; font-size: 30px; padding: 18px 26px; line-height: 1.4; }
 footer { position: absolute; left: 72px; right: 72px; bottom: 44px; display: flex; justify-content: space-between;
          align-items: center; font-size: 26px; color: #64748b; }
+
+.pause-emoji { font-size: 120px; line-height: 1; margin: 10px 0 6px; }

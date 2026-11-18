@@ -29,7 +29,7 @@
 .lq-slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .lq-slides::-webkit-scrollbar { display: none; }
 .lq-slide { flex: 0 0 100%; scroll-snap-align: start; }
-.lq-slide img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; }
+.lq-slide img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; }
 .lq-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 0;
   background: rgba(255,255,255,.92); color: #111; display: grid; place-items: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 .lq-nav.prev { left: 8px; } .lq-nav.next { right: 8px; }

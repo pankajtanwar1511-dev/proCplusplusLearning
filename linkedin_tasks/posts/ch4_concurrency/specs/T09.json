@@ -196,7 +196,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Ring buffers",
         "title": "Four pushes, N = 4. What prints?",
-        "code": "constexpr size_t N = 4, MASK = N - 1;\nint buf[N]; size_t head = 0, tail = 0;\nbool full() {\n  return (tail & MASK) + 1 == (head & MASK);\n}\nbool empty() {\n  return (tail & MASK) == (head & MASK);\n}\nbool push(int v) {\n  if (full()) return false;\n  buf[tail++ & MASK] = v; return true;\n}\nint n = 0;\nfor (int i = 1; i <= 4; ++i) n += push(i);\nstd::cout << \"accepted=\" << n << \" empty=\"\n          << std::boolalpha << empty();",
+        "code": "constexpr size_t N = 4, MASK = N - 1;\nint buf[N]; size_t head = 0, tail = 0;\nbool full() { return\n  (tail & MASK) + 1 == (head & MASK); }\nbool empty() { return\n  (tail & MASK) == (head & MASK); }\nbool push(int v) {\n  if (full()) return false;\n  buf[tail++ & MASK] = v; return true; }\nint n = 0;\nfor (int i = 1; i <= 4; ++i) n += push(i);\nstd::cout << \"accepted=\" << n << \" empty=\"\n  << std::boolalpha << empty();",
         "options": [
           "accepted=4 empty=false",
           "accepted=3 empty=false",
@@ -221,9 +221,10 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Pick one scheme and stick to it",
-        "code": "// Monotonic indices: all N slots usable\nbool full()  { return tail - head == N; }\nbool empty() { return tail == head; }\n// write buf[tail & MASK], then ++tail\n\n// Wrapped indices: one slot sacrificed\nbool full() {\n  return ((tail + 1) & MASK) == head;\n}",
+        "code": "// Monotonic indices: all N slots usable\nbool full()  { return tail - head == N; }\nbool empty() { return tail == head; }\n// write buf[tail & MASK], then ++tail",
         "bullets": [
-          "Monotonic version, pushing 1..5: `accepted=4 empty=false`."
+          "Monotonic version, pushing 1..5: `accepted=4 empty=false`.",
+          "Or wrapped indices, one slot sacrificed: full when `((tail + 1) & MASK) == head`."
         ],
         "tip": "With `size_t` indices and N a power of two, `tail - head` stays correct across wraparound.",
         "takeaway": "A masked index plus one can equal N. Never compare it with another masked index."
@@ -254,8 +255,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · False sharing",
-        "title": "What are the three sizeofs?<br>Which layout avoids false sharing?",
-        "code": "struct Packed {\n    std::atomic<std::size_t> head{0};\n    std::atomic<std::size_t> tail{0};\n};\nstruct HeadOnly {\n    alignas(64) std::atomic<std::size_t> head{0};\n    std::atomic<std::size_t> tail{0};\n};\nstruct Both {\n    alignas(64) std::atomic<std::size_t> head{0};\n    alignas(64) std::atomic<std::size_t> tail{0};\n};",
+        "title": "The three sizeofs? Which<br>layout avoids false sharing?",
+        "code": "using A = std::atomic<std::size_t>;\nstruct Packed { A head{0}; A tail{0}; };\nstruct HeadOnly {\n  alignas(64) A head{0};\n  A tail{0};\n};\nstruct Both {\n  alignas(64) A head{0};\n  alignas(64) A tail{0};\n};",
         "options": [
           "16, 64, 128 · only Both",
           "16, 128, 128 · HeadOnly and Both",

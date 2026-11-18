@@ -9,4 +9,4 @@ x86-64, GCC or Clang. Work out the three sizeofs first: they give the answer awa
 #cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
 
 === FIRST COMMENT ===
-The answer is on slide 2 ➜ Comment your answer first, then compare.
+The answer is on page 3 ➜ Comment your answer first, then compare.

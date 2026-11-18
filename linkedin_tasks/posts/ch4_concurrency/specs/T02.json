@@ -297,13 +297,13 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Deadlocks",
-        "title": "Only one mutex exists.<br>Can this program deadlock?",
-        "code": "std::mutex m;\nint result = 0;\n\nint main() {\n    std::lock_guard<std::mutex> g(m);\n    std::thread worker([] {\n        std::lock_guard<std::mutex> wg(m);\n        result = 42;\n    });\n    std::cout << \"main: joining\\n\";\n    worker.join();\n    std::cout << \"result \" << result << '\\n';\n}",
+        "title": "One mutex. Can this deadlock?",
+        "code": "std::mutex m; int result = 0;\nint main() {\n  std::lock_guard g(m);\n  std::thread worker([] {\n    std::lock_guard wg(m);\n    result = 42;\n  });\n  std::cout << \"main: joining\\n\";\n  worker.join();\n  std::cout << \"result \" << result << '\\n';\n}",
         "options": [
-          "No: a deadlock needs two mutexes",
-          "Only with unlucky timing",
+          "No: one mutex",
+          "Only by bad timing",
           "Yes, always",
-          "No: prints `result 42`"
+          "No: prints 42"
         ],
         "cta": "Work it out, then swipe ➜"
       },
@@ -323,7 +323,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Never join while holding a lock",
-        "code": "int main() {\n    std::thread worker([] {\n        std::lock_guard<std::mutex> wg(m);\n        result = 42;\n    });\n    std::cout << \"main: joining\\n\";\n    worker.join();          // no lock held\n    std::cout << \"result \" << result << '\\n';\n}",
+        "code": "int main() {\n  std::thread worker([] {\n    std::lock_guard wg(m);\n    result = 42;\n  });\n  std::cout << \"main: joining\\n\";\n  worker.join();  // no lock held\n  std::cout << \"result \" << result << '\\n';\n}",
         "tip": "Same shape: `future.get()` or waiting on a full queue while holding a lock the other thread needs.",
         "takeaway": "A deadlock needs a cycle of waits, not two mutexes."
       }
@@ -406,12 +406,12 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Deadlocks",
-        "title": "scoped_lock is deadlock-free.<br>What happens here?",
-        "code": "struct Account {\n  std::mutex m; long balance = 100;\n};\nvoid transfer(Account& from, Account& to,\n              long n) {\n  std::scoped_lock lk(from.m, to.m);\n  from.balance -= n; to.balance += n;\n}\nint main() {\n  Account a;\n  std::cout << \"start\\n\";\n  transfer(a, a, 10);  // self-transfer\n  std::cout << \"done \" << a.balance << '\\n';\n}",
+        "title": "scoped_lock, self-transfer.<br>What happens?",
+        "code": "struct Acc { std::mutex m; long bal = 100; };\nvoid transfer(Acc& a, Acc& b, long n) {\n  std::scoped_lock lk(a.m, b.m);\n  a.bal -= n; b.bal += n;\n}\nint main() {\n  Acc acc;\n  std::cout << \"start\\n\";\n  transfer(acc, acc, 10);\n  std::cout << \"done \" << acc.bal << '\\n';\n}",
         "options": [
           "`start`, `done 100`",
-          "UB: in practice `start`, then 100% CPU forever",
-          "`start`, then a classic deadlock (0% CPU)",
+          "UB: spins, 100% CPU",
+          "Deadlock, 0% CPU",
           "Compile error"
         ],
         "cta": "Work it out, then swipe ➜"
@@ -433,7 +433,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Handle aliasing before you lock",
-        "code": "void transfer(Account& from, Account& to, long n) {\n    if (&from == &to) return;   // nothing to move\n    std::scoped_lock lk(from.m, to.m);\n    from.balance -= n;\n    to.balance += n;\n}",
+        "code": "void transfer(Acc& a, Acc& b, long n) {\n  if (&a == &b) return;  // nothing to move\n  std::scoped_lock lk(a.m, b.m);\n  a.bal -= n;\n  b.bal += n;\n}",
         "tip": "Aliasing is common: self-transfers, swapping an object with itself, merging a container into itself.",
         "takeaway": "Always handle aliasing before multi-locking. Now it prints `done 100`."
       }

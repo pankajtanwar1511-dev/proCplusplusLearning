@@ -199,8 +199,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Lock-free",
-        "title": "x86-64, GCC.<br>What does this print?",
-        "code": "struct Node;\nstruct TaggedPtr {\n  Node* ptr;\n  std::uint64_t tag;\n};\nusing AT = std::atomic<TaggedPtr>;\nusing AU = std::atomic<std::uint64_t>;\nint main() {\n  std::cout << sizeof(TaggedPtr) << ' '\n    << std::boolalpha\n    << AT::is_always_lock_free << ' '\n    << AU::is_always_lock_free << '\\n';\n}",
+        "title": "x86-64, GCC. What prints?",
+        "code": "struct Node;\nstruct TaggedPtr {\n  Node* ptr; std::uint64_t tag;\n};\nusing AT = std::atomic<TaggedPtr>;\nusing AU = std::atomic<std::uint64_t>;\nstd::cout << sizeof(TaggedPtr) << ' '\n  << std::boolalpha\n  << AT::is_always_lock_free << ' '\n  << AU::is_always_lock_free;",
         "options": [
           "16 true true",
           "16 false true",
@@ -225,12 +225,12 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Fit the CAS word in 8 bytes. Assert it.",
-        "code": "// preallocated node pool:\n// 32-bit index + 32-bit tag = 8 bytes\nstruct Head {\n  std::uint32_t idx;\n  std::uint32_t tag;\n};\nstatic_assert(\n  std::atomic<Head>::is_always_lock_free);",
+        "code": "struct Head {         // 8 bytes\n  std::uint32_t idx;  // pool index\n  std::uint32_t tag;\n};\nstatic_assert(\n  std::atomic<Head>::is_always_lock_free);",
         "bullets": [
-          "Or put the tag in the unused upper bits of a 48-bit x86-64 pointer (narrower, can wrap).",
-          "Results depend on compiler and flags (Clang may inline `cmpxchg16b` with `-mcx16`)."
+          "Nodes come from a preallocated pool: 32-bit index + 32-bit tag = one 8-byte CAS.",
+          "Or pack the tag into the unused upper bits of a 48-bit pointer (narrower, can wrap)."
         ],
-        "takeaway": "Verify the lock-freedom of every atomic your algorithm depends on. Make the compiler check it."
+        "takeaway": "Lock-freedom varies by compiler and flags (`-mcx16`). Make the compiler check it."
       }
     ]
   },
@@ -322,7 +322,7 @@
         "layout": "answer",
         "verdict": "A. CAS compares values, not history",
         "verdict_sub": "the value went A, then B, then A again",
-        "code": "stack: head -> A -> B -> C\nT1: old = A, next = B\n    (preempted)\nT2: pop A, pop B (free B)\nT2: push A   => head -> A -> C\nT1: CAS(head, A, B) succeeds\n    => head = B (freed!)",
+        "code": "head -> A -> B -> C\nT1: old=A, next=B (preempted)\nT2: pop A, pop B, free B\nT2: push A  => head -> A -> C\nT1: CAS(A, B) ok => head = B (freed!)",
         "bullets": [
           "The recycled A comes from a node pool, or `malloc` reusing the freed address.",
           "For a plain counter, A to B to A is harmless: nothing hides behind the value."

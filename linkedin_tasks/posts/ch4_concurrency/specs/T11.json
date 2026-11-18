@@ -78,13 +78,13 @@
       {
         "layout": "code",
         "kicker": "std::barrier",
-        "title": "Lock-step phases with a completion step",
-        "code": "std::barrier sync{4, []() noexcept {\n    // combine partial results, once per phase\n}};\n\n// in each of the 4 workers:\nfor (int step = 0; step < steps; ++step) {\n    compute_my_part(step);\n    sync.arrive_and_wait();\n}",
+        "title": "Lock-step phases + completion",
+        "code": "std::barrier sync{4, []() noexcept {\n  // combine results, once per phase\n}};\n// in each of the 4 workers:\nfor (int s = 0; s < steps; ++s) {\n  compute_my_part(s);\n  sync.arrive_and_wait();\n}",
         "bullets": [
-          "The completion must be `noexcept`. GCC 11 does not diagnose a missing one.",
-          "A thread leaving early must call `arrive_and_drop()`, or the others hang."
+          "Completion must be `noexcept` (GCC 11 won't check).",
+          "Leaving early? Call `arrive_and_drop()`."
         ],
-        "takeaway": "All arrivals happen before the completion step, so it can safely combine per-thread results."
+        "takeaway": "All arrivals happen before the completion step, so it can safely combine results."
       },
       {
         "layout": "cards",
@@ -203,8 +203,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · C++20 latch",
-        "title": "Main wants to wait for both workers in EVERY round. What happens?",
-        "code": "std::latch done{2};\nint results[2] = {};\n\nfor (int r = 1; r <= 3; ++r) {\n  std::thread a([&] { results[0] = r * 10;\n                      done.count_down(); });\n  std::thread b([&] { results[1] = r * 10 + 1;\n                      done.count_down(); });\n  done.wait();\n  std::cout << \"round \" << r << \": \"\n            << results[0] + results[1] << '\\n';\n  a.join(); b.join();\n}",
+        "title": "3 rounds, one latch. What happens?",
+        "code": "std::latch done{2}; int results[2] = {};\nfor (int r = 1; r <= 3; ++r) {\n  std::thread a([&] { results[0] = r * 10;\n    done.count_down(); });\n  std::thread b([&] { results[1] = r*10 + 1;\n    done.count_down(); });\n  done.wait();\n  std::cout << \"round \" << r << \": \"\n    << results[0] + results[1] << '\\n';\n  a.join(); b.join();\n}",
         "options": [
           "21, 41, 61",
           "Round 1 fine, then UB",
@@ -259,8 +259,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · std::jthread",
-        "title": "What does this print,<br>and in what order?",
-        "code": "int main() {\n  {\n    std::jthread w([](std::stop_token st) {\n      while (!st.stop_requested())\n        std::this_thread::sleep_for(1ms);\n      std::cout << \"worker: stop seen\\n\";\n    });\n    std::this_thread::sleep_for(20ms);\n    std::cout << \"leaving scope\\n\";\n  }\n  std::cout << \"after scope\\n\";\n}",
+        "title": "What prints, in what order?",
+        "code": "{\n  std::jthread w([](std::stop_token st) {\n    while (!st.stop_requested())\n      std::this_thread::sleep_for(1ms);\n    std::cout << \"worker: stop seen\\n\";\n  });\n  std::this_thread::sleep_for(20ms);\n  std::cout << \"leaving scope\\n\";\n}\nstd::cout << \"after scope\\n\";",
         "options": [
           "Hangs at the closing brace",
           "leaving, after, stop seen",

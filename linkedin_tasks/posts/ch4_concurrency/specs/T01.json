@@ -428,13 +428,13 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Thread lifetime",
-        "title": "main reads `*ptr` only after `join()`.<br>Is this correct?",
-        "code": "int* ptr = nullptr;\nvoid worker() {\n    int value = 42;\n    ptr = &value;\n}\n\nint main() {\n    std::thread t(worker);\n    t.join();\n    std::cout << *ptr << '\\n';\n}",
+        "title": "`*ptr` is read after `join()`.<br>Is this correct?",
+        "code": "int* ptr = nullptr;\nvoid worker() {\n  int value = 42;\n  ptr = &value;\n}\nint main() {\n  std::thread t(worker);\n  t.join();\n  std::cout << *ptr << '\\n';\n}",
         "options": [
-          "Yes, prints 42",
-          "Data race on `ptr`",
+          "Prints 42",
+          "Data race",
           "Compile error",
-          "UB: dead object"
+          "Dangling UB"
         ],
         "cta": "Work it out, then swipe ➜"
       },

@@ -205,13 +205,13 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · thread_local",
-        "title": "Three threads, 100 calls each.<br>What is printed?",
-        "code": "thread_local int counter = 0;\nvoid foo() { ++counter; }\n\nint main() {\n    std::array<int, 3> result{};\n    std::array<std::thread, 3> ts;\n    for (int i = 0; i < 3; ++i)\n        ts[i] = std::thread([i, &result] {\n            for (int k = 0; k < 100; ++k) foo();\n            result[i] = counter;\n        });\n    for (auto& t : ts) t.join();\n\n    std::cout << result[0] << ' ' << result[1]\n              << ' ' << result[2] << '\\n';\n    std::cout << counter << '\\n';\n}",
+        "title": "What does this print?",
+        "code": "thread_local int counter = 0;\nvoid foo() { ++counter; }\nint main() {\n  std::array<int, 3> result{};\n  std::array<std::thread, 3> ts;\n  for (int i = 0; i < 3; ++i)\n    ts[i] = std::thread([i, &result] {\n      for (int k = 0; k < 100; ++k) foo();\n      result[i] = counter; });\n  for (auto& t : ts) t.join();\n  std::cout << result[0] << ' ' << result[1]\n    << ' ' << result[2] << '\\n' << counter;\n}",
         "options": [
-          "100 200 300, then 300",
-          "100 100 100, then 300",
-          "Data race: unpredictable",
-          "100 100 100, then 0"
+          "100 200 300 / 300",
+          "100 100 100 / 300",
+          "Data race",
+          "100 100 100 / 0"
         ],
         "cta": "Work it out, then swipe ➜"
       },
@@ -329,24 +329,24 @@
         "layout": "puzzle",
         "kicker": "Puzzle · promise / future",
         "title": "The promise is never set.<br>What happens?",
-        "code": "std::promise<int> p; auto f = p.get_future();\nstd::thread producer(\n  [pr = std::move(p)](bool fail) mutable {\n    if (!fail) pr.set_value(1);\n  }, true);\ntry {\n  std::cout << f.get() << '\\n';\n} catch (const std::future_error& e) {\n  bool bp = e.code() ==\n            std::future_errc::broken_promise;\n  std::cout << \"future_error: \" << e.what()\n    << '\\n' << std::boolalpha << bp << '\\n';\n}\nproducer.join();",
+        "code": "std::promise<int> p;\nauto f = p.get_future();\nstd::thread th([pr = std::move(p)] {});\ntry { std::cout << f.get(); }\ncatch (const std::future_error& e) {\n  std::cout << e.what();\n}\nth.join();",
         "options": [
-          "Hangs forever in `f.get()`",
-          "Prints 0 (a default int)",
-          "`get()` throws: broken promise",
-          "UB: the promise no longer exists"
+          "Hangs in `f.get()`",
+          "Prints 0",
+          "`get()` throws",
+          "UB: promise gone"
         ],
         "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
         "verdict": "C: `get()` throws",
-        "verdict_sub": "`future_error: std::future_error: Broken promise`, then `true`",
+        "verdict_sub": "prints `std::future_error: Broken promise`",
         "bullets": [
           "The promise was moved into the lambda, so it dies with the thread's callable when the lambda returns unset.",
           "A promise destroyed without a result stores `future_error(broken_promise)` and makes the state ready.",
           "`get()` wakes up and throws. No hang.",
-          "The `what()` text is libstdc++'s; the error code is portable."
+          "The `what()` text is libstdc++'s. Portable check: `e.code() == std::future_errc::broken_promise`."
         ],
         "wrong": "\"it hangs forever in get()\"",
         "cta": "The dangerous variant ➜"
@@ -450,13 +450,13 @@
       {
         "layout": "question",
         "kicker": "Interview question · Initialization",
-        "title": "Many threads run this. Is it broken, and does `std::atomic<bool> initialized` fix it?",
+        "title": "Many threads run this. Broken?",
         "code": "if (!initialized) {\n    init();\n    initialized = true;\n}",
         "options": [
-          "Fine as is: a bool write is atomic on x86.",
-          "Broken, and `atomic<bool>` fixes it completely.",
-          "Broken only if `init()` throws.",
-          "`bool`: data race (UB). `atomic<bool>`: no UB, but `init()` can still run twice."
+          "Fine: bool writes are atomic",
+          "Broken; `atomic<bool>` fixes it",
+          "Broken only if `init()` throws",
+          "`bool`: UB. `atomic`: `init()` may run twice"
         ],
         "cta": "Pick one, then swipe ➜"
       },

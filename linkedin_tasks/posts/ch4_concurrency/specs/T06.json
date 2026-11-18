@@ -153,15 +153,15 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Memory ordering",
-        "title": "The consumer now uses acquire.<br>Is it thread-safe?",
+        "title": "The consumer now uses acquire.<br>Thread-safe?",
         "options": [
-          "Yes, always prints 500",
-          "Prints 100 or 500",
-          "Data race: undefined behaviour",
-          "Does not compile"
+          "Yes, always 500",
+          "100 or 500",
+          "Data race (UB)",
+          "Won't compile"
         ],
         "cta": "Work it out, then swipe ➜",
-        "code": "int payload = 100;\nstd::atomic<bool> ready{false};\n\n// Producer thread\npayload = 500;\nready.store(true, std::memory_order_relaxed);\n\n// Consumer thread\nwhile (!ready.load(std::memory_order_acquire))\n    ;\nstd::cout << payload;"
+        "code": "int payload = 100;\nstd::atomic<bool> ready{false};\n// Producer thread\npayload = 500;\nready.store(true,\n            std::memory_order_relaxed);\n// Consumer thread\nwhile (!ready.load(\n         std::memory_order_acquire)) {}\nstd::cout << payload;"
       },
       {
         "layout": "answer",
@@ -181,12 +181,12 @@
         "kicker": "The fix",
         "title": "Release and acquire are a pair",
         "bullets": [
-          "Half-fix: a relaxed store gives the acquire load nothing to pair with.",
+          "Half-fix: relaxed gives acquire nothing to pair with.",
           "The release store synchronizes-with the acquire load that reads `true`.",
-          "So `payload = 500` happens-before the read: no race, always 500."
+          "So the write happens-before the read: always 500."
         ],
-        "takeaway": "Release on the store, acquire on the load, same atomic. Fixing only one side is the classic half-fix.",
-        "code": "// Producer\npayload = 500;\nready.store(true, std::memory_order_release);\n\n// Consumer (unchanged)\nwhile (!ready.load(std::memory_order_acquire))\n    ;\nstd::cout << payload;"
+        "takeaway": "Release on the store, acquire on the load.",
+        "code": "// Producer (consumer unchanged)\npayload = 500;\nready.store(true,\n            std::memory_order_release);"
       }
     ]
   },
@@ -264,10 +264,9 @@
         ],
         "bullets": [
           "Each atomic has its own modification order. Nothing links `x` and `y`.",
-          "All atomic, so no data race: the stale `0` is defined, just unwanted.",
-          "This is the classic `data` + `ready` flag bug. Fix: release store on the flag, acquire load of it."
+          "No data race: the stale `0` is defined, just unwanted. This is the `data` + `ready` flag bug: fix with release/acquire."
         ],
-        "takeaway": "One modification order **per object**. Relaxed drops ordering between different objects, never per-object coherence."
+        "takeaway": "One modification order **per object**: relaxed keeps per-object coherence, not cross-object order."
       }
     ]
   },
