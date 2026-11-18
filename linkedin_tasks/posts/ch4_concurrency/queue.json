@@ -9,7 +9,7 @@
    "code_puzzle": 25,
    "concept": 25
   },
-  "total_slides": 309,
+  "total_slides": 259,
   "unrendered": [],
   "appended": [],
   "dropped": []
@@ -65,12 +65,11 @@
    ],
    "post_text": "Two threads. One mutex. 100000 locked increments each. 🔒\n\nThe author expects 200000. What does it actually print?\nLock in your answer below, then swipe ➜ to verify.\n\nThis exact bug shows up in code reviews and interviews. The compiler even warns about it, and people still miss it.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T02-P2/s-01.png",
     "T02-P2/s-02.png",
-    "T02-P2/s-03.png",
-    "T02-P2/s-04.png"
+    "T02-P2/s-03.png"
    ],
    "pdf": "T02-P2/slides.pdf",
    "rendered": true
@@ -92,12 +91,11 @@
    ],
    "post_text": "\"Data race\" and \"race condition\" are not synonyms.\nCan you explain the difference in one sentence?\n\nComment A, B, C or D, then swipe ➜ for the answer.\n\nA classic opener in C++ concurrency interviews. The precise answer is short.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T02-Q7/s-01.png",
     "T02-Q7/s-02.png",
-    "T02-Q7/s-03.png",
-    "T02-Q7/s-04.png"
+    "T02-Q7/s-03.png"
    ],
    "pdf": "T02-Q7/slides.pdf",
    "rendered": true
@@ -119,12 +117,11 @@
    ],
    "post_text": "Only one mutex in the whole program.\nSo a deadlock is impossible. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe usual suspect is two mutexes locked in opposite order. This one hides somewhere else.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T02-P10/s-01.png",
     "T02-P10/s-02.png",
-    "T02-P10/s-03.png",
-    "T02-P10/s-04.png"
+    "T02-P10/s-03.png"
    ],
    "pdf": "T02-P10/slides.pdf",
    "rendered": true
@@ -146,12 +143,11 @@
    ],
    "post_text": "\"Every member is std::atomic, so the class is thread-safe.\"\n\nTrue or false?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nA favourite design question. The answer is about invariants, not variables.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T02-Q12/s-01.png",
     "T02-Q12/s-02.png",
-    "T02-Q12/s-03.png",
-    "T02-Q12/s-04.png"
+    "T02-Q12/s-03.png"
    ],
    "pdf": "T02-Q12/slides.pdf",
    "rendered": true
@@ -173,12 +169,11 @@
    ],
    "post_text": "std::scoped_lock is deadlock-free.\nSo a self-transfer is harmless... right? ⚠️\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne aliasing case that \"deadlock-free\" code forgets. Self-transfers, self-swaps and self-merges all hit it.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T02-P9/s-01.png",
     "T02-P9/s-02.png",
-    "T02-P9/s-03.png",
-    "T02-P9/s-04.png"
+    "T02-P9/s-03.png"
    ],
    "pdf": "T02-P9/slides.pdf",
    "rendered": true
@@ -233,12 +228,11 @@
    ],
    "post_text": "The worker thread finished 100 ms ago.\nSo leaving main is safe, right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of the most common std::thread bugs. The fix is one line, but the reason is what interviewers ask about.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T01-P1/s-01.png",
     "T01-P1/s-02.png",
-    "T01-P1/s-03.png",
-    "T01-P1/s-04.png"
+    "T01-P1/s-03.png"
    ],
    "pdf": "T01-P1/slides.pdf",
    "rendered": true
@@ -260,12 +254,11 @@
    ],
    "post_text": "Four lines. One detach(). One [&].\nIs this code safe?\n\nComment A, B, C or D, then swipe ➜ for the answer.\n\nIt can print 42 on one machine and garbage on the next. The output does not answer the question.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T01-Q12/s-01.png",
     "T01-Q12/s-02.png",
-    "T01-Q12/s-03.png",
-    "T01-Q12/s-04.png"
+    "T01-Q12/s-03.png"
    ],
    "pdf": "T01-Q12/slides.pdf",
    "rendered": true
@@ -287,12 +280,11 @@
    ],
    "post_text": "A thread, a lambda taking int&, and a plain int.\nWhat does this program print?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThis is the question behind every std::ref you have ever written.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T01-P3/s-01.png",
     "T01-P3/s-02.png",
-    "T01-P3/s-03.png",
-    "T01-P3/s-04.png"
+    "T01-P3/s-03.png"
    ],
    "pdf": "T01-P3/slides.pdf",
    "rendered": true
@@ -314,12 +306,11 @@
    ],
    "post_text": "8 cores. Purely CPU-bound work.\nHow many threads do you start?\n\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe \"obvious\" answer is only half right. The other half is what makes it a senior answer.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T01-Q16/s-01.png",
     "T01-Q16/s-02.png",
-    "T01-Q16/s-03.png",
-    "T01-Q16/s-04.png"
+    "T01-Q16/s-03.png"
    ],
    "pdf": "T01-Q16/slides.pdf",
    "rendered": true
@@ -341,12 +332,11 @@
    ],
    "post_text": "main reads *ptr only after join().\njoin() synchronizes everything. So this is correct?\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo separate questions hide in this program. Most answers only check one of them.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T01-P10/s-01.png",
     "T01-P10/s-02.png",
-    "T01-P10/s-03.png",
-    "T01-P10/s-04.png"
+    "T01-P10/s-03.png"
    ],
    "pdf": "T01-P10/slides.pdf",
    "rendered": true
@@ -400,13 +390,12 @@
     "interviewprep"
    ],
    "post_text": "Every increment is \"locked\". Two threads, 100000 each.\n\nIs this code correct? What does it print?\nThink it through, comment your answer, then swipe ➜\n\nOne missing word changes everything. The compiler even tells you, if you read the warning.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T03-P1/s-01.png",
     "T03-P1/s-02.png",
-    "T03-P1/s-03.png",
-    "T03-P1/s-04.png"
+    "T03-P1/s-03.png"
    ],
    "pdf": "T03-P1/slides.pdf",
    "rendered": true
@@ -428,12 +417,11 @@
    ],
    "post_text": "T1 is started before T2. Both lock the same std::mutex.\n\nWho gets it first?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nMost answers assume some kind of queue. The standard promises less than you think.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T03-Q7/s-01.png",
     "T03-Q7/s-02.png",
-    "T03-Q7/s-03.png",
-    "T03-Q7/s-04.png"
+    "T03-Q7/s-03.png"
    ],
    "pdf": "T03-Q7/slides.pdf",
    "rendered": true
@@ -455,12 +443,11 @@
    ],
    "post_text": "A reader finds the key missing, so it \"upgrades\" to a write lock.\n\nOnly one thread runs. Can this deadlock?\nLock in your answer below, then swipe ➜ to verify.\n\nThis read-then-upgrade pattern looks natural in a cache. Slide 3 shows the version that is safe.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T03-P9/s-01.png",
     "T03-P9/s-02.png",
-    "T03-P9/s-03.png",
-    "T03-P9/s-04.png"
+    "T03-P9/s-03.png"
    ],
    "pdf": "T03-P9/slides.pdf",
    "rendered": true
@@ -482,12 +469,11 @@
    ],
    "post_text": "\"A mutex always goes through the kernel, so it is slow.\"\n\nYou hear this in many interviews. Is it true?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T03-Q15/s-01.png",
     "T03-Q15/s-02.png",
-    "T03-Q15/s-03.png",
-    "T03-Q15/s-04.png"
+    "T03-Q15/s-03.png"
    ],
    "pdf": "T03-Q15/slides.pdf",
    "rendered": true
@@ -509,12 +495,11 @@
    ],
    "post_text": "p50 latency is normal. p99.9 jumps to milliseconds.\nA reporting thread holds the order-book mutex for 5 to 8 ms.\n\nWhat do you change? Comment A, B, C or D, then swipe ➜\n\nA classic low-latency design question. The tempting answer fixes the wrong thing.\n\n#cpp #cplusplus #concurrency #lowlatency #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T03-Q21/s-01.png",
     "T03-Q21/s-02.png",
-    "T03-Q21/s-03.png",
-    "T03-Q21/s-04.png"
+    "T03-Q21/s-03.png"
    ],
    "pdf": "T03-Q21/slides.pdf",
    "rendered": true
@@ -569,12 +554,11 @@
    ],
    "post_text": "The producer sets ready = true and notifies.\nOnly then does the consumer start waiting.\n\nWhat is printed? Comment your answer, then swipe ➜ to check it.\n\nFour plausible outputs. One rule about notifications decides which one you will see.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T04-P2/s-01.png",
     "T04-P2/s-02.png",
-    "T04-P2/s-03.png",
-    "T04-P2/s-04.png"
+    "T04-P2/s-03.png"
    ],
    "pdf": "T04-P2/slides.pdf",
    "rendered": true
@@ -596,12 +580,11 @@
    ],
    "post_text": "The consumer waits correctly, under the lock.\nThe producer just sets a bool and notifies.\n\nWhat is wrong? Comment A, B, C or D, then swipe ➜\n\nThere are two problems here, and the first one is worse.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T04-Q9/s-01.png",
     "T04-Q9/s-02.png",
-    "T04-Q9/s-03.png",
-    "T04-Q9/s-04.png"
+    "T04-Q9/s-03.png"
    ],
    "pdf": "T04-Q9/slides.pdf",
    "rendered": true
@@ -623,12 +606,11 @@
    ],
    "post_text": "Nobody ever calls notify in this program. 🔔\n\nDoes it hang? If not, what does it print?\nComment your answer, then swipe ➜ to check it.\n\nTwo numbers to predict: how often the predicate runs, and whether the lock is held at the end.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T04-P10/s-01.png",
     "T04-P10/s-02.png",
-    "T04-P10/s-03.png",
-    "T04-P10/s-04.png"
+    "T04-P10/s-03.png"
    ],
    "pdf": "T04-P10/slides.pdf",
    "rendered": true
@@ -650,12 +632,11 @@
    ],
    "post_text": "notify_one(): inside the lock, or after unlocking?\n\nCode reviewers argue about this all the time.\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe right answer separates correctness from performance, then adds one important exception.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T04-Q11/s-01.png",
     "T04-Q11/s-02.png",
-    "T04-Q11/s-03.png",
-    "T04-Q11/s-04.png"
+    "T04-Q11/s-03.png"
    ],
    "pdf": "T04-Q11/slides.pdf",
    "rendered": true
@@ -677,12 +658,11 @@
    ],
    "post_text": "notify_all() wakes three consumers. C1 grabs the mutex and holds it for 40 seconds.\n\nWhat are C2 and C3 doing?\nComment A, B, C or D, then swipe ➜\n\nTwo kinds of waiting hide in this question. Interviewers check whether you can tell them apart.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T04-Q13/s-01.png",
     "T04-Q13/s-02.png",
-    "T04-Q13/s-03.png",
-    "T04-Q13/s-04.png"
+    "T04-Q13/s-03.png"
    ],
    "pdf": "T04-Q13/slides.pdf",
    "rendered": true
@@ -737,12 +717,11 @@
    ],
    "post_text": "counter is a std::atomic<int>.\nTwo threads add 4 to it, 1000 times each. 🧵\n\nWhat can it print? Comment your answer, then swipe ➜ to check it.\n\nTwo questions in one: the printed value, and whether this is a data race. Both parts matter.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T05-P3/s-01.png",
     "T05-P3/s-02.png",
-    "T05-P3/s-03.png",
-    "T05-P3/s-04.png"
+    "T05-P3/s-03.png"
    ],
    "pdf": "T05-P3/slides.pdf",
    "rendered": true
@@ -764,12 +743,11 @@
    ],
    "post_text": "\"It's just a bool stop flag. The CPU writes a bool atomically.\"\n\nDoes it still need std::atomic<bool>? 🧠\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe code is 5 lines. What the optimizer does with it surprises a lot of people.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T05-Q6/s-01.png",
     "T05-Q6/s-02.png",
-    "T05-Q6/s-03.png",
-    "T05-Q6/s-04.png"
+    "T05-Q6/s-03.png"
    ],
    "pdf": "T05-Q6/slides.pdf",
    "rendered": true
@@ -791,12 +769,11 @@
    ],
    "post_text": "The single most asked detail about compare-and-swap.\nWhat happens to expected when CAS fails? 🧠\n\nComment your answer, then swipe ➜ to check it.\n\nTwo CAS calls, two lines of output. Read the second call carefully.\n\n#cpp #cplusplus #concurrency #lockfree #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T05-P4/s-01.png",
     "T05-P4/s-02.png",
-    "T05-P4/s-03.png",
-    "T05-P4/s-04.png"
+    "T05-P4/s-03.png"
    ],
    "pdf": "T05-P4/slides.pdf",
    "rendered": true
@@ -818,12 +795,11 @@
    ],
    "post_text": "One std::atomic<long> counter, shared by every thread.\nAdd more threads and it gets slower, not faster. Why? 🧠\n\nComment A, B, C or D, then swipe ➜ for the answer.\n\nNo mutex, no lock, and it still does not scale. The reason lives below the C++ level.\n\n#cpp #cplusplus #concurrency #performance #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T05-Q17/s-01.png",
     "T05-Q17/s-02.png",
-    "T05-Q17/s-03.png",
-    "T05-Q17/s-04.png"
+    "T05-Q17/s-03.png"
    ],
    "pdf": "T05-Q17/slides.pdf",
    "rendered": true
@@ -845,12 +821,11 @@
    ],
    "post_text": "Wrap any struct in std::atomic and it is lock-free, right?\n\nx86-64, GCC. Three types, three booleans. 🧩\nLock in your answer below, then swipe ➜ to verify.\n\nThis one decides whether your \"lock-free\" design really is.\n\n#cpp #cplusplus #concurrency #lockfree #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T05-P9/s-01.png",
     "T05-P9/s-02.png",
-    "T05-P9/s-03.png",
-    "T05-P9/s-04.png"
+    "T05-P9/s-03.png"
    ],
    "pdf": "T05-P9/slides.pdf",
    "rendered": true
@@ -903,13 +878,12 @@
     "interviewprep"
    ],
    "post_text": "The consumer was \"fixed\" to use memory_order_acquire.\nThe producer was left alone. 🧵\n\nIs it thread-safe now? Think it through, comment your answer, then swipe ➜\n\nThis is the most common half-fix in memory ordering code reviews. Look at both sides before you answer.\n\n#cpp #cplusplus #memorymodel #concurrency #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T06-P2/s-01.png",
     "T06-P2/s-02.png",
-    "T06-P2/s-03.png",
-    "T06-P2/s-04.png"
+    "T06-P2/s-03.png"
    ],
    "pdf": "T06-P2/slides.pdf",
    "rendered": true
@@ -931,12 +905,11 @@
    ],
    "post_text": "\"A flag shared by two threads needs volatile. Otherwise the compiler caches it in a register.\"\n\nAgree? 🧠 Comment A, B, C or D, then swipe ➜ for the answer.\n\nHalf of this claim is true. That is exactly why it is dangerous.\n\n#cpp #cplusplus #memorymodel #concurrency #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T06-Q11/s-01.png",
     "T06-Q11/s-02.png",
-    "T06-Q11/s-03.png",
-    "T06-Q11/s-04.png"
+    "T06-Q11/s-03.png"
    ],
    "pdf": "T06-Q11/slides.pdf",
    "rendered": true
@@ -957,13 +930,12 @@
     "interviewprep"
    ],
    "post_text": "Everything is memory_order_relaxed.\nOne writer stores 10 then 20. One reader loads twice. 🧵\n\nWhich outputs are possible? Pick all that apply, then swipe ➜\n\n\"Relaxed means anything goes\" is the answer that fails here. Slide 3 shows where relaxed really does surprise you.\n\n#cpp #cplusplus #memorymodel #concurrency #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T06-P5/s-01.png",
     "T06-P5/s-02.png",
-    "T06-P5/s-03.png",
-    "T06-P5/s-04.png"
+    "T06-P5/s-03.png"
    ],
    "pdf": "T06-P5/slides.pdf",
    "rendered": true
@@ -985,12 +957,11 @@
    ],
    "post_text": "\"Release works because it flushes the store buffer, and MESI pushes the line to the other core.\"\n\nSounds senior. Is it right? 🧠\nComment A, B, C or D, then swipe ➜\n\nThe best answer here is about layers, not about hardware.\n\n#cpp #cplusplus #memorymodel #concurrency #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T06-Q14/s-01.png",
     "T06-Q14/s-02.png",
-    "T06-Q14/s-03.png",
-    "T06-Q14/s-04.png"
+    "T06-Q14/s-03.png"
    ],
    "pdf": "T06-Q14/slides.pdf",
    "rendered": true
@@ -1012,12 +983,11 @@
    ],
    "post_text": "Two threads. Two flags. Four possible outputs.\nOnly some of them can actually happen. 🧵\n\nPick all that apply, then swipe ➜\n\nThis is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.\n\n#cpp #cplusplus #memorymodel #concurrency #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T06-P6/s-01.png",
     "T06-P6/s-02.png",
-    "T06-P6/s-03.png",
-    "T06-P6/s-04.png"
+    "T06-P6/s-03.png"
    ],
    "pdf": "T06-P6/slides.pdf",
    "rendered": true
@@ -1074,12 +1044,11 @@
    ],
    "post_text": "This ring buffer \"full\" check looks correct. 🔁\n\nPush 4 items into a 4-slot ring. What prints?\nComment your answer, then swipe ➜ to check it.\n\nSingle-threaded on purpose: no races, just index arithmetic. The bug is the same in a lock-free SPSC queue.\n\n#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T09-P1/s-01.png",
     "T09-P1/s-02.png",
-    "T09-P1/s-03.png",
-    "T09-P1/s-04.png"
+    "T09-P1/s-03.png"
    ],
    "pdf": "T09-P1/slides.pdf",
    "rendered": true
@@ -1102,12 +1071,11 @@
    ],
    "post_text": "Why is a ring buffer's capacity almost always a power of two?\n\nThe popular answer is half right.\nComment A, B, C or D, then swipe ➜ for the answer.\n\nBonus points if you know when the compiler already does the trick for you.\n\n#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T09-Q4/s-01.png",
     "T09-Q4/s-02.png",
-    "T09-Q4/s-03.png",
-    "T09-Q4/s-04.png"
+    "T09-Q4/s-03.png"
    ],
    "pdf": "T09-Q4/slides.pdf",
    "rendered": true
@@ -1129,13 +1097,12 @@
     "interviewprep"
    ],
    "post_text": "One alignas(64) on head. Problem solved? 🧱\n\nThree layouts for the two indices of an SPSC queue. Which ones really stop false sharing?\nThink it through, comment your answer, then swipe ➜\n\nx86-64, GCC or Clang. Work out the three sizeofs first: they give the answer away.\n\n#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T09-P13/s-01.png",
     "T09-P13/s-02.png",
-    "T09-P13/s-03.png",
-    "T09-P13/s-04.png"
+    "T09-P13/s-03.png"
    ],
    "pdf": "T09-P13/slides.pdf",
    "rendered": true
@@ -1158,12 +1125,11 @@
    ],
    "post_text": "Your market-data SPSC ring is full. The feed handler has one more message.\n\nWhat do you do?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThere is no free option here. Every choice loses something: the question is what, and who finds out.\n\n#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T09-Q14/s-01.png",
     "T09-Q14/s-02.png",
-    "T09-Q14/s-03.png",
-    "T09-Q14/s-04.png"
+    "T09-Q14/s-03.png"
    ],
    "pdf": "T09-Q14/slides.pdf",
    "rendered": true
@@ -1186,12 +1152,11 @@
    ],
    "post_text": "\"The queue keeps filling up. Just make it 10x bigger.\"\n\nWhy is that usually the wrong fix?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nMemory is cheap. That is not what this question is about.\n\n#cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T09-Q16/s-01.png",
     "T09-Q16/s-02.png",
-    "T09-Q16/s-03.png",
-    "T09-Q16/s-04.png"
+    "T09-Q16/s-03.png"
    ],
    "pdf": "T09-Q16/slides.pdf",
    "rendered": true
@@ -1246,12 +1211,11 @@
    ],
    "post_text": "Three threads, one counter variable, 100 increments each. 🧵\n\nNo mutex, no atomic. What prints?\nComment your answer, then swipe ➜ to check it.\n\nRead every line before you answer.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T10-P1/s-01.png",
     "T10-P1/s-02.png",
-    "T10-P1/s-03.png",
-    "T10-P1/s-04.png"
+    "T10-P1/s-03.png"
    ],
    "pdf": "T10-P1/slides.pdf",
    "rendered": true
@@ -1273,12 +1237,11 @@
    ],
    "post_text": "One std::async per incoming market-data message.\n\nClean, modern C++. Would you ship it in a low-latency hot path?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThink about what each call really costs on Linux, not what the code looks like.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T10-Q8/s-01.png",
     "T10-Q8/s-02.png",
-    "T10-Q8/s-03.png",
-    "T10-Q8/s-04.png"
+    "T10-Q8/s-03.png"
    ],
    "pdf": "T10-Q8/slides.pdf",
    "rendered": true
@@ -1299,13 +1262,12 @@
     "interviewprep"
    ],
    "post_text": "\"Fire and forget\" with std::async. 🚀\n\nThe task sleeps 200 ms. In what order do the three lines print?\nThink it through, comment your answer, then swipe ➜\n\nThe answer is deterministic. GCC even warns about this line.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T10-P2/s-01.png",
     "T10-P2/s-02.png",
-    "T10-P2/s-03.png",
-    "T10-P2/s-04.png"
+    "T10-P2/s-03.png"
    ],
    "pdf": "T10-P2/slides.pdf",
    "rendered": true
@@ -1327,12 +1289,11 @@
    ],
    "post_text": "Three lines of lazy initialization. Many threads call them.\n\nBroken? And does std::atomic<bool> fix it?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe most common answer is only half right.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T10-Q14/s-01.png",
     "T10-Q14/s-02.png",
-    "T10-Q14/s-03.png",
-    "T10-Q14/s-04.png"
+    "T10-Q14/s-03.png"
    ],
    "pdf": "T10-Q14/slides.pdf",
    "rendered": true
@@ -1354,12 +1315,11 @@
    ],
    "post_text": "The producer thread finishes without ever setting the promise. 🤝\n\nDoes main hang forever in get()?\nLock in your answer below, then swipe ➜ to verify.\n\nA classic error-path bug. What the standard library does here is worth knowing by heart.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T10-P4/s-01.png",
     "T10-P4/s-02.png",
-    "T10-P4/s-03.png",
-    "T10-P4/s-04.png"
+    "T10-P4/s-03.png"
    ],
    "pdf": "T10-P4/slides.pdf",
    "rendered": true
@@ -1415,12 +1375,11 @@
    ],
    "post_text": "A \"spinlock\" made from a plain bool.\nMain sleeps 100 ms, sets data = 42, then unlocks. 🤔\n\nWhat does the waiter print?\nComment your answer, then swipe ➜ to check it.\n\nCompiled with g++ -O2. Read it the way the optimizer does.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T07-P4/s-01.png",
     "T07-P4/s-02.png",
-    "T07-P4/s-03.png",
-    "T07-P4/s-04.png"
+    "T07-P4/s-03.png"
    ],
    "pdf": "T07-P4/slides.pdf",
    "rendered": true
@@ -1443,12 +1402,11 @@
    ],
    "post_text": "\"Spinlocks are faster than mutexes.\"\n\nAgree or disagree? Most answers miss the condition that decides it.\nComment A, B, C or D, then swipe ➜ for the answer.\n\nSlide 2 has real measurements: same work, 8 threads vs 80 threads.\n\n#cpp #cplusplus #concurrency #multithreading #performance #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T07-Q3/s-01.png",
     "T07-Q3/s-02.png",
-    "T07-Q3/s-03.png",
-    "T07-Q3/s-04.png"
+    "T07-Q3/s-03.png"
    ],
    "pdf": "T07-Q3/slides.pdf",
    "rendered": true
@@ -1471,12 +1429,11 @@
    ],
    "post_text": "32 threads spin on one line of C++:\nwhile (locked.exchange(true)) {}\n\nWhat is the hardware doing meanwhile? ⚠️\nComment A, B, C or D, then swipe ➜\n\nThe fix is one extra loop. Slide 2 shows it.\n\n#cpp #cplusplus #concurrency #multithreading #performance #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T07-Q5/s-01.png",
     "T07-Q5/s-02.png",
-    "T07-Q5/s-03.png",
-    "T07-Q5/s-04.png"
+    "T07-Q5/s-03.png"
    ],
    "pdf": "T07-Q5/slides.pdf",
    "rendered": true
@@ -1532,12 +1489,11 @@
    ],
    "post_text": "Your ABA-safe stack uses a tagged pointer.\nNo mutex anywhere in the source. 🧐\n\nIs it really lock-free? Three values decide it.\nLock in your answer below, then swipe ➜ to verify.\n\nx86-64, GCC. One of these three values breaks the lock-free claim.\n\n#cpp #cplusplus #lockfree #concurrency #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T08-P9/s-01.png",
     "T08-P9/s-02.png",
-    "T08-P9/s-03.png",
-    "T08-P9/s-04.png"
+    "T08-P9/s-03.png"
    ],
    "pdf": "T08-P9/slides.pdf",
    "rendered": true
@@ -1559,12 +1515,11 @@
    ],
    "post_text": "\"We use only std::atomic, no mutex. So our code is lock-free.\"\n\nA classic interview question. True or false?\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe real answer changes how you talk about lock-free code in interviews.\n\n#cpp #cplusplus #lockfree #concurrency #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T08-Q2/s-01.png",
     "T08-Q2/s-02.png",
-    "T08-Q2/s-03.png",
-    "T08-Q2/s-04.png"
+    "T08-Q2/s-03.png"
    ],
    "pdf": "T08-Q2/slides.pdf",
    "rendered": true
@@ -1586,12 +1541,11 @@
    ],
    "post_text": "Your lock-free pop's CAS succeeded.\nThe stack is still corrupted. 🧩\n\nThis is the ABA problem. Can you explain it?\nComment A, B, C or D, then swipe ➜\n\nSlide 2 walks through the exact interleaving, step by step.\n\n#cpp #cplusplus #lockfree #concurrency #interviewprep",
    "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T08-Q6/s-01.png",
     "T08-Q6/s-02.png",
-    "T08-Q6/s-03.png",
-    "T08-Q6/s-04.png"
+    "T08-Q6/s-03.png"
    ],
    "pdf": "T08-Q6/slides.pdf",
    "rendered": true
@@ -1614,12 +1568,11 @@
    ],
    "post_text": "Lock-free stack vs mutex-protected stack.\nWhich one is faster? 🏁\n\nThe obvious answer is the one interviewers wait to correct.\nComment A, B, C or D, then swipe ➜\n\nSlide 2 has a real measurement.\n\n#cpp #cplusplus #lockfree #concurrency #performance #interviewprep",
    "first_comment": "👉 Pick A, B, C or D below, then swipe right to check your answer.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T08-Q13/s-01.png",
     "T08-Q13/s-02.png",
-    "T08-Q13/s-03.png",
-    "T08-Q13/s-04.png"
+    "T08-Q13/s-03.png"
    ],
    "pdf": "T08-Q13/slides.pdf",
    "rendered": true
@@ -1676,12 +1629,11 @@
    ],
    "post_text": "Main waits for both workers in every round with a std::latch.\nRound 1 prints the right answer. 🤔\n\nWhat about rounds 2 and 3?\nComment your answer, then swipe ➜ to check it.\n\nFind the bug before you swipe. It compiles cleanly with -Wall -Wextra.\n\n#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep",
    "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T11-P1/s-01.png",
     "T11-P1/s-02.png",
-    "T11-P1/s-03.png",
-    "T11-P1/s-04.png"
+    "T11-P1/s-03.png"
    ],
    "pdf": "T11-P1/slides.pdf",
    "rendered": true
@@ -1704,12 +1656,11 @@
    ],
    "post_text": "\"binary_semaphore is just a lighter, faster mutex.\"\n\nWould you swap your std::mutex for one? 🔒\nComment A, B, C or D, then swipe ➜ for the answer.\n\nThe difference is one word, and it decides which tool you reach for.\n\n#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep",
    "first_comment": "Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.",
-   "slide_count": 4,
+   "slide_count": 3,
    "slides": [
     "T11-Q7/s-01.png",
     "T11-Q7/s-02.png",
-    "T11-Q7/s-03.png",
-    "T11-Q7/s-04.png"
+    "T11-Q7/s-03.png"
    ],
    "pdf": "T11-Q7/slides.pdf",
    "rendered": true
@@ -1731,13 +1682,12 @@
     "interviewprep"
    ],
    "post_text": "A std::jthread goes out of scope while its worker is still looping.\n\nWhat prints, and in what order? 🧵\nThink it through, comment your answer, then swipe ➜\n\nSlide 3 shows what changes if you swap jthread for std::thread.\n\n#cpp #cplusplus #cpp20 #concurrency #multithreading #interviewprep",
-   "first_comment": "The answer is on page 3 ➜ Comment your answer first, then compare.",
-   "slide_count": 4,
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 3,
    "slides": [
     "T11-P6/s-01.png",
     "T11-P6/s-02.png",
-    "T11-P6/s-03.png",
-    "T11-P6/s-04.png"
+    "T11-P6/s-03.png"
    ],
    "pdf": "T11-P6/slides.pdf",
    "rendered": true

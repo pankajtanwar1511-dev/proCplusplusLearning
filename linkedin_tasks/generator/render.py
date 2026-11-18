@@ -9,8 +9,8 @@ Each spec file holds one post (or a list of posts). Per post the renderer writes
   <out_dir>/<id>/s-NN.png        1080x1080 PNG per slide (preview / review)
 
 Pages are square: in the LinkedIn mobile feed a square page shows nearly full width
-with only a sliver of the next page. Q&A posts get an automatic "Lock in your
-answer" pause page as page 2, so that sliver never reveals the answer.
+with only a sliver (~10%) of the next page, which falls inside the 72px margin and
+never reveals the answer. (An optional pause page exists: AUTO_PAUSE_PAGE.)
   <out_dir>/<id>/post.txt        post text + first comment, ready to paste
 and <out_dir>/render_report.json with fit results. Any slide that still
 overflows after auto-fit is reported as an error (exit code 1).
@@ -237,10 +237,16 @@ LAYOUTS = {
 }
 
 
+# Square pages show only ~10% of the next page in the mobile feed (inside our 72px
+# margin), which never reveals the answer, so the automatic pause page is off.
+# Set to True to insert a "Lock in your answer" page 2 into every Q&A post.
+AUTO_PAUSE_PAGE = False
+
+
 def with_pause_page(post):
-    """Q&A posts get the pause page inserted as page 2 (specs stay unchanged)."""
+    """Q&A posts get the pause page inserted as page 2 when AUTO_PAUSE_PAGE is on."""
     slides = post["slides"]
-    if post.get("type") == "theory" or any(s["layout"] == "pause" for s in slides):
+    if not AUTO_PAUSE_PAGE or post.get("type") == "theory" or any(s["layout"] == "pause" for s in slides):
         return slides
     return [slides[0], {"layout": "pause", "cta": "Swipe for the answer ➜"}] + slides[1:]
 

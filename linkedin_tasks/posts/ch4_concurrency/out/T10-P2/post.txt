@@ -9,4 +9,4 @@ The answer is deterministic. GCC even warns about this line.
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-The answer is on page 3 ➜ Comment your answer first, then compare.
+The answer is on the next page ➜ Comment your answer first, then compare.

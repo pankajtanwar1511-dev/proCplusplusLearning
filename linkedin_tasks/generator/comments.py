@@ -9,7 +9,7 @@ import zlib
 TEMPLATES = {
     "code_puzzle": [
         "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
-        "The answer is on page 3 ➜ Comment your answer first, then compare.",
+        "The answer is on the next page ➜ Comment your answer first, then compare.",
         "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
     ],
     "concept": [
