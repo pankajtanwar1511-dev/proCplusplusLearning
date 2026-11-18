@@ -73,3 +73,6 @@ ChatGPT_export_*/
 ChatGPT_export_*.zip
 data_interview/raw/
 data_interview/topics/
+
+# Dated local prompt notes (reminders for Claude sessions): never commit
+*_check_prompt.md
