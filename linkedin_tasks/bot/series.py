@@ -130,6 +130,8 @@ def build_view(cfg=None, posted=None, now=None):
     for i, p in enumerate(seq, 1):
         item = {k: v for k, v in p.items()}
         item["seq"] = i
+        pdf = ROOT / p["chapter"] / "out" / p["id"] / "slides.pdf"
+        item["rendered_at"] = int(pdf.stat().st_mtime) if pdf.exists() else 0   # cache-busting stamp
         if p["id"] in posted:
             item["status"] = "posted"
             item.update({"posted_at": posted[p["id"]]["posted_at"], "post_url": posted[p["id"]].get("url"),

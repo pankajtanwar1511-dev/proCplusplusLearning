@@ -37,7 +37,7 @@ const CopyButton = ({ text, label }) => {
   );
 };
 
-const Carousel = ({ chapter, slides }) => {
+const Carousel = ({ chapter, slides, v }) => {
   const ref = useRef(null);
   const [idx, setIdx] = useState(0);
   const go = (d) => ref.current && ref.current.scrollBy({ left: d * ref.current.clientWidth, behavior: 'smooth' });
@@ -48,7 +48,7 @@ const Carousel = ({ chapter, slides }) => {
         onScroll={(e) => setIdx(Math.round(e.target.scrollLeft / e.target.clientWidth))}>
         {slides.map((s) => (
           <div className="lq-slide" key={s}>
-            <img src={`${API_BASE}/linkedin/file/${chapter}/${s}`} alt="" loading="lazy" />
+            <img src={`${API_BASE}/linkedin/file/${chapter}/${s}?v=${v}`} alt="" loading="lazy" />
           </div>
         ))}
       </div>
@@ -88,7 +88,7 @@ const PostCard = ({ p, tz }) => {
         </div>
       </header>
       <div className="lq-grid">
-        <Carousel chapter={p.chapter_name} slides={p.slides} />
+        <Carousel chapter={p.chapter_name} slides={p.slides} v={p.rendered_at} />
         <div className="lq-text">
           <div className="lq-label">Post text <small>({p.post_text.length} chars)</small></div>
           <div className="lq-postbody">
@@ -101,7 +101,7 @@ const PostCard = ({ p, tz }) => {
           <div className="lq-actions">
             <CopyButton text={p.post_text} label="Copy post" />
             <CopyButton text={p.first_comment} label="Copy comment" />
-            <a className="lq-btn" href={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.pdf}`} download={`${p.id}.pdf`}>
+            <a className="lq-btn" href={`${API_BASE}/linkedin/file/${p.chapter_name}/${p.pdf}?v=${p.rendered_at}`} download={`${p.id}.pdf`}>
               <Download size={15} /> PDF ({p.slide_count} slides)
             </a>
           </div>
