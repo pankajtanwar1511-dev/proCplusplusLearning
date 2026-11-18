@@ -1,6 +1,6 @@
 {
   "_help": "Edit this file to control the LinkedIn series. chapters: posted in this order (paths relative to linkedin_tasks/). paused: true stops posting. skip: post ids never to post. slots: posting times in 'timezone'. start_date: first day posts may go out. token_expires_on: set when you renew the LinkedIn token (generated date + 60 days).",
-  "paused": false,
+  "paused": true,
   "chapters": [
     "posts/ch4_concurrency"
   ],
