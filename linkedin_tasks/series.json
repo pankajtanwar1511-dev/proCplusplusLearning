@@ -6,8 +6,8 @@
   ],
   "timezone": "Asia/Kolkata",
   "slots": [
-    "09:00",
-    "21:00"
+    "08:30",
+    "20:00"
   ],
   "start_date": "2026-11-17",
   "min_gap_hours": 4,

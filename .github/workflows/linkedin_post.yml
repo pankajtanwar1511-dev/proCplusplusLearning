@@ -9,10 +9,10 @@ on:
   schedule:
     # Several tries per slot: GitHub can start scheduled runs late (even hours).
     # The bot posts once per slot and only within series.json "window_minutes".
-    - cron: '30 3 * * *'    # 09:00 IST
-    - cron: '0,30 4 * * *'  # 09:30, 10:00 IST
-    - cron: '30 15 * * *'   # 21:00 IST
-    - cron: '0,30 16 * * *' # 21:30, 22:00 IST
+    - cron: '0,30 3 * * *'   # 08:30, 09:00 IST
+    - cron: '0 4 * * *'      # 09:30 IST
+    - cron: '30 14 * * *'    # 20:00 IST
+    - cron: '0,30 15 * * *'  # 20:30, 21:00 IST
   workflow_dispatch:
     inputs:
       mode:
