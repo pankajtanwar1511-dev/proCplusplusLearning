@@ -93,6 +93,43 @@ class LinkedInClient:
         log.info("Uploaded %s (%d KB) as %s", Path(pdf_path).name, len(data) // 1024, value["document"])
         return value["document"]
 
+    def upload_video(self, mp4_path, wait_secs=600):
+        """Videos API: initialize, PUT each part (collect ETags), finalize, then wait until
+        LinkedIn has processed the video (status AVAILABLE) so the post shows it."""
+        data = Path(mp4_path).read_bytes()
+        init = self._request("POST", f"{REST}/videos?action=initializeUpload", headers=self._headers(),
+                             json={"initializeUploadRequest": {"owner": self.author, "fileSizeBytes": len(data),
+                                                               "uploadCaptions": False, "uploadThumbnail": False}})
+        if init.status_code != 200:
+            raise RuntimeError(f"Video init failed: {init.status_code} {init.text[:300]}")
+        v = init.json()["value"]
+        etags = []
+        for part in v["uploadInstructions"]:
+            chunk = data[part["firstByte"]:part["lastByte"] + 1]
+            up = self._request("PUT", part["uploadUrl"], timeout=300, data=chunk,
+                               headers={"Content-Type": "application/octet-stream"})
+            if up.status_code not in (200, 201):
+                raise RuntimeError(f"Video part upload failed: {up.status_code} {up.text[:300]}")
+            etags.append(up.headers.get("etag") or up.headers.get("ETag"))
+        fin = self._request("POST", f"{REST}/videos?action=finalizeUpload", headers=self._headers(),
+                            json={"finalizeUploadRequest": {"video": v["video"], "uploadToken": v.get("uploadToken", ""),
+                                                            "uploadedPartIds": etags}})
+        if fin.status_code not in (200, 201):
+            raise RuntimeError(f"Video finalize failed: {fin.status_code} {fin.text[:300]}")
+        log.info("Uploaded %s (%d KB) as %s; waiting for processing", Path(mp4_path).name, len(data) // 1024, v["video"])
+        deadline = time.time() + wait_secs
+        while time.time() < deadline:
+            st = self._request("GET", f"{REST}/videos/{quote(v['video'], safe='')}", headers=self._headers(False))
+            status = st.json().get("status") if st.status_code == 200 else f"HTTP {st.status_code}"
+            if status == "AVAILABLE":
+                log.info("Video processed")
+                return v["video"]
+            if status in ("PROCESSING_FAILED",):
+                raise RuntimeError(f"LinkedIn could not process the video: {st.text[:300]}")
+            time.sleep(10)
+        log.warning("Video still processing after %ss; posting anyway", wait_secs)
+        return v["video"]
+
     def create_document_post(self, commentary, document_urn, title):
         body = {
             "author": self.author, "commentary": commentary, "visibility": "PUBLIC",

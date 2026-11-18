@@ -137,9 +137,10 @@ def main():
             return 0
 
     chapter_dir = series.ROOT / post["chapter"] / "out" / post["id"]
-    pdf = chapter_dir / "slides.pdf"
+    is_video = post.get("format") == "video"
+    pdf = chapter_dir / ("video.mp4" if is_video else "slides.pdf")
     if not pdf.exists():
-        log.error("Missing %s: run generator/render.py", pdf)
+        log.error("Missing %s: run generator/%s", pdf, "render_video.py" if is_video else "render.py")
         return 1
     text, comment, title = post["post_text"], post["first_comment"], document_title(post)
     log.info("Next: %s (%s, %s), %d slides, %d chars", post["id"], post["type"], post["topic_short"],
@@ -154,7 +155,7 @@ def main():
             log.error("Token problem: %s", e)
             gh_output(token_error="true")
             return 1
-        print(f"\n--- DRY RUN: would post {post['id']} ---\nTitle: {title}\nPDF: {pdf}\n\n{text}\n\n"
+        print(f"\n--- DRY RUN: would post {post['id']} ({'video' if is_video else 'carousel'}) ---\nTitle: {title}\nFile: {pdf}\n\n{text}\n\n"
               f"--- first comment ---\n{comment}\n")
         return 0
 
@@ -169,8 +170,8 @@ def main():
             log.error("Token problem: %s", e)
             gh_output(token_error="true")
             return 1
-        doc = client.upload_document(pdf)
-        urn = client.create_document_post(text, doc, title)
+        media = client.upload_video(pdf) if is_video else client.upload_document(pdf)
+        urn = client.create_document_post(text, media, title)
 
     # Record the post BEFORE the comment: a comment failure must never cause a re-post.
     from linkedin_client import post_url

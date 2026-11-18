@@ -46,7 +46,8 @@
     "T02-TH/s-10.png"
    ],
    "pdf": "T02-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T02-P2",
@@ -72,7 +73,8 @@
     "T02-P2/s-03.png"
    ],
    "pdf": "T02-P2/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T02-Q7",
@@ -80,7 +82,7 @@
    "topic_no": 2,
    "topic_short": "Data Races",
    "source": "topic_02 qa Q7",
-   "hook": "\"Data race\" and \"race condition\" are not synonyms.\nCan you explain the difference in one sentence?\n\nComment A, B, C or D, then swipe ➜ for the answer.",
+   "hook": "⏱ 30-second C++ challenge.\n\"Data race\" vs \"race condition\": can you tell them apart before the timer ends?\n\nComment your letter. The answer appears at 0:36.",
    "body": "A classic opener in C++ concurrency interviews. The precise answer is short.",
    "hashtags": [
     "cpp",
@@ -89,8 +91,8 @@
     "multithreading",
     "interviewprep"
    ],
-   "post_text": "\"Data race\" and \"race condition\" are not synonyms.\nCan you explain the difference in one sentence?\n\nComment A, B, C or D, then swipe ➜ for the answer.\n\nA classic opener in C++ concurrency interviews. The precise answer is short.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
-   "first_comment": "Which option did you pick? Reply with the letter, then swipe right for the answer ➜",
+   "post_text": "⏱ 30-second C++ challenge.\n\"Data race\" vs \"race condition\": can you tell them apart before the timer ends?\n\nComment your letter. The answer appears at 0:36.\n\nA classic opener in C++ concurrency interviews. The precise answer is short.\n\n#cpp #cplusplus #concurrency #multithreading #interviewprep",
+   "first_comment": "What was your answer when time ran out? Reply with the letter 👇",
    "slide_count": 3,
    "slides": [
     "T02-Q7/s-01.png",
@@ -98,7 +100,9 @@
     "T02-Q7/s-03.png"
    ],
    "pdf": "T02-Q7/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "video",
+   "video": "T02-Q7/video.mp4"
   },
   {
    "id": "T02-P10",
@@ -124,7 +128,8 @@
     "T02-P10/s-03.png"
    ],
    "pdf": "T02-P10/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T02-Q12",
@@ -150,7 +155,8 @@
     "T02-Q12/s-03.png"
    ],
    "pdf": "T02-Q12/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T02-P9",
@@ -176,7 +182,8 @@
     "T02-P9/s-03.png"
    ],
    "pdf": "T02-P9/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-TH",
@@ -209,7 +216,8 @@
     "T01-TH/s-10.png"
    ],
    "pdf": "T01-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-P1",
@@ -235,7 +243,8 @@
     "T01-P1/s-03.png"
    ],
    "pdf": "T01-P1/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-Q12",
@@ -261,7 +270,8 @@
     "T01-Q12/s-03.png"
    ],
    "pdf": "T01-Q12/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-P3",
@@ -287,7 +297,8 @@
     "T01-P3/s-03.png"
    ],
    "pdf": "T01-P3/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-Q16",
@@ -313,7 +324,8 @@
     "T01-Q16/s-03.png"
    ],
    "pdf": "T01-Q16/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T01-P10",
@@ -339,7 +351,8 @@
     "T01-P10/s-03.png"
    ],
    "pdf": "T01-P10/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-TH",
@@ -372,7 +385,8 @@
     "T03-TH/s-10.png"
    ],
    "pdf": "T03-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-P1",
@@ -398,7 +412,8 @@
     "T03-P1/s-03.png"
    ],
    "pdf": "T03-P1/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-Q7",
@@ -424,7 +439,8 @@
     "T03-Q7/s-03.png"
    ],
    "pdf": "T03-Q7/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-P9",
@@ -450,7 +466,8 @@
     "T03-P9/s-03.png"
    ],
    "pdf": "T03-P9/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-Q15",
@@ -476,7 +493,8 @@
     "T03-Q15/s-03.png"
    ],
    "pdf": "T03-Q15/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T03-Q21",
@@ -502,7 +520,8 @@
     "T03-Q21/s-03.png"
    ],
    "pdf": "T03-Q21/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-TH",
@@ -535,7 +554,8 @@
     "T04-TH/s-10.png"
    ],
    "pdf": "T04-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-P2",
@@ -561,7 +581,8 @@
     "T04-P2/s-03.png"
    ],
    "pdf": "T04-P2/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-Q9",
@@ -587,7 +608,8 @@
     "T04-Q9/s-03.png"
    ],
    "pdf": "T04-Q9/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-P10",
@@ -613,7 +635,8 @@
     "T04-P10/s-03.png"
    ],
    "pdf": "T04-P10/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-Q11",
@@ -639,7 +662,8 @@
     "T04-Q11/s-03.png"
    ],
    "pdf": "T04-Q11/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T04-Q13",
@@ -665,7 +689,8 @@
     "T04-Q13/s-03.png"
    ],
    "pdf": "T04-Q13/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-TH",
@@ -698,7 +723,8 @@
     "T05-TH/s-10.png"
    ],
    "pdf": "T05-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-P3",
@@ -724,7 +750,8 @@
     "T05-P3/s-03.png"
    ],
    "pdf": "T05-P3/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-Q6",
@@ -750,7 +777,8 @@
     "T05-Q6/s-03.png"
    ],
    "pdf": "T05-Q6/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-P4",
@@ -776,7 +804,8 @@
     "T05-P4/s-03.png"
    ],
    "pdf": "T05-P4/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-Q17",
@@ -802,7 +831,8 @@
     "T05-Q17/s-03.png"
    ],
    "pdf": "T05-Q17/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T05-P9",
@@ -828,7 +858,8 @@
     "T05-P9/s-03.png"
    ],
    "pdf": "T05-P9/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-TH",
@@ -860,7 +891,8 @@
     "T06-TH/s-09.png"
    ],
    "pdf": "T06-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-P2",
@@ -886,7 +918,8 @@
     "T06-P2/s-03.png"
    ],
    "pdf": "T06-P2/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-Q11",
@@ -912,7 +945,8 @@
     "T06-Q11/s-03.png"
    ],
    "pdf": "T06-Q11/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-P5",
@@ -938,7 +972,8 @@
     "T06-P5/s-03.png"
    ],
    "pdf": "T06-P5/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-Q14",
@@ -964,7 +999,8 @@
     "T06-Q14/s-03.png"
    ],
    "pdf": "T06-Q14/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T06-P6",
@@ -990,7 +1026,8 @@
     "T06-P6/s-03.png"
    ],
    "pdf": "T06-P6/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-TH",
@@ -1024,7 +1061,8 @@
     "T09-TH/s-10.png"
    ],
    "pdf": "T09-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-P1",
@@ -1051,7 +1089,8 @@
     "T09-P1/s-03.png"
    ],
    "pdf": "T09-P1/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-Q4",
@@ -1078,7 +1117,8 @@
     "T09-Q4/s-03.png"
    ],
    "pdf": "T09-Q4/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-P13",
@@ -1105,7 +1145,8 @@
     "T09-P13/s-03.png"
    ],
    "pdf": "T09-P13/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-Q14",
@@ -1132,7 +1173,8 @@
     "T09-Q14/s-03.png"
    ],
    "pdf": "T09-Q14/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T09-Q16",
@@ -1159,7 +1201,8 @@
     "T09-Q16/s-03.png"
    ],
    "pdf": "T09-Q16/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-TH",
@@ -1192,7 +1235,8 @@
     "T10-TH/s-10.png"
    ],
    "pdf": "T10-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-P1",
@@ -1218,7 +1262,8 @@
     "T10-P1/s-03.png"
    ],
    "pdf": "T10-P1/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-Q8",
@@ -1244,7 +1289,8 @@
     "T10-Q8/s-03.png"
    ],
    "pdf": "T10-Q8/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-P2",
@@ -1270,7 +1316,8 @@
     "T10-P2/s-03.png"
    ],
    "pdf": "T10-P2/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-Q14",
@@ -1296,7 +1343,8 @@
     "T10-Q14/s-03.png"
    ],
    "pdf": "T10-Q14/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T10-P4",
@@ -1322,7 +1370,8 @@
     "T10-P4/s-03.png"
    ],
    "pdf": "T10-P4/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T07-TH",
@@ -1356,7 +1405,8 @@
     "T07-TH/s-10.png"
    ],
    "pdf": "T07-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T07-P4",
@@ -1382,7 +1432,8 @@
     "T07-P4/s-03.png"
    ],
    "pdf": "T07-P4/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T07-Q3",
@@ -1409,7 +1460,8 @@
     "T07-Q3/s-03.png"
    ],
    "pdf": "T07-Q3/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T07-Q5",
@@ -1436,7 +1488,8 @@
     "T07-Q5/s-03.png"
    ],
    "pdf": "T07-Q5/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T08-TH",
@@ -1470,7 +1523,8 @@
     "T08-TH/s-10.png"
    ],
    "pdf": "T08-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T08-P9",
@@ -1496,7 +1550,8 @@
     "T08-P9/s-03.png"
    ],
    "pdf": "T08-P9/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T08-Q2",
@@ -1522,7 +1577,8 @@
     "T08-Q2/s-03.png"
    ],
    "pdf": "T08-Q2/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T08-Q6",
@@ -1548,7 +1604,8 @@
     "T08-Q6/s-03.png"
    ],
    "pdf": "T08-Q6/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T08-Q13",
@@ -1575,7 +1632,8 @@
     "T08-Q13/s-03.png"
    ],
    "pdf": "T08-Q13/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T11-TH",
@@ -1609,7 +1667,8 @@
     "T11-TH/s-10.png"
    ],
    "pdf": "T11-TH/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T11-P1",
@@ -1636,7 +1695,8 @@
     "T11-P1/s-03.png"
    ],
    "pdf": "T11-P1/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T11-Q7",
@@ -1663,7 +1723,8 @@
     "T11-Q7/s-03.png"
    ],
    "pdf": "T11-Q7/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   },
   {
    "id": "T11-P6",
@@ -1690,7 +1751,8 @@
     "T11-P6/s-03.png"
    ],
    "pdf": "T11-P6/slides.pdf",
-   "rendered": true
+   "rendered": true,
+   "format": "carousel"
   }
  ]
 }

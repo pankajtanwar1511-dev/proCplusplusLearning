@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).parent))
 import render  # noqa: E402
 
-W, H = 1080, 1350
+W, H = render.PAGE_W, render.PAGE_H
 BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 AMBER, BLUE, SLATE, BG = (245, 158, 11), (147, 197, 253), (148, 163, 184), (15, 23, 42)
@@ -48,7 +48,7 @@ def words(slide):
 def duration(slide, first):
     n, code = words(slide)
     secs = n / 3.5 + code * 0.6 + 1          # ~3.5 words/s skim-reading on a phone, + code scanning
-    lo, hi = (8, 15) if first else (6, 14)   # the question also gets thinking time
+    lo, hi = (8, 15) if first else (6, 18)   # the question also gets thinking time
     return int(max(lo, min(hi, math.ceil(secs))))
 
 
@@ -74,7 +74,7 @@ def slide_pngs(post, tmp):
 
 
 def overlay(base, left, total, label):
-    """Top-right, one horizontal row:  [pause icon] Tap to pause   [ Answer in 9s ]"""
+    """Top-right timer pill  [ Answer in 9s ]  plus a thin progress bar on the top edge."""
     im = base.copy()
     d = ImageDraw.Draw(im)
     # progress bar across the top edge (time elapsed on this slide)
@@ -91,17 +91,68 @@ def overlay(base, left, total, label):
     cy = (y1 + y2) // 2
     d.text((x1 + 24, cy), label, font=lab_f, fill=BLUE, anchor="lm")
     d.text((x1 + 24 + lw, cy), num, font=num_f, fill=(255, 255, 255), anchor="lm")
-    # "Tap to pause" with a pause icon, same line, left of the pill
-    hint = "Tap to pause"
-    hw = d.textlength(hint, font=hint_f)
-    hx = x1 - 28 - hw
-    d.text((hx, cy), hint, font=hint_f, fill=SLATE, anchor="lm")
-    d.rectangle([hx - 36, cy - 13, hx - 28, cy + 13], fill=SLATE)
-    d.rectangle([hx - 22, cy - 13, hx - 14, cy + 13], fill=SLATE)
     return im
 
 
-def render_video(post, out_dir):
+def intro_card(topic, secs_label):
+    """Title card: '30-SECOND CHALLENGE' + topic, shown before the question."""
+    im = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(im)
+    f_k, f_h, f_t = ImageFont.truetype(BOLD, 34), ImageFont.truetype(BOLD, 96), ImageFont.truetype(BOLD, 52)
+    cx = W // 2
+    d.text((cx, H * 0.30), "C++ INTERVIEW", font=f_k, fill=BLUE, anchor="mm")
+    d.text((cx, H * 0.43), secs_label, font=f_h, fill=AMBER, anchor="mm")
+    d.text((cx, H * 0.53), "CHALLENGE", font=f_h, fill=(255, 255, 255), anchor="mm")
+    d.rounded_rectangle([cx - 330, H * 0.63, cx + 330, H * 0.63 + 90], radius=45, outline=BLUE, width=3)
+    d.text((cx, H * 0.63 + 45), topic, font=f_t, fill=BLUE, anchor="mm")
+    d.text((cx, H * 0.80), "Can you answer before the timer ends?", font=ImageFont.truetype(REG, 36),
+           fill=SLATE, anchor="mm")
+    return im
+
+
+def end_card():
+    """Closing card: the follow call to action."""
+    im = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(im)
+    cx = W // 2
+    d.text((cx, H * 0.36), "Got it right?", font=ImageFont.truetype(BOLD, 64), fill=(255, 255, 255), anchor="mm")
+    d.text((cx, H * 0.48), "Follow for a daily", font=ImageFont.truetype(BOLD, 72), fill=AMBER, anchor="mm")
+    d.text((cx, H * 0.57), "C++ challenge", font=ImageFont.truetype(BOLD, 72), fill=AMBER, anchor="mm")
+    d.text((cx, H * 0.70), "Comment your letter below", font=ImageFont.truetype(REG, 38), fill=BLUE, anchor="mm")
+    d.text((cx, H * 0.88), "C++ Interview Prep", font=ImageFont.truetype(BOLD, 30), fill=SLATE, anchor="mm")
+    return im
+
+
+def times_up_card():
+    """Between question and answer: time's up + follow call to action (gets an 'Answer in' timer)."""
+    im = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(im)
+    cx = W // 2
+    d.text((cx, H * 0.33), "Time's up!", font=ImageFont.truetype(BOLD, 96), fill=(255, 255, 255), anchor="mm")
+    d.text((cx, H * 0.46), "Lock in your answer", font=ImageFont.truetype(REG, 44), fill=BLUE, anchor="mm")
+    d.rounded_rectangle([cx - 400, H * 0.57, cx + 400, H * 0.57 + 190], radius=30, outline=AMBER, width=4)
+    d.text((cx, H * 0.57 + 62), "Follow for a daily", font=ImageFont.truetype(BOLD, 58), fill=AMBER, anchor="mm")
+    d.text((cx, H * 0.57 + 132), "C++ challenge", font=ImageFont.truetype(BOLD, 58), fill=AMBER, anchor="mm")
+    d.text((cx, H * 0.88), "C++ Interview Prep", font=ImageFont.truetype(BOLD, 30), fill=SLATE, anchor="mm")
+    return im
+
+
+def merged_answer(post):
+    """One reveal slide: verdict + 2 key bullets + one line per wrong option."""
+    ans = copy.deepcopy(post["slides"][1])
+    why = next((s for s in post["slides"] if s["layout"] == "wrong_options"), None)
+    bullets = ans.get("bullets", [])[:2]
+    if why:
+        bullets += ["❌ " + re.split(r"(?<=\.)\s", it, maxsplit=1)[0] for it in why["items"]]
+    ans["bullets"] = bullets
+    ans.pop("wrong", None)
+    ans.pop("cta", None)
+    return ans
+
+
+def render_video(post, out_dir, question_secs=None, intro_secs=0, merge=False, outro_secs=0, gap_secs=0):
+    if merge:
+        post = {**post, "slides": [post["slides"][0], merged_answer(post)]}
     d = Path(out_dir) / post["id"]
     frames_dir = d / "video_frames"
     shutil.rmtree(frames_dir, ignore_errors=True)
@@ -110,16 +161,40 @@ def render_video(post, out_dir):
         pngs = slide_pngs(post, tmp)
         lst, plan, k = [], [], 0
         n = len(pngs)
+        if intro_secs:
+            card = intro_card(post.get("topic_short", "C++"), f"{question_secs or 30}-SECOND")
+            for _ in range(intro_secs):
+                f = frames_dir / f"f{k:04d}.png"
+                card.save(f)
+                lst.append(f)
+                k += 1
+            plan.append(intro_secs)
         for i, (png, slide) in enumerate(zip(pngs, post["slides"])):
             base = Image.open(png).convert("RGB").crop((0, 0, W, H))
-            secs = duration(slide, i == 0)
+            secs = question_secs if (i == 0 and question_secs) else duration(slide, i == 0)
             plan.append(secs)
-            label = "Answer in" if i == 0 else ("Next in" if i < n - 1 else "")
+            label = ("Time left" if gap_secs else "Answer in") if i == 0 else ("Next in" if i < n - 1 else "")
             for t in range(secs):
                 f = frames_dir / f"f{k:04d}.png"
                 overlay(base, secs - t, secs, label).save(f)
                 lst.append(f)
                 k += 1
+            if i == 0 and gap_secs:
+                card = times_up_card()
+                for t in range(gap_secs):
+                    f = frames_dir / f"f{k:04d}.png"
+                    overlay(card, gap_secs - t, gap_secs, "Answer in").save(f)
+                    lst.append(f)
+                    k += 1
+                plan.append(gap_secs)
+    if outro_secs:
+        card = end_card()
+        for _ in range(outro_secs):
+            f = frames_dir / f"f{k:04d}.png"
+            card.save(f)
+            lst.append(f)
+            k += 1
+        plan.append(outro_secs)
     listing = d / "video_frames" / "list.txt"
     listing.write_text("".join(f"file '{f}'\nduration 1\n" for f in lst) + f"file '{lst[-1]}'\n")
     mp4 = d / "video.mp4"
@@ -130,10 +205,26 @@ def render_video(post, out_dir):
 
 
 def main():
-    specs, out, ids = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3:]
+    args = sys.argv[1:]
+    challenge = None
+    merge = "--merge" in args
+    if merge:
+        args.remove("--merge")
+    gap = "--gap" in args                         # 3 s "Time's up / follow" card before the answer
+    if gap:
+        args.remove("--gap")
+    outro = "--outro" in args or merge          # 3 s "follow" end card
+    if "--outro" in args:
+        args.remove("--outro")
+    if "--challenge" in args:                     # --challenge 30: title card + 30 s question timer
+        i = args.index("--challenge")
+        challenge = int(args[i + 1])
+        del args[i:i + 2]
+    specs, out, ids = Path(args[0]), Path(args[1]).resolve(), args[2:]   # ffmpeg concat needs absolute paths
     posts = {p["id"]: p for p in render.load_specs(specs)}
     for pid in ids:
-        mp4, plan = render_video(posts[pid], out)
+        mp4, plan = render_video(posts[pid], out, question_secs=challenge, intro_secs=3 if challenge else 0,
+                                 merge=merge, outro_secs=3 if outro else 0, gap_secs=3 if gap else 0)
         print(f"{pid}: {sum(plan)} s  slides {plan}  -> {mp4}")
 
 

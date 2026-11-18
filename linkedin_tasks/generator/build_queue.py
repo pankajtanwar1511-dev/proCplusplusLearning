@@ -72,7 +72,9 @@ def main():
         p = specs[pid]
         out = base / "out" / pid
         pngs = sorted(x.name for x in out.glob("s-*.png"))
-        t = {k: (plain(v) if isinstance(v, str) else v) for k, v in p["text"].items()}
+        is_video = p.get("format") == "video"
+        src_text = {**p["text"], **p.get("video_text", {})} if is_video else p["text"]
+        t = {k: (plain(v) if isinstance(v, str) else v) for k, v in src_text.items()}
         full = t["hook"].rstrip() + "\n\n" + t.get("body", "").strip()
         full = full.rstrip() + "\n\n" + " ".join("#" + h for h in t.get("hashtags", []))
         posts.append({
@@ -81,6 +83,8 @@ def main():
             "hashtags": t.get("hashtags", []), "post_text": full, "first_comment": first_comment(p),
             "slide_count": len(with_pause_page(p)), "slides": [f"{pid}/{n}" for n in pngs],
             "pdf": f"{pid}/slides.pdf", "rendered": len(pngs) == len(with_pause_page(p)),
+            "format": p.get("format", "carousel"),
+            **({"video": f"{pid}/video.mp4"} if is_video else {}),
             **({"skip": True} if p.get("skip") else {}),
         })
 

@@ -25,6 +25,14 @@ TEMPLATES = {
 }
 
 
+TEMPLATES["video"] = [
+    "Which letter did you pick before the timer ran out? 👇",
+    "Did you beat the 30-second timer? Comment your letter 👇",
+    "What was your answer when time ran out? Reply with the letter 👇",
+]
+
+
 def first_comment(post):
-    options = TEMPLATES.get(post["type"], TEMPLATES["concept"])
+    kind = "video" if post.get("format") == "video" else post["type"]
+    options = TEMPLATES.get(kind, TEMPLATES["concept"])
     return options[zlib.crc32(post["id"].encode()) % len(options)]

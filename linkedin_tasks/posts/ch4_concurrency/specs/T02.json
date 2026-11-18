@@ -272,7 +272,12 @@
         ],
         "takeaway": "Senior answer: \"Data-race-free is the minimum bar for a defined program. Race-condition-free is the bar for a correct one.\""
       }
-    ]
+    ],
+    "format": "video",
+    "video_text": {
+      "hook": "⏱ 30-second C++ challenge.\n\"Data race\" vs \"race condition\": can you tell them apart before the timer ends?\n\nComment your letter. The answer appears at 0:36.",
+      "body": "A classic opener in C++ concurrency interviews. The precise answer is short."
+    }
   },
   {
     "id": "T02-P10",
