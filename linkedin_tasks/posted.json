@@ -22,5 +22,14 @@
   "chapter": "posts/ch4_concurrency",
   "comment_ok": true,
   "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/44231303418"
+ },
+ "T02-P10": {
+  "posted_at": "2026-11-19T13:30:45+09:00",
+  "post_urn": "urn:li:ugcPost:7529038431163678720",
+  "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7529038431163678720/",
+  "chapter": "posts/ch4_concurrency",
+  "comment_ok": true,
+  "for_slot": null,
+  "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/44458795789"
  }
 }
