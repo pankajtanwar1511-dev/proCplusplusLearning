@@ -10,9 +10,9 @@
     "20:00"
   ],
   "start_date": "2026-11-17",
-  "min_gap_hours": 4,
+  "min_gap_hours": 3,
   "low_buffer_days": 7,
   "skip": [],
   "token_expires_on": "2027-01-16",
-  "window_minutes": 120
+  "last_post_time": "23:30"
 }

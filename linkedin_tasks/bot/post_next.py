@@ -118,17 +118,25 @@ def main():
     if cfg.get("start_date") and now.date() < date.fromisoformat(cfg["start_date"]) and not (a.force or a.id):
         log.info("Series starts on %s. Not posting yet.", cfg["start_date"])
         return 0
-    # Scheduled runs (GitHub cron, often late) may post only inside a slot's window,
-    # once per slot. Manual runs (workflow_dispatch / local) skip this check.
+    # Scheduled runs: GitHub cron is often late (even hours) or drops runs, so the
+    # workflow tries every hour and the bot CATCHES UP: it posts whenever today has
+    # fewer posts than slots already due today, as long as it is before
+    # "last_post_time" (IST) and min_gap_hours have passed. Two slots = two posts a day.
+    # Manual runs (workflow_dispatch / local) skip this check.
     if os.getenv("GITHUB_EVENT_NAME") == "schedule" and not (a.force or a.id):
-        slot = series.current_slot(cfg, now)
-        if slot is None or now - slot > timedelta(minutes=cfg["window_minutes"]):
-            log.info("Outside posting window (slot %s, now %s). Skipping.", slot and slot.strftime("%H:%M"),
-                     now.strftime("%H:%M"))
+        z = series.tz(cfg)
+        today = now.astimezone(z).date()
+        due = sum(1 for sl in cfg["slots"] if now.astimezone(z).strftime("%H:%M") >= sl)
+        done = sum(1 for v in posted.values()
+                   if datetime.fromisoformat(v["posted_at"]).astimezone(z).date() == today)
+        if done >= due:
+            log.info("Today: %d slot(s) due, %d posted. Nothing to do.", due, done)
             return 0
-        if s["last_posted_at"] and datetime.fromisoformat(s["last_posted_at"]) >= slot - timedelta(minutes=30):
-            log.info("Slot %s already has a post. Skipping.", slot.strftime("%d %b %H:%M"))
+        if now.astimezone(z).strftime("%H:%M") >= cfg["last_post_time"]:
+            log.warning("Today: %d slot(s) due, %d posted, but it is past %s IST. Not posting at night.",
+                        due, done, cfg["last_post_time"])
             return 0
+        log.info("Today: %d slot(s) due, %d posted. Posting (catch-up allowed).", due, done)
     if s["last_posted_at"] and not (a.force or a.id):
         gap = now - datetime.fromisoformat(s["last_posted_at"])
         if gap < timedelta(hours=cfg["min_gap_hours"]):

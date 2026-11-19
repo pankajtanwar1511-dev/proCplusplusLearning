@@ -7,12 +7,13 @@ name: LinkedIn post
 
 on:
   schedule:
-    # Several tries per slot: GitHub can start scheduled runs late (even hours).
-    # The bot posts once per slot and only within series.json "window_minutes".
-    - cron: '0,30 3 * * *'   # 08:30, 09:00 IST
-    - cron: '0 4 * * *'      # 09:30 IST
-    - cron: '30 14 * * *'    # 20:00 IST
-    - cron: '0,30 15 * * *'  # 20:30, 21:00 IST
+    # GitHub can start scheduled runs hours late or drop them, so we try often.
+    # The bot posts only when today has fewer posts than slots due (08:30, 20:00 IST),
+    # catches up late slots until series.json "last_post_time", so 2 posts every day.
+    # Off-the-hour minutes: GitHub's queue is busiest at :00 and :30.
+    - cron: '3 3 * * *'      # 08:33 IST (morning slot)
+    - cron: '33 14 * * *'    # 20:03 IST (evening slot)
+    - cron: '47 3-17 * * *'  # every hour 09:17 to 23:17 IST (retries / catch-up)
   workflow_dispatch:
     inputs:
       mode:
@@ -50,10 +51,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests
-
-      - name: Natural posting time (scheduled runs only)
-        if: github.event_name == 'schedule'
-        run: sleep $(( RANDOM % 300 ))      # 0-5 min jitter
 
       - name: Run bot
         id: bot

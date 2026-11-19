@@ -33,7 +33,7 @@ def load_config():
     cfg.setdefault("timezone", "Asia/Kolkata")
     cfg.setdefault("slots", ["09:00", "21:00"])
     cfg.setdefault("min_gap_hours", 4)
-    cfg.setdefault("window_minutes", 120)   # scheduled runs post only this long after a slot
+    cfg.setdefault("last_post_time", "23:30")   # scheduled catch-up posts stop at this time (timezone)
     cfg.setdefault("low_buffer_days", 7)
     cfg.setdefault("skip", [])
     cfg.setdefault("chapters", [])

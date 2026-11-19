@@ -25,6 +25,12 @@ There is no position counter: reordering chapters, adding chapters or appending
 topics can never double post or miss a post. Dates in the app are projected from
 the last real post, so they shift automatically if a run is late or skipped.
 
+Two posts every day: GitHub often starts scheduled runs hours late or drops them,
+so the workflow runs at 08:33 and 20:03 IST and then every hour (:17 past, until
+23:17 IST). A scheduled run posts only if today has fewer posts than slots already
+due, so a late slot is caught up the same day, never twice, and never after
+`last_post_time` (23:30 IST, no night posts).
+
 Guards: no posting before `start_date`, at least `min_gap_hours` between posts,
 one run at a time, and a post is never retried automatically (a retry after a
 timeout could publish twice).
@@ -57,8 +63,8 @@ timeout could publish twice).
 | Pause everything | `"paused": true` in `series.json`, push |
 | Never post one item | add its id to `"skip"` in `series.json` |
 | Post one item now | Actions → Run workflow → mode `post`, `post_id` = id |
-| Catch up after a missed slot | Run workflow → mode `post` (tick `force` to ignore the gap) |
-| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow (UTC) |
+| Catch up after a missed slot | automatic the same day; otherwise Run workflow → mode `post` (tick `force` to ignore the gap) |
+| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the slot cron lines in the workflow (UTC = IST − 5:30) |
 | See status locally | `python3 linkedin_tasks/bot/post_next.py --status` |
 | Test locally without LinkedIn | `python3 post_next.py --simulate --force --posted-file /tmp/p.json` |
 
