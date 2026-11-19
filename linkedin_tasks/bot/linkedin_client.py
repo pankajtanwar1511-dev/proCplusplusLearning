@@ -25,6 +25,10 @@ class TokenError(RuntimeError):
     """The access token is missing, expired or revoked."""
 
 
+class PostRejected(RuntimeError):
+    """LinkedIn answered 4xx to post creation: the post was definitely NOT created."""
+
+
 class LinkedInClient:
     def __init__(self, access_token=None, author_urn=None, api_version=None):
         self.token = access_token or os.getenv("LINKEDIN_ACCESS_TOKEN")
@@ -139,7 +143,9 @@ class LinkedInClient:
             "lifecycleState": "PUBLISHED", "isReshareDisabledByAuthor": False,
         }
         r = self._request("POST", f"{REST}/posts", headers=self._headers(), json=body, attempts=1)
-        if r.status_code != 201:
+        if 400 <= r.status_code < 500:
+            raise PostRejected(f"Post creation rejected: {r.status_code} {r.text[:300]}")
+        if r.status_code != 201:   # 5xx: LinkedIn may still have created it
             raise RuntimeError(f"Post creation failed: {r.status_code} {r.text[:300]}")
         urn = r.headers.get("x-restli-id")
         log.info("Post created: %s", urn)

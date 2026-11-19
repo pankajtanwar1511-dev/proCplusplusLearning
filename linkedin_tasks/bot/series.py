@@ -11,7 +11,7 @@ cursor, so reordering, adding chapters or appending topics can never cause a
 double post or a missed post.
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -33,7 +33,6 @@ def load_config():
     cfg.setdefault("timezone", "Asia/Kolkata")
     cfg.setdefault("slots", ["09:00", "21:00"])
     cfg.setdefault("min_gap_hours", 4)
-    cfg.setdefault("last_post_time", "23:30")   # scheduled catch-up posts stop at this time (timezone)
     cfg.setdefault("low_buffer_days", 7)
     cfg.setdefault("skip", [])
     cfg.setdefault("chapters", [])
@@ -101,6 +100,31 @@ def current_slot(cfg, now):
             if t <= now and (best is None or t > best):
                 best = t
     return best
+
+
+def last_cron_fire(cron, now):
+    """Latest firing time (UTC) at or before `now` of a daily cron like '30 2 * * *'."""
+    try:
+        minute, hour = (int(x) for x in cron.split()[:2])
+    except (ValueError, AttributeError):
+        return None
+    now_utc = now.astimezone(timezone.utc)
+    t = now_utc.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return t if t <= now_utc else t - timedelta(days=1)
+
+
+def slot_after(cfg, t, strictly=False):
+    """First slot time (in the series timezone) at or after `t` (after, if strictly)."""
+    z = tz(cfg)
+    t = t.astimezone(z)
+    for back in range(0, 3):
+        day = (t + timedelta(days=back)).date()
+        for s in sorted(cfg["slots"]):
+            h, m = map(int, s.split(":"))
+            c = datetime(day.year, day.month, day.day, h, m, tzinfo=z)
+            if c > t or (c == t and not strictly):
+                return c
+    return None
 
 
 def build_view(cfg=None, posted=None, now=None):

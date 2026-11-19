@@ -7,13 +7,12 @@ name: LinkedIn post
 
 on:
   schedule:
-    # GitHub can start scheduled runs hours late or drop them, so we try often.
-    # The bot posts only when today has fewer posts than slots due (08:30, 20:00 IST),
-    # catches up late slots until series.json "last_post_time", so 2 posts every day.
-    # Off-the-hour minutes: GitHub's queue is busiest at :00 and :30.
-    - cron: '3 3 * * *'      # 08:33 IST (morning slot)
-    - cron: '33 14 * * *'    # 20:03 IST (evening slot)
-    - cron: '47 3-17 * * *'  # every hour 09:17 to 23:17 IST (retries / catch-up)
+    # One run per slot, no retry runs. Fired half an hour early: GitHub usually
+    # starts scheduled runs late, so posts land around 08:30 / 20:00 IST. The bot
+    # posts whenever the run starts (never skips for lateness), once per firing.
+    # If you change these, keep series.json "slots" 30 min later.
+    - cron: '30 2 * * *'     # 08:00 IST  -> morning post
+    - cron: '0 14 * * *'     # 19:30 IST  -> evening post
   workflow_dispatch:
     inputs:
       mode:
@@ -57,11 +56,26 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Hold check (scheduled runs only)
+        # An open "LinkedIn bot on hold" issue stops scheduled posting until a human
+        # closes it (opened when a post may or may not be live, see the last step).
+        id: hold
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh issue list --state open --limit 200 --json title -q '.[].title' | grep -Fxq "LinkedIn bot on hold"; then
+            echo "on_hold=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Bot is on hold (open issue 'LinkedIn bot on hold'). Not posting."
+          fi
+
       - name: Run bot
         id: bot
+        if: steps.hold.outputs.on_hold != 'true'
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           MODE: ${{ inputs.mode || 'post' }}
           POST_ID: ${{ inputs.post_id }}
@@ -79,6 +93,7 @@ jobs:
           python3 post_next.py $args
 
       - name: Commit posted.json
+        id: commit
         # always(): even if the bot failed after posting, the record must be saved
         # or the next run could post the same item again.
         if: always()
@@ -93,6 +108,27 @@ jobs:
             sleep 5
           done
           echo "::error::Could not push posted.json. The post IS live; add it to posted.json manually." && exit 1
+
+      - name: Put the bot on hold if a post may be duplicated
+        # Case 1: LinkedIn timed out / 5xx while creating the post (it may be live).
+        # Case 2: the post is live but posted.json could not be pushed (a retry would re-post).
+        if: always() && (steps.bot.outputs.hold != '' || (steps.bot.outputs.posted_id != '' && steps.commit.outcome == 'failure'))
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WHY: ${{ steps.bot.outputs.hold || format('{0} is live but posted.json could not be pushed', steps.bot.outputs.posted_id) }}
+        run: |
+          if ! gh issue list --state open --limit 200 --json title -q '.[].title' | grep -Fxq "LinkedIn bot on hold"; then
+            gh issue create --title "LinkedIn bot on hold" --body "Scheduled posting is paused to avoid a duplicate post.
+
+          Reason: $WHY
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          To fix: check your LinkedIn profile.
+          - If the post IS live: make sure its id is in linkedin_tasks/posted.json (add post_urn/url if known).
+          - If it is NOT live: remove its entry from linkedin_tasks/posted.json (or post it with Run workflow, mode post, post_id).
+          Then close this issue and posting resumes at the next slot."
+          fi
+          echo "::error::Bot put on hold: $WHY"
 
       - name: Warn if the first comment failed
         if: steps.bot.outputs.comment_ok == 'false'

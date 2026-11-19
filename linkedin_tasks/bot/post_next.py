@@ -32,7 +32,7 @@ def gh_output(**kv):
     if path:
         with open(path, "a") as f:
             for k, v in kv.items():
-                f.write(f"{k}={v}\n")
+                f.write(f"{k}={' '.join(str(v).split())}\n")   # one line per output
 
 
 def document_title(post):
@@ -75,7 +75,8 @@ def main():
 
     if a.comment_missing:
         from linkedin_client import LinkedInClient
-        missing = [p for p in view["posts"] if p["status"] == "posted" and not posted[p["id"]].get("comment_ok")]
+        missing = [p for p in view["posts"] if p["status"] == "posted" and not posted[p["id"]].get("comment_ok")
+                   and posted[p["id"]].get("post_urn")]
         if a.id:
             missing = [p for p in missing if p["id"] == a.id]
         if not missing:
@@ -118,26 +119,40 @@ def main():
     if cfg.get("start_date") and now.date() < date.fromisoformat(cfg["start_date"]) and not (a.force or a.id):
         log.info("Series starts on %s. Not posting yet.", cfg["start_date"])
         return 0
-    # Scheduled runs: GitHub cron is often late (even hours) or drops runs, so the
-    # workflow tries every hour and the bot CATCHES UP: it posts whenever today has
-    # fewer posts than slots already due today, as long as it is before
-    # "last_post_time" (IST) and min_gap_hours have passed. Two slots = two posts a day.
+    # Scheduled runs: exactly ONE GitHub run per slot (no retry runs). GitHub often
+    # starts it late (even hours), so it posts whenever it arrives, unless something
+    # was already posted since that slot (then this run is a duplicate and skips).
     # Manual runs (workflow_dispatch / local) skip this check.
+    # Scheduled runs (old auto-linkedin concept): one GitHub run per slot, fired half
+    # an hour early (08:00 / 19:30 IST) to absorb GitHub's usual delay. The run posts
+    # once, whenever it starts, until 1 h before the next slot (morning run until
+    # 19:00, evening run until 07:30 next day). Duplicate guard: each post records
+    # which cron firing it was for ("for_slot").
+    # Manual runs (workflow_dispatch / local) skip this check.
+    for_slot = None
     if os.getenv("GITHUB_EVENT_NAME") == "schedule" and not (a.force or a.id):
-        z = series.tz(cfg)
-        today = now.astimezone(z).date()
-        due = sum(1 for sl in cfg["slots"] if now.astimezone(z).strftime("%H:%M") >= sl)
-        done = sum(1 for v in posted.values()
-                   if datetime.fromisoformat(v["posted_at"]).astimezone(z).date() == today)
-        if done >= due:
-            log.info("Today: %d slot(s) due, %d posted. Nothing to do.", due, done)
+        fired = series.last_cron_fire(os.getenv("SCHEDULE_CRON", ""), now)
+        if fired is None:
+            log.error("Unknown cron %r: cannot tell which slot this run is for.", os.getenv("SCHEDULE_CRON"))
+            return 1
+        key = fired.astimezone(series.tz(cfg)).isoformat(timespec="minutes")
+        if any(v.get("for_slot") == key or (not v.get("for_slot") and
+               datetime.fromisoformat(v["posted_at"]) >= fired - timedelta(minutes=30)) for v in posted.values()):
+            log.info("Run for %s already has a post. Skipping.", key)
             return 0
-        if now.astimezone(z).strftime("%H:%M") >= cfg["last_post_time"]:
-            log.warning("Today: %d slot(s) due, %d posted, but it is past %s IST. Not posting at night.",
-                        due, done, cfg["last_post_time"])
+        # No lateness boundary, except: once it is within 1 h of the NEXT slot's post
+        # time, this run gives up and the next slot's run posts (no back-to-back posts).
+        deadline = series.slot_after(cfg, series.slot_after(cfg, fired), strictly=True) - timedelta(hours=1)
+        if now > deadline:
+            log.warning("Run for %s started %s, past its deadline %s (1 h before the next slot). Skipping.",
+                        key, now.isoformat(timespec="minutes"), deadline.isoformat(timespec="minutes"))
             return 0
-        log.info("Today: %d slot(s) due, %d posted. Posting (catch-up allowed).", due, done)
-    if s["last_posted_at"] and not (a.force or a.id):
+        log.info("Posting for the run scheduled at %s (started %s, deadline %s).", key,
+                 now.isoformat(timespec="minutes"), deadline.isoformat(timespec="minutes"))
+        for_slot = key
+    # Gap guard for manual runs only (e.g. clicking "post" twice). A scheduled run
+    # never skips for the gap: with one run per slot, skipping would lose the post.
+    elif s["last_posted_at"] and not (a.force or a.id):
         gap = now - datetime.fromisoformat(s["last_posted_at"])
         if gap < timedelta(hours=cfg["min_gap_hours"]):
             log.info("Last post was %.1f h ago (< %d h). Skipping this run.", gap.total_seconds() / 3600,
@@ -179,13 +194,29 @@ def main():
             gh_output(token_error="true")
             return 1
         media = client.upload_video(pdf) if is_video else client.upload_document(pdf)
-        urn = client.create_document_post(text, media, title)
+        from linkedin_client import PostRejected
+        try:
+            urn = client.create_document_post(text, media, title)
+        except PostRejected as e:      # 4xx: definitely not posted, a later run may retry
+            log.error("%s", e)
+            return 1
+        except Exception as e:         # noqa: BLE001 - timeout / 5xx: it MAY be live
+            # Never let a retry post it a second time: record it as uncertain (counts as
+            # posted for today and the sequence) and put the bot on hold for a human check.
+            posted[post["id"]] = {"posted_at": datetime.now(series.tz(cfg)).isoformat(timespec="seconds"),
+                                  "post_urn": None, "url": None, "chapter": post["chapter"],
+                                  "comment_ok": False, "uncertain": True, "for_slot": for_slot, "error": str(e)[:300],
+                                  "run": os.getenv("GITHUB_RUN_URL", "local")}
+            series.save_posted(posted, a.posted_file)
+            log.error("Post %s MAY be live (%s). Recorded as uncertain; bot on hold.", post["id"], e)
+            gh_output(hold=f"{post['id']} may or may not be live on LinkedIn ({str(e)[:150]})")
+            return 1
 
     # Record the post BEFORE the comment: a comment failure must never cause a re-post.
     from linkedin_client import post_url
     posted[post["id"]] = {"posted_at": datetime.now(series.tz(cfg)).isoformat(timespec="seconds"),
                           "post_urn": urn, "url": post_url(urn), "chapter": post["chapter"],
-                          "comment_ok": False, "run": os.getenv("GITHUB_RUN_URL", "local")}
+                          "comment_ok": False, "for_slot": for_slot, "run": os.getenv("GITHUB_RUN_URL", "local")}
     series.save_posted(posted, a.posted_file)
 
     if a.simulate:
