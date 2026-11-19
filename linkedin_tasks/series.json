@@ -6,8 +6,8 @@
   ],
   "timezone": "Asia/Tokyo",
   "slots": [
-    "12:00",
-    "23:30"
+    "11:30",
+    "23:00"
   ],
   "start_date": "2026-11-17",
   "min_gap_hours": 3,

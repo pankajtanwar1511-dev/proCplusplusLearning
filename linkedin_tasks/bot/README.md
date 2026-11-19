@@ -25,12 +25,12 @@ There is no position counter: reordering chapters, adding chapters or appending
 topics can never double post or miss a post. Dates in the app are projected from
 the last real post, so they shift automatically if a run is late or skipped.
 
-Schedule (one run per slot, no retry runs): the workflow fires half an hour early,
-11:30 and 23:00 JST (08:00 / 19:30 IST), because GitHub usually starts scheduled runs late. A run posts
-once, whenever it starts, until 1 h before the next slot (first run until 22:30 JST,
-second run until 11:00 JST next day); later than that it skips and the next slot's run
-posts. Each post records the cron firing it was for (`for_slot`), so the same firing
-can never post twice, and a manual post from 30 min before a firing counts for it.
+Schedule (one run per slot, no retry runs): the workflow fires at the slot times,
+11:30 and 23:00 JST. GitHub may start a run late; it then posts whenever it starts,
+until 1 h before the next slot (first run until 22:00 JST, second run until 10:30 JST
+next day); later than that it skips and the next slot's run posts. Each post records
+the cron firing it was for (`for_slot`), so the same firing can never post twice,
+and a manual post from 30 min before a firing counts for it.
 
 Duplicate safety: the post call is never retried. If LinkedIn times out or answers
 5xx while creating a post (it may be live), or posted.json cannot be pushed, the bot
@@ -70,7 +70,7 @@ timeout could publish twice).
 | Never post one item | add its id to `"skip"` in `series.json` |
 | Post one item now | Actions → Run workflow → mode `post`, `post_id` = id |
 | Catch up after a missed slot | Run workflow → mode `post` (tick `force` to ignore the gap) |
-| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow, 30 min earlier (UTC = JST − 9) |
+| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow (UTC = JST − 9) |
 | See status locally | `python3 linkedin_tasks/bot/post_next.py --status` |
 | Test locally without LinkedIn | `python3 post_next.py --simulate --force --posted-file /tmp/p.json` |
 

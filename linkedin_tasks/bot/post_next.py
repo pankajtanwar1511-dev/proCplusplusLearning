@@ -119,15 +119,10 @@ def main():
     if cfg.get("start_date") and now.date() < date.fromisoformat(cfg["start_date"]) and not (a.force or a.id):
         log.info("Series starts on %s. Not posting yet.", cfg["start_date"])
         return 0
-    # Scheduled runs: exactly ONE GitHub run per slot (no retry runs). GitHub often
-    # starts it late (even hours), so it posts whenever it arrives, unless something
-    # was already posted since that slot (then this run is a duplicate and skips).
-    # Manual runs (workflow_dispatch / local) skip this check.
-    # Scheduled runs (old auto-linkedin concept): one GitHub run per slot, fired half
-    # an hour early (11:30 / 23:00 JST) to absorb GitHub's usual delay. The run posts
-    # once, whenever it starts, until 1 h before the next slot (first run until
-    # 22:30 JST, second run until 11:00 JST next day). Duplicate guard: each post records
-    # which cron firing it was for ("for_slot").
+    # Scheduled runs (old auto-linkedin concept): one GitHub run per slot (11:30 and
+    # 23:00 JST). The run posts once, whenever it starts, until 1 h before the next
+    # slot (first run until 22:00 JST, second run until 10:30 JST next day).
+    # Duplicate guard: each post records which cron firing it was for ("for_slot").
     # Manual runs (workflow_dispatch / local) skip this check.
     for_slot = None
     if os.getenv("GITHUB_EVENT_NAME") == "schedule" and not (a.force or a.id):
