@@ -4,10 +4,10 @@
   "chapters": [
     "posts/ch4_concurrency"
   ],
-  "timezone": "Asia/Kolkata",
+  "timezone": "Asia/Tokyo",
   "slots": [
-    "08:30",
-    "20:00"
+    "12:00",
+    "23:30"
   ],
   "start_date": "2026-11-17",
   "min_gap_hours": 3,

@@ -8,11 +8,12 @@ name: LinkedIn post
 on:
   schedule:
     # One run per slot, no retry runs. Fired half an hour early: GitHub usually
-    # starts scheduled runs late, so posts land around 08:30 / 20:00 IST. The bot
+    # starts scheduled runs late, so posts land around 12:00 / 23:30 JST. The bot
     # posts whenever the run starts (never skips for lateness), once per firing.
     # If you change these, keep series.json "slots" 30 min later.
-    - cron: '30 2 * * *'     # 08:00 IST  -> morning post
-    - cron: '0 14 * * *'     # 19:30 IST  -> evening post
+    # GitHub cron is always UTC: JST = UTC + 9.
+    - cron: '30 2 * * *'     # 11:30 JST -> 12:00 JST post (08:30 IST)
+    - cron: '0 14 * * *'     # 23:00 JST -> 23:30 JST post (20:00 IST)
   workflow_dispatch:
     inputs:
       mode:

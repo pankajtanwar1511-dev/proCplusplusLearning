@@ -124,9 +124,9 @@ def main():
     # was already posted since that slot (then this run is a duplicate and skips).
     # Manual runs (workflow_dispatch / local) skip this check.
     # Scheduled runs (old auto-linkedin concept): one GitHub run per slot, fired half
-    # an hour early (08:00 / 19:30 IST) to absorb GitHub's usual delay. The run posts
-    # once, whenever it starts, until 1 h before the next slot (morning run until
-    # 19:00, evening run until 07:30 next day). Duplicate guard: each post records
+    # an hour early (11:30 / 23:00 JST) to absorb GitHub's usual delay. The run posts
+    # once, whenever it starts, until 1 h before the next slot (first run until
+    # 22:30 JST, second run until 11:00 JST next day). Duplicate guard: each post records
     # which cron firing it was for ("for_slot").
     # Manual runs (workflow_dispatch / local) skip this check.
     for_slot = None
