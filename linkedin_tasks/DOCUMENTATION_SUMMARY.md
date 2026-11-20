@@ -1,5 +1,10 @@
 # Documentation Complete - LinkedIn Automation Project
 
+> **Superseded: original plan (March 2026), kept for history.** The live system is different:
+> 2 posts a day (11:30 and 23:00 JST), triggered by cron-job.org with GitHub Actions as backup.
+> See [`bot/README.md`](bot/README.md) (posting, schedule, controls) and
+> [`generator/SPEC.md`](generator/SPEC.md) (building posts).
+
 **Date:** March 27, 2026
 **Status:** ✅ Phase 1 Complete - Ready for Your Review
 

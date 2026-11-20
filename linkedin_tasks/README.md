@@ -1,5 +1,10 @@
 # LinkedIn Content Automation Project
 
+> **Superseded: original plan (March 2026), kept for history.** The live system is different:
+> 2 posts a day (11:30 and 23:00 JST), triggered by cron-job.org with GitHub Actions as backup.
+> See [`bot/README.md`](bot/README.md) (posting, schedule, controls) and
+> [`generator/SPEC.md`](generator/SPEC.md) (building posts).
+
 **Automate daily posting of C++ learning content to LinkedIn with professional carousel slides.**
 
 ---

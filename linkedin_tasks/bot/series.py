@@ -30,9 +30,9 @@ def load_json(path, default):
 def load_config():
     cfg = load_json(SERIES_FILE, {})
     cfg.setdefault("paused", False)
-    cfg.setdefault("timezone", "Asia/Kolkata")
-    cfg.setdefault("slots", ["09:00", "21:00"])
-    cfg.setdefault("min_gap_hours", 4)
+    cfg.setdefault("timezone", "Asia/Tokyo")
+    cfg.setdefault("slots", ["11:30", "23:00"])
+    cfg.setdefault("min_gap_hours", 3)
     cfg.setdefault("low_buffer_days", 7)
     cfg.setdefault("skip", [])
     cfg.setdefault("chapters", [])

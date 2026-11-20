@@ -399,6 +399,10 @@ Prefer `./manage.sh` (see Common Operations) — it wraps the scripts below.
 - `verification_scripts/*` - 4-point QA suite + `topic_utils.py` (shared
   split-file grouping that reuses the parser's logic) + `run_all_verifications.sh`.
 - `DEPLOY.sh` - Deployment setup (Render + Vercel).
+- `linkedin_tasks/` - LinkedIn post series: `generator/` builds posts, `bot/` posts
+  them (`.github/workflows/linkedin_post.yml`, 11:30 + 23:00 JST, triggered by
+  cron-job.org with GitHub's cron as backup). Start with `linkedin_tasks/bot/README.md`.
+  Not the same as the old untracked `linkedin_automation/` below.
 
 ### 🟡 Content pipeline (situational — only when regenerating content)
 - `split_md_files.py` - Split a single `topic_X.md` into `_theory/_practice/_qa`.
