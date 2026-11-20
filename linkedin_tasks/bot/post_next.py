@@ -7,6 +7,7 @@ Usage (normally run by .github/workflows/linkedin_post.yml):
   python3 post_next.py --id T02-P2     # post a specific item (manual run)
   python3 post_next.py --force         # ignore the minimum gap between posts
   python3 post_next.py --simulate      # full flow without calling LinkedIn (local testing)
+  python3 post_next.py --scheduled     # slot run from an external scheduler (cron-job.org)
   python3 post_next.py --status        # print the series status and exit
   python3 post_next.py --comment-missing  # add the first comment to posted items where it failed
 
@@ -48,6 +49,8 @@ def main():
     ap.add_argument("--id")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--comment-missing", action="store_true")
+    ap.add_argument("--scheduled", action="store_true",
+                    help="slot run started by an external scheduler (same guards as a cron run)")
     ap.add_argument("--posted-file", help="override posted.json (testing)")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -124,12 +127,20 @@ def main():
     # slot (first run until 22:00 JST, second run until 10:30 JST next day).
     # Duplicate guard: each post records which cron firing it was for ("for_slot").
     # Manual runs (workflow_dispatch / local) skip this check.
+    # Slot runs come from GitHub's cron (often hours late) OR from an external scheduler
+    # (cron-job.org) that starts the workflow with mode "scheduled" at the exact slot time.
+    # Both get the same slot key, so whichever runs second for a slot skips.
     for_slot = None
-    if os.getenv("GITHUB_EVENT_NAME") == "schedule" and not (a.force or a.id):
-        fired = series.last_cron_fire(os.getenv("SCHEDULE_CRON", ""), now)
-        if fired is None:
-            log.error("Unknown cron %r: cannot tell which slot this run is for.", os.getenv("SCHEDULE_CRON"))
-            return 1
+    is_cron = os.getenv("GITHUB_EVENT_NAME") == "schedule"
+    if (is_cron or a.scheduled) and not (a.force or a.id):
+        if is_cron:
+            fired = series.last_cron_fire(os.getenv("SCHEDULE_CRON", ""), now)
+            if fired is None:
+                log.error("Unknown cron %r: cannot tell which slot this run is for.", os.getenv("SCHEDULE_CRON"))
+                return 1
+        else:
+            # +5 min: a trigger that fires a few seconds early still counts for its slot.
+            fired = series.current_slot(cfg, now + timedelta(minutes=5))
         key = fired.astimezone(series.tz(cfg)).isoformat(timespec="minutes")
         if any(v.get("for_slot") == key or (not v.get("for_slot") and
                datetime.fromisoformat(v["posted_at"]) >= fired - timedelta(minutes=30)) for v in posted.values()):

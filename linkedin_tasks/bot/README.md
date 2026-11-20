@@ -25,8 +25,13 @@ There is no position counter: reordering chapters, adding chapters or appending
 topics can never double post or miss a post. Dates in the app are projected from
 the last real post, so they shift automatically if a run is late or skipped.
 
+Trigger: **cron-job.org** starts the workflow at exactly 11:30 and 23:00 JST
+(Run workflow via the GitHub API, mode `scheduled`; setup below). GitHub's own cron
+(same times) stays as a backup: it often starts runs hours late, and if the slot
+already has a post it simply skips. Both triggers count for the same slot key.
+
 Schedule (one run per slot, no retry runs): the workflow fires at the slot times,
-11:30 and 23:00 JST. GitHub may start a run late; it then posts whenever it starts,
+11:30 and 23:00 JST. If a run starts late, it posts whenever it starts,
 until 1 h before the next slot (first run until 22:00 JST, second run until 10:30 JST
 next day); later than that it skips and the next slot's run posts. Each post records
 the cron firing it was for (`for_slot`), so the same firing can never post twice,
@@ -62,6 +67,20 @@ timeout could publish twice).
 6. GitHub → Actions → **LinkedIn post** → Run workflow → mode **dry-run**: checks the
    token and prints exactly what would be posted, without posting.
 
+## Exact-time trigger (cron-job.org)
+
+1. GitHub → Settings → Developer settings → **Fine-grained tokens** → Generate:
+   repository access *Only* `proCplusplusLearning`, permission **Actions: Read and write**
+   (nothing else). Expiry: up to 1 year; note the date.
+2. cron-job.org → Create cronjob, twice (11:30 and 23:00, time zone **Asia/Tokyo**):
+   - URL: `https://api.github.com/repos/pankajtanwar1511-dev/proCplusplusLearning/actions/workflows/linkedin_post.yml/dispatches`
+   - Advanced → Request method **POST**, headers
+     `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`
+   - Request body: `{"ref":"main","inputs":{"mode":"scheduled"}}`
+   - Success = HTTP **204**. Turn on failure notifications.
+3. Changing the times: update cron-job.org too, not only `series.json` and the workflow.
+
 ## Everyday controls
 
 | Want to | Do |
@@ -70,7 +89,7 @@ timeout could publish twice).
 | Never post one item | add its id to `"skip"` in `series.json` |
 | Post one item now | Actions → Run workflow → mode `post`, `post_id` = id |
 | Catch up after a missed slot | Run workflow → mode `post` (tick `force` to ignore the gap) |
-| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow (UTC = JST − 9) |
+| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow (UTC = JST − 9) **and** the cron-job.org jobs |
 | See status locally | `python3 linkedin_tasks/bot/post_next.py --status` |
 | Test locally without LinkedIn | `python3 post_next.py --simulate --force --posted-file /tmp/p.json` |
 

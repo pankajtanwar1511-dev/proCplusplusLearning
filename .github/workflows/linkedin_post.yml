@@ -7,6 +7,9 @@ name: LinkedIn post
 
 on:
   schedule:
+    # BACKUP trigger. The main trigger is cron-job.org, which starts this workflow at
+    # the exact slot time with mode "scheduled" (GitHub's cron often starts runs hours
+    # late). Both count for the same slot, so the second one to run skips.
     # One run per slot, no retry runs, at the slot times in series.json.
     # GitHub may start a run late; the bot then posts late rather than skip.
     # GitHub cron is always UTC: JST = UTC + 9. Keep in sync with series.json "slots".
@@ -15,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'post = post now; dry-run = check token + preview, change nothing; status = print series status; comment = add missing first comments'
+        description: 'post = post now; dry-run = check token + preview, change nothing; status = print series status; comment = add missing first comments; scheduled = slot run (used by cron-job.org)'
         type: choice
-        options: [dry-run, post, status, comment]
+        options: [dry-run, post, status, comment, scheduled]
         default: dry-run
       post_id:
         description: 'Optional: post this id instead of the next one (e.g. T02-P2)'
@@ -59,7 +62,7 @@ jobs:
         # An open "LinkedIn bot on hold" issue stops scheduled posting until a human
         # closes it (opened when a post may or may not be live, see the last step).
         id: hold
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' || inputs.mode == 'scheduled'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -86,6 +89,7 @@ jobs:
             dry-run) args="--dry-run" ;;
             status)  args="--status" ;;
             comment) args="--comment-missing" ;;
+            scheduled) args="--scheduled" ;;
           esac
           [ -n "$POST_ID" ] && args="$args --id $POST_ID"
           [ "$FORCE" = "true" ] && args="$args --force"
