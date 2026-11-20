@@ -134,12 +134,16 @@ class LinkedInClient:
         log.warning("Video still processing after %ss; posting anyway", wait_secs)
         return v["video"]
 
-    def create_document_post(self, commentary, document_urn, title):
+    def create_document_post(self, commentary, document_urn, title=None):
+        # title=None: no title, so LinkedIn draws no title bar over the first slide.
+        media = {"id": document_urn}
+        if title:
+            media["title"] = title
         body = {
             "author": self.author, "commentary": commentary, "visibility": "PUBLIC",
             "distribution": {"feedDistribution": "MAIN_FEED", "targetEntities": [],
                              "thirdPartyDistributionChannels": []},
-            "content": {"media": {"title": title, "id": document_urn}},
+            "content": {"media": media},
             "lifecycleState": "PUBLISHED", "isReshareDisabledByAuthor": False,
         }
         r = self._request("POST", f"{REST}/posts", headers=self._headers(), json=body, attempts=1)

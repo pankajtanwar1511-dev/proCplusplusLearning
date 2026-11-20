@@ -175,7 +175,7 @@ def main():
             log.error("Token problem: %s", e)
             gh_output(token_error="true")
             return 1
-        print(f"\n--- DRY RUN: would post {post['id']} ({'video' if is_video else 'carousel'}) ---\nTitle: {title}\nFile: {pdf}\n\n{text}\n\n"
+        print(f"\n--- DRY RUN: would post {post['id']} ({'video' if is_video else 'carousel'}) ---\nTitle bar: none (fallback if LinkedIn requires one: {title})\nFile: {pdf}\n\n{text}\n\n"
               f"--- first comment ---\n{comment}\n")
         return 0
 
@@ -193,7 +193,13 @@ def main():
         media = client.upload_video(pdf) if is_video else client.upload_document(pdf)
         from linkedin_client import PostRejected
         try:
-            urn = client.create_document_post(text, media, title)
+            # No title: LinkedIn's title bar would cover the first slide's own heading.
+            # If LinkedIn insists on a title (4xx = nothing was created), post again with one.
+            try:
+                urn = client.create_document_post(text, media)
+            except PostRejected as e:
+                log.warning("Post without title rejected (%s); posting with title %r", e, title)
+                urn = client.create_document_post(text, media, title)
         except PostRejected as e:      # 4xx: definitely not posted, a later run may retry
             log.error("%s", e)
             return 1
