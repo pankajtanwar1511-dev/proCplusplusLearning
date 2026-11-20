@@ -148,7 +148,8 @@ def main():
         for_slot = key
     # Gap guard for manual runs only (e.g. clicking "post" twice). A scheduled run
     # never skips for the gap: with one run per slot, skipping would lose the post.
-    elif s["last_posted_at"] and not (a.force or a.id):
+    # A dry run posts nothing, so it is never blocked (it must reach the token check).
+    elif s["last_posted_at"] and not (a.force or a.id or a.dry_run):
         gap = now - datetime.fromisoformat(s["last_posted_at"])
         if gap < timedelta(hours=cfg["min_gap_hours"]):
             log.info("Last post was %.1f h ago (< %d h). Skipping this run.", gap.total_seconds() / 3600,
