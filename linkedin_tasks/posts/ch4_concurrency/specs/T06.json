@@ -400,7 +400,6 @@
         "takeaway": "Senior answer: \"hardware register or signal handler: `volatile`. Another C++ thread: `std::atomic` or a mutex.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n\"A flag shared by two threads needs volatile. Otherwise the compiler caches it in a register.\"\n\nAgree? 🧠 Comment A, B, C or D. The answer appears at 0:36.",
       "body": "Half of this claim is true. That is exactly why it is dangerous."
@@ -458,7 +457,6 @@
         "takeaway": "Senior answer: \"define release/acquire with happens-before. Store buffers and MESI are implementation details.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n\"Release works because it flushes the store buffer, and MESI pushes the line to the other core.\"\n\nSounds senior. Is it right? 🧠\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "The best answer here is about layers, not about hardware."

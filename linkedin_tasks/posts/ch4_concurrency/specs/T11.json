@@ -358,7 +358,6 @@
         "takeaway": "Senior answer: semaphore = permits for signalling and throttling, mutex = ownership for exclusion. The initial count is a design decision."
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n\"binary_semaphore is just a lighter, faster mutex.\"\n\nWould you swap your std::mutex for one? 🔒\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "The difference is one word, and it decides which tool you reach for."

@@ -426,7 +426,6 @@
         "takeaway": "Senior answer: \"std::async is fine for coarse, occasional work like startup or batch jobs. Never on a path measured in microseconds.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\nOne std::async per incoming market-data message.\n\nClean, modern C++. Would you ship it in a low-latency hot path?\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "Think about what each call really costs on Linux, not what the code looks like."
@@ -487,7 +486,6 @@
         "takeaway": "Senior answer: \"once-only init needs election, waiting and publication. That is exactly what `call_once` is.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\nThree lines of lazy initialization. Many threads call them.\n\nBroken? And does std::atomic<bool> fix it?\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "The most common answer is only half right."

@@ -274,7 +274,6 @@
         "takeaway": "Senior answer: \"No ordering, no FIFO. If I really need fairness, a ticket lock gives FIFO at a throughput cost.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\nT1 is started before T2. Both lock the same std::mutex.\n\nWho gets it first?\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "Most answers assume some kind of queue. The standard promises less than you think."
@@ -389,7 +388,6 @@
         "takeaway": "Senior answer: \"Uncontended, a mutex is user-space atomics. Under contention it may block via an OS mechanism such as a futex.\" The 0/1/2 states are one library's design, not the C++ standard."
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n\"A mutex always goes through the kernel, so it is slow.\"\n\nYou hear this in many interviews. Is it true?\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "The real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds."
@@ -449,7 +447,6 @@
         "takeaway": "Senior answer: fix lock-induced tail latency by shortening hold time, not by changing the lock type. Never hold a lock across I/O, logging, allocation or callbacks."
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\np50 latency is normal. p99.9 jumps to milliseconds.\nA reporting thread holds the order-book mutex for 5 to 8 ms.\n\nWhat do you change? Comment A, B, C or D. The answer appears at 0:36.",
       "body": "A classic low-latency design question. The tempting answer fixes the wrong thing."

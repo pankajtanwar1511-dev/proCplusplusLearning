@@ -276,7 +276,6 @@
         "takeaway": "Senior answer: \"A spinlock wins when the expected wait is shorter than a context switch and the holder is guaranteed to be running.\""
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n\"Spinlocks are faster than mutexes.\"\n\nAgree or disagree? Most answers miss the condition that decides it.\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "Slide 2 has real measurements: same work, 8 threads vs 80 threads."
@@ -336,7 +335,6 @@
         "takeaway": "Senior answer: TTAS still bursts on every release. Backoff, ticket locks or MCS queue locks (one line per waiter) scale further."
       }
     ],
-    "format": "video",
     "video_text": {
       "hook": "⏱ 30-second C++ challenge.\n32 threads spin on one line of C++:\nwhile (locked.exchange(true)) {}\n\nWhat is the hardware doing meanwhile? ⚠️\nComment A, B, C or D. The answer appears at 0:36.",
       "body": "The fix is one extra loop. Slide 2 shows it."
