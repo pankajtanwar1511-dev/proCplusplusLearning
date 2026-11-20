@@ -6,15 +6,8 @@ name: LinkedIn post
 # Setup and controls: linkedin_tasks/bot/README.md
 
 on:
-  schedule:
-    # BACKUP trigger. The main trigger is cron-job.org, which starts this workflow at
-    # the exact slot time with mode "scheduled" (GitHub's cron often starts runs hours
-    # late). Both count for the same slot, so the second one to run skips.
-    # One run per slot, no retry runs, at the slot times in series.json.
-    # GitHub may start a run late; the bot then posts late rather than skip.
-    # GitHub cron is always UTC: JST = UTC + 9. Keep in sync with series.json "slots".
-    - cron: '30 2 * * *'     # 11:30 JST (08:00 IST)
-    - cron: '0 14 * * *'     # 23:00 JST (19:30 IST)
+  # Only trigger: cron-job.org starts this at 11:30 and 23:00 JST with mode "scheduled"
+  # (GitHub's own cron started runs hours late, so it is not used). Manual runs: Run workflow.
   workflow_dispatch:
     inputs:
       mode:
@@ -62,7 +55,7 @@ jobs:
         # An open "LinkedIn bot on hold" issue stops scheduled posting until a human
         # closes it (opened when a post may or may not be live, see the last step).
         id: hold
-        if: github.event_name == 'schedule' || inputs.mode == 'scheduled'
+        if: inputs.mode == 'scheduled'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -77,7 +70,6 @@ jobs:
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
-          SCHEDULE_CRON: ${{ github.event.schedule }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           MODE: ${{ inputs.mode || 'post' }}
           POST_ID: ${{ inputs.post_id }}

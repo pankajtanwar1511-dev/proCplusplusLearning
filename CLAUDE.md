@@ -401,7 +401,7 @@ Prefer `./manage.sh` (see Common Operations) — it wraps the scripts below.
 - `DEPLOY.sh` - Deployment setup (Render + Vercel).
 - `linkedin_tasks/` - LinkedIn post series: `generator/` builds posts, `bot/` posts
   them (`.github/workflows/linkedin_post.yml`, 11:30 + 23:00 JST, triggered by
-  cron-job.org with GitHub's cron as backup). Start with `linkedin_tasks/bot/README.md`.
+  cron-job.org only; GitHub's cron is not used). Start with `linkedin_tasks/bot/README.md`.
   Not the same as the old untracked `linkedin_automation/` below.
 
 ### 🟡 Content pipeline (situational — only when regenerating content)

@@ -11,7 +11,7 @@ cursor, so reordering, adding chapters or appending topics can never cause a
 double post or a missed post.
 """
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -100,17 +100,6 @@ def current_slot(cfg, now):
             if t <= now and (best is None or t > best):
                 best = t
     return best
-
-
-def last_cron_fire(cron, now):
-    """Latest firing time (UTC) at or before `now` of a daily cron like '30 2 * * *'."""
-    try:
-        minute, hour = (int(x) for x in cron.split()[:2])
-    except (ValueError, AttributeError):
-        return None
-    now_utc = now.astimezone(timezone.utc)
-    t = now_utc.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return t if t <= now_utc else t - timedelta(days=1)
 
 
 def slot_after(cfg, t, strictly=False):

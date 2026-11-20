@@ -2,12 +2,12 @@
 """Post the next LinkedIn carousel in the series and record it in posted.json.
 
 Usage (normally run by .github/workflows/linkedin_post.yml):
-  python3 post_next.py                 # scheduled run: post next item if due
+  python3 post_next.py                 # post the next item now (manual run)
   python3 post_next.py --dry-run       # check token + show what would be posted, change nothing
   python3 post_next.py --id T02-P2     # post a specific item (manual run)
   python3 post_next.py --force         # ignore the minimum gap between posts
   python3 post_next.py --simulate      # full flow without calling LinkedIn (local testing)
-  python3 post_next.py --scheduled     # slot run from an external scheduler (cron-job.org)
+  python3 post_next.py --scheduled     # slot run (what cron-job.org triggers at 11:30 / 23:00 JST)
   python3 post_next.py --status        # print the series status and exit
   python3 post_next.py --comment-missing  # add the first comment to posted items where it failed
 
@@ -122,24 +122,15 @@ def main():
     if cfg.get("start_date") and now.date() < date.fromisoformat(cfg["start_date"]) and not (a.force or a.id):
         log.info("Series starts on %s. Not posting yet.", cfg["start_date"])
         return 0
-    # Slot runs (11:30 and 23:00 JST) come from two triggers:
-    #   - cron-job.org (main): starts the workflow with mode "scheduled" at the exact time
-    #   - GitHub's own cron (backup): often starts hours late
-    # Both map to the same slot key ("for_slot" in posted.json), so whichever runs second
-    # for a slot skips: one post per slot, never a duplicate. A slot run posts whenever it
-    # starts, until 1 h before the next slot (11:30 slot until 22:00 JST, 23:00 slot until
-    # 10:30 JST next day). Manual runs (mode post / local) skip this check.
+    # Slot runs (11:30 and 23:00 JST): cron-job.org starts the workflow with mode
+    # "scheduled" (--scheduled) at the slot time. Each post records its slot ("for_slot"
+    # in posted.json), so a second run for the same slot skips: never a duplicate.
+    # A slot run posts until 1 h before the next slot (11:30 slot until 22:00 JST,
+    # 23:00 slot until 10:30 JST next day). Manual runs (mode post / local) skip this.
     for_slot = None
-    is_cron = os.getenv("GITHUB_EVENT_NAME") == "schedule"
-    if (is_cron or a.scheduled) and not (a.force or a.id):
-        if is_cron:
-            fired = series.last_cron_fire(os.getenv("SCHEDULE_CRON", ""), now)
-            if fired is None:
-                log.error("Unknown cron %r: cannot tell which slot this run is for.", os.getenv("SCHEDULE_CRON"))
-                return 1
-        else:
-            # +5 min: a trigger that fires a few seconds early still counts for its slot.
-            fired = series.current_slot(cfg, now + timedelta(minutes=5))
+    if a.scheduled and not (a.force or a.id):
+        # +5 min: a trigger that fires a few seconds early still counts for its slot.
+        fired = series.current_slot(cfg, now + timedelta(minutes=5))
         key = fired.astimezone(series.tz(cfg)).isoformat(timespec="minutes")
         if any(v.get("for_slot") == key or (not v.get("for_slot") and
                datetime.fromisoformat(v["posted_at"]) >= fired - timedelta(minutes=30)) for v in posted.values()):

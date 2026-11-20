@@ -26,16 +26,14 @@ topics can never double post or miss a post. Dates in the app are projected from
 the last real post, so they shift automatically if a run is late or skipped.
 
 Trigger: **cron-job.org** starts the workflow at exactly 11:30 and 23:00 JST
-(Run workflow via the GitHub API, mode `scheduled`; setup below). GitHub's own cron
-(same times) stays as a backup: it often starts runs hours late, and if the slot
-already has a post it simply skips. Both triggers count for the same slot key.
+(Run workflow via the GitHub API, mode `scheduled`; setup below). It is the only
+automatic trigger: GitHub's own cron started runs hours late, so it is not used.
 
-Schedule (one run per slot, no retry runs): the workflow fires at the slot times,
-11:30 and 23:00 JST. If a run starts late, it posts whenever it starts,
-until 1 h before the next slot (first run until 22:00 JST, second run until 10:30 JST
-next day); later than that it skips and the next slot's run posts. Each post records
-the cron firing it was for (`for_slot`), so the same firing can never post twice,
-and a manual post from 30 min before a firing counts for it.
+One run per slot, no retry runs. If a run starts late, it still posts, until 1 h
+before the next slot (11:30 slot until 22:00 JST, 23:00 slot until 10:30 JST next
+day). Each post records its slot (`for_slot`), so a second run for the same slot
+skips, and a manual post from 30 min before a slot counts for it.
+If cron-job.org fails, it emails you; post that slot by hand (Run workflow, mode `post`).
 
 Duplicate safety: the post call is never retried. If LinkedIn times out or answers
 5xx while creating a post (it may be live), or posted.json cannot be pushed, the bot
@@ -89,7 +87,7 @@ timeout could publish twice).
 | Never post one item | add its id to `"skip"` in `series.json` |
 | Post one item now | Actions → Run workflow → mode `post`, `post_id` = id |
 | Catch up after a missed slot | Run workflow → mode `post` (tick `force` to ignore the gap) |
-| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron lines in the workflow (UTC = JST − 9) **and** the cron-job.org jobs |
+| Change times | `"slots"` in `series.json` (times in `"timezone"`) **and** the two cron-job.org jobs |
 | See status locally | `python3 linkedin_tasks/bot/post_next.py --status` |
 | Test locally without LinkedIn | `python3 post_next.py --simulate --force --posted-file /tmp/p.json` |
 
