@@ -72,7 +72,7 @@
  },
  "T01-P1": {
   "id": "T01-P1",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -88,6 +88,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 36,
     "zoom": 1,
     "overflow": false
@@ -97,11 +103,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 293,
-  "png": 3
+  "png": 4
  },
  "T01-Q12": {
   "id": "T01-Q12",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -120,17 +126,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 264,
-  "png": 3
+  "png": 4
  },
  "T01-P3": {
   "id": "T01-P3",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -146,6 +158,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -155,11 +173,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 258,
-  "png": 3
+  "png": 4
  },
  "T01-Q16": {
   "id": "T01-Q16",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -178,17 +196,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 266,
-  "png": 3
+  "png": 4
  },
  "T01-P10": {
   "id": "T01-P10",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -204,6 +228,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -213,7 +243,7 @@
   "small_code": [],
   "small_text": [],
   "chars": 282,
-  "png": 3
+  "png": 4
  },
  "T02-TH": {
   "id": "T02-TH",
@@ -504,7 +534,7 @@
  },
  "T03-P1": {
   "id": "T03-P1",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -520,6 +550,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -529,11 +565,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 302,
-  "png": 3
+  "png": 4
  },
  "T03-Q7": {
   "id": "T03-Q7",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -552,17 +588,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 271,
-  "png": 3
+  "png": 4
  },
  "T03-P9": {
   "id": "T03-P9",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -578,6 +620,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -587,11 +635,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 317,
-  "png": 3
+  "png": 4
  },
  "T03-Q15": {
   "id": "T03-Q15",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -607,6 +655,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -616,11 +670,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 326,
-  "png": 3
+  "png": 4
  },
  "T03-Q21": {
   "id": "T03-Q21",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -630,12 +684,18 @@
    },
    {
     "n": 2,
-    "code_px": 36,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 36,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -645,7 +705,7 @@
   "small_code": [],
   "small_text": [],
   "chars": 308,
-  "png": 3
+  "png": 4
  },
  "T04-TH": {
   "id": "T04-TH",
@@ -720,7 +780,7 @@
  },
  "T04-P2": {
   "id": "T04-P2",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -736,6 +796,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 29,
     "zoom": 1,
     "overflow": false
@@ -745,11 +811,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 299,
-  "png": 3
+  "png": 4
  },
  "T04-Q9": {
   "id": "T04-Q9",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -768,17 +834,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 259,
-  "png": 3
+  "png": 4
  },
  "T04-P10": {
   "id": "T04-P10",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -794,6 +866,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 38,
     "zoom": 1,
     "overflow": false
@@ -803,11 +881,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 290,
-  "png": 3
+  "png": 4
  },
  "T04-Q11": {
   "id": "T04-Q11",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -823,6 +901,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -832,11 +916,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 302,
-  "png": 3
+  "png": 4
  },
  "T04-Q13": {
   "id": "T04-Q13",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -846,12 +930,18 @@
    },
    {
     "n": 2,
-    "code_px": 32,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 32,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -861,7 +951,7 @@
   "small_code": [],
   "small_text": [],
   "chars": 303,
-  "png": 3
+  "png": 4
  },
  "T05-TH": {
   "id": "T05-TH",
@@ -936,7 +1026,7 @@
  },
  "T05-P3": {
   "id": "T05-P3",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -952,6 +1042,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -961,11 +1057,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 296,
-  "png": 3
+  "png": 4
  },
  "T05-P4": {
   "id": "T05-P4",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -981,6 +1077,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 42,
     "zoom": 1,
     "overflow": false
@@ -990,11 +1092,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 267,
-  "png": 3
+  "png": 4
  },
  "T05-P9": {
   "id": "T05-P9",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1010,6 +1112,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 32,
     "zoom": 1,
     "overflow": false
@@ -1019,11 +1127,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 270,
-  "png": 3
+  "png": 4
  },
  "T05-Q6": {
   "id": "T05-Q6",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1042,17 +1150,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 297,
-  "png": 3
+  "png": 4
  },
  "T05-Q17": {
   "id": "T05-Q17",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1062,12 +1176,18 @@
    },
    {
     "n": 2,
-    "code_px": 29,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 29,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -1077,7 +1197,7 @@
   "small_code": [],
   "small_text": [],
   "chars": 307,
-  "png": 3
+  "png": 4
  },
  "T06-TH": {
   "id": "T06-TH",
@@ -1146,7 +1266,7 @@
  },
  "T06-P2": {
   "id": "T06-P2",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1162,6 +1282,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 36,
     "zoom": 1,
     "overflow": false
@@ -1171,11 +1297,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 323,
-  "png": 3
+  "png": 4
  },
  "T06-P5": {
   "id": "T06-P5",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1191,6 +1317,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 32,
     "zoom": 1,
     "overflow": false
@@ -1200,11 +1332,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 328,
-  "png": 3
+  "png": 4
  },
  "T06-P6": {
   "id": "T06-P6",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1220,6 +1352,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 29,
     "zoom": 1,
     "overflow": false
@@ -1229,11 +1367,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 303,
-  "png": 3
+  "png": 4
  },
  "T06-Q11": {
   "id": "T06-Q11",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1252,17 +1390,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 279,
-  "png": 3
+  "png": 4
  },
  "T06-Q14": {
   "id": "T06-Q14",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1281,13 +1425,19 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 279,
-  "png": 3
+  "png": 4
  },
  "T07-TH": {
   "id": "T07-TH",
@@ -1362,7 +1512,7 @@
  },
  "T07-P4": {
   "id": "T07-P4",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1378,6 +1528,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 31,
     "zoom": 1,
     "overflow": false
@@ -1387,11 +1543,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 285,
-  "png": 3
+  "png": 4
  },
  "T07-Q3": {
   "id": "T07-Q3",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1407,6 +1563,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -1416,11 +1578,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 298,
-  "png": 3
+  "png": 4
  },
  "T07-Q5": {
   "id": "T07-Q5",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1430,12 +1592,18 @@
    },
    {
     "n": 2,
-    "code_px": 36,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 36,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -1445,7 +1613,7 @@
   "small_code": [],
   "small_text": [],
   "chars": 265,
-  "png": 3
+  "png": 4
  },
  "T08-TH": {
   "id": "T08-TH",
@@ -1520,7 +1688,7 @@
  },
  "T08-P9": {
   "id": "T08-P9",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1536,6 +1704,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 32,
     "zoom": 1,
     "overflow": false
@@ -1545,11 +1719,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 300,
-  "png": 3
+  "png": 4
  },
  "T08-Q2": {
   "id": "T08-Q2",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1565,6 +1739,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -1574,11 +1754,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 288,
-  "png": 3
+  "png": 4
  },
  "T08-Q6": {
   "id": "T08-Q6",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1588,12 +1768,18 @@
    },
    {
     "n": 2,
-    "code_px": 35,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 35,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -1603,11 +1789,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 264,
-  "png": 3
+  "png": 4
  },
  "T08-Q13": {
   "id": "T08-Q13",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1626,13 +1812,19 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 261,
-  "png": 3
+  "png": 4
  },
  "T09-TH": {
   "id": "T09-TH",
@@ -1707,7 +1899,7 @@
  },
  "T09-P1": {
   "id": "T09-P1",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1723,6 +1915,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -1732,11 +1930,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 316,
-  "png": 3
+  "png": 4
  },
  "T09-P13": {
   "id": "T09-P13",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1752,6 +1950,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 28,
     "zoom": 1,
     "overflow": false
@@ -1761,11 +1965,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 336,
-  "png": 3
+  "png": 4
  },
  "T09-Q4": {
   "id": "T09-Q4",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1784,17 +1988,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 290,
-  "png": 3
+  "png": 4
  },
  "T09-Q14": {
   "id": "T09-Q14",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1813,17 +2023,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 311,
-  "png": 3
+  "png": 4
  },
  "T09-Q16": {
   "id": "T09-Q16",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1842,13 +2058,19 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 267,
-  "png": 3
+  "png": 4
  },
  "T10-TH": {
   "id": "T10-TH",
@@ -1923,7 +2145,7 @@
  },
  "T10-P1": {
   "id": "T10-P1",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1939,6 +2161,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 33,
     "zoom": 1,
     "overflow": false
@@ -1948,11 +2176,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 238,
-  "png": 3
+  "png": 4
  },
  "T10-P2": {
   "id": "T10-P2",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1968,6 +2196,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 31,
     "zoom": 1,
     "overflow": false
@@ -1977,11 +2211,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 276,
-  "png": 3
+  "png": 4
  },
  "T10-P4": {
   "id": "T10-P4",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -1997,6 +2231,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 29,
     "zoom": 1,
     "overflow": false
@@ -2006,11 +2246,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 300,
-  "png": 3
+  "png": 4
  },
  "T10-Q8": {
   "id": "T10-Q8",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -2029,17 +2269,23 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 306,
-  "png": 3
+  "png": 4
  },
  "T10-Q14": {
   "id": "T10-Q14",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -2058,13 +2304,19 @@
     "code_px": null,
     "zoom": 1,
     "overflow": false
+   },
+   {
+    "n": 4,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
    }
   ],
   "overflow": [],
   "small_code": [],
   "small_text": [],
   "chars": 259,
-  "png": 3
+  "png": 4
  },
  "T11-TH": {
   "id": "T11-TH",
@@ -2139,7 +2391,7 @@
  },
  "T11-P1": {
   "id": "T11-P1",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -2150,11 +2402,17 @@
    {
     "n": 2,
     "code_px": null,
-    "zoom": 0.98,
+    "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 0.98,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 30,
     "zoom": 1,
     "overflow": false
@@ -2164,11 +2422,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 311,
-  "png": 3
+  "png": 4
  },
  "T11-P6": {
   "id": "T11-P6",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -2184,6 +2442,12 @@
    },
    {
     "n": 3,
+    "code_px": null,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": 33,
     "zoom": 1,
     "overflow": false
@@ -2193,11 +2457,11 @@
   "small_code": [],
   "small_text": [],
   "chars": 287,
-  "png": 3
+  "png": 4
  },
  "T11-Q7": {
   "id": "T11-Q7",
-  "slides": 3,
+  "slides": 4,
   "fit": [
    {
     "n": 1,
@@ -2207,12 +2471,18 @@
    },
    {
     "n": 2,
-    "code_px": 31,
+    "code_px": null,
     "zoom": 1,
     "overflow": false
    },
    {
     "n": 3,
+    "code_px": 31,
+    "zoom": 1,
+    "overflow": false
+   },
+   {
+    "n": 4,
     "code_px": null,
     "zoom": 1,
     "overflow": false
@@ -2222,6 +2492,6 @@
   "small_code": [],
   "small_text": [],
   "chars": 283,
-  "png": 3
+  "png": 4
  }
 }

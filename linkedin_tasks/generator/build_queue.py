@@ -67,11 +67,16 @@ def main():
     order = [i for i in old if i in specs] + [i for i in fresh if i not in old]
     dropped = [i for i in old if i not in specs]
 
+    posted_file = Path(__file__).resolve().parent.parent / "posted.json"
+    posted = json.loads(posted_file.read_text()) if posted_file.exists() else {}
     posts = []
     for pid in order:
         p = specs[pid]
         out = base / "out" / pid
         pngs = sorted(x.name for x in out.glob("s-*.png"))
+        # Already posted: keep the pages it went out with (e.g. 3-page Q&A before the
+        # pause page existed); later layout changes must not mark it unrendered.
+        n_pages = len(pngs) if pid in posted and pngs else len(with_pause_page(p))
         is_video = p.get("format") == "video"
         src_text = {**p["text"], **p.get("video_text", {})} if is_video else p["text"]
         t = {k: (plain(v) if isinstance(v, str) else v) for k, v in src_text.items()}
@@ -81,8 +86,8 @@ def main():
             "id": pid, "type": p["type"], "topic_no": p["topic_no"], "topic_short": p.get("topic_short", ""),
             "source": p.get("source", ""), "hook": t["hook"], "body": t.get("body", ""),
             "hashtags": t.get("hashtags", []), "post_text": full, "first_comment": first_comment(p),
-            "slide_count": len(with_pause_page(p)), "slides": [f"{pid}/{n}" for n in pngs],
-            "pdf": f"{pid}/slides.pdf", "rendered": len(pngs) == len(with_pause_page(p)),
+            "slide_count": n_pages, "slides": [f"{pid}/{n}" for n in pngs],
+            "pdf": f"{pid}/slides.pdf", "rendered": len(pngs) == n_pages,
             "format": p.get("format", "carousel"),
             **({"video": f"{pid}/video.mp4"} if is_video else {}),
             **({"skip": True} if p.get("skip") else {}),

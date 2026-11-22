@@ -213,12 +213,12 @@ def s_myths(s):
 
 
 def s_pause(s):
-    """Page 2 of every Q&A post: hides the answer from the feed's next-page sliver."""
-    h = kicker(s.get("kicker", "Your turn"), "#f59e0b")
-    h += '<div class="pause-emoji">🤔</div>'
-    h += f'<div class="hero">{md(s.get("hero", "Lock in your answer."))}</div>'
-    h += f'<p class="lead">{md(s.get("lead", "Comment it below, then swipe ➜ to see if you were right."))}</p>'
-    return h
+    """Page 2 of every Q&A post. The mobile feed shows ~70% of page 2 next to page 1,
+    so this page keeps the answer off it: one word per line, inside the left half of
+    the page, so the whole message is readable in the feed's peek."""
+    words = s.get("words", ["Swipe", "right", "to", "see", "answer", "➜"])
+    return '<div class="pause-stack">' + "".join(
+        f'<div class="pw{" arrow" if w == "➜" else ""}">{w}</div>' for w in words) + "</div>"
 
 
 def s_takeaway(s):
@@ -237,10 +237,9 @@ LAYOUTS = {
 }
 
 
-# Square pages show only ~10% of the next page in the mobile feed (inside our 72px
-# margin), which never reveals the answer, so the automatic pause page is off.
-# Set to True to insert a "Lock in your answer" page 2 into every Q&A post.
-AUTO_PAUSE_PAGE = False
+# The LinkedIn mobile feed shows ~70% of page 2 beside page 1 (checked on two phones,
+# 20 Nov 2026), which revealed the answer. Every Q&A post gets the pause page as page 2.
+AUTO_PAUSE_PAGE = True
 
 
 def with_pause_page(post):
