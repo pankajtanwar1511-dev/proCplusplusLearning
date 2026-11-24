@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Copy constructor: deleted. Move constructor: deleted.
+"The compiler elides the copy anyway."
+So both functions compile?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+This is how factories return types that hold a std::mutex or a std::atomic.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

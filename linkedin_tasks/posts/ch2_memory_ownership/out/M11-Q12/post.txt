@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The vector lives in your arena. You push one 100-char string.
+How many times does it touch the global heap?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A favourite pmr follow-up in low-latency interviews.
+
+#cpp #cplusplus #memorymanagement #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

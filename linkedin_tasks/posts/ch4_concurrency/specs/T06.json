@@ -348,14 +348,15 @@
     ]
   },
   {
-    "id": "T06-Q11",
-    "type": "concept",
+    "id": "T06-Q21",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 6,
     "topic_short": "Memory Ordering",
-    "source": "topic_06 qa Q11",
+    "source": "topic_06 qa Q21",
     "text": {
-      "hook": "\"A flag shared by two threads needs volatile. Otherwise the compiler caches it in a register.\"\n\nAgree? 🧠 Comment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "Half of this claim is true. That is exactly why it is dangerous.",
+      "hook": "T1 writes config and releases `a`. T3 only ever acquires `b`.\n\"T3 never synchronized with T1, so it races.\" Agree?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Three threads, two flags, one plain std::string. The rule that decides it also makes every pipeline work.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -364,55 +365,55 @@
         "interviewprep"
       ]
     },
-    "first_comment": "🧠 Bonus: which flag type may a signal handler write, traditionally declared `volatile`? Reply with your answer 👇 I'll post the answer here tomorrow.",
-    "bonus_answer": "`volatile std::sig_atomic_t`. Signal handlers and memory-mapped hardware registers are what `volatile` is for, not other threads.",
     "slides": [
       {
-        "layout": "question",
-        "title": "\"A flag shared by two threads needs `volatile`.\" Do you agree?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory Ordering",
+        "title": "T3 never touches `a`.<br>Is reading `config` safe?",
+        "code": "using enum std::memory_order;  // C++20\nstd::string config;  // plain, not atomic\nstd::atomic<bool> a{false}, b{false};\n\nvoid t1() { config = \"fast\";\n            a.store(true, release); }\nvoid t2() { while (!a.load(acquire)) {}\n            b.store(true, release); }\nvoid t3() { while (!b.load(acquire)) {}\n            std::cout << config; }",
         "options": [
-          "No. `volatile` forces every access, but gives no atomicity, no race freedom, no ordering.",
-          "Yes. It stops the compiler caching the flag, which is all a flag needs.",
-          "Yes. `volatile` means \"don't reorder\": a lightweight memory barrier.",
-          "Yes. It works on MSVC, so it is portable enough."
+          "Race: T3 must acquire `a` too",
+          "Safe on x86 only",
+          "Safe only if all are seq_cst",
+          "Safe: prints `fast`"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "A. No, use std::atomic",
-        "verdict_sub": "volatile is for hardware and signal handlers, not threads",
+        "verdict": "D. Safe: prints `fast`",
+        "verdict_sub": "happens-before is transitive. GCC 11 + TSan: no race reported",
         "bullets": [
-          "`volatile`: every read and write is performed. That is all.",
-          "No atomic RMW: `volatile int n; ++n;` from two threads still loses increments.",
-          "Concurrent access is still a data race: UB.",
-          "No release/acquire, no happens-before. Relaxed `std::atomic<bool>` is enough for a pure stop flag."
+          "T1: write `config`, then release `a`.",
+          "T2's acquire of `a` syncs with it. T2 then releases `b`.",
+          "T3's acquire of `b` syncs with T2. Chain: write → T3's read.",
+          "Each pipeline stage syncs only with the previous one, yet sees all earlier writes."
         ],
-        "cta": "Why not B, C or D ➜"
+        "wrong": "\"T3 must also acquire `a` to see T1's data\"",
+        "cta": "Where the chain breaks ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "B: re-reading is not enough. It is still a data race, and it publishes no other data.",
-          "C: volatile accesses stay ordered only among themselves. Plain accesses move across them, and the CPU can reorder.",
-          "D: MSVC `/volatile:ms` is a non-standard extension (default on x86/x64, not ARM). GCC and Clang give no such guarantee."
+        "layout": "code",
+        "kicker": "The twist · one weak link",
+        "title": "T2 stores `b` relaxed",
+        "code": "void t2() { while (!a.load(acquire)) {}\n            b.store(true, relaxed); }\n// T3: acquire b, read config\n// TSan: data race on config",
+        "bullets": [
+          "A relaxed store releases nothing, so T3's acquire syncs with nobody.",
+          "Same break if T2 stored `b` before acquiring `a`."
         ],
-        "takeaway": "Senior answer: \"hardware register or signal handler: `volatile`. Another C++ thread: `std::atomic` or a mutex.\""
+        "takeaway": "Happens-before chains across any number of threads, if every link is a real release/acquire pair."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"A flag shared by two threads needs volatile. Otherwise the compiler caches it in a register.\"\n\nAgree? 🧠 Comment A, B, C or D. The answer appears at 0:36.",
-      "body": "Half of this claim is true. That is exactly why it is dangerous."
-    }
+    ]
   },
   {
     "id": "T06-Q14",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 6,
     "topic_short": "Memory Ordering",
     "source": "topic_06 qa Q14",
     "text": {
-      "hook": "\"Release works because it flushes the store buffer, and MESI pushes the line to the other core.\"\n\nSounds senior. Is it right? 🧠\nComment A, B, C or D, then swipe ➜",
+      "hook": "\"Release works because it flushes the store buffer.\"\nAn interviewer said this. Sounds senior. Is it right?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "The best answer here is about layers, not about hardware.",
       "hashtags": [
         "cpp",
@@ -426,40 +427,50 @@
     "bonus_answer": "`xchg` (implicitly locked): a full barrier that drains the store buffer. Release and relaxed stores are a plain `mov`.",
     "slides": [
       {
-        "layout": "question",
-        "title": "\"Release works by flushing the store buffer, and MESI pushes the line to the other core.\" Agree?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory ordering",
+        "title": "x86-64, GCC `-O2`. What does the release store compile to?",
+        "code": "int payload = 0;\nstd::atomic<bool> ready{false};\n\nvoid publish() {\n    payload = 42;\n    ready.store(true,\n        std::memory_order_release);\n}\n// consumer: acquire-load of ready,\n// then reads payload",
         "options": [
-          "Yes. That is how the C++ standard defines release.",
-          "No. Store buffers and MESI have nothing to do with memory ordering.",
-          "Not as a definition. Release is a happens-before guarantee; hardware is one way to implement it.",
-          "Yes on x86: a release store compiles to `mfence`."
+          "`mfence`: flush the store buffer",
+          "A plain `mov`",
+          "`xchg`: a full barrier",
+          "`mov`, then `mfence`"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "C. Not as a definition",
-        "verdict_sub": "If an acquire reads the released value, everything before the release happens-before everything after the acquire",
+        "verdict": "B. A plain `mov`",
+        "verdict_sub": "GCC 11 `-O2`: `movb $1, ready(%rip)`. No flush at all.",
         "bullets": [
-          "On x86 a release store is a plain `mov`: no flush at all. On ARMv8 it is `stlr`.",
-          "Coherence (MESI) alone does not give ordering: a core can still delay its stores in a store buffer.",
-          "Answer in 3 layers: C++ (happens-before), compiler, hardware. Go to hardware only if asked."
+          "C++ defines release by happens-before: if the acquire reads `true`, `payload == 42` holds.",
+          "x86 is TSO: stores already stay in order. On ARMv8 a release store is `stlr`.",
+          "Coherence (MESI) alone gives no ordering: a core can still delay stores in a store buffer.",
+          "Answer in 3 layers: C++, compiler, hardware. Go to hardware only if asked."
         ],
-        "cta": "Why not A, B or D ➜"
+        "wrong": "\"Release flushes the store buffer\"",
+        "cta": "The twist ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: a flush is one possible hardware effect, not the C++ guarantee.",
-          "B: overcorrection. Coherence is part of how hardware implements atomicity and visibility.",
-          "D: x86 is TSO, stores already stay in order: a release store is a plain `mov`. `mfence` shows up for seq_cst fences."
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "The costly store is seq_cst",
+        "columns": [
+          {
+            "label": "release",
+            "code": "ready.store(true,\n  memory_order_release);\n// movb $1, ready",
+            "verdict": "plain `mov`",
+            "verdict_ok": true
+          },
+          {
+            "label": "seq_cst (default)",
+            "code": "ready.store(true);\n\n// xchgb ready, %al",
+            "verdict": "`xchg`: full barrier"
+          }
         ],
-        "takeaway": "Senior answer: \"define release/acquire with happens-before. Store buffers and MESI are implementation details.\""
+        "takeaway": "Define release/acquire with happens-before. Store buffers and MESI are implementation details (x86-64, GCC)."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"Release works because it flushes the store buffer, and MESI pushes the line to the other core.\"\n\nSounds senior. Is it right? 🧠\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The best answer here is about layers, not about hardware."
-    }
+    ]
   }
 ]

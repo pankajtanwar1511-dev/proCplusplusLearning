@@ -1,13 +1,12 @@
 === POST TEXT ===
-Your lock-free pop's CAS succeeded.
-The stack is still corrupted. 🧩
+The CAS succeeded. The stack is still corrupted.
+No data race, no wrong memory order.
 
-This is the ABA problem. Can you explain it?
-Comment A, B, C or D, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
-Slide 2 walks through the exact interleaving, step by step.
+Follow the interleaving in the comments line by line.
 
 #cpp #cplusplus #lockfree #concurrency #interviewprep
 
 === FIRST COMMENT ===
-Which option did you pick? Reply with the letter, then swipe right for the answer ➜
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

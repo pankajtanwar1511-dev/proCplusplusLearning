@@ -1,0 +1,397 @@
+[
+  {
+    "id": "M06-TH",
+    "type": "theory",
+    "topic_no": 6,
+    "topic_short": "unique_ptr",
+    "source": "topic_06 theory",
+    "text": {
+      "hook": "std::unique_ptr is the default owning pointer.\nInterviewers use it to test ownership, deleters and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. One owner plus a cleanup policy\n2. What a move really transfers\n3. get, release, reset\n4. Custom deleters and their size\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "std::unique_ptr:<br>the mental model<br>+ 6 myths",
+        "lead": "Ownership transfer, deleters and arrays: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Exclusive ownership plus a cleanup policy",
+        "cards": [
+          {
+            "label": "`T* ptr`",
+            "text": "Points to the managed object, usually on the heap."
+          },
+          {
+            "label": "Deleter `D`",
+            "text": "The cleanup policy. Default: `delete ptr`."
+          }
+        ],
+        "takeaway": "Copy is deleted, ownership only moves. With the default deleter it is one pointer, same code as a raw pointer."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Ownership transfer",
+        "title": "`auto p2 = std::move(p1);` step by step",
+        "steps": [
+          "`std::move` is only a cast. It moves nothing.",
+          "the move constructor copies the stored pointer into `p2`",
+          "`p1` is set to `nullptr`: guaranteed empty, not \"unspecified\"",
+          "the object never moved: same address, no allocation"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Observers and modifiers",
+        "title": "`get`, `release`, `reset`",
+        "header": [
+          "Call",
+          "Ownership"
+        ],
+        "rows": [
+          [
+            "`get()`",
+            "unchanged: caller only observes"
+          ],
+          [
+            "`release()`",
+            "**given up**: returns the pointer, frees nothing"
+          ],
+          [
+            "`reset()`",
+            "deletes the object, becomes empty"
+          ],
+          [
+            "`reset(q)`",
+            "stores `q` **first**, then deletes the old object"
+          ]
+        ],
+        "takeaway": "The deleter is never called on null: no `fclose(nullptr)` through a `unique_ptr`."
+      },
+      {
+        "layout": "table",
+        "kicker": "Custom deleters",
+        "title": "The deleter is part of the type (libstdc++, x86-64)",
+        "header": [
+          "Deleter",
+          "Size of the unique_ptr"
+        ],
+        "rows": [
+          [
+            "`default_delete<T>`",
+            "8"
+          ],
+          [
+            "stateless functor / captureless lambda",
+            "8"
+          ],
+          [
+            "function pointer `int(*)(FILE*)`",
+            "16"
+          ],
+          [
+            "`std::function<void(FILE*)>`",
+            "40"
+          ]
+        ],
+        "takeaway": "Different deleters, different types: they cannot share one `std::vector`. (`shared_ptr` type-erases the deleter.)"
+      },
+      {
+        "layout": "cards",
+        "kicker": "Arrays",
+        "title": "Scalar vs array form",
+        "cards": [
+          {
+            "label": "`unique_ptr<int>(new int[10])`",
+            "text": "Compiles, but pairs `new[]` with `delete`: **UB** (ASan: alloc-dealloc-mismatch)."
+          },
+          {
+            "label": "`make_unique<T[]>(n)`",
+            "text": "Calls `delete[]`: n destructors, in reverse index order."
+          }
+        ],
+        "takeaway": "It does not know its size. Prefer `std::vector`, keep `unique_ptr<T[]>` for fixed buffers handed to C APIs."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Pimpl",
+        "title": "The destructor goes in the .cpp",
+        "cards": [
+          {
+            "label": "Header",
+            "text": "`struct Impl; std::unique_ptr<Impl> impl_;` and **declare** `~Widget();`"
+          },
+          {
+            "label": ".cpp",
+            "text": "Define `Impl` first, then `Widget::~Widget() = default;`"
+          }
+        ],
+        "takeaway": "An implicit destructor deletes `Impl` where it is incomplete: \"invalid application of 'sizeof' to incomplete type\"."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`std::move(p1)` moves the object to `p2`.\"",
+            "truth": "Only the stored pointer is transferred. The object stays at the same address."
+          },
+          {
+            "myth": "\"After the move, `p1` is unspecified.\"",
+            "truth": "For `unique_ptr` it is guaranteed empty. `p1->f()` is a null dereference: UB."
+          },
+          {
+            "myth": "\"`unique_ptr` constructs the object.\"",
+            "truth": "`make_unique` or `new` constructs it. `unique_ptr` owns and destroys it."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A custom deleter always increases the size.\"",
+            "truth": "Stateless deleters add nothing. Function pointers and state do."
+          },
+          {
+            "myth": "\"`reset(q)` deletes the old object, then stores `q`.\"",
+            "truth": "It stores `q` first, then deletes the old object."
+          },
+          {
+            "myth": "\"In C++17 you still need `make_unique` for exception safety.\"",
+            "truth": "That argument-interleaving leak is gone in C++17. Prefer it anyway: no naked `new`."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "One owner.<br>Moves, never copies.<br><br>`reset()` frees.<br>`release()` lets go.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M06-P9",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "unique_ptr",
+    "source": "topic_06 practice Q9",
+    "text": {
+      "hook": "The author wanted to free a 1 MiB buffer early.\nOne call on a unique_ptr. Did it work?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The compiler stays silent, even with -Wall -Wextra.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Freeing early",
+        "title": "\"Done with it.\"<br>What happens to the buffer?",
+        "code": "int main() {\n  auto buf = std::make_unique<\n      std::vector<char>>(1 << 20);\n  std::cout << buf->size() << '\\n';\n\n  buf.release();       // \"done with it\"\n\n  std::cout << (buf ? \"set\" : \"null\");\n}",
+        "options": [
+          "Prints null, 1 MiB leaks",
+          "Prints null, buffer freed",
+          "Prints set, buffer freed",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `buf` is null, and the buffer leaks",
+        "verdict_sub": "LeakSanitizer: the vector and its 1 MiB buffer. GCC 11: no warning",
+        "bullets": [
+          "`release()` only gives up ownership: it nulls the stored pointer and **returns** the old one.",
+          "The returned pointer is discarded here. Nothing is deleted.",
+          "libstdc++ 11 does not mark `release()` `[[nodiscard]]`, so `-Wall -Wextra` are silent.",
+          "`release()` hands responsibility to the caller. `reset()` is the one that frees."
+        ],
+        "wrong": "\"B: release() releases the memory\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Map the intent to the right call",
+        "code": "buf.reset();             // free it now\nbuf = nullptr;           // same thing\n\nq = std::move(buf);      // hand to q\napi_adopt(buf.release()); // C API owns it",
+        "takeaway": "`release()` without using its result is always a leak."
+      }
+    ]
+  },
+  {
+    "id": "M06-P11",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "unique_ptr",
+    "source": "topic_06 practice Q11",
+    "text": {
+      "hook": "A lambda captures a unique_ptr by move.\nThen it goes into a std::function.\nDoes this compile?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "A pattern that shows up in every task queue and callback API.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Move-only lambda",
+        "title": "Does this compile?<br>If yes, what does it print?",
+        "code": "int main() {\n  auto data = std::make_unique<int>(5);\n  auto task = [p = std::move(data)] {\n    return *p * 2;\n  };\n  std::cout << task() << '\\n';\n\n  std::function<int()> f = std::move(task);\n  std::cout << f() << '\\n';\n}",
+        "options": [
+          "10, then 10",
+          "10, then a crash",
+          "Compile error",
+          "10, then 0"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Compile error",
+        "verdict_sub": "libstdc++ 11: \"std::function target must be copy-constructible\"",
+        "bullets": [
+          "The init-capture is fine: the closure owns the `unique_ptr`, so it is **move-only**.",
+          "`task()` alone would print 10.",
+          "`std::function` requires a copy-constructible target, even if you never copy it.",
+          "Moving the lambda in does not help."
+        ],
+        "wrong": "\"A: 10, then 10, the lambda was moved in\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix (C++23)",
+        "title": "`std::move_only_function`",
+        "code": "std::move_only_function<int()> f =\n    std::move(task);\nstd::cout << f() << '\\n';   // 10",
+        "bullets": [
+          "C++23, GCC 12+.",
+          "Or keep the closure as `auto` / a template parameter.",
+          "Or capture a `std::shared_ptr` if it must be copyable."
+        ],
+        "takeaway": "Owning a `unique_ptr` makes the enclosing type move-only, lambdas included."
+      }
+    ]
+  },
+  {
+    "id": "M06-Q12",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 6,
+    "topic_short": "unique_ptr",
+    "source": "topic_06 qa Q12",
+    "text": {
+      "hook": "unique_ptr<Base> holding a Derived.\nNo warning at -Wall, no crash in tests.\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The bug hides well: switch the same code to shared_ptr and it seems to work.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · unique_ptr and inheritance",
+        "title": "Is this correct?",
+        "code": "struct Base { ~Base() {} };\nstruct Derived : Base {\n  std::string big = std::string(64, 'd');\n};\nint main() {\n  std::unique_ptr<Base> b =\n      std::make_unique<Derived>();\n}",
+        "options": [
+          "Correct",
+          "Compile error",
+          "Warning only",
+          "UB"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Undefined behaviour",
+        "verdict_sub": "`Base` needs a virtual destructor",
+        "bullets": [
+          "The converting move turns the deleter into `default_delete<Base>`: `delete (Base*)p`.",
+          "Without a virtual destructor that is UB. In practice `~Derived` never runs.",
+          "ASan: new-delete-type-mismatch. With that check off, LSan reports `big`'s 65-byte buffer.",
+          "GCC `-Wall` is silent: `Base` has no other virtual functions."
+        ],
+        "wrong": "\"Fine: unique_ptr remembers the real type\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Two correct designs",
+        "code": "struct Base {\n  virtual ~Base() = default;\n};  // ~Derived runs: ASan clean\n\nstruct Base2 {\nprotected:\n  ~Base2() = default;\n};  // the line no longer compiles",
+        "tip": "`shared_ptr` captures the deleter at creation and calls `~Derived`. That hides the bug.",
+        "takeaway": "Polymorphic ownership through `unique_ptr<Base>` requires `virtual ~Base()`."
+      }
+    ]
+  },
+  {
+    "id": "M06-Q13",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 6,
+    "topic_short": "unique_ptr",
+    "source": "topic_06 qa Q13",
+    "text": {
+      "hook": "A function only reads an Order.\nThe caller owns it through a unique_ptr.\n\"Pass the smart pointer by const&.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Your signature documents ownership. Reviewers read it that way.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Ownership in signatures",
+        "title": "Which parameter type for `print`?",
+        "code": "void print(/* ??? */ o);  // only reads\n// A: const std::unique_ptr<Order>&\n// B: const Order&\n// C: std::unique_ptr<Order>\n// D: std::unique_ptr<Order>&&\n\nauto u = std::make_unique<Order>();\nauto s = std::make_shared<Order>();\nOrder local{3};\n// all three must be printable",
+        "cta": "Pick A, B, C or D, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `const Order&`",
+        "verdict_sub": "Ownership is not involved, so the signature should not mention it",
+        "bullets": [
+          "Callers write `print(*u)`, `print(*s)`, `print(local)`: any owner works.",
+          "`const unique_ptr&` ties `print` to one owner type. `s` and `local` cannot call it.",
+          "`unique_ptr` by value is a **sink**: `print` would take and destroy the order.",
+          "`unique_ptr&&`: a sink that may not move. The caller cannot be sure it is empty."
+        ],
+        "wrong": "\"`const std::unique_ptr<Order>&`: no copy\"",
+        "cta": "The full map ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The full map",
+        "title": "Signatures document ownership",
+        "code": "void use(const Order& o);         // use\nvoid sink(std::unique_ptr<Order> p); // sink\nvoid reseat(std::unique_ptr<Order>& p);\nstd::unique_ptr<Order> make();     // factory",
+        "tip": "Sink: caller writes `sink(std::move(u))`, `u` is null after. Factory: `return p;` with no `std::move`.",
+        "takeaway": "Core Guidelines: R.32 by value to sink, R.33 `&` to reseat, F.7 `T*` or `T&` when ownership is not involved."
+      }
+    ]
+  }
+]

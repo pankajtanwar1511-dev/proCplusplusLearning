@@ -1,0 +1,19 @@
+=== POST TEXT ===
+malloc's fast path takes tens of nanoseconds.
+So why do low-latency systems still write memory pools?
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. What a pool exploits
+2. Designing a fixed-size pool
+3. The exhaustion policy
+4. std::pmr resources and their traps
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #memorymanagement #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

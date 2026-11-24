@@ -1,12 +1,12 @@
 === POST TEXT ===
-Your market-data SPSC ring is full. The feed handler has one more message.
+The feed handler has one more update. The ring is full.
+Every option loses something. Which loss is acceptable?
 
-What do you do?
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
-There is no free option here. Every choice loses something: the question is what, and who finds out.
+Think about who finds out, and when.
 
 #cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
 
 === FIRST COMMENT ===
-👉 Pick A, B, C or D below, then swipe right to check your answer.
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

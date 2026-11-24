@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Same three fields. Only the order differs.
+What does this print on x86-64 Linux?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Four numbers. Each one tests a different layout rule.
+
+#cpp #cplusplus #systemsprogramming #performance #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

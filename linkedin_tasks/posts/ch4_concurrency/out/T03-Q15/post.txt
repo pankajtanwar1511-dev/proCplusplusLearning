@@ -1,12 +1,12 @@
 === POST TEXT ===
 "A mutex always goes through the kernel, so it is slow."
+One thread, a million lock/unlock pairs. Count the syscalls.
 
-You hear this in many interviews. Is it true?
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
-The real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds.
+The real answer explains why an uncontended lock is cheap and a contended one is not.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-Which option did you pick? Reply with the letter, then swipe right for the answer ➜
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

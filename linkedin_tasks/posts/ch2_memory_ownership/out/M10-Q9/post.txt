@@ -1,0 +1,12 @@
+=== POST TEXT ===
+An Order built with placement new in a stack buffer.
+Four engineers, four cleanup lines. Three of them are bugs.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Pool slots, inline storage and shared memory all use this exact pattern.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

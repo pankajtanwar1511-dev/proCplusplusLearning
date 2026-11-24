@@ -1,0 +1,399 @@
+[
+  {
+    "id": "M04-TH",
+    "type": "theory",
+    "topic_no": 4,
+    "topic_short": "Copy Elision",
+    "source": "topic_04 theory",
+    "text": {
+      "hook": "\"RVO is guaranteed since C++17.\"\nHalf true, and interviewers ask about the other half.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Guaranteed vs optional elision\n2. What every return statement costs\n3. How NRVO works in the ABI\n4. Implicit move, standard by standard\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Copy elision:<br>the mental model<br>+ 6 myths",
+        "lead": "RVO, NRVO and implicit move: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Two very different things share one name",
+        "cards": [
+          {
+            "label": "Guaranteed (C++17)",
+            "text": "A **prvalue** initializes its final object directly. No copy or move constructor needed, not even an accessible one."
+          },
+          {
+            "label": "Permitted (optional)",
+            "text": "**NRVO** for a named local. The compiler *may* skip the move. The constructor must still be usable."
+          }
+        ],
+        "takeaway": "Returning a local by value: NRVO (0 ops), else implicit move (1 move), else copy (only if no move constructor is declared)."
+      },
+      {
+        "layout": "table",
+        "kicker": "C++17/20",
+        "title": "What each `return` really costs",
+        "header": [
+          "Return statement",
+          "Result"
+        ],
+        "rows": [
+          [
+            "`return T(args);`",
+            "1 ctor, guaranteed"
+          ],
+          [
+            "`return local;` (one candidate)",
+            "NRVO usually, else 1 move"
+          ],
+          [
+            "`return a;` / `return b;` (two paths)",
+            "1 move, no NRVO"
+          ],
+          [
+            "`return c ? a : b;`",
+            "1 **copy**: it is an lvalue"
+          ]
+        ],
+        "takeaway": "`return local.member;` copies too: a member is not implicitly movable. Here `std::move` is correct."
+      },
+      {
+        "layout": "chain",
+        "kicker": "The ABI view (x86-64)",
+        "title": "How NRVO actually works",
+        "steps": [
+          "the caller reserves space for the result and passes its address as a hidden argument",
+          "`return T{...};` runs the constructor directly at that address (RVO)",
+          "`T t; return t;` places `t` itself at that address from the start (NRVO)",
+          "two candidates, or a parameter (caller-owned storage): no NRVO, implicit move"
+        ]
+      },
+      {
+        "layout": "cards",
+        "kicker": "Initialization vs assignment",
+        "title": "Elision only happens at initialization",
+        "cards": [
+          {
+            "label": "`T a = make();`",
+            "text": "Built directly in `a`. Output: `ctor`."
+          },
+          {
+            "label": "`a = make();`",
+            "text": "A temporary is materialized, move-assigned into `a`, then destroyed: `ctor move-assign dtor`."
+          }
+        ],
+        "takeaway": "Assigning a fresh object into a container throws away its old capacity. In hot loops, refill an existing object instead."
+      },
+      {
+        "layout": "table",
+        "kicker": "Implicit move on return",
+        "title": "`return x;` moves: what changed, standard by standard",
+        "header": [
+          "Standard",
+          "Moves when..."
+        ],
+        "rows": [
+          [
+            "C++11",
+            "`x` is a local or a by-value parameter"
+          ],
+          [
+            "C++14 (CWG 1579)",
+            "types differ: `unique_ptr<Derived>` into `unique_ptr<Base>`"
+          ],
+          [
+            "C++20 (P1825)",
+            "`x` is a `T&&` parameter or local"
+          ],
+          [
+            "C++23 (P2266)",
+            "the returned name simply *is* an xvalue"
+          ]
+        ],
+        "takeaway": "Never covered: members, globals, statics. Structured bindings: compilers differ. Need a move? Write `std::move`."
+      },
+      {
+        "layout": "statement",
+        "kicker": "The as-if exception",
+        "hero": "Elision may skip<br>side effects.",
+        "lead": "A copy or move constructor that logs or counts may simply never run. Never put essential work (registration, ref counting) only there."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"RVO is guaranteed in C++17.\"",
+            "truth": "Elision from a **prvalue** is guaranteed. NRVO (`return local;`) is still optional."
+          },
+          {
+            "myth": "\"If NRVO does not happen, the object is copied.\"",
+            "truth": "It is moved (implicit move). Copied only if no move constructor is declared."
+          },
+          {
+            "myth": "\"A deleted move constructor makes `return local;` fall back to copy.\"",
+            "truth": "The deleted move is selected: ill-formed. GCC C++20: \"use of deleted function\"."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Returning a by-value parameter gets NRVO.\"",
+            "truth": "Its storage belongs to the caller's argument. It is moved, never elided."
+          },
+          {
+            "myth": "\"`return cond ? a : b;` moves.\"",
+            "truth": "A conditional of two lvalues is an lvalue: it copies. Use `if (cond) return a; return b;`."
+          },
+          {
+            "myth": "\"`-fno-elide-constructors` turns off all elision.\"",
+            "truth": "Since C++17 it can only disable NRVO. Prvalue elision has nothing to elide."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "`return T{...};`<br>guaranteed.<br><br>`return local;`<br>NRVO or a move.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M04-P1",
+    "type": "code_puzzle",
+    "topic_no": 4,
+    "topic_short": "Copy Elision",
+    "source": "topic_04 practice Q1",
+    "text": {
+      "hook": "Four constructor calls in the source.\nHow many actually run in C++17?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Count the objects, not the parentheses.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Copy elision",
+        "title": "C++17. Which constructors run?",
+        "code": "struct T {\n  T() { std::cout << \"ctor \"; }\n  T(const T&) { std::cout << \"copy \"; }\n  T(T&&) { std::cout << \"move \"; }\n  ~T() { std::cout << \"dtor \"; }\n};\n\nT make() { return T(T(T())); }\n\nint main() {\n  T x = T(make());\n}",
+        "options": [
+          "ctor + 2 moves",
+          "ctor + 1 move",
+          "ctor + 1 copy",
+          "ctor only"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `ctor` only (output: `ctor dtor`)",
+        "verdict_sub": "One object, built directly in `x` (guaranteed since C++17)",
+        "bullets": [
+          "Each `T(...)` around a prvalue of type `T` is a prvalue with the **same result object**.",
+          "So `T(make())` and `T(T(T()))` collapse into `x`.",
+          "No copy, no move: it compiles even with deleted copy and move constructors.",
+          "C++14 with `-fno-elide-constructors` prints a chain of moves instead."
+        ],
+        "wrong": "\"ctor + 2 moves\" (one temporary per layer)",
+        "cta": "The twist ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "C++17 with `-fno-elide-constructors`",
+        "columns": [
+          {
+            "label": "prvalue (RVO)",
+            "code": "T rvo() {\n  return T{};\n}\nT a = rvo();",
+            "verdict": "`ctor dtor`",
+            "verdict_ok": true
+          },
+          {
+            "label": "named (NRVO)",
+            "code": "T nrvo() {\n  T t;\n  return t;\n}\nT b = nrvo();",
+            "verdict": "`ctor move dtor dtor`"
+          }
+        ],
+        "takeaway": "A prvalue is a recipe, not a temporary: there is nothing to elide. Only NRVO can be switched off."
+      }
+    ]
+  },
+  {
+    "id": "M04-P2",
+    "type": "code_puzzle",
+    "topic_no": 4,
+    "topic_short": "Copy Elision",
+    "source": "topic_04 practice Q2",
+    "text": {
+      "hook": "\"Add std::move to make sure it moves.\"\nA code review comment you have probably seen.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "What does the program print, and which line would you flag in review?",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · return std::move",
+        "title": "\"Make sure it moves.\"<br>Which special members run?",
+        "code": "struct T {\n  T() { std::cout << \"ctor \"; }\n  T(const T&) { std::cout << \"copy \"; }\n  T(T&&) { std::cout << \"move \"; }\n  ~T() { std::cout << \"dtor \"; }\n};\nT build() {\n  T result;\n  return std::move(result);\n}\nint main() { T t = build(); }",
+        "options": [
+          "ctor, move, 2 dtors",
+          "ctor, 1 dtor",
+          "ctor, copy, 2 dtors",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. ctor, move, 2 dtors",
+        "verdict_sub": "Output `ctor move dtor dtor`. GCC `-Wall`: \"moving a local object in a return statement prevents copy elision\"",
+        "bullets": [
+          "`std::move(result)` is a function call expression, **not the name of a local**.",
+          "So NRVO is not allowed: the result is move-constructed.",
+          "`result` is then destroyed at the end of `build()`: one extra move, one extra destructor.",
+          "`return result;` gives `ctor dtor` (NRVO), or at worst one implicit move."
+        ],
+        "wrong": "\"B: `std::move` makes the return free\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Return locals by name",
+        "code": "T build() {\n  T result;\n  return result;   // NRVO, else implicit move\n}\n\nint main() { T t = build(); }   // ctor dtor",
+        "tip": "`std::move` in a return *is* right for members and sub-objects: `return std::move(p.first);`",
+        "takeaway": "`return local;` and `return param;` never need `std::move`. Adding it can only add a move."
+      }
+    ]
+  },
+  {
+    "id": "M04-Q7",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 4,
+    "topic_short": "Copy Elision",
+    "source": "topic_04 qa Q7",
+    "text": {
+      "hook": "Copy constructor: deleted. Move constructor: deleted.\n\"The compiler elides the copy anyway.\"\nSo both functions compile?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "This is how factories return types that hold a std::mutex or a std::atomic.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Copy elision",
+        "title": "C++17. Which function compiles?",
+        "code": "struct NM {\n  int v;\n  explicit NM(int x) : v(x) {}\n  NM(const NM&) = delete;\n  NM(NM&&) = delete;\n};\nNM f1() { return NM{1}; }\nNM f2() { NM x{1}; return x; }",
+        "options": [
+          "Both",
+          "Only `f1`",
+          "Only `f2`",
+          "Neither"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Only `f1`",
+        "verdict_sub": "Prvalue return: yes. Named return: never.",
+        "bullets": [
+          "`return NM{1};` is a prvalue: it initializes the caller's object directly. No constructor needed.",
+          "`return x;` relies on NRVO, which is optional. The code must be valid without it: \"use of deleted function\".",
+          "In C++14 `f1` fails too. Guaranteed elision is C++17."
+        ],
+        "wrong": "\"Both: the compiler elides it anyway\"",
+        "cta": "What else works ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The limits",
+        "title": "Created by a factory, never relocated",
+        "code": "NM a = f1();             // OK (C++17)\nstd::atomic<int> x = 5;  // OK (C++17)\na = f1();   // error: no operator=",
+        "tip": "Same idea: a factory returning `std::lock_guard`. All of these fail in C++14.",
+        "takeaway": "Non-movable types are returnable as prvalues only. They cannot live in a `std::vector` that grows."
+      }
+    ]
+  },
+  {
+    "id": "M04-Q12",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 4,
+    "topic_short": "Copy Elision",
+    "source": "topic_04 qa Q12",
+    "text": {
+      "hook": "\"Always take a std::string by const&. It avoids copies.\"\nThis constructor stores its argument.\nHow many copies happen?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Three callers: an lvalue, a std::move and a temporary.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Sink parameters",
+        "title": "How many `copy` lines?",
+        "code": "struct Str {  // logs \"copy \" / \"move \"\n  Str() = default;\n  Str(const Str&) { printf(\"copy \"); }\n  Str(Str&&) noexcept { printf(\"move \"); }\n};\nstruct Order {\n  Str id_;\n  Order(const Str& id) : id_(id) {}\n};\nStr s, t;\nOrder a(s);\nOrder b(std::move(t));\nOrder c(Str{});",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. 3: `copy copy copy`",
+        "verdict_sub": "`const&` forces a copy into the member, even from a temporary",
+        "bullets": [
+          "`id_(id)`: `id` is a const lvalue, so the member is always copy-constructed.",
+          "`std::move(t)` and `Str{}` bind to `const&` and lose their rvalue-ness.",
+          "For a **stored** parameter, the `const&` reflex wastes every temporary."
+        ],
+        "wrong": "\"1: only the lvalue copies, rvalues get moved\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Sink by value, then move",
+        "code": "Order(Str id) : id_(std::move(id)) {}\n\nOrder a(s);             // copy move\nOrder b(std::move(t));  // move move\nOrder c(Str{});         // move",
+        "tip": "A `const&` + `&&` overload pair saves one move, but needs 2^N overloads for N parameters.",
+        "takeaway": "Stored parameter: by value + `std::move`. Read-only parameter: `const&` or a view."
+      }
+    ]
+  }
+]

@@ -1,0 +1,397 @@
+[
+  {
+    "id": "M10-TH",
+    "type": "theory",
+    "topic_no": 10,
+    "topic_short": "new & delete",
+    "source": "topic_10 theory",
+    "text": {
+      "hook": "You write new every week.\nBut can you say what it does, in which order, and what happens when it fails?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Storage is not an object\n2. The pairing rules\n3. When the constructor throws\n4. Wire buffers and what malloc really costs\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "new & delete:<br>the mental model<br>+ 6 myths",
+        "lead": "Storage vs object, pairing rules, failure, and what malloc really costs.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Storage is not an object",
+        "cards": [
+          {
+            "label": "Storage",
+            "text": "Raw bytes with an address. Can exist with no object in it."
+          },
+          {
+            "label": "Object",
+            "text": "Typed. Lifetime starts when construction completes, ends when its destructor starts."
+          },
+          {
+            "label": "Same storage, new object",
+            "text": "Destroy, then construct again at the same address: a **new** object. Keep the pointer placement new returns."
+          }
+        ],
+        "takeaway": "Pools, `std::launder` and wire buffers all follow from keeping storage and lifetime apart."
+      },
+      {
+        "layout": "table",
+        "kicker": "Pairing rules",
+        "title": "Release it the way you got it",
+        "header": [
+          "Acquired with",
+          "Release with"
+        ],
+        "rows": [
+          [
+            "`new T`",
+            "`delete p`"
+          ],
+          [
+            "`new T[n]`",
+            "`delete[] p`"
+          ],
+          [
+            "`malloc` / `calloc`",
+            "`free(p)`"
+          ],
+          [
+            "`new (buf) T`",
+            "`std::destroy_at(p)`, never `delete`"
+          ]
+        ],
+        "takeaway": "Any mismatch is UB, even when it \"works\". `delete nullptr` is a no-op: never write `if (p) delete p;`."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Constructor throws",
+        "title": "`new Order(-1)`, step by step",
+        "steps": [
+          "`operator new(4)` allocates the storage",
+          "the constructor runs and throws",
+          "the new-expression calls the **matching** `operator delete`",
+          "no leak, and no destructor: the object never existed"
+        ]
+      },
+      {
+        "layout": "cards",
+        "kicker": "Class-specific operator new",
+        "title": "Your `T::operator new` is skipped by",
+        "cards": [
+          {
+            "label": "Shared pointers",
+            "text": "`std::make_shared<T>()` allocates control block + object via `std::allocator`."
+          },
+          {
+            "label": "Arrays",
+            "text": "`new T[n]` uses `T::operator new[]` only if you declare it."
+          },
+          {
+            "label": "Global scope",
+            "text": "`::new T` explicitly selects the global allocation function."
+          }
+        ],
+        "takeaway": "If the class allocator exists for correctness (shared memory, a special heap), each bypass is a bug."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Wire buffers",
+        "title": "Casting a receive buffer to `Header*` breaks",
+        "items": [
+          "Object model: no `Header` was ever created there",
+          "Strict aliasing: only `char`, `unsigned char`, `std::byte` may alias anything",
+          "Alignment: the offset may be odd, and misaligned access is UB",
+          "Layout: padding and byte order must match the wire"
+        ],
+        "takeaway": "Use `std::memcpy` (a plain load at `-O2`), `std::bit_cast` (C++20) or `std::start_lifetime_as` (C++23)."
+      },
+      {
+        "layout": "statement",
+        "kicker": "malloc cost (glibc, Linux)",
+        "hero": "The problem is<br>variance,<br>not the average.",
+        "lead": "Most small `new` calls are a lock-free tcache pop. Rare paths take a lock, a syscall and page faults: that ruins p99.9."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Same address, same type: it's the same object.\"",
+            "truth": "A new lifetime is a new object. Old pointers stay valid only under the transparent-replacement rules."
+          },
+          {
+            "myth": "\"`destroy_at` is C++20.\"",
+            "truth": "`std::destroy_at` is C++17. `std::construct_at` is C++20."
+          },
+          {
+            "myth": "\"Every `new` takes a lock and makes a system call.\"",
+            "truth": "The common path is a user-space tcache pop (glibc). The slow paths are rare but unpredictable."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`new T` zero-initializes, like `new T()`.\"",
+            "truth": "`new T` default-initializes: an `int` or trivial members are indeterminate. `new T()` and `new T{}` zero them."
+          },
+          {
+            "myth": "\"`new` of a few GB throws `bad_alloc` if RAM is short.\"",
+            "truth": "Linux overcommits: it usually succeeds. Pages arrive on first touch; the OOM killer acts later."
+          },
+          {
+            "myth": "\"RSS keeps growing, so it is a leak.\"",
+            "truth": "Retention, fragmentation, kept capacity and unbounded queues grow RSS with every block freed."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "`new` = allocate + construct.<br>`delete` = destroy + free.<br><br>Pair them exactly.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M10-P1",
+    "type": "code_puzzle",
+    "topic_no": 10,
+    "topic_short": "new & delete",
+    "source": "topic_10 practice Q1",
+    "text": {
+      "hook": "Three orders allocated with new[]. One delete.\nAt worst that leaks two objects, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "It compiles. For some types it even seems to work, which is why it survives code review.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · new[] and delete",
+        "title": "What happens at run time?<br>(x86-64, GCC + glibc)",
+        "code": "struct Order {\n  int id = 0;\n  ~Order() { std::printf(\"~Order %d\\n\", id); }\n};\n\nint main() {\n  Order* batch = new Order[3];\n  for (int i = 0; i < 3; ++i) batch[i].id = i;\n  delete batch;\n}",
+        "options": [
+          "3 dtors, clean exit",
+          "1 dtor, 2 leak",
+          "1 dtor, then abort",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `~Order 0`, then **abort**",
+        "verdict_sub": "GCC + glibc: \"munmap_chunk(): invalid pointer\". Undefined behaviour.",
+        "bullets": [
+          "`new Order[3]` stores the count in an 8-byte cookie before the array (Itanium ABI).",
+          "It returns a pointer **past** that cookie.",
+          "Plain `delete` runs one destructor, then frees the shifted address: not the start of any allocation.",
+          "`new int[3]` has no cookie and may \"work\". Still UB: ASan reports `alloc-dealloc-mismatch`."
+        ],
+        "wrong": "\"It just leaks the other two\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Match the form, or own nothing",
+        "columns": [
+          {
+            "label": "delete[]",
+            "code": "Order* b = new Order[3];\n// ...\ndelete[] b;",
+            "verdict": "3 destructors: 2, 1, 0",
+            "verdict_ok": true
+          },
+          {
+            "label": "std::vector",
+            "code": "std::vector<Order> b(3);\n// ...\n// no delete at all",
+            "verdict": "3 destructors, no mismatch possible",
+            "verdict_ok": true
+          }
+        ],
+        "tip": "GCC 11 even warns: `-Wfree-nonheap-object`, \"nonzero offset 8\".",
+        "takeaway": "`new[]` pairs only with `delete[]`. Better: `std::vector` or `std::unique_ptr<T[]>`."
+      }
+    ]
+  },
+  {
+    "id": "M10-P7",
+    "type": "code_puzzle",
+    "topic_no": 10,
+    "topic_short": "new & delete",
+    "source": "topic_10 practice Q7",
+    "text": {
+      "hook": "64 TiB requested with plain new, then with nothrow.\nThe code even checks for nullptr. What prints?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Two forms of new, two different failure contracts. Mixing them up leaves dead error handling in real code.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Allocation failure",
+        "title": "What prints? (Linux x86-64)",
+        "code": "const auto huge = 1ULL << 46;  // 64 TiB\ntry {\n  char* p = new char[huge];\n  if (!p) { std::cout << \"null\\n\"; return 1; }\n  std::cout << \"allocated\\n\";\n  delete[] p;\n} catch (const std::bad_alloc& e) {\n  std::cout << \"caught \" << e.what() << '\\n';\n}\nchar* q = new (std::nothrow) char[huge];\nstd::cout << (q ? \"memory\" : \"nullptr\");",
+        "options": [
+          "caught, nullptr",
+          "null, nullptr",
+          "allocated, memory",
+          "caught, then crash"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `caught std::bad_alloc`, then `nullptr`",
+        "verdict_sub": "Linux x86-64: 64 TiB is more than the kernel will reserve, so both fail at once",
+        "bullets": [
+          "Plain `new` never returns `nullptr`: it throws `std::bad_alloc`.",
+          "So the `if (p == nullptr)` branch is dead code.",
+          "`new (std::nothrow)` reports failure by returning `nullptr` instead.",
+          "Under ASan it aborts instead, unless `allocator_may_return_null=1`."
+        ],
+        "wrong": "\"null\" (null-checking plain new)",
+        "cta": "The rule ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "Each form needs its own check",
+        "code": "// plain new: throws, never null\ntry { use(new char[n]); }\ncatch (const std::bad_alloc&) { reject(); }\n\n// nothrow: null, never throws\nif (auto* q = new (std::nothrow) char[n])\n  use(q);\nelse\n  reject();",
+        "takeaway": "Linux overcommit: 8 GiB on a 16 GB box usually *succeeds*. Failure comes later, as an OOM kill when pages are touched."
+      }
+    ]
+  },
+  {
+    "id": "M10-Q1",
+    "type": "code_puzzle",
+    "topic_no": 10,
+    "topic_short": "new & delete",
+    "source": "topic_10 qa Q1",
+    "text": {
+      "hook": "\"new T and operator new are the same thing.\"\nThis program disagrees.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Get this one right and placement new, pools and allocation counters all make sense.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · new vs operator new",
+        "title": "What does it print?",
+        "code": "struct T {\n  T() { std::cout << \"ctor \"; }\n};\n\nint main() {\n  void* raw = operator new(sizeof(T));\n  std::cout << \"| \";\n  T* t = new T;\n  // cleanup not shown\n}",
+        "options": [
+          "`ctor | ctor`",
+          "`| ctor`",
+          "`ctor |`",
+          "`|`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `| ctor`",
+        "verdict_sub": "`operator new` = allocate only. `new T` = allocate + construct",
+        "bullets": [
+          "`operator new(std::size_t)` returns raw bytes, like `malloc`. No constructor.",
+          "`new T` calls `operator new`, then constructs a `T` in that storage.",
+          "`delete p` mirrors it: destructor first, then `operator delete(p)`.",
+          "You can overload or replace `operator new`. You cannot change the new-expression."
+        ],
+        "wrong": "\"`operator new` is just the name of the `new` keyword\"",
+        "cta": "Turning `raw` into a `T` ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "Raw bytes need placement new",
+        "code": "void* raw = operator new(sizeof(T));\nT* t2 = new (raw) T;   // prints \"ctor \"\nt2->~T();              // end the object\noperator delete(raw);  // free the bytes",
+        "bullets": [
+          "Placement new = the new-expression with a non-allocating `operator new(size_t, void*)`."
+        ],
+        "takeaway": "Pools, allocation counters and custom heaps hook in at `operator new`. Construction always stays with the new-expression."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M10-Q9",
+    "type": "code_puzzle",
+    "topic_no": 10,
+    "topic_short": "new & delete",
+    "source": "topic_10 qa Q9",
+    "text": {
+      "hook": "An Order built with placement new in a stack buffer.\nFour engineers, four cleanup lines. Three of them are bugs.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Pool slots, inline storage and shared memory all use this exact pattern.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Placement new",
+        "title": "Which cleanup is correct?",
+        "code": "struct Order {\n  std::string note;\n  Order(int, double) : note(40, 'x') {}\n};\n\nint main() {\n  alignas(Order) std::byte buf[sizeof(Order)];\n  Order* p = new (buf) Order(10, 99.5);\n  // cleanup: ???\n}",
+        "options": [
+          "`delete p`",
+          "`free(p)`",
+          "Nothing: the stack frees it",
+          "Call `~Order()` only"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Call the destructor only",
+        "verdict_sub": "Placement new allocates nothing: it constructs in storage you own",
+        "bullets": [
+          "End the lifetime: `p->~Order()`, or `std::destroy_at(p)` (C++17).",
+          "Whoever owns the storage releases it: here, the stack frame.",
+          "Afterwards the storage can hold another object.",
+          "The storage must be big enough, aligned for `Order`, and free of live objects."
+        ],
+        "wrong": "\"`delete p` frees the buffer so it can't be reused\"",
+        "cta": "Why not A, B or C ➜"
+      },
+      {
+        "layout": "wrong_options",
+        "items": [
+          "A: `delete` runs the destructor, then frees a stack address. ASan: \"attempting free on address which was not malloc()-ed\".",
+          "B: `free` gets a stack address too (same ASan error), and the destructor never runs.",
+          "C: the bytes go away, but `~Order()` never runs. The 40-char string's heap buffer leaks (LeakSanitizer: 41 bytes)."
+        ],
+        "takeaway": "Senior answer: \"In generic code write `::new (static_cast<void*>(addr)) T(...)` or `std::construct_at`, so class-specific placement overloads are not picked up.\""
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

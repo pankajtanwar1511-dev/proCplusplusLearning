@@ -1,0 +1,12 @@
+=== POST TEXT ===
+fopen fails and returns nullptr.
+The shared_ptr is empty, so the deleter never runs. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+This one surprises people who port code from unique_ptr to shared_ptr.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

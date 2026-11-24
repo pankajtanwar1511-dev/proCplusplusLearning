@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Each thread gets its own shared_ptr copy.
+So the counter must be correct?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+At -O2 it may even print the right number. That is the dangerous part.
+
+#cpp #cplusplus #smartpointers #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

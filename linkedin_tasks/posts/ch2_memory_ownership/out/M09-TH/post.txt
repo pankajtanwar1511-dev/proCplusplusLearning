@@ -1,0 +1,19 @@
+=== POST TEXT ===
+weak_ptr has no operator->, no get(), no *.
+That is not a missing feature. It is the whole design.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Owning vs observing
+2. The weak_ptr API contract
+3. Object vs control block lifetime
+4. Which link becomes weak, enable_shared_from_this
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

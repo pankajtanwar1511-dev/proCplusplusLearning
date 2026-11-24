@@ -1,0 +1,13 @@
+=== POST TEXT ===
+unique_ptr<Base> holding a Derived.
+No warning at -Wall, no crash in tests.
+Ship it?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The bug hides well: switch the same code to shared_ptr and it seems to work.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

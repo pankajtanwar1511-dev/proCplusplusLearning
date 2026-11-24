@@ -1,0 +1,401 @@
+[
+  {
+    "id": "M08-TH",
+    "type": "theory",
+    "topic_no": 8,
+    "topic_short": "shared_ptr & Threads",
+    "source": "topic_08 theory",
+    "text": {
+      "hook": "\"Is shared_ptr thread-safe?\"\nYes and no are both wrong answers.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Three layers, three questions\n2. Safe and unsafe, case by case\n3. Why one shared handle races\n4. atomic<shared_ptr> and copy-on-write\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "shared_ptr<br>and threads<br>+ 6 myths",
+        "lead": "What is thread-safe, what is not, and the answers that fail.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three layers, three questions",
+        "cards": [
+          {
+            "label": "The handle",
+            "text": "One `shared_ptr` variable shared by threads, with a writer? Needs a mutex or `atomic<shared_ptr>`."
+          },
+          {
+            "label": "The lifetime",
+            "text": "Protected for every thread holding its **own** copy. Not for raw pointers or references."
+          },
+          {
+            "label": "The object",
+            "text": "`shared_ptr` does nothing here. Immutable, a mutex, or atomic members."
+          }
+        ],
+        "takeaway": "`shared_ptr` makes ownership thread-safe. Not the handle variable, not the object."
+      },
+      {
+        "layout": "table",
+        "kicker": "Case by case",
+        "title": "Safe or data race?",
+        "header": [
+          "Two threads do",
+          "Result"
+        ],
+        "rows": [
+          [
+            "`p1.reset()` and `p2.reset()`, `p2` a copy of `p1`",
+            "✅ safe"
+          ],
+          [
+            "both copy **from** `g`, nobody writes `g`",
+            "✅ safe"
+          ],
+          [
+            "`auto c = g;` and `g = make_shared<T>();`",
+            "❌ race on `g`"
+          ],
+          [
+            "`p1->x++` and `p2->x++`, same object",
+            "❌ race on `x`"
+          ]
+        ],
+        "takeaway": "Same rule as `int`: const access from many threads is fine. A writer needs exclusion."
+      },
+      {
+        "layout": "chain",
+        "kicker": "One handle, one writer",
+        "title": "Why copying `g` races",
+        "steps": [
+          "Copy step 1: read `g`'s two pointers",
+          "Meanwhile another thread reassigns `g` and drops the last owner: block freed",
+          "Copy step 2: increment a count in **freed memory**",
+          "Fix: make \"read + increment\" one step: a mutex or `atomic<shared_ptr>`"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "std::atomic<std::shared_ptr<T>> (C++20)",
+        "title": "What it gives, what it costs",
+        "header": [
+          "Fact",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "`load()`",
+            "returns an owning copy (count +1)"
+          ],
+          [
+            "`is_lock_free()`",
+            "`false`: a lock bit (libstdc++, MSVC)"
+          ],
+          [
+            "Toolchain",
+            "libstdc++ from GCC 12. GCC 11 rejects it"
+          ],
+          [
+            "Before C++20",
+            "`std::atomic_load(&sp)`: **every** access must use it"
+          ]
+        ],
+        "takeaway": "One plain `sp = x` next to `atomic_load` breaks it. That is why C++20 made it a type."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Copy-on-write",
+        "title": "Two writers: the lost update",
+        "cards": [
+          {
+            "label": "The bug",
+            "text": "A and B both load v1, both build v2 from it, both store. One update is gone."
+          },
+          {
+            "label": "Fix 1",
+            "text": "A mutex that serializes writers only. Readers stay on `load()`."
+          },
+          {
+            "label": "Fix 2",
+            "text": "A CAS loop: `compare_exchange_weak` publishes only if nobody else did."
+          }
+        ],
+        "takeaway": "Readers: one `load()` per operation. Two loads can return two versions."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Refcount cost",
+        "hero": "No mutex does not<br>mean no cost.",
+        "lead": "Every copy is an atomic RMW on one cache line. Measured (GCC 11 -O2, x86-64): 8 threads on one block, about 20x slower per copy than one thread."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`shared_ptr` is thread-safe.\"",
+            "truth": "Its control block is. The handle variable and the object are not."
+          },
+          {
+            "myth": "\"It is not thread-safe, so every copy needs a mutex.\"",
+            "truth": "Copies of each other in different threads are fine. Only a shared handle with a writer needs one."
+          },
+          {
+            "myth": "\"If the race happens, the reader just sees the old or the new pointer.\"",
+            "truth": "It is UB. Real failures: use-after-free inside the refcount."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`atomic<shared_ptr>` is lock-free.\"",
+            "truth": "Usually a lock bit inside. `is_lock_free()` is `false`."
+          },
+          {
+            "myth": "\"Release/acquire makes plain `shared_ptr` assignment atomic.\"",
+            "truth": "Ordering is not atomicity. Repeated concurrent writes still race."
+          },
+          {
+            "myth": "\"`use_count() == 1` means I own it exclusively.\"",
+            "truth": "A `weak_ptr` in another thread can `lock()` right after the check."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Own copy per thread:<br>safe.<br><br>One shared handle<br>+ a writer: race.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M08-P1",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "shared_ptr & Threads",
+    "source": "topic_08 practice Q1",
+    "text": {
+      "hook": "The reference count is atomic.\nOne thread copies a global shared_ptr, another replaces it.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Most engineers answer this one from the word \"atomic\". The program disagrees.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Shared handle",
+        "title": "The count is atomic. Race-free?",
+        "code": "struct Config { int limit = 0; };\nauto g_cfg = std::make_shared<Config>();\nint main() {\n  std::thread reader([] {\n    for (int i = 0; i < 100000; ++i)\n      std::shared_ptr<Config> c = g_cfg;\n  });\n  std::thread writer([] {\n    for (int i = 0; i < 100000; ++i)\n      g_cfg = std::make_shared<Config>();\n  });\n  reader.join(); writer.join();\n}",
+        "options": [
+          "Safe: count is atomic",
+          "Safe, `c` may be stale",
+          "Race on `limit` only",
+          "Data race on `g_cfg`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Data race on `g_cfg`: **UB**",
+        "verdict_sub": "TSan: data race, copy vs assignment. Observed (GCC 11, -O0): segfaults and \"pure virtual method called\"",
+        "bullets": [
+          "Both threads touch the **same** `shared_ptr` object, and one writes it.",
+          "A copy reads two pointers, **then** increments the count.",
+          "In between, the writer can drop the last owner: the reader increments a freed block.",
+          "The atomic count protects copies of each other, not one shared handle."
+        ],
+        "wrong": "\"Safe, the count is atomic\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Copy and replace the handle under a mutex",
+        "code": "std::mutex m;\nusing P = std::shared_ptr<const Config>;\nP g_cfg = std::make_shared<const Config>();\n\nP load() {\n  std::lock_guard lk(m);\n  return g_cfg;     // +1 under the lock\n}\nvoid store(P n) {\n  std::lock_guard lk(m);\n  g_cfg.swap(n);    // old dies after unlock\n}",
+        "takeaway": "Readers use their copy with no lock held. TSan: clean."
+      }
+    ]
+  },
+  {
+    "id": "M08-P3",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "shared_ptr & Threads",
+    "source": "topic_08 practice Q3",
+    "text": {
+      "hook": "Each thread gets its own shared_ptr copy.\nSo the counter must be correct?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "At -O2 it may even print the right number. That is the dangerous part.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Separate handles",
+        "title": "Two handles. Correct count?",
+        "code": "struct Stats { long fills = 0; };\nint main() {\n  auto p1 = std::make_shared<Stats>();\n  auto p2 = p1;   // separate handle\n  auto run = [](auto p) {   // own copy\n    for (int i = 0; i < 100000; ++i)\n      ++p->fills;\n  };\n  std::thread a(run, p1), b(run, p2);\n  a.join(); b.join();\n  std::cout << p1->fills << '\\n';\n}",
+        "options": [
+          "Data race on `fills`",
+          "Always `200000`",
+          "Race on the refcount",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Data race on `fills`: **UB**",
+        "verdict_sub": "Prints at most 200000. Observed at -O0: 113544, 146620. TSan: data race on `fills`",
+        "bullets": [
+          "The handles are separate, so the `shared_ptr` part is fine: lifetime is protected.",
+          "Both threads modify the **same** `Stats` with no synchronization.",
+          "`shared_ptr` never protects the object it points to.",
+          "At -O2 each loop may become one `+= 100000` and hide the bug. TSan still reports it."
+        ],
+        "wrong": "\"Always 200000, each thread has its own copy\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Make the shared data itself safe",
+        "code": "struct Stats { std::atomic<long> fills{0}; };\n\nauto run = [](auto p) {   // own copy\n  for (int i = 0; i < 100000; ++i)\n    p->fills.fetch_add(1,\n        std::memory_order_relaxed);\n};\nstd::thread a(run, p1), b(run, p2);\n// after join: 200000",
+        "takeaway": "Separate handles protect lifetime, not the pointee's data."
+      }
+    ]
+  },
+  {
+    "id": "M08-Q7",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "shared_ptr & Threads",
+    "source": "topic_08 qa Q7",
+    "text": {
+      "hook": "Config hot-reload with atomic<shared_ptr>.\nThe reader never writes, every load is atomic, TSan is quiet.\nSo it is correct. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "A classic system-design follow-up. This reader passes every unit test.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Config hot-reload",
+        "title": "What can go wrong?",
+        "code": "std::atomic<std::shared_ptr<const Config>>\n    cfg;\n\nbool check(const Order& o) {  // reader\n  return o.qty   <= cfg.load()->max_qty\n      && o.price <= cfg.load()->max_px;\n}\n\n// writer thread, at any moment:\ncfg.store(std::make_shared<const Config>(\n    next));",
+        "options": [
+          "Nothing: every load is atomic",
+          "Use-after-free on reload",
+          "Limits from two versions",
+          "Data race on `Config`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Limits from two versions",
+        "verdict_sub": "Two `load()` calls can return two different configs",
+        "bullets": [
+          "`max_qty` from v1, `max_px` from v2: a combination nobody configured.",
+          "Not B: `load()` returns an **owning** copy. A `store()` cannot free it under you.",
+          "Not D: readers only read, and `const Config` stops them from writing.",
+          "Rule: one `load()` per operation, read every field through it."
+        ],
+        "wrong": "\"Every load is atomic, so the check is consistent\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "One snapshot per operation",
+        "code": "bool check(const Order& o) {\n  auto c = cfg.load();  // one snapshot\n  return o.qty   <= c->max_qty\n      && o.price <= c->max_px;\n}\n\n// writer: build a complete Config, then\ncfg.store(std::move(next_ptr));",
+        "bullets": [
+          "Old configs die when their last reader drops its copy.",
+          "`atomic<shared_ptr>` is C++20: GCC 12+ (not GCC 11), and `is_lock_free()` is `false`."
+        ],
+        "takeaway": "Atomic handle + immutable object + one snapshot per operation."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M08-Q14",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "shared_ptr & Threads",
+    "source": "topic_08 qa Q14",
+    "text": {
+      "hook": "main creates a big object. A reader thread holds a copy.\nWhich thread pays for destroying it?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "In low-latency code this decides who pays for freeing a big object.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "concurrency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · shared_ptr & threads",
+        "title": "What does it print?",
+        "code": "thread_local const char* who = \"main\";\nstd::atomic<bool> go{false};\nstruct Big { ~Big() {\n  std::cout << \"~Big on \" << who; } };\nauto p = std::make_shared<Big>();\nstd::thread reader([q = p]() mutable {\n  who = \"reader\";\n  while (!go) {}\n  q.reset();\n});\np.reset(); go = true;\nreader.join();",
+        "options": [
+          "`~Big on main`",
+          "`~Big on reader`",
+          "Nothing: the object leaks",
+          "Varies from run to run"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `~Big on reader`",
+        "verdict_sub": "Every run: `main` drops its copy first, the reader drops the last one",
+        "bullets": [
+          "The decrement that reaches 0 runs the destructor right there, inline, on that thread.",
+          "Not the creator, not a library thread: reference counting has no thread of its own.",
+          "Shared snapshots: often a **reader on the hot path** frees a big old object.",
+          "Dropped inside a critical section: the destructor runs under the lock."
+        ],
+        "wrong": "\"The thread that created it destroys it\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Decide where the last release happens",
+        "code": "std::shared_ptr<const Snapshot> old;\n{\n  std::lock_guard g(m);\n  old = std::exchange(cur, next);\n}\n// unlocked: if old was the last owner,\n// ~Snapshot runs here, not under m\nold.reset();",
+        "bullets": [
+          "Or a retire list freed on a background thread, or a deferred-free deleter."
+        ],
+        "takeaway": "The same holds for the control block: the last `weak_ptr` or owner frees it, on its own thread."
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

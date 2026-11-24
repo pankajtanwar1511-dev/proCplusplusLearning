@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A lambda captures a unique_ptr by move.
+Then it goes into a std::function.
+Does this compile?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A pattern that shows up in every task queue and callback API.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

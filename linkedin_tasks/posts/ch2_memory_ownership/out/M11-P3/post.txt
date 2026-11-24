@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The loader builds a vector in a fast local arena and returns it by value.
+Move semantics make that safe, right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+It looks like textbook modern C++. Read it the way a reviewer would.
+
+#cpp #cplusplus #memorymanagement #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

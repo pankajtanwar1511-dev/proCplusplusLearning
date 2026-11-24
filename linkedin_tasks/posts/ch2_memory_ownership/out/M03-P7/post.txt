@@ -1,0 +1,12 @@
+=== POST TEXT ===
+send_pending() moves the message out, then sends it.
+You call it twice.
+
+How many messages go out? Lock in your answer, then swipe ➜ to verify.
+
+A real duplicate-message bug. The code looks like it consumes the value.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

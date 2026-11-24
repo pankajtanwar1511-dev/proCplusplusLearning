@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A packed struct saves 3 bytes per message.
+GCC compiles it with -Wall -Wextra: zero warnings.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Packing shows up in every wire-format codebase. So does this bug.
+
+#cpp #cplusplus #systemsprogramming #performance #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

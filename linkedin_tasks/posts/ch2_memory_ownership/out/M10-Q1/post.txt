@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"new T and operator new are the same thing."
+This program disagrees.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Get this one right and placement new, pools and allocation counters all make sense.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

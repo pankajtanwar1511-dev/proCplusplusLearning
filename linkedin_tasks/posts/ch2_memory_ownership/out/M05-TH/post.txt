@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"RAII means destructors clean up."
+True, until the exception is never caught.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Lifetime is ownership
+2. What stack unwinding really runs
+3. Why destructors must not throw
+4. Writing your own RAII wrapper
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #raii #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

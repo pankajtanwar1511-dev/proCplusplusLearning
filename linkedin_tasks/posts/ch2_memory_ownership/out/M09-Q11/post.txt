@@ -1,0 +1,12 @@
+=== POST TEXT ===
+enable_shared_from_this, and an object on the stack.
+A common answer: "shared_from_this() returns nullptr".
+
+Lock in your answer below, then swipe ➜ to verify.
+
+C++17 changed what this line does.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

@@ -306,12 +306,13 @@
   },
   {
     "id": "T11-Q7",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 11,
     "topic_short": "C++20 Sync",
     "source": "topic_11 qa Q7",
     "text": {
-      "hook": "\"binary_semaphore is just a lighter, faster mutex.\"\n\nWould you swap your std::mutex for one? 🔒\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "hook": "\"binary_semaphore is just a lighter, faster mutex.\"\nSo someone swapped it in for std::mutex.\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "The difference is one word, and it decides which tool you reach for.",
       "hashtags": [
         "cpp",
@@ -326,41 +327,39 @@
     "bonus_answer": "Two binary_semaphores: ping_turn{1}, pong_turn{0}. Each thread acquires its own turn, prints, then releases the other's. The releaser is never the acquirer, which a mutex forbids.",
     "slides": [
       {
-        "layout": "question",
-        "title": "How does std::counting_semaphore differ from std::mutex? Could binary_semaphore replace a mutex?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · C++20 semaphores",
+        "title": "A semaphore replaces the mutex.<br>What happens?",
+        "code": "#include <semaphore>\n\nstd::binary_semaphore sem{1}; // was mutex\nlong balance = 0;\n\nvoid deposit(long x) {\n  std::lock_guard g(sem);\n  balance += x;\n}",
         "options": [
-          "Same thing, but faster. Swap them freely.",
-          "Identical, except a semaphore allows N holders at once.",
-          "A semaphore cannot provide mutual exclusion at all.",
-          "It counts permits with no owner: great for signalling, a poor mutex substitute."
+          "Same, but a bit faster",
+          "Works, no ownership checks",
+          "Compile error",
+          "Deadlocks on the 2nd call"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. Permits without ownership",
-        "verdict_sub": "A mutex has an owner that must unlock it. A semaphore has none.",
+        "verdict": "C. Compile error",
+        "verdict_sub": "GCC: 'class std::counting_semaphore<1>' has no member named 'lock'",
         "bullets": [
-          "Any thread may `release()`, even one that never acquired.",
-          "Use cases: limit concurrency to K, count items, signal across threads (start at `{0}`).",
-          "No `lock()`/`unlock()` members, so this does not even compile:"
+          "A semaphore has `acquire()`/`release()`, not `lock()`/`unlock()`.",
+          "So `lock_guard` and `scoped_lock` cannot use it.",
+          "The deeper reason: a semaphore counts permits and has **no owner**.",
+          "A mutex has an owner that must unlock it."
         ],
-        "code": "std::binary_semaphore sem{1};\n// error: no member named 'lock'\nstd::lock_guard<std::binary_semaphore> g(sem);",
-        "cta": "Why not A, B or C ➜"
+        "wrong": "\"Same thing, just faster\"",
+        "cta": "Wrap it by hand? ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: a stray `release()` from another thread silently \"unlocks\" it. Releasing past `max()` is UB.",
-          "B: the N holders are not the point. Ownership is: no owner, no unlock-by-owner rule, no recursion.",
-          "C: a binary semaphore starting at 1 can exclude. You just lose the ownership checks."
-        ],
-        "takeaway": "Senior answer: semaphore = permits for signalling and throttling, mutex = ownership for exclusion. The initial count is a design decision."
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "No owner: any thread may release",
+        "code": "std::binary_semaphore sem{1};\n\nsem.acquire();         // A \"locks\"\nstd::thread b([&] {\n  sem.release();       // B never acquired\n});\nb.join();\nstd::cout << sem.try_acquire(); // 1",
+        "tip": "Great for signalling (start at `{0}`) and limiting concurrency to K. A stray `release()` silently \"unlocks\" it.",
+        "takeaway": "Semaphore = permits without ownership, for signalling. Mutex = ownership, for exclusion."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"binary_semaphore is just a lighter, faster mutex.\"\n\nWould you swap your std::mutex for one? 🔒\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The difference is one word, and it decides which tool you reach for."
-    }
+    ]
   }
 ]

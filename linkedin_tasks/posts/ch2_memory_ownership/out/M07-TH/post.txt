@@ -1,0 +1,19 @@
+=== POST TEXT ===
+std::shared_ptr is two pointers and a control block.
+Interviewers use it to test what you really know about ownership.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Handle, control block, object
+2. What copy, move and reset cost
+3. Two lifetimes: object vs control block
+4. Type-erased deleters and when not to use make_shared
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

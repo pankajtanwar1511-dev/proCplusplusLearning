@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Three orders allocated with new[]. One delete.
+At worst that leaks two objects, right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+It compiles. For some types it even seems to work, which is why it survives code review.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

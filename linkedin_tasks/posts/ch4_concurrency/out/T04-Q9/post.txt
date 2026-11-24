@@ -1,12 +1,13 @@
 === POST TEXT ===
 The consumer waits correctly, under the lock.
-The producer just sets a bool and notifies.
+The producer skips the mutex: it only sets a bool.
+This passed code review.
 
-What is wrong? Comment A, B, C or D, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
 There are two problems here, and the first one is worse.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-👉 Pick A, B, C or D below, then swipe right to check your answer.
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

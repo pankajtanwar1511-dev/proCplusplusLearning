@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Item's move constructor is noexcept.
+The wrapper only adds an empty destructor.
+That cannot change anything. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+"Why is my vector copying?" Not the missing noexcept this time.
+
+#cpp #cplusplus #raii #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

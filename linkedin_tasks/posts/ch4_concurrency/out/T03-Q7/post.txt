@@ -1,12 +1,12 @@
 === POST TEXT ===
-T1 is started before T2. Both lock the same std::mutex.
+T1 is started first. Both threads lock the same mutex.
+So T1 always prints first. Right?
 
-Who gets it first?
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
 Most answers assume some kind of queue. The standard promises less than you think.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-Comment your letter first 👇 then swipe ➜ to see the answer and why the other options are wrong.
+The answer is on the next page ➜ Comment your answer first, then compare.

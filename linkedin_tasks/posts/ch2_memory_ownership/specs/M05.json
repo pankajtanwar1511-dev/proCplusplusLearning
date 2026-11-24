@@ -1,0 +1,388 @@
+[
+  {
+    "id": "M05-TH",
+    "type": "theory",
+    "topic_no": 5,
+    "topic_short": "RAII",
+    "source": "topic_05 theory",
+    "text": {
+      "hook": "\"RAII means destructors clean up.\"\nTrue, until the exception is never caught.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Lifetime is ownership\n2. What stack unwinding really runs\n3. Why destructors must not throw\n4. Writing your own RAII wrapper\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "RAII:<br>the mental model<br>+ 6 myths",
+        "lead": "Ownership, stack unwinding and exception safety: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "The object's lifetime **is** the ownership",
+        "cards": [
+          {
+            "label": "Constructor",
+            "text": "Acquires the resource, or **throws**. A half-acquired object never exists."
+          },
+          {
+            "label": "Destructor",
+            "text": "Releases it, on every exit path: return, break, exception."
+          }
+        ],
+        "takeaway": "No naked `new`/`delete`, no manual `lock()`/`unlock()`. Every resource is owned by an object from the moment it is acquired."
+      },
+      {
+        "layout": "table",
+        "kicker": "Not only memory",
+        "title": "A resource is anything you must give back",
+        "header": [
+          "Resource",
+          "Standard RAII type"
+        ],
+        "rows": [
+          [
+            "Heap object",
+            "`std::unique_ptr`, `std::shared_ptr`"
+          ],
+          [
+            "Mutex ownership",
+            "`std::lock_guard`, `std::scoped_lock`"
+          ],
+          [
+            "File",
+            "`std::fstream`, `unique_ptr<FILE, D>`"
+          ],
+          [
+            "Thread",
+            "`std::jthread` (C++20)"
+          ]
+        ],
+        "takeaway": "A forgotten `unlock()` is worse than a leak: every other thread blocks forever."
+      },
+      {
+        "layout": "table",
+        "kicker": "Stack unwinding",
+        "title": "When do local destructors actually run?",
+        "header": [
+          "Situation",
+          "Automatic objects"
+        ],
+        "rows": [
+          [
+            "Exception caught up the stack",
+            "✅ destroyed, reverse order"
+          ],
+          [
+            "Exception **never caught**",
+            "⚠️ `std::terminate`. GCC: no unwinding"
+          ],
+          [
+            "Escapes a `noexcept` function",
+            "⚠️ `std::terminate`. Unwinding not guaranteed"
+          ],
+          [
+            "`std::exit()`",
+            "❌ skipped. Only statics are destroyed"
+          ]
+        ],
+        "takeaway": "Want guaranteed cleanup? Put a top-level `catch (...)` in `main` and in every thread function."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Destructors",
+        "title": "Destructors must not throw",
+        "cards": [
+          {
+            "label": "Implicitly noexcept (C++11)",
+            "text": "A `throw` from a destructor calls `std::terminate`, even inside `try`/`catch`."
+          },
+          {
+            "label": "But release can fail",
+            "text": "Offer an explicit `close()` that throws or returns an error. The destructor closes only if still open, and logs."
+          }
+        ],
+        "takeaway": "Even with `noexcept(false)`, a throw during unwinding of another exception is `std::terminate`."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Your own wrapper",
+        "title": "RAII wrapper for a raw handle",
+        "items": [
+          "Constructor acquires or throws: no \"zombie\" object",
+          "Destructor releases, `noexcept`, handles the empty state",
+          "Decide copying: move-only, deep copy (`dup()`) or shared",
+          "`explicit` constructor from a raw handle",
+          "Often enough: `std::unique_ptr<FILE, Closer>` (Rule of 0)"
+        ],
+        "warn": "The generated copy copies the handle value: two owners, a double close."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Release order",
+        "hero": "Declaration order<br>is release order.",
+        "lead": "Members die in reverse order. Declare a `jthread` after the queue it uses, a statement handle after its connection."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"RAII is about heap memory.\"",
+            "truth": "It is about any acquire/release pair: locks, files, sockets, threads."
+          },
+          {
+            "myth": "\"RAII means the stack instead of the heap.\"",
+            "truth": "The *owner* is usually automatic. The resource is often still on the heap."
+          },
+          {
+            "myth": "\"Destructors always run when an exception is thrown.\"",
+            "truth": "Only if it is caught. Uncaught: `std::terminate`, and GCC does not unwind."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`File(int fd)` owns the fd because it stores it.\"",
+            "truth": "Ownership is a documented contract. The generated copy happily creates a second owner."
+          },
+          {
+            "myth": "\"`lock_guard` destroys the mutex.\"",
+            "truth": "It unlocks the mutex. The mutex lives on."
+          },
+          {
+            "myth": "\"`std::exit` runs all destructors.\"",
+            "truth": "It skips automatic objects. Only statics and thread-locals are destroyed."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Every resource:<br>owned by an object<br>from the moment<br>it is acquired.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M05-P1",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "RAII",
+    "source": "topic_05 practice Q1",
+    "text": {
+      "hook": "One raw pointer, one unique_ptr, one stack object.\nThen an early return.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "What does it print, and which object leaks?",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Early return",
+        "title": "`handle(true)` prints `+A+B+C`.<br>What comes next?",
+        "code": "struct R {\n  char n;\n  R(char c) : n(c) { std::cout << '+' << n; }\n  ~R() { std::cout << '-' << n; }\n};\nvoid handle(bool early) {\n  R* a = new R('A');\n  auto b = std::make_unique<R>('B');\n  R c('C');\n  if (early) return;\n  delete a;\n}",
+        "options": [
+          "`-C-B-A`",
+          "`-C-B`",
+          "`-A-B-C`",
+          "`-B-C`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `-C-B`, and A leaks",
+        "verdict_sub": "Full output `+A+B+C-C-B`. LeakSanitizer: one leaked `R`",
+        "bullets": [
+          "Early return destroys locals in reverse order: `c` (`-C`), then `b`, which deletes B (`-B`).",
+          "The raw pointer `a` is destroyed too, but destroying a pointer does nothing.",
+          "`delete a;` is a statement. A path that skips it never runs it.",
+          "Scope exit destroys **owners**, not pointees."
+        ],
+        "wrong": "\"`-A` at the end, the pointer goes out of scope\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Give every resource an owner",
+        "code": "void handle(bool early) {\n  auto a = std::make_unique<R>('A');\n  auto b = std::make_unique<R>('B');\n  R c('C');\n  if (early) return;\n}\n// handle(true): +A+B+C-C-B-A",
+        "takeaway": "No `delete` statement to forget: every exit path releases everything, in reverse order."
+      }
+    ]
+  },
+  {
+    "id": "M05-P11",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "RAII",
+    "source": "topic_05 practice Q11",
+    "text": {
+      "hook": "Lock, work, unlock. Three lines. It passed code review.\nThen one bad input made the work throw.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The exception is caught. So everything is fine afterwards. Right?",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Manual unlock",
+        "title": "`parse()` throws. Output?",
+        "code": "std::mutex m;\nvoid process() {\n  m.lock();\n  parse();  // throws\n  m.unlock();\n}\nint main() {\n  try { process(); } catch (...) {}\n  std::thread t([] {\n    std::cout << m.try_lock();\n  });\n  t.join();\n}",
+        "options": [
+          "`1`",
+          "Hangs forever",
+          "Terminates",
+          "`0`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `0`: the lock is still held",
+        "verdict_sub": "The exception is caught, but `m` is still locked by main",
+        "bullets": [
+          "`parse()` throws, so `m.unlock()` never runs. Catching the exception does not undo that.",
+          "`try_lock` fails: the mutex is still owned. (The full program unlocks it in main before exit.)",
+          "With `m.lock()` instead, the thread blocks forever: a hang, no crash, no message.",
+          "Test from another thread on purpose: relocking a `std::mutex` from its owner is UB."
+        ],
+        "wrong": "\"`1`, the stack unwinds and releases the lock\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Put the unlock in a destructor",
+        "code": "void process() {\n  std::lock_guard<std::mutex> lk(m);\n  parse();  // throws: ~lock_guard unlocks\n}\n// the other thread now prints 1",
+        "takeaway": "Manual `lock()`/`unlock()` around code that can throw is a lock waiting to be lost. Ownership must be an RAII object."
+      }
+    ]
+  },
+  {
+    "id": "M05-Q8",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 5,
+    "topic_short": "RAII",
+    "source": "topic_05 qa Q8",
+    "text": {
+      "hook": "The constructor throws. The caller catches it.\nThe destructor right there frees raw_.\nSo nothing leaks. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The classic constructor-failure question.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Constructor failure",
+        "title": "Caught. What leaks?",
+        "code": "struct Holder {\n  int* raw_ = new int[100];\n  std::vector<int> safe_{1, 2, 3};\n  Holder() { throw std::runtime_error(\"x\"); }\n  ~Holder() { delete[] raw_; puts(\"~Holder\"); }\n};\nint main() {\n  try { Holder h; }\n  catch (...) { puts(\"caught\"); }\n}",
+        "options": [
+          "`raw_` only",
+          "No leak",
+          "Both buffers",
+          "Crash"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Only `raw_` leaks",
+        "verdict_sub": "Prints only `caught`. LeakSanitizer: \"Direct leak of 400 byte(s)\"",
+        "bullets": [
+          "The constructor never completed, so the object never existed: `~Holder` does **not** run.",
+          "Every fully constructed member and base is destroyed, in reverse order.",
+          "`safe_` frees its buffer. `raw_` is a raw pointer: its destructor releases nothing.",
+          "With `new Holder`, the new-expression also frees the object's own memory."
+        ],
+        "wrong": "\"`~Holder` runs and frees `raw_`\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "One resource per RAII member",
+        "code": "struct Holder {\n  std::unique_ptr<int[]> raw_ =\n      std::make_unique<int[]>(100);\n  std::vector<int> safe_{1, 2, 3};\n  Holder() { throw std::runtime_error(\"x\"); }\n};  // no destructor needed: no leak",
+        "takeaway": "Constructor failure destroys finished members, never the object itself. Throwing is still the right way to report it."
+      }
+    ]
+  },
+  {
+    "id": "M05-Q10",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 5,
+    "topic_short": "RAII",
+    "source": "topic_05 qa Q10",
+    "text": {
+      "hook": "\"This function gives the basic exception guarantee.\"\nIt just threw. What do you actually know?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "\"Exception safe\" has four levels. Interviewers expect you to name them.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Exception guarantees",
+        "title": "`add_all` throws. What is in `book`?",
+        "code": "struct Order {   // copying id 3 throws\n  int id;\n  Order(int i) : id(i) {}\n  Order(const Order& o) : id(o.id) {\n    if (id == 3) throw std::runtime_error(\"\");\n  }\n};\nvoid add_all(std::vector<Order>& book,\n             const std::vector<Order>& batch) {\n  for (const Order& o : batch)\n    book.push_back(o);\n}\n// book empty, batch holds ids 1..5",
+        "options": [
+          "Empty",
+          "Broken state",
+          "`1 2`",
+          "`1 2` + junk"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `1 2`: valid, nothing leaked",
+        "verdict_sub": "Basic guarantee: invariants hold, values may have changed",
+        "bullets": [
+          "Each `push_back` is **strong**: the failed 3rd one left `book` as it was.",
+          "The loop as a whole is only **basic**: orders 1 and 2 stay in.",
+          "**No-throw**: never fails (destructors, `swap`). **Strong**: commit or rollback.",
+          "Each level includes the weaker ones. RAII gets you basic, design gets you strong."
+        ],
+        "wrong": "\"Empty: exception safe means rollback\"",
+        "cta": "Make it strong ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Upgrade to strong",
+        "title": "Work on a copy, commit with a no-throw swap",
+        "code": "void add_all(std::vector<Order>& book,\n             const std::vector<Order>& batch) {\n  std::vector<Order> tmp = book;  // may throw\n  for (const Order& o : batch)\n    tmp.push_back(o);             // may throw\n  book.swap(tmp);                 // no-throw\n}  // throws: book unchanged",
+        "takeaway": "Strong is built from no-throw steps. It costs a copy, so libraries choose it only where it is cheap or essential."
+      }
+    ]
+  }
+]

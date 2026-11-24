@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The author added alignas(1) to "pack" the struct and remove its padding.
+What does GCC print?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One attribute, two compilers, two different reactions.
+
+#cpp #cplusplus #systemsprogramming #performance #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

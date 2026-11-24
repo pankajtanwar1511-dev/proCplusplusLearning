@@ -1,0 +1,19 @@
+=== POST TEXT ===
+Most C++ memory bugs are lifetime bugs.
+Interviewers test whether you can say exactly when an object dies.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Storage vs lifetime vs scope
+2. When lifetime starts and ends
+3. When const& extends a temporary
+4. Construction and destruction order
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

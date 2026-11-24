@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The constructor throws. The caller catches it.
+The destructor right there frees raw_.
+So nothing leaks. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The classic constructor-failure question.
+
+#cpp #cplusplus #raii #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

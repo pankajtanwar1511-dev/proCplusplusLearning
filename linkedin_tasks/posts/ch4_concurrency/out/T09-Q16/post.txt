@@ -1,12 +1,12 @@
 === POST TEXT ===
-"The queue keeps filling up. Just make it 10x bigger."
+"The queue keeps filling up. Just make it 8x bigger."
+The ticket got closed. Was anything fixed?
 
-Why is that usually the wrong fix?
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
 Memory is cheap. That is not what this question is about.
 
 #cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
 
 === FIRST COMMENT ===
-Which option did you pick? Reply with the letter, then swipe right for the answer ➜
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

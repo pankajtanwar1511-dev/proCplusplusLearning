@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Config hot-reload with atomic<shared_ptr>.
+The reader never writes, every load is atomic, TSan is quiet.
+So it is correct. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A classic system-design follow-up. This reader passes every unit test.
+
+#cpp #cplusplus #smartpointers #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

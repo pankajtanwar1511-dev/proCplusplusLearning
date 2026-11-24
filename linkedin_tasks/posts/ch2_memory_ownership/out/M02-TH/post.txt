@@ -1,0 +1,19 @@
+=== POST TEXT ===
+Rule of 3, Rule of 5, Rule of 0.
+Everyone can name them. Few can say what the compiler actually generates.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Constructor or assignment, copy or move
+2. What declaring one member does to the others
+3. A correct copy assignment, and copy-and-swap
+4. Writing the moves, and members that block them
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #raii #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

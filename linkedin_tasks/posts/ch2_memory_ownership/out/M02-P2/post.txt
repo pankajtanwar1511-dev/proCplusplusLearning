@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The class frees its buffer in the destructor.
+The program only prints the size. What can go wrong?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+No assignment, no move, no explicit copy anywhere in main. Look at the parameter.
+
+#cpp #cplusplus #raii #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The author wanted to free a 1 MiB buffer early.
+One call on a unique_ptr. Did it work?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The compiler stays silent, even with -Wall -Wextra.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

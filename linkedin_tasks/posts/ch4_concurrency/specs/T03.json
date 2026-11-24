@@ -222,12 +222,13 @@
   },
   {
     "id": "T03-Q7",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "source": "topic_03 qa Q7",
     "topic_no": 3,
     "topic_short": "Mutexes",
     "text": {
-      "hook": "T1 is started before T2. Both lock the same std::mutex.\n\nWho gets it first?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "hook": "T1 is started first. Both threads lock the same mutex.\nSo T1 always prints first. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Most answers assume some kind of queue. The standard promises less than you think.",
       "hashtags": [
         "cpp",
@@ -241,43 +242,40 @@
     "bonus_answer": "It never locks. It assumes this thread already owns m and only takes over the unlock. Used on a mutex you do not own, it unlocks an unowned mutex: UB.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Mutexes",
-        "title": "T1 starts before T2. Both lock the same `std::mutex`. Who gets it first?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Mutex fairness",
+        "title": "T1 is started first.<br>Which line prints first?",
+        "code": "std::mutex m;\nvoid work(const char* name) {\n    std::lock_guard g(m);\n    std::cout << name << '\\n';\n}\nint main() {\n    std::thread t1(work, \"T1\");\n    std::thread t2(work, \"T2\");\n    t1.join(); t2.join();\n}",
         "options": [
-          "T1, because it was created first.",
-          "Not guaranteed. `std::mutex` promises no order and no fairness.",
-          "Whoever arrives first. After that, waiters are served FIFO.",
-          "The longest waiter, because `unlock()` hands the lock to it."
+          "Always `T1`: it started first",
+          "Always `T2`: newest runs first",
+          "Either one: no guarantee",
+          "`T1`: waiters are served FIFO"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "B. Not guaranteed.",
-        "verdict_sub": "Mutex = exclusion, not ordering and not fairness.",
+        "verdict": "C. Either one: no guarantee",
+        "verdict_sub": "Observed on x86-64 Linux: `T2` printed first in 837 of 2000 runs",
         "bullets": [
-          "Creation order says nothing about scheduling. Whichever thread reaches `lock()` first wins.",
+          "Creation order says nothing about scheduling. Whoever reaches `lock()` first wins.",
+          "`std::mutex` promises exclusion. No FIFO queue, no fairness.",
           "glibc: unlock wakes one sleeper, but a running thread can grab the lock first (barging).",
-          "Unfair locks are faster, at the cost of possible starvation.",
-          "Need order? Use `join()`, a CV with a predicate, a semaphore or latch, or a release/acquire flag."
+          "Unfair locks are faster, at the cost of possible starvation."
         ],
-        "cta": "Why not A, C or D ➜"
+        "wrong": "\"T1, because it was started first\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: creating a thread first does not make it run or reach the lock first.",
-          "C: the standard defines no queue discipline, and common implementations such as glibc do not provide one.",
-          "D: unlock hands nothing over. The woken thread must re-compete for the lock."
-        ],
-        "takeaway": "Senior answer: \"No ordering, no FIFO. If I really need fairness, a ticket lock gives FIFO at a throughput cost.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Need an order? Build it explicitly",
+        "code": "std::latch t1_done{1};   // C++20\n\nstd::thread t1([&] {\n    work(\"T1\");\n    t1_done.count_down();\n});\nstd::thread t2([&] {\n    t1_done.wait();\n    work(\"T2\");\n});",
+        "tip": "Also: `join()`, a CV with a predicate, a semaphore, a release/acquire flag. A ticket lock gives FIFO at a throughput cost.",
+        "takeaway": "Mutex = exclusion, not ordering and not fairness."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nT1 is started before T2. Both lock the same std::mutex.\n\nWho gets it first?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "Most answers assume some kind of queue. The standard promises less than you think."
-    }
+    ]
   },
   {
     "id": "T03-P9",
@@ -336,13 +334,14 @@
   },
   {
     "id": "T03-Q15",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "source": "topic_03 qa Q15",
     "topic_no": 3,
     "topic_short": "Mutexes",
     "text": {
-      "hook": "\"A mutex always goes through the kernel, so it is slow.\"\n\nYou hear this in many interviews. Is it true?\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "The real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds.",
+      "hook": "\"A mutex always goes through the kernel, so it is slow.\"\nOne thread, a million lock/unlock pairs. Count the syscalls.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The real answer explains why an uncontended lock is cheap and a contended one is not.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -355,52 +354,49 @@
     "bonus_answer": "No. The lock is released when the getter returns, so the caller reads the member unlocked while a writer may modify it: a data race. Return a copy made under the lock.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Mutexes",
-        "title": "Does every `mutex.lock()` call go into the kernel?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Mutex internals",
+        "title": "Linux, glibc, one thread.<br>How many syscalls does the loop make?",
+        "code": "std::mutex m;\nlong counter = 0;\n\nint main() {   // single thread\n    for (int i = 0; i < 1'000'000; ++i) {\n        std::lock_guard g(m);\n        ++counter;\n    }\n}",
         "options": [
-          "Yes. A mutex is a kernel object, so every lock is a syscall.",
-          "Only under contention, and then the kernel must always be involved.",
-          "No, but every `unlock()` calls the kernel to wake the next thread.",
-          "No. Uncontended lock and unlock are user-space atomics."
+          "2,000,000: lock + unlock",
+          "Zero",
+          "1,000,000: one per lock",
+          "1,000,000: one per unlock"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. No.",
-        "verdict_sub": "The kernel is involved only when a thread must sleep or be woken.",
+        "verdict": "B. Zero",
+        "verdict_sub": "`strace -c` (glibc, x86-64): no syscalls from the loop",
         "bullets": [
-          "glibc fast path: CAS the lock word 0 ➜ 1. Success: done, no kernel.",
-          "Contended: set the word to 2 (\"maybe waiters\") and call `futex(FUTEX_WAIT)`: the thread sleeps.",
-          "Unlock: set it back to 0. Only if the old value was 2: `futex(FUTEX_WAKE, 1)`.",
-          "The lock word lives in user memory. The kernel only keeps a wait queue while threads sleep."
+          "Uncontended lock: CAS the lock word 0 ➜ 1 in user space. Done.",
+          "Uncontended unlock: set it back to 0. No waiters, no kernel.",
+          "The kernel is involved only when a thread must sleep or be woken (`futex` on Linux).",
+          "Uncontended, a mutex costs about two atomic RMWs."
         ],
-        "cta": "Why not A, B or C ➜"
+        "wrong": "\"Every lock is a syscall\"",
+        "cta": "Under the hood ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: uncontended, a mutex costs about two atomic RMWs. No kernel at all.",
-          "B: it *may* enter the kernel. A spinning implementation can hand over without a syscall.",
-          "C: uncontended unlock is pure user space. The wake call happens only if waiters exist."
-        ],
-        "takeaway": "Senior answer: \"Uncontended, a mutex is user-space atomics. Under contention it may block via an OS mechanism such as a futex.\" The 0/1/2 states are one library's design, not the C++ standard."
+        "layout": "code",
+        "kicker": "Under the hood",
+        "title": "glibc's scheme, simplified",
+        "code": "// 0 free, 1 locked, 2 waiters\nvoid lock() {\n  int c = 0;\n  if (w.compare_exchange_strong(c, 1))\n    return;            // fast path\n  while (w.exchange(2) != 0)\n    futex_wait(&w, 2); // sleep\n}\nvoid unlock() {\n  if (w.exchange(0) == 2)\n    futex_wake(&w, 1); // if waiters\n}",
+        "takeaway": "Uncontended: user-space atomics. Contended: may sleep via a futex. 0/1/2 is glibc's design, not C++."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"A mutex always goes through the kernel, so it is slow.\"\n\nYou hear this in many interviews. Is it true?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The real answer explains why an uncontended lock costs nanoseconds and a contended one can cost microseconds."
-    }
+    ]
   },
   {
     "id": "T03-Q21",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "source": "topic_03 qa Q21",
     "topic_no": 3,
     "topic_short": "Mutexes",
     "text": {
-      "hook": "p50 latency is normal. p99.9 jumps to milliseconds.\nA reporting thread holds the order-book mutex for 5 to 8 ms.\n\nWhat do you change? Comment A, B, C or D, then swipe ➜",
+      "hook": "p50 latency is normal. p99.9 jumps to milliseconds.\nTracing points at one function holding the book mutex.\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "A classic low-latency design question. The tempting answer fixes the wrong thing.",
       "hashtags": [
         "cpp",
@@ -414,42 +410,39 @@
     "bonus_answer": "Shard by key (hash(key) % N, one cache-line-padded mutex per shard), or better, route each shard to a single owning thread so it needs no lock at all.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Design question · Mutexes",
-        "title": "A reporting thread holds the order-book mutex for 5 to 8 ms. p99.9 explodes. Best fix?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Tail latency",
+        "title": "`report()` holds the lock 5 to 8 ms.<br>Best fix?",
+        "code": "std::mutex m;\nstd::map<std::string, long> book;\nvoid on_tick(Tick t) {  // hot path\n    std::lock_guard g(m);\n    book[t.sym] = t.px;\n}\nstd::string report() {  // reporter\n    std::lock_guard g(m);\n    return build_report(book); // 8 ms\n}",
         "options": [
-          "Copy a snapshot under the lock, build the report outside it.",
-          "Switch to a faster lock, such as a spinlock.",
-          "Switch to `std::shared_mutex`: the report only reads.",
-          "Use `std::timed_mutex` so the hot path gives up after 1 ms."
+          "Copy under lock, build outside",
+          "Use a spinlock instead",
+          "A read lock for the report",
+          "A timed lock on the hot path"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "A. Shrink the critical section.",
+        "verdict": "A. Shrink the critical section",
         "verdict_sub": "The lock is not slow. The hold time is.",
         "bullets": [
-          "Most messages never meet a report. The few that do wait ms: only the tail suffers.",
-          "Copy under the lock, release, then format the private copy.",
-          "Better: publish snapshots or events to the reporter via a queue."
+          "Most ticks never meet a report. The few that do wait ms: only the tail suffers.",
+          "Spinlock: still waits the full 5 to 8 ms, and burns a core.",
+          "Reader/writer lock (`shared_mutex`): the hot path *writes*, so it still waits.",
+          "Timed lock (`timed_mutex`): the hot path still waits, then must drop or defer work."
         ],
-        "code": "std::map<std::string, long> snap;\n{ std::lock_guard g(m); snap = book; }\nreturn build_report(snap);  // unlocked",
-        "cta": "Why not B, C or D ➜"
+        "wrong": "\"Use a faster lock\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "B: a spinlock still waits the full 5 to 8 ms, and burns a core while doing it.",
-          "C: the hot path *writes* the book, so it still waits for the reporter's 8 ms read lock.",
-          "D: treats the symptom. The hot path still waits up to 1 ms, then has to drop or defer work."
-        ],
-        "takeaway": "Senior answer: fix lock-induced tail latency by shortening hold time, not by changing the lock type. Never hold a lock across I/O, logging, allocation or callbacks."
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Lock for one copy, not for the report",
+        "code": "std::string report() {\n    std::map<std::string, long> snap;\n    {\n        std::lock_guard g(m);\n        snap = book;            // one copy\n    }\n    return build_report(snap);  // no lock\n}",
+        "tip": "Better still: the hot path publishes snapshots or events to the reporter through a queue.",
+        "takeaway": "Never hold a lock across I/O, logging, allocation or callbacks. Shorten hold time, do not change the lock type."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\np50 latency is normal. p99.9 jumps to milliseconds.\nA reporting thread holds the order-book mutex for 5 to 8 ms.\n\nWhat do you change? Comment A, B, C or D. The answer appears at 0:36.",
-      "body": "A classic low-latency design question. The tempting answer fixes the wrong thing."
-    }
+    ]
   }
 ]

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two keys with identical fields.
+A one-line memcmp says they are different. Bug or not?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A one-liner that shows up in hash maps, caches and dedup code.
+
+#cpp #cplusplus #systemsprogramming #performance #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

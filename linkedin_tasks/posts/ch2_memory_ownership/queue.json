@@ -1,0 +1,1771 @@
+{
+ "chapter_title": "C++ Memory & Ownership",
+ "summary": {
+  "chapter": "ch2_memory_ownership",
+  "chapter_title": "C++ Memory & Ownership",
+  "total_posts": 60,
+  "by_type": {
+   "theory": 12,
+   "code_puzzle": 48,
+   "concept": 0
+  },
+  "total_slides": 312,
+  "unrendered": [],
+  "appended": [],
+  "dropped": []
+ },
+ "posts": [
+  {
+   "id": "M03-TH",
+   "type": "theory",
+   "topic_no": 3,
+   "topic_short": "Move Semantics",
+   "source": "topic_03 theory",
+   "hook": "std::move does not move anything.\nInterviewers use move semantics to test value categories and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. lvalue, xvalue, prvalue in one picture\n2. What actually performs a move\n3. Moved-from state, type by type\n4. Pointers into a moved resource\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "std::move does not move anything.\nInterviewers use move semantics to test value categories and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. lvalue, xvalue, prvalue in one picture\n2. What actually performs a move\n3. Moved-from state, type by type\n4. Pointers into a moved resource\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "M03-TH/s-01.png",
+    "M03-TH/s-02.png",
+    "M03-TH/s-03.png",
+    "M03-TH/s-04.png",
+    "M03-TH/s-05.png",
+    "M03-TH/s-06.png",
+    "M03-TH/s-07.png",
+    "M03-TH/s-08.png",
+    "M03-TH/s-09.png",
+    "M03-TH/s-10.png"
+   ],
+   "pdf": "M03-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M03-P1",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "Move Semantics",
+   "source": "topic_03 practice Q1",
+   "hook": "wrap() takes a T&&. Inside, it calls f(x).\nf has a const T& and a T&& overload.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The rule behind this one explains half of all \"why did it copy?\" questions.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "wrap() takes a T&&. Inside, it calls f(x).\nf has a const T& and a T&& overload.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe rule behind this one explains half of all \"why did it copy?\" questions.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M03-P1/s-01.png",
+    "M03-P1/s-02.png",
+    "M03-P1/s-03.png",
+    "M03-P1/s-04.png"
+   ],
+   "pdf": "M03-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M03-P7",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "Move Semantics",
+   "source": "topic_03 practice Q7",
+   "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.",
+   "body": "A real duplicate-message bug. The code looks like it consumes the value.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.\n\nA real duplicate-message bug. The code looks like it consumes the value.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M03-P7/s-01.png",
+    "M03-P7/s-02.png",
+    "M03-P7/s-03.png",
+    "M03-P7/s-04.png"
+   ],
+   "pdf": "M03-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M03-Q2",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "Move Semantics",
+   "source": "topic_03 qa Q2",
+   "hook": "No assignment. No function call around it.\nJust std::move(a); on its own line.\nThe string is gone now. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The answer is the foundation of every move semantics question.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "No assignment. No function call around it.\nJust std::move(a); on its own line.\nThe string is gone now. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe answer is the foundation of every move semantics question.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M03-Q2/s-01.png",
+    "M03-Q2/s-02.png",
+    "M03-Q2/s-03.png",
+    "M03-Q2/s-04.png"
+   ],
+   "pdf": "M03-Q2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M03-Q4",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "Move Semantics",
+   "source": "topic_03 qa Q4",
+   "hook": "a is const. You write std::move(a).\nThe class has a noexcept move constructor.\nNo warning from GCC or Clang.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "That silence is exactly why it hides in real code.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "a is const. You write std::move(a).\nThe class has a noexcept move constructor.\nNo warning from GCC or Clang.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThat silence is exactly why it hides in real code.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M03-Q4/s-01.png",
+    "M03-Q4/s-02.png",
+    "M03-Q4/s-03.png",
+    "M03-Q4/s-04.png"
+   ],
+   "pdf": "M03-Q4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M06-TH",
+   "type": "theory",
+   "topic_no": 6,
+   "topic_short": "unique_ptr",
+   "source": "topic_06 theory",
+   "hook": "std::unique_ptr is the default owning pointer.\nInterviewers use it to test ownership, deleters and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. One owner plus a cleanup policy\n2. What a move really transfers\n3. get, release, reset\n4. Custom deleters and their size\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "std::unique_ptr is the default owning pointer.\nInterviewers use it to test ownership, deleters and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. One owner plus a cleanup policy\n2. What a move really transfers\n3. get, release, reset\n4. Custom deleters and their size\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "M06-TH/s-01.png",
+    "M06-TH/s-02.png",
+    "M06-TH/s-03.png",
+    "M06-TH/s-04.png",
+    "M06-TH/s-05.png",
+    "M06-TH/s-06.png",
+    "M06-TH/s-07.png",
+    "M06-TH/s-08.png",
+    "M06-TH/s-09.png",
+    "M06-TH/s-10.png"
+   ],
+   "pdf": "M06-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M06-P9",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "unique_ptr",
+   "source": "topic_06 practice Q9",
+   "hook": "The author wanted to free a 1 MiB buffer early.\nOne call on a unique_ptr. Did it work?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The compiler stays silent, even with -Wall -Wextra.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "The author wanted to free a 1 MiB buffer early.\nOne call on a unique_ptr. Did it work?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe compiler stays silent, even with -Wall -Wextra.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M06-P9/s-01.png",
+    "M06-P9/s-02.png",
+    "M06-P9/s-03.png",
+    "M06-P9/s-04.png"
+   ],
+   "pdf": "M06-P9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M06-P11",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "unique_ptr",
+   "source": "topic_06 practice Q11",
+   "hook": "A lambda captures a unique_ptr by move.\nThen it goes into a std::function.\nDoes this compile?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A pattern that shows up in every task queue and callback API.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "A lambda captures a unique_ptr by move.\nThen it goes into a std::function.\nDoes this compile?\n\nLock in your answer below, then swipe ➜ to verify.\n\nA pattern that shows up in every task queue and callback API.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M06-P11/s-01.png",
+    "M06-P11/s-02.png",
+    "M06-P11/s-03.png",
+    "M06-P11/s-04.png"
+   ],
+   "pdf": "M06-P11/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M06-Q12",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "unique_ptr",
+   "source": "topic_06 qa Q12",
+   "hook": "unique_ptr<Base> holding a Derived.\nNo warning at -Wall, no crash in tests.\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The bug hides well: switch the same code to shared_ptr and it seems to work.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "unique_ptr<Base> holding a Derived.\nNo warning at -Wall, no crash in tests.\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe bug hides well: switch the same code to shared_ptr and it seems to work.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M06-Q12/s-01.png",
+    "M06-Q12/s-02.png",
+    "M06-Q12/s-03.png",
+    "M06-Q12/s-04.png"
+   ],
+   "pdf": "M06-Q12/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M06-Q13",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "unique_ptr",
+   "source": "topic_06 qa Q13",
+   "hook": "A function only reads an Order.\nThe caller owns it through a unique_ptr.\n\"Pass the smart pointer by const&.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Your signature documents ownership. Reviewers read it that way.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "A function only reads an Order.\nThe caller owns it through a unique_ptr.\n\"Pass the smart pointer by const&.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nYour signature documents ownership. Reviewers read it that way.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M06-Q13/s-01.png",
+    "M06-Q13/s-02.png",
+    "M06-Q13/s-03.png",
+    "M06-Q13/s-04.png"
+   ],
+   "pdf": "M06-Q13/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M07-TH",
+   "type": "theory",
+   "topic_no": 7,
+   "topic_short": "shared_ptr",
+   "source": "topic_07 theory",
+   "hook": "std::shared_ptr is two pointers and a control block.\nInterviewers use it to test what you really know about ownership.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Handle, control block, object\n2. What copy, move and reset cost\n3. Two lifetimes: object vs control block\n4. Type-erased deleters and when not to use make_shared\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "std::shared_ptr is two pointers and a control block.\nInterviewers use it to test what you really know about ownership.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Handle, control block, object\n2. What copy, move and reset cost\n3. Two lifetimes: object vs control block\n4. Type-erased deleters and when not to use make_shared\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "M07-TH/s-01.png",
+    "M07-TH/s-02.png",
+    "M07-TH/s-03.png",
+    "M07-TH/s-04.png",
+    "M07-TH/s-05.png",
+    "M07-TH/s-06.png",
+    "M07-TH/s-07.png",
+    "M07-TH/s-08.png",
+    "M07-TH/s-09.png",
+    "M07-TH/s-10.png"
+   ],
+   "pdf": "M07-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M07-P2",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "shared_ptr",
+   "source": "topic_07 practice Q2",
+   "hook": "Two shared_ptrs, one Session, one raw pointer.\nShared ownership, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "It compiles without a single warning. That is exactly why interviewers like it.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "Two shared_ptrs, one Session, one raw pointer.\nShared ownership, right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIt compiles without a single warning. That is exactly why interviewers like it.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M07-P2/s-01.png",
+    "M07-P2/s-02.png",
+    "M07-P2/s-03.png",
+    "M07-P2/s-04.png"
+   ],
+   "pdf": "M07-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M07-P11",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "shared_ptr",
+   "source": "topic_07 practice Q11",
+   "hook": "fopen fails and returns nullptr.\nThe shared_ptr is empty, so the deleter never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "This one surprises people who port code from unique_ptr to shared_ptr.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "fopen fails and returns nullptr.\nThe shared_ptr is empty, so the deleter never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThis one surprises people who port code from unique_ptr to shared_ptr.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M07-P11/s-01.png",
+    "M07-P11/s-02.png",
+    "M07-P11/s-03.png",
+    "M07-P11/s-04.png"
+   ],
+   "pdf": "M07-P11/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M07-Q6",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "shared_ptr",
+   "source": "topic_07 qa Q6",
+   "hook": "\"make_shared is faster\" is what everyone says.\nSo we counted every call to operator new.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The counter is a replaced global operator new. Nothing else is hidden.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "\"make_shared is faster\" is what everyone says.\nSo we counted every call to operator new.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe counter is a replaced global operator new. Nothing else is hidden.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M07-Q6/s-01.png",
+    "M07-Q6/s-02.png",
+    "M07-Q6/s-03.png",
+    "M07-Q6/s-04.png"
+   ],
+   "pdf": "M07-Q6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M07-Q18",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "shared_ptr",
+   "source": "topic_07 qa Q18",
+   "hook": "A linked list built from shared_ptr. No raw new, no delete, no cycles.\nSmart pointers clean it up automatically. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One million nodes, one reset. Linux, default stack size.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "A linked list built from shared_ptr. No raw new, no delete, no cycles.\nSmart pointers clean it up automatically. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne million nodes, one reset. Linux, default stack size.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M07-Q18/s-01.png",
+    "M07-Q18/s-02.png",
+    "M07-Q18/s-03.png",
+    "M07-Q18/s-04.png"
+   ],
+   "pdf": "M07-Q18/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M02-TH",
+   "type": "theory",
+   "topic_no": 2,
+   "topic_short": "Rule of 0/3/5",
+   "source": "topic_02 theory",
+   "hook": "Rule of 3, Rule of 5, Rule of 0.\nEveryone can name them. Few can say what the compiler actually generates.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Constructor or assignment, copy or move\n2. What declaring one member does to the others\n3. A correct copy assignment, and copy-and-swap\n4. Writing the moves, and members that block them\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Rule of 3, Rule of 5, Rule of 0.\nEveryone can name them. Few can say what the compiler actually generates.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Constructor or assignment, copy or move\n2. What declaring one member does to the others\n3. A correct copy assignment, and copy-and-swap\n4. Writing the moves, and members that block them\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #raii #moderncpp #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "M02-TH/s-01.png",
+    "M02-TH/s-02.png",
+    "M02-TH/s-03.png",
+    "M02-TH/s-04.png",
+    "M02-TH/s-05.png",
+    "M02-TH/s-06.png",
+    "M02-TH/s-07.png",
+    "M02-TH/s-08.png",
+    "M02-TH/s-09.png",
+    "M02-TH/s-10.png"
+   ],
+   "pdf": "M02-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M02-P2",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "Rule of 0/3/5",
+   "source": "topic_02 practice Q2",
+   "hook": "The class frees its buffer in the destructor.\nThe program only prints the size. What can go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No assignment, no move, no explicit copy anywhere in main. Look at the parameter.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The class frees its buffer in the destructor.\nThe program only prints the size. What can go wrong?\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo assignment, no move, no explicit copy anywhere in main. Look at the parameter.\n\n#cpp #cplusplus #raii #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M02-P2/s-01.png",
+    "M02-P2/s-02.png",
+    "M02-P2/s-03.png",
+    "M02-P2/s-04.png"
+   ],
+   "pdf": "M02-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M02-P7",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "Rule of 0/3/5",
+   "source": "topic_02 practice Q7",
+   "hook": "The class has a perfectly good move constructor.\nThe vector grows twice. What does it print?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "\"Why is my vector copying?\" Cause number one, in 15 lines.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The class has a perfectly good move constructor.\nThe vector grows twice. What does it print?\n\nLock in your answer below, then swipe ➜ to verify.\n\n\"Why is my vector copying?\" Cause number one, in 15 lines.\n\n#cpp #cplusplus #raii #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M02-P7/s-01.png",
+    "M02-P7/s-02.png",
+    "M02-P7/s-03.png",
+    "M02-P7/s-04.png"
+   ],
+   "pdf": "M02-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M02-Q13",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "Rule of 0/3/5",
+   "source": "topic_02 qa Q13",
+   "hook": "No destructor. No copy constructor. No move constructor.\nThe class owns a heap buffer.\nSo copying it must be broken. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The best way to follow the Rule of 5 is to write none of them.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "No destructor. No copy constructor. No move constructor.\nThe class owns a heap buffer.\nSo copying it must be broken. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe best way to follow the Rule of 5 is to write none of them.\n\n#cpp #cplusplus #raii #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M02-Q13/s-01.png",
+    "M02-Q13/s-02.png",
+    "M02-Q13/s-03.png",
+    "M02-Q13/s-04.png"
+   ],
+   "pdf": "M02-Q13/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M02-Q6",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "Rule of 0/3/5",
+   "source": "topic_02 qa Q6",
+   "hook": "Item's move constructor is noexcept.\nThe wrapper only adds an empty destructor.\nThat cannot change anything. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "\"Why is my vector copying?\" Not the missing noexcept this time.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Item's move constructor is noexcept.\nThe wrapper only adds an empty destructor.\nThat cannot change anything. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\n\"Why is my vector copying?\" Not the missing noexcept this time.\n\n#cpp #cplusplus #raii #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M02-Q6/s-01.png",
+    "M02-Q6/s-02.png",
+    "M02-Q6/s-03.png",
+    "M02-Q6/s-04.png"
+   ],
+   "pdf": "M02-Q6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M01-TH",
+   "type": "theory",
+   "topic_no": 1,
+   "topic_short": "Object Lifetime",
+   "source": "topic_01 theory",
+   "hook": "Most C++ memory bugs are lifetime bugs.\nInterviewers test whether you can say exactly when an object dies.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Storage vs lifetime vs scope\n2. When lifetime starts and ends\n3. When const& extends a temporary\n4. Construction and destruction order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Most C++ memory bugs are lifetime bugs.\nInterviewers test whether you can say exactly when an object dies.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Storage vs lifetime vs scope\n2. When lifetime starts and ends\n3. When const& extends a temporary\n4. Construction and destruction order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "M01-TH/s-01.png",
+    "M01-TH/s-02.png",
+    "M01-TH/s-03.png",
+    "M01-TH/s-04.png",
+    "M01-TH/s-05.png",
+    "M01-TH/s-06.png",
+    "M01-TH/s-07.png",
+    "M01-TH/s-08.png",
+    "M01-TH/s-09.png",
+    "M01-TH/s-10.png"
+   ],
+   "pdf": "M01-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M01-P2",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "Object Lifetime",
+   "source": "topic_01 practice Q2",
+   "hook": "std::max returns a const int&.\nYou bind it to a const int&. Is that well-defined?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Three lines, no pointers, no heap. Still a classic dangling reference interviewers love.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "std::max returns a const int&.\nYou bind it to a const int&. Is that well-defined?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThree lines, no pointers, no heap. Still a classic dangling reference interviewers love.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M01-P2/s-01.png",
+    "M01-P2/s-02.png",
+    "M01-P2/s-03.png",
+    "M01-P2/s-04.png"
+   ],
+   "pdf": "M01-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M01-P10",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "Object Lifetime",
+   "source": "topic_01 practice Q10",
+   "hook": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One of the few lifetime bugs the language itself changed in C++23.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of the few lifetime bugs the language itself changed in C++23.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M01-P10/s-01.png",
+    "M01-P10/s-02.png",
+    "M01-P10/s-03.png",
+    "M01-P10/s-04.png"
+   ],
+   "pdf": "M01-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M01-Q8",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "Object Lifetime",
+   "source": "topic_01 qa Q8",
+   "hook": "This passed code review.\nThe vector is alive the whole time,\nso the reference is fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "It even prints the right number in testing. That is why it survives.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "This passed code review.\nThe vector is alive the whole time,\nso the reference is fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIt even prints the right number in testing. That is why it survives.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M01-Q8/s-01.png",
+    "M01-Q8/s-02.png",
+    "M01-Q8/s-03.png",
+    "M01-Q8/s-04.png"
+   ],
+   "pdf": "M01-Q8/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M01-Q12",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "Object Lifetime",
+   "source": "topic_01 qa Q12",
+   "hook": "Two globals in two .cpp files. One reads the other.\nIt printed 9001 in every test.\nIs that guaranteed?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No threads, no pointers, no warnings. Then someone changes the build.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Two globals in two .cpp files. One reads the other.\nIt printed 9001 in every test.\nIs that guaranteed?\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo threads, no pointers, no warnings. Then someone changes the build.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M01-Q12/s-01.png",
+    "M01-Q12/s-02.png",
+    "M01-Q12/s-03.png",
+    "M01-Q12/s-04.png"
+   ],
+   "pdf": "M01-Q12/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M04-TH",
+   "type": "theory",
+   "topic_no": 4,
+   "topic_short": "Copy Elision",
+   "source": "topic_04 theory",
+   "hook": "\"RVO is guaranteed since C++17.\"\nHalf true, and interviewers ask about the other half.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Guaranteed vs optional elision\n2. What every return statement costs\n3. How NRVO works in the ABI\n4. Implicit move, standard by standard\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"RVO is guaranteed since C++17.\"\nHalf true, and interviewers ask about the other half.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Guaranteed vs optional elision\n2. What every return statement costs\n3. How NRVO works in the ABI\n4. Implicit move, standard by standard\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "M04-TH/s-01.png",
+    "M04-TH/s-02.png",
+    "M04-TH/s-03.png",
+    "M04-TH/s-04.png",
+    "M04-TH/s-05.png",
+    "M04-TH/s-06.png",
+    "M04-TH/s-07.png",
+    "M04-TH/s-08.png",
+    "M04-TH/s-09.png",
+    "M04-TH/s-10.png"
+   ],
+   "pdf": "M04-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M04-P1",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "Copy Elision",
+   "source": "topic_04 practice Q1",
+   "hook": "Four constructor calls in the source.\nHow many actually run in C++17?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Count the objects, not the parentheses.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Four constructor calls in the source.\nHow many actually run in C++17?\n\nLock in your answer below, then swipe ➜ to verify.\n\nCount the objects, not the parentheses.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M04-P1/s-01.png",
+    "M04-P1/s-02.png",
+    "M04-P1/s-03.png",
+    "M04-P1/s-04.png"
+   ],
+   "pdf": "M04-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M04-P2",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "Copy Elision",
+   "source": "topic_04 practice Q2",
+   "hook": "\"Add std::move to make sure it moves.\"\nA code review comment you have probably seen.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "What does the program print, and which line would you flag in review?",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"Add std::move to make sure it moves.\"\nA code review comment you have probably seen.\n\nLock in your answer below, then swipe ➜ to verify.\n\nWhat does the program print, and which line would you flag in review?\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M04-P2/s-01.png",
+    "M04-P2/s-02.png",
+    "M04-P2/s-03.png",
+    "M04-P2/s-04.png"
+   ],
+   "pdf": "M04-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M04-Q7",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "Copy Elision",
+   "source": "topic_04 qa Q7",
+   "hook": "Copy constructor: deleted. Move constructor: deleted.\n\"The compiler elides the copy anyway.\"\nSo both functions compile?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "This is how factories return types that hold a std::mutex or a std::atomic.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Copy constructor: deleted. Move constructor: deleted.\n\"The compiler elides the copy anyway.\"\nSo both functions compile?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThis is how factories return types that hold a std::mutex or a std::atomic.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M04-Q7/s-01.png",
+    "M04-Q7/s-02.png",
+    "M04-Q7/s-03.png",
+    "M04-Q7/s-04.png"
+   ],
+   "pdf": "M04-Q7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M04-Q12",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "Copy Elision",
+   "source": "topic_04 qa Q12",
+   "hook": "\"Always take a std::string by const&. It avoids copies.\"\nThis constructor stores its argument.\nHow many copies happen?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Three callers: an lvalue, a std::move and a temporary.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "movesemantics",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"Always take a std::string by const&. It avoids copies.\"\nThis constructor stores its argument.\nHow many copies happen?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThree callers: an lvalue, a std::move and a temporary.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M04-Q12/s-01.png",
+    "M04-Q12/s-02.png",
+    "M04-Q12/s-03.png",
+    "M04-Q12/s-04.png"
+   ],
+   "pdf": "M04-Q12/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M05-TH",
+   "type": "theory",
+   "topic_no": 5,
+   "topic_short": "RAII",
+   "source": "topic_05 theory",
+   "hook": "\"RAII means destructors clean up.\"\nTrue, until the exception is never caught.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Lifetime is ownership\n2. What stack unwinding really runs\n3. Why destructors must not throw\n4. Writing your own RAII wrapper\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "\"RAII means destructors clean up.\"\nTrue, until the exception is never caught.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Lifetime is ownership\n2. What stack unwinding really runs\n3. Why destructors must not throw\n4. Writing your own RAII wrapper\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #raii #memorymanagement #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "M05-TH/s-01.png",
+    "M05-TH/s-02.png",
+    "M05-TH/s-03.png",
+    "M05-TH/s-04.png",
+    "M05-TH/s-05.png",
+    "M05-TH/s-06.png",
+    "M05-TH/s-07.png",
+    "M05-TH/s-08.png",
+    "M05-TH/s-09.png",
+    "M05-TH/s-10.png"
+   ],
+   "pdf": "M05-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M05-P1",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "RAII",
+   "source": "topic_05 practice Q1",
+   "hook": "One raw pointer, one unique_ptr, one stack object.\nThen an early return.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "What does it print, and which object leaks?",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "One raw pointer, one unique_ptr, one stack object.\nThen an early return.\n\nLock in your answer below, then swipe ➜ to verify.\n\nWhat does it print, and which object leaks?\n\n#cpp #cplusplus #raii #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M05-P1/s-01.png",
+    "M05-P1/s-02.png",
+    "M05-P1/s-03.png",
+    "M05-P1/s-04.png"
+   ],
+   "pdf": "M05-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M05-P11",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "RAII",
+   "source": "topic_05 practice Q11",
+   "hook": "Lock, work, unlock. Three lines. It passed code review.\nThen one bad input made the work throw.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The exception is caught. So everything is fine afterwards. Right?",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "Lock, work, unlock. Three lines. It passed code review.\nThen one bad input made the work throw.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe exception is caught. So everything is fine afterwards. Right?\n\n#cpp #cplusplus #raii #memorymanagement #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M05-P11/s-01.png",
+    "M05-P11/s-02.png",
+    "M05-P11/s-03.png",
+    "M05-P11/s-04.png"
+   ],
+   "pdf": "M05-P11/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M05-Q8",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "RAII",
+   "source": "topic_05 qa Q8",
+   "hook": "The constructor throws. The caller catches it.\nThe destructor right there frees raw_.\nSo nothing leaks. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The classic constructor-failure question.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "The constructor throws. The caller catches it.\nThe destructor right there frees raw_.\nSo nothing leaks. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe classic constructor-failure question.\n\n#cpp #cplusplus #raii #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M05-Q8/s-01.png",
+    "M05-Q8/s-02.png",
+    "M05-Q8/s-03.png",
+    "M05-Q8/s-04.png"
+   ],
+   "pdf": "M05-Q8/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M05-Q10",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "RAII",
+   "source": "topic_05 qa Q10",
+   "hook": "\"This function gives the basic exception guarantee.\"\nIt just threw. What do you actually know?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "\"Exception safe\" has four levels. Interviewers expect you to name them.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "raii",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "\"This function gives the basic exception guarantee.\"\nIt just threw. What do you actually know?\n\nLock in your answer below, then swipe ➜ to verify.\n\n\"Exception safe\" has four levels. Interviewers expect you to name them.\n\n#cpp #cplusplus #raii #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M05-Q10/s-01.png",
+    "M05-Q10/s-02.png",
+    "M05-Q10/s-03.png",
+    "M05-Q10/s-04.png"
+   ],
+   "pdf": "M05-Q10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M09-TH",
+   "type": "theory",
+   "topic_no": 9,
+   "topic_short": "weak_ptr",
+   "source": "topic_09 theory",
+   "hook": "weak_ptr has no operator->, no get(), no *.\nThat is not a missing feature. It is the whole design.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Owning vs observing\n2. The weak_ptr API contract\n3. Object vs control block lifetime\n4. Which link becomes weak, enable_shared_from_this\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "weak_ptr has no operator->, no get(), no *.\nThat is not a missing feature. It is the whole design.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Owning vs observing\n2. The weak_ptr API contract\n3. Object vs control block lifetime\n4. Which link becomes weak, enable_shared_from_this\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "M09-TH/s-01.png",
+    "M09-TH/s-02.png",
+    "M09-TH/s-03.png",
+    "M09-TH/s-04.png",
+    "M09-TH/s-05.png",
+    "M09-TH/s-06.png",
+    "M09-TH/s-07.png",
+    "M09-TH/s-08.png",
+    "M09-TH/s-09.png",
+    "M09-TH/s-10.png"
+   ],
+   "pdf": "M09-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M09-P4",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "weak_ptr",
+   "source": "topic_09 practice Q4",
+   "hook": "The code checks expired() before it calls lock().\nCareful code, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "In production the release comes from another thread, so this crashes once a week. Here it crashes every time.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "The code checks expired() before it calls lock().\nCareful code, right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIn production the release comes from another thread, so this crashes once a week. Here it crashes every time.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M09-P4/s-01.png",
+    "M09-P4/s-02.png",
+    "M09-P4/s-03.png",
+    "M09-P4/s-04.png"
+   ],
+   "pdf": "M09-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M09-P10",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "weak_ptr",
+   "source": "topic_09 practice Q10",
+   "hook": "To avoid a shared_ptr cycle, this callback captures the button by reference.\nProblem solved?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "It avoids one bug by trading it for a worse one.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "To avoid a shared_ptr cycle, this callback captures the button by reference.\nProblem solved?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIt avoids one bug by trading it for a worse one.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M09-P10/s-01.png",
+    "M09-P10/s-02.png",
+    "M09-P10/s-03.png",
+    "M09-P10/s-04.png"
+   ],
+   "pdf": "M09-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M09-Q6",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "weak_ptr",
+   "source": "topic_09 qa Q6",
+   "hook": "Two objects hold shared_ptrs to each other.\nBoth owners call reset(). Someone in the room says \"deadlock\".\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One of the wrong answers is a word every interviewer is listening for.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "Two objects hold shared_ptrs to each other.\nBoth owners call reset(). Someone in the room says \"deadlock\".\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of the wrong answers is a word every interviewer is listening for.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M09-Q6/s-01.png",
+    "M09-Q6/s-02.png",
+    "M09-Q6/s-03.png",
+    "M09-Q6/s-04.png"
+   ],
+   "pdf": "M09-Q6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M09-Q11",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "weak_ptr",
+   "source": "topic_09 qa Q11",
+   "hook": "enable_shared_from_this, and an object on the stack.\nA common answer: \"shared_from_this() returns nullptr\".\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "C++17 changed what this line does.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "memorymanagement",
+    "interviewprep"
+   ],
+   "post_text": "enable_shared_from_this, and an object on the stack.\nA common answer: \"shared_from_this() returns nullptr\".\n\nLock in your answer below, then swipe ➜ to verify.\n\nC++17 changed what this line does.\n\n#cpp #cplusplus #smartpointers #memorymanagement #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M09-Q11/s-01.png",
+    "M09-Q11/s-02.png",
+    "M09-Q11/s-03.png",
+    "M09-Q11/s-04.png"
+   ],
+   "pdf": "M09-Q11/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M08-TH",
+   "type": "theory",
+   "topic_no": 8,
+   "topic_short": "shared_ptr & Threads",
+   "source": "topic_08 theory",
+   "hook": "\"Is shared_ptr thread-safe?\"\nYes and no are both wrong answers.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Three layers, three questions\n2. Safe and unsafe, case by case\n3. Why one shared handle races\n4. atomic<shared_ptr> and copy-on-write\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "concurrency",
+    "interviewprep"
+   ],
+   "post_text": "\"Is shared_ptr thread-safe?\"\nYes and no are both wrong answers.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Three layers, three questions\n2. Safe and unsafe, case by case\n3. Why one shared handle races\n4. atomic<shared_ptr> and copy-on-write\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #smartpointers #concurrency #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "M08-TH/s-01.png",
+    "M08-TH/s-02.png",
+    "M08-TH/s-03.png",
+    "M08-TH/s-04.png",
+    "M08-TH/s-05.png",
+    "M08-TH/s-06.png",
+    "M08-TH/s-07.png",
+    "M08-TH/s-08.png",
+    "M08-TH/s-09.png",
+    "M08-TH/s-10.png"
+   ],
+   "pdf": "M08-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M08-P1",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "shared_ptr & Threads",
+   "source": "topic_08 practice Q1",
+   "hook": "The reference count is atomic.\nOne thread copies a global shared_ptr, another replaces it.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Most engineers answer this one from the word \"atomic\". The program disagrees.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "concurrency",
+    "interviewprep"
+   ],
+   "post_text": "The reference count is atomic.\nOne thread copies a global shared_ptr, another replaces it.\n\nLock in your answer below, then swipe ➜ to verify.\n\nMost engineers answer this one from the word \"atomic\". The program disagrees.\n\n#cpp #cplusplus #smartpointers #concurrency #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M08-P1/s-01.png",
+    "M08-P1/s-02.png",
+    "M08-P1/s-03.png",
+    "M08-P1/s-04.png"
+   ],
+   "pdf": "M08-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M08-P3",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "shared_ptr & Threads",
+   "source": "topic_08 practice Q3",
+   "hook": "Each thread gets its own shared_ptr copy.\nSo the counter must be correct?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "At -O2 it may even print the right number. That is the dangerous part.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "concurrency",
+    "interviewprep"
+   ],
+   "post_text": "Each thread gets its own shared_ptr copy.\nSo the counter must be correct?\n\nLock in your answer below, then swipe ➜ to verify.\n\nAt -O2 it may even print the right number. That is the dangerous part.\n\n#cpp #cplusplus #smartpointers #concurrency #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M08-P3/s-01.png",
+    "M08-P3/s-02.png",
+    "M08-P3/s-03.png",
+    "M08-P3/s-04.png"
+   ],
+   "pdf": "M08-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M08-Q7",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "shared_ptr & Threads",
+   "source": "topic_08 qa Q7",
+   "hook": "Config hot-reload with atomic<shared_ptr>.\nThe reader never writes, every load is atomic, TSan is quiet.\nSo it is correct. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A classic system-design follow-up. This reader passes every unit test.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "concurrency",
+    "interviewprep"
+   ],
+   "post_text": "Config hot-reload with atomic<shared_ptr>.\nThe reader never writes, every load is atomic, TSan is quiet.\nSo it is correct. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nA classic system-design follow-up. This reader passes every unit test.\n\n#cpp #cplusplus #smartpointers #concurrency #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M08-Q7/s-01.png",
+    "M08-Q7/s-02.png",
+    "M08-Q7/s-03.png",
+    "M08-Q7/s-04.png"
+   ],
+   "pdf": "M08-Q7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M08-Q14",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "shared_ptr & Threads",
+   "source": "topic_08 qa Q14",
+   "hook": "main creates a big object. A reader thread holds a copy.\nWhich thread pays for destroying it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "In low-latency code this decides who pays for freeing a big object.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "smartpointers",
+    "concurrency",
+    "interviewprep"
+   ],
+   "post_text": "main creates a big object. A reader thread holds a copy.\nWhich thread pays for destroying it?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIn low-latency code this decides who pays for freeing a big object.\n\n#cpp #cplusplus #smartpointers #concurrency #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M08-Q14/s-01.png",
+    "M08-Q14/s-02.png",
+    "M08-Q14/s-03.png",
+    "M08-Q14/s-04.png"
+   ],
+   "pdf": "M08-Q14/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M10-TH",
+   "type": "theory",
+   "topic_no": 10,
+   "topic_short": "new & delete",
+   "source": "topic_10 theory",
+   "hook": "You write new every week.\nBut can you say what it does, in which order, and what happens when it fails?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. Storage is not an object\n2. The pairing rules\n3. When the constructor throws\n4. Wire buffers and what malloc really costs\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "You write new every week.\nBut can you say what it does, in which order, and what happens when it fails?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. Storage is not an object\n2. The pairing rules\n3. When the constructor throws\n4. Wire buffers and what malloc really costs\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "M10-TH/s-01.png",
+    "M10-TH/s-02.png",
+    "M10-TH/s-03.png",
+    "M10-TH/s-04.png",
+    "M10-TH/s-05.png",
+    "M10-TH/s-06.png",
+    "M10-TH/s-07.png",
+    "M10-TH/s-08.png",
+    "M10-TH/s-09.png",
+    "M10-TH/s-10.png"
+   ],
+   "pdf": "M10-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M10-P1",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "new & delete",
+   "source": "topic_10 practice Q1",
+   "hook": "Three orders allocated with new[]. One delete.\nAt worst that leaks two objects, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "It compiles. For some types it even seems to work, which is why it survives code review.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Three orders allocated with new[]. One delete.\nAt worst that leaks two objects, right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIt compiles. For some types it even seems to work, which is why it survives code review.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M10-P1/s-01.png",
+    "M10-P1/s-02.png",
+    "M10-P1/s-03.png",
+    "M10-P1/s-04.png"
+   ],
+   "pdf": "M10-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M10-P7",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "new & delete",
+   "source": "topic_10 practice Q7",
+   "hook": "64 TiB requested with plain new, then with nothrow.\nThe code even checks for nullptr. What prints?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two forms of new, two different failure contracts. Mixing them up leaves dead error handling in real code.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "64 TiB requested with plain new, then with nothrow.\nThe code even checks for nullptr. What prints?\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo forms of new, two different failure contracts. Mixing them up leaves dead error handling in real code.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M10-P7/s-01.png",
+    "M10-P7/s-02.png",
+    "M10-P7/s-03.png",
+    "M10-P7/s-04.png"
+   ],
+   "pdf": "M10-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M10-Q1",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "new & delete",
+   "source": "topic_10 qa Q1",
+   "hook": "\"new T and operator new are the same thing.\"\nThis program disagrees.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Get this one right and placement new, pools and allocation counters all make sense.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"new T and operator new are the same thing.\"\nThis program disagrees.\n\nLock in your answer below, then swipe ➜ to verify.\n\nGet this one right and placement new, pools and allocation counters all make sense.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M10-Q1/s-01.png",
+    "M10-Q1/s-02.png",
+    "M10-Q1/s-03.png",
+    "M10-Q1/s-04.png"
+   ],
+   "pdf": "M10-Q1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M10-Q9",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "new & delete",
+   "source": "topic_10 qa Q9",
+   "hook": "An Order built with placement new in a stack buffer.\nFour engineers, four cleanup lines. Three of them are bugs.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Pool slots, inline storage and shared memory all use this exact pattern.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "An Order built with placement new in a stack buffer.\nFour engineers, four cleanup lines. Three of them are bugs.\n\nLock in your answer below, then swipe ➜ to verify.\n\nPool slots, inline storage and shared memory all use this exact pattern.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M10-Q9/s-01.png",
+    "M10-Q9/s-02.png",
+    "M10-Q9/s-03.png",
+    "M10-Q9/s-04.png"
+   ],
+   "pdf": "M10-Q9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M12-TH",
+   "type": "theory",
+   "topic_no": 12,
+   "topic_short": "Alignment",
+   "source": "topic_12 theory",
+   "hook": "Alignment questions look like trivia.\nThey are really about arrays, threads and wire formats.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. sizeof vs alignof\n2. Computing a layout by hand\n3. What empty classes cost\n4. Layout bugs only threads expose\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "systemsprogramming",
+    "performance",
+    "interviewprep"
+   ],
+   "post_text": "Alignment questions look like trivia.\nThey are really about arrays, threads and wire formats.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. sizeof vs alignof\n2. Computing a layout by hand\n3. What empty classes cost\n4. Layout bugs only threads expose\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #systemsprogramming #performance #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "M12-TH/s-01.png",
+    "M12-TH/s-02.png",
+    "M12-TH/s-03.png",
+    "M12-TH/s-04.png",
+    "M12-TH/s-05.png",
+    "M12-TH/s-06.png",
+    "M12-TH/s-07.png",
+    "M12-TH/s-08.png",
+    "M12-TH/s-09.png",
+    "M12-TH/s-10.png"
+   ],
+   "pdf": "M12-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M12-P1",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "Alignment",
+   "source": "topic_12 practice Q1",
+   "hook": "Same three fields. Only the order differs.\nWhat does this print on x86-64 Linux?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Four numbers. Each one tests a different layout rule.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "systemsprogramming",
+    "performance",
+    "interviewprep"
+   ],
+   "post_text": "Same three fields. Only the order differs.\nWhat does this print on x86-64 Linux?\n\nLock in your answer below, then swipe ➜ to verify.\n\nFour numbers. Each one tests a different layout rule.\n\n#cpp #cplusplus #systemsprogramming #performance #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M12-P1/s-01.png",
+    "M12-P1/s-02.png",
+    "M12-P1/s-03.png",
+    "M12-P1/s-04.png"
+   ],
+   "pdf": "M12-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M12-P2",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "Alignment",
+   "source": "topic_12 practice Q2",
+   "hook": "The author added alignas(1) to \"pack\" the struct and remove its padding.\nWhat does GCC print?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One attribute, two compilers, two different reactions.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "systemsprogramming",
+    "performance",
+    "interviewprep"
+   ],
+   "post_text": "The author added alignas(1) to \"pack\" the struct and remove its padding.\nWhat does GCC print?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne attribute, two compilers, two different reactions.\n\n#cpp #cplusplus #systemsprogramming #performance #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M12-P2/s-01.png",
+    "M12-P2/s-02.png",
+    "M12-P2/s-03.png",
+    "M12-P2/s-04.png"
+   ],
+   "pdf": "M12-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M12-Q7",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "Alignment",
+   "source": "topic_12 qa Q7",
+   "hook": "A packed struct saves 3 bytes per message.\nGCC compiles it with -Wall -Wextra: zero warnings.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Packing shows up in every wire-format codebase. So does this bug.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "systemsprogramming",
+    "performance",
+    "interviewprep"
+   ],
+   "post_text": "A packed struct saves 3 bytes per message.\nGCC compiles it with -Wall -Wextra: zero warnings.\n\nLock in your answer below, then swipe ➜ to verify.\n\nPacking shows up in every wire-format codebase. So does this bug.\n\n#cpp #cplusplus #systemsprogramming #performance #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M12-Q7/s-01.png",
+    "M12-Q7/s-02.png",
+    "M12-Q7/s-03.png",
+    "M12-Q7/s-04.png"
+   ],
+   "pdf": "M12-Q7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M12-Q9",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "Alignment",
+   "source": "topic_12 qa Q9",
+   "hook": "Two keys with identical fields.\nA one-line memcmp says they are different. Bug or not?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A one-liner that shows up in hash maps, caches and dedup code.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "systemsprogramming",
+    "performance",
+    "interviewprep"
+   ],
+   "post_text": "Two keys with identical fields.\nA one-line memcmp says they are different. Bug or not?\n\nLock in your answer below, then swipe ➜ to verify.\n\nA one-liner that shows up in hash maps, caches and dedup code.\n\n#cpp #cplusplus #systemsprogramming #performance #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M12-Q9/s-01.png",
+    "M12-Q9/s-02.png",
+    "M12-Q9/s-03.png",
+    "M12-Q9/s-04.png"
+   ],
+   "pdf": "M12-Q9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M11-TH",
+   "type": "theory",
+   "topic_no": 11,
+   "topic_short": "Memory Pools",
+   "source": "topic_11 theory",
+   "hook": "malloc's fast path takes tens of nanoseconds.\nSo why do low-latency systems still write memory pools?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+   "body": "Inside:\n1. What a pool exploits\n2. Designing a fixed-size pool\n3. The exhaustion policy\n4. std::pmr resources and their traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "lowlatency",
+    "interviewprep"
+   ],
+   "post_text": "malloc's fast path takes tens of nanoseconds.\nSo why do low-latency systems still write memory pools?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡\n\nInside:\n1. What a pool exploits\n2. Designing a fixed-size pool\n3. The exhaustion policy\n4. std::pmr resources and their traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #memorymanagement #lowlatency #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "M11-TH/s-01.png",
+    "M11-TH/s-02.png",
+    "M11-TH/s-03.png",
+    "M11-TH/s-04.png",
+    "M11-TH/s-05.png",
+    "M11-TH/s-06.png",
+    "M11-TH/s-07.png",
+    "M11-TH/s-08.png",
+    "M11-TH/s-09.png",
+    "M11-TH/s-10.png"
+   ],
+   "pdf": "M11-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M11-P3",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "Memory Pools",
+   "source": "topic_11 practice Q3",
+   "hook": "The loader builds a vector in a fast local arena and returns it by value.\nMove semantics make that safe, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "It looks like textbook modern C++. Read it the way a reviewer would.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "lowlatency",
+    "interviewprep"
+   ],
+   "post_text": "The loader builds a vector in a fast local arena and returns it by value.\nMove semantics make that safe, right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nIt looks like textbook modern C++. Read it the way a reviewer would.\n\n#cpp #cplusplus #memorymanagement #lowlatency #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M11-P3/s-01.png",
+    "M11-P3/s-02.png",
+    "M11-P3/s-03.png",
+    "M11-P3/s-04.png"
+   ],
+   "pdf": "M11-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M11-P6",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "Memory Pools",
+   "source": "topic_11 practice Q6",
+   "hook": "One arena-backed vector, passed by value twice: once copied, once moved.\nWhich call still uses the arena?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Same function, same vector, two calls. The only difference is std::move.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "lowlatency",
+    "interviewprep"
+   ],
+   "post_text": "One arena-backed vector, passed by value twice: once copied, once moved.\nWhich call still uses the arena?\n\nLock in your answer below, then swipe ➜ to verify.\n\nSame function, same vector, two calls. The only difference is std::move.\n\n#cpp #cplusplus #memorymanagement #lowlatency #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M11-P6/s-01.png",
+    "M11-P6/s-02.png",
+    "M11-P6/s-03.png",
+    "M11-P6/s-04.png"
+   ],
+   "pdf": "M11-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M11-Q9",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "Memory Pools",
+   "source": "topic_11 qa Q9",
+   "hook": "Allocate 64 bytes from an arena. Free them. Allocate 64 again.\nSurely you get the same block back?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Pick this resource for the wrong workload and memory grows without bound.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "lowlatency",
+    "interviewprep"
+   ],
+   "post_text": "Allocate 64 bytes from an arena. Free them. Allocate 64 again.\nSurely you get the same block back?\n\nLock in your answer below, then swipe ➜ to verify.\n\nPick this resource for the wrong workload and memory grows without bound.\n\n#cpp #cplusplus #memorymanagement #lowlatency #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "M11-Q9/s-01.png",
+    "M11-Q9/s-02.png",
+    "M11-Q9/s-03.png",
+    "M11-Q9/s-04.png"
+   ],
+   "pdf": "M11-Q9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "M11-Q12",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "Memory Pools",
+   "source": "topic_11 qa Q12",
+   "hook": "The vector lives in your arena. You push one 100-char string.\nHow many times does it touch the global heap?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A favourite pmr follow-up in low-latency interviews.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "memorymanagement",
+    "lowlatency",
+    "interviewprep"
+   ],
+   "post_text": "The vector lives in your arena. You push one 100-char string.\nHow many times does it touch the global heap?\n\nLock in your answer below, then swipe ➜ to verify.\n\nA favourite pmr follow-up in low-latency interviews.\n\n#cpp #cplusplus #memorymanagement #lowlatency #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "M11-Q12/s-01.png",
+    "M11-Q12/s-02.png",
+    "M11-Q12/s-03.png",
+    "M11-Q12/s-04.png"
+   ],
+   "pdf": "M11-Q12/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+One arena-backed vector, passed by value twice: once copied, once moved.
+Which call still uses the arena?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Same function, same vector, two calls. The only difference is std::move.
+
+#cpp #cplusplus #memorymanagement #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

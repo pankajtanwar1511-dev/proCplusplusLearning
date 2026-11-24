@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"Is shared_ptr thread-safe?"
+Yes and no are both wrong answers.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Three layers, three questions
+2. Safe and unsafe, case by case
+3. Why one shared handle races
+4. atomic<shared_ptr> and copy-on-write
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #smartpointers #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

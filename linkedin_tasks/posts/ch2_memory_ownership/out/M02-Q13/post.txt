@@ -1,0 +1,13 @@
+=== POST TEXT ===
+No destructor. No copy constructor. No move constructor.
+The class owns a heap buffer.
+So copying it must be broken. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The best way to follow the Rule of 5 is to write none of them.
+
+#cpp #cplusplus #raii #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

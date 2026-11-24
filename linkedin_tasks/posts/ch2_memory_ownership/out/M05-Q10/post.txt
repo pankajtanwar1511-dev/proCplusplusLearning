@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"This function gives the basic exception guarantee."
+It just threw. What do you actually know?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+"Exception safe" has four levels. Interviewers expect you to name them.
+
+#cpp #cplusplus #raii #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

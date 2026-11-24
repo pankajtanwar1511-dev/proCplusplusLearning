@@ -1,0 +1,398 @@
+[
+  {
+    "id": "M02-TH",
+    "type": "theory",
+    "topic_no": 2,
+    "topic_short": "Rule of 0/3/5",
+    "source": "topic_02 theory",
+    "text": {
+      "hook": "Rule of 3, Rule of 5, Rule of 0.\nEveryone can name them. Few can say what the compiler actually generates.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Constructor or assignment, copy or move\n2. What declaring one member does to the others\n3. A correct copy assignment, and copy-and-swap\n4. Writing the moves, and members that block them\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Rule of 0/3/5:<br>the mental model<br>+ 6 myths",
+        "lead": "Special members, what the compiler generates, and what it costs to get wrong.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Two questions pick the special member",
+        "cards": [
+          {
+            "label": "Does the destination exist?",
+            "text": "No: a **constructor**. Yes: an **assignment**. `T b = a;` is initialization: copy constructor."
+          },
+          {
+            "label": "What is the source?",
+            "text": "An lvalue: **copy**. An rvalue (`std::move(a)`, a temporary): **move**."
+          }
+        ],
+        "takeaway": "The compiler writes them memberwise. Wrong exactly when a member is a raw handle: a pointer, a file descriptor."
+      },
+      {
+        "layout": "table",
+        "kicker": "Generation rules",
+        "title": "What declaring one member does",
+        "header": [
+          "You declare",
+          "Effect on the others"
+        ],
+        "rows": [
+          [
+            "Destructor",
+            "moves **not declared**, copies still generated (deprecated)"
+          ],
+          [
+            "Copy ctor or copy assign",
+            "moves **not declared**"
+          ],
+          [
+            "Move ctor or move assign",
+            "both copies **deleted**"
+          ],
+          [
+            "`~T() = default;`",
+            "still user-declared: no implicit moves"
+          ]
+        ],
+        "takeaway": "Not declared: rvalues fall back to the copy. Deleted: the call does not compile."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Copy assignment",
+        "title": "A correct copy assignment, in order",
+        "steps": [
+          "Survive self-assignment: `a = a` must not free the source first",
+          "Allocate and copy **before** deleting (a throwing `new` leaves `*this` unchanged)",
+          "Release the old resource",
+          "Update all members, return `*this`"
+        ]
+      },
+      {
+        "layout": "cards",
+        "kicker": "Copy-and-swap",
+        "title": "Copy into a temporary, then swap",
+        "cards": [
+          {
+            "label": "How",
+            "text": "`Buffer tmp(other); swap(*this, tmp);` The destructor of `tmp` frees the **old** resource."
+          },
+          {
+            "label": "Gains",
+            "text": "Strong exception guarantee and self-assignment safety, no branch."
+          },
+          {
+            "label": "Cost",
+            "text": "Always allocates. A hand-written version can reuse capacity."
+          }
+        ]
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Rule of 5",
+        "title": "Writing the moves",
+        "items": [
+          "Steal, then reset the source: `data_(std::exchange(o.data_, nullptr))`",
+          "The moved-from destructor still runs: without the reset, double delete",
+          "Move assignment releases its old resource. It does not allocate",
+          "Guard self-move, and mark both moves `noexcept`"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Members that block generation",
+        "title": "One member changes the whole class",
+        "header": [
+          "Member",
+          "Effect on the class"
+        ],
+        "rows": [
+          [
+            "`const T`",
+            "copy and move **assignment** deleted"
+          ],
+          [
+            "`T&`",
+            "assignment deleted, no default ctor"
+          ],
+          [
+            "`std::unique_ptr`",
+            "copies deleted: move-only"
+          ],
+          [
+            "`std::mutex`",
+            "copies and moves deleted"
+          ]
+        ],
+        "takeaway": "A `const` member still allows `push_back`, but `std::sort` and `erase` fail to compile: they assign."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`T b = a;` calls the assignment operator.\"",
+            "truth": "It is initialization: the copy constructor."
+          },
+          {
+            "myth": "\"I wrote a move constructor, I still get the default copy assignment.\"",
+            "truth": "Both copy operations become deleted. `b = a;` does not compile."
+          },
+          {
+            "myth": "\"Double delete always crashes.\"",
+            "truth": "It is UB. It may seem to work, corrupt the heap, or crash much later."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Move assignment needs a temporary in case allocation throws.\"",
+            "truth": "Move assignment does not allocate. That concern belongs to copy assignment."
+          },
+          {
+            "myth": "\"The default move of a raw pointer member transfers ownership.\"",
+            "truth": "It copies the pointer and leaves the source unchanged. Only your code can null it."
+          },
+          {
+            "myth": "\"Every class with a destructor needs five hand-written bodies.\"",
+            "truth": "It needs all five **decided**: some are `= default` or `= delete`."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Wrote a destructor?<br>Decide what copy<br>and move mean.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M02-P2",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Rule of 0/3/5",
+    "source": "topic_02 practice Q2",
+    "text": {
+      "hook": "The class frees its buffer in the destructor.\nThe program only prints the size. What can go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No assignment, no move, no explicit copy anywhere in main. Look at the parameter.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Rule of 3",
+        "title": "What happens?",
+        "code": "struct Buffer {\n  int* data_; std::size_t size_;\n  explicit Buffer(std::size_t n)\n    : data_(new int[n]{}), size_(n) {}\n  ~Buffer() { delete[] data_; }\n};\nvoid print(Buffer b) {\n  std::cout << \"size \" << b.size_ << '\\n';\n}\nint main() {\n  Buffer a(4); print(a);\n}",
+        "options": [
+          "Double delete",
+          "Clean exit",
+          "Compile error",
+          "Leak only"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Double delete: undefined behaviour",
+        "verdict_sub": "glibc: \"free(): double free detected in tcache 2\", abort",
+        "bullets": [
+          "Pass by value calls the **implicit copy constructor**: `b` shares `a`'s array.",
+          "`print` returns: `~b` frees the array. End of `main`: `~a` frees it again.",
+          "ASan: \"attempting double-free\".",
+          "`-Wall -Wextra` is silent. Only `-Wdeprecated-copy-dtor` warns."
+        ],
+        "wrong": "\"Fine, `print` only reads the buffer\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Decide what a copy means",
+        "code": "// Rule of 3: deep copy\nBuffer(const Buffer& o)\n    : data_(new int[o.size_]),\n      size_(o.size_) {\n    std::copy_n(o.data_, size_, data_);\n}\nBuffer& operator=(const Buffer&) = delete;\n\n// and no copy needed here at all\nvoid print(const Buffer& b);",
+        "tip": "Rule of 0: hold a `std::vector<int>` and write none of this.",
+        "takeaway": "A user destructor without copy control is a time bomb. Every hidden copy arms it."
+      }
+    ]
+  },
+  {
+    "id": "M02-P7",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "Rule of 0/3/5",
+    "source": "topic_02 practice Q7",
+    "text": {
+      "hook": "The class has a perfectly good move constructor.\nThe vector grows twice. What does it print?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "\"Why is my vector copying?\" Cause number one, in 15 lines.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · noexcept moves",
+        "title": "GCC/libstdc++. What does it print?",
+        "code": "struct Msg {\n  Msg(int) {}\n  Msg(const Msg&) { std::cout << \"copy \"; }\n  Msg(Msg&&) { std::cout << \"move \"; }\n};\nint main() {\n  std::vector<Msg> v;\n  for (int i = 0; i < 3; ++i) {\n    v.emplace_back(i);\n    std::cout << \"| \";\n  }\n}",
+        "options": [
+          "`| move | move move |`",
+          "`| | |`",
+          "Compile error",
+          "`| copy | copy copy |`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `| copy | copy copy |`",
+        "verdict_sub": "Cause: the move constructor is not `noexcept`",
+        "bullets": [
+          "`emplace_back` builds the new element in place: nothing printed for it.",
+          "libstdc++ grows capacity 1 ➜ 2 ➜ 4: relocates one element, then two.",
+          "To keep the strong guarantee, vector uses `std::move_if_noexcept`.",
+          "Move may throw and a copy exists: it **copies**."
+        ],
+        "wrong": "\"`| move | move move |`: it has a move constructor\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "One keyword",
+        "code": "Msg(Msg&&) noexcept { std::cout << \"move \"; }\n// now prints: | move | move move |\n\nstatic_assert(\n  std::is_nothrow_move_constructible_v<Msg>);",
+        "tip": "Same symptom, other cause: a user-declared destructor removes the implicit move entirely.",
+        "takeaway": "A move constructor that is not `noexcept` is ignored by vector growth whenever copying is possible."
+      }
+    ]
+  },
+  {
+    "id": "M02-Q13",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 2,
+    "topic_short": "Rule of 0/3/5",
+    "source": "topic_02 qa Q13",
+    "text": {
+      "hook": "No destructor. No copy constructor. No move constructor.\nThe class owns a heap buffer.\nSo copying it must be broken. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The best way to follow the Rule of 5 is to write none of them.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Rule of 0",
+        "title": "No special members written. What does it print?",
+        "code": "struct Buf {          // Rule of 0\n  std::vector<int> data;\n  explicit Buf(std::size_t n) : data(n) {}\n};\nint main() {\n  Buf a(3);\n  Buf b = a;               // copy\n  b.data[0] = 7;\n  Buf c = std::move(a);    // move\n  std::cout << c.data[0] << ' ';\n  std::cout << noexcept(Buf(std::move(b)));\n}",
+        "options": [
+          "`7 0`",
+          "`0 0`",
+          "`7 1`",
+          "`0 1`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `0 1`",
+        "verdict_sub": "Deep copy and a `noexcept` move, both for free",
+        "bullets": [
+          "The implicit copy calls `vector`'s copy: separate storage, so `b.data[0] = 7` never touches `a`.",
+          "The implicit move calls `vector`'s move: O(1) buffer transfer, `noexcept`.",
+          "The implicit destructor frees the buffer. All five are correct, none written.",
+          "Add a member later: the implicit functions pick it up. Hand-written ones silently skip it."
+        ],
+        "wrong": "\"7: the implicit copy is shallow\"",
+        "cta": "Choose the member ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The design rule",
+        "title": "Pick the member type by the semantics you want",
+        "code": "std::vector<int> v;        // deep copy\nstd::unique_ptr<int[]> p;  // move-only\nstd::shared_ptr<int[]> s;  // shared",
+        "tip": "With `unique_ptr<int[]>` the class becomes move-only automatically. Need copies? Write the deep copy, default the moves.",
+        "takeaway": "Rule of 0: let members own resources. The compiler-generated members then compose correctly."
+      }
+    ]
+  },
+  {
+    "id": "M02-Q6",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 2,
+    "topic_short": "Rule of 0/3/5",
+    "source": "topic_02 qa Q6",
+    "text": {
+      "hook": "Item's move constructor is noexcept.\nThe wrapper only adds an empty destructor.\nThat cannot change anything. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "\"Why is my vector copying?\" Not the missing noexcept this time.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "raii",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Implicit moves",
+        "title": "GCC/libstdc++. What does `reserve(3)` print?",
+        "code": "struct Item {\n  Item() = default;\n  Item(const Item&) { puts(\"copy\"); }\n  Item(Item&&) noexcept { puts(\"move\"); }\n};\nstruct Logged { Item o; ~Logged() {} };\nint main() {\n  std::vector<Logged> v(2);\n  v.reserve(3);\n}",
+        "options": [
+          "`move move`",
+          "`copy copy`",
+          "Nothing",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `copy` twice",
+        "verdict_sub": "Cause: the user-declared destructor removed the implicit move",
+        "bullets": [
+          "Declare only a destructor: the copies are still generated, the moves are **not declared**.",
+          "So `Logged` has no move constructor. Rvalues bind to the copy constructor.",
+          "`reserve(3)` exceeds capacity 2: both elements are relocated by copy.",
+          "`~Logged() = default;` gives the same result: still user-declared."
+        ],
+        "wrong": "\"`move` twice: Item's move is noexcept\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Default the moves",
+        "code": "struct Logged {\n  Item o;\n  ~Logged() {}\n  Logged() = default;\n  Logged(Logged&&) = default;\n  Logged(const Logged&) = default;\n};\n// reserve(3) now prints: move move",
+        "tip": "Simplest fix: delete the empty destructor (Rule of 0). Same output.",
+        "takeaway": "\"Not declared\" is not \"deleted\": rvalues silently fall back to the copy."
+      }
+    ]
+  }
+]

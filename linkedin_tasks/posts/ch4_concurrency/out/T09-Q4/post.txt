@@ -1,12 +1,12 @@
 === POST TEXT ===
-Why is a ring buffer's capacity almost always a power of two?
+A reviewer swapped % for a bit mask to save a division.
+Tests use capacity 8. Production uses 6.
 
-The popular answer is half right.
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
-Bonus points if you know when the compiler already does the trick for you.
+Bonus on slide 2: when the compiler already does this trick for you.
 
 #cpp #cplusplus #concurrency #lockfree #lowlatency #interviewprep
 
 === FIRST COMMENT ===
-👉 Pick A, B, C or D below, then swipe right to check your answer.
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

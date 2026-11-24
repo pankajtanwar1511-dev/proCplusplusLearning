@@ -1,0 +1,12 @@
+=== POST TEXT ===
+std::max returns a const int&.
+You bind it to a const int&. Is that well-defined?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Three lines, no pointers, no heap. Still a classic dangling reference interviewers love.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

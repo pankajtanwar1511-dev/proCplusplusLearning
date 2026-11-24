@@ -1,0 +1,425 @@
+[
+  {
+    "id": "M01-TH",
+    "type": "theory",
+    "topic_no": 1,
+    "topic_short": "Object Lifetime",
+    "source": "topic_01 theory",
+    "text": {
+      "hook": "Most C++ memory bugs are lifetime bugs.\nInterviewers test whether you can say exactly when an object dies.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Storage vs lifetime vs scope\n2. When lifetime starts and ends\n3. When const& extends a temporary\n4. Construction and destruction order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Object lifetime:<br>the mental model<br>+ 6 myths",
+        "lead": "Storage, lifetime, temporaries and order: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three ideas people blur",
+        "cards": [
+          {
+            "label": "Storage duration",
+            "text": "How long the **memory** stays reserved: automatic, static, thread, dynamic."
+          },
+          {
+            "label": "Lifetime",
+            "text": "When the **object** exists: from end of initialization to the start of its destructor."
+          },
+          {
+            "label": "Scope",
+            "text": "Where a **name** can be used. A `static` local: block scope, program-long lifetime."
+          }
+        ],
+        "takeaway": "Every dangling bug is the same bug: a non-owning handle used after its object's lifetime ended."
+      },
+      {
+        "layout": "table",
+        "kicker": "Storage durations",
+        "title": "Four durations, four lifetimes",
+        "header": [
+          "Duration",
+          "Example: lives from / to"
+        ],
+        "rows": [
+          [
+            "Automatic",
+            "local `int x;`: block entry / block exit"
+          ],
+          [
+            "Static",
+            "global, `static` local: before `main` (or first pass) / after `main`"
+          ],
+          [
+            "Thread",
+            "`thread_local`: first use in the thread / thread exit"
+          ],
+          [
+            "Dynamic",
+            "`new T`: `new` / `delete`"
+          ]
+        ],
+        "takeaway": "`int* p = new int(5);`: `p` is automatic, `*p` is dynamic. When `p` dies, the `int` leaks."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Start and end",
+        "title": "When an object is alive",
+        "cards": [
+          {
+            "label": "Starts",
+            "text": "When the constructor **finishes**. If it throws, the object never existed: no destructor."
+          },
+          {
+            "label": "Ends",
+            "text": "When the destructor **starts**. A moved-from object is still alive."
+          },
+          {
+            "label": "Storage can outlive it",
+            "text": "After `optional::reset()` or `pop_back()` the bytes remain. Using them is UB."
+          }
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Temporaries",
+        "title": "Does `const&` extend the temporary?",
+        "header": [
+          "Extended?",
+          "Binding"
+        ],
+        "rows": [
+          [
+            "✅ yes",
+            "`const T& r = T{};`"
+          ],
+          [
+            "✅ yes, whole object",
+            "`const auto& r = make().member;`"
+          ],
+          [
+            "❌ dangles at `;`",
+            "`T&& r = std::move(T{});`"
+          ],
+          [
+            "❌ not a reference",
+            "`std::string_view sv = std::string{};`"
+          ]
+        ],
+        "takeaway": "Only a direct binding to the temporary (or its member) extends it. Never through a function call."
+      },
+      {
+        "layout": "table",
+        "kicker": "Order",
+        "title": "Construction and destruction order",
+        "header": [
+          "What",
+          "Rule"
+        ],
+        "rows": [
+          [
+            "Members",
+            "**declaration** order, destroyed in reverse"
+          ],
+          [
+            "Bases vs members",
+            "bases first, destroyed last"
+          ],
+          [
+            "Locals",
+            "destroyed in reverse of declaration"
+          ],
+          [
+            "Statics, one file",
+            "destroyed in reverse of completed construction"
+          ]
+        ],
+        "takeaway": "Declare a member after everything it uses: it is then destroyed first."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Function-local statics",
+        "hero": "Initialization<br>is thread-safe.<br>Use is not.",
+        "lead": "Since C++11 exactly one thread runs the initializer, others wait. Later reads and writes still need their own synchronization."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Moving from an object ends its lifetime.\"",
+            "truth": "It changes its state. Only destruction (`reset`, scope exit, `delete`) ends lifetime."
+          },
+          {
+            "myth": "\"Members are initialized in the order of the initializer list.\"",
+            "truth": "Declaration order. `-Wreorder` (in `-Wall`) warns about the mismatch."
+          },
+          {
+            "myth": "\"The memory still holds the old value, so using the object is fine.\"",
+            "truth": "Lifetime ended means UB, whatever the bytes say."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`join()` makes a pointer to the thread's local safe.\"",
+            "truth": "The local died when the thread function returned. `join()` only waits."
+          },
+          {
+            "myth": "\"`volatile` puts a variable in RAM and makes it thread-safe.\"",
+            "truth": "Neither. It only affects accesses. Use `std::atomic` for threads."
+          },
+          {
+            "myth": "\"Static objects are destroyed in declaration order.\"",
+            "truth": "In reverse order of completed construction."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Storage is memory.<br>Lifetime is when<br>the object exists in it.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M01-P2",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "Object Lifetime",
+    "source": "topic_01 practice Q2",
+    "text": {
+      "hook": "std::max returns a const int&.\nYou bind it to a const int&. Is that well-defined?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Three lines, no pointers, no heap. Still a classic dangling reference interviewers love.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Lifetime extension",
+        "title": "Is this well-defined?<br>What does it print?",
+        "code": "int main() {\n    int limit = 3;\n    const int& m = std::max(limit, 5);\n    std::cout << m << '\\n';\n}",
+        "options": [
+          "Prints 5, well-defined",
+          "Prints 3",
+          "UB: `m` dangles",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Undefined behaviour",
+        "verdict_sub": "`m` refers to a temporary `5` that died at the `;`",
+        "bullets": [
+          "`std::max` takes and **returns** `const int&`.",
+          "The literal `5` becomes a temporary bound to its parameter. `std::max` returns a reference to it.",
+          "The temporary dies at the end of the full-expression. `m` was not bound to it directly: no extension.",
+          "A plain `-O0` build printed 5. ASan: `stack-use-after-scope`."
+        ],
+        "wrong": "\"Prints 5: `const&` extends the temporary\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Copy the value, not the reference",
+        "columns": [
+          {
+            "label": "dangles",
+            "code": "const int& m =\n  std::max(limit, 5);",
+            "verdict": "reference to a dead temporary"
+          },
+          {
+            "label": "safe",
+            "code": "const int m =\n  std::max(limit, 5);",
+            "verdict": "a copy: prints 5",
+            "verdict_ok": true
+          }
+        ],
+        "tip": "GCC 11 is silent. GCC 13 warns with `-Wdangling-reference`.",
+        "takeaway": "Lifetime extension never passes through a function that returns a reference."
+      }
+    ]
+  },
+  {
+    "id": "M01-P10",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "Object Lifetime",
+    "source": "topic_01 practice Q10",
+    "text": {
+      "hook": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One of the few lifetime bugs the language itself changed in C++23.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Range-for",
+        "title": "C++20. What does it print?",
+        "code": "struct Book {\n  std::vector<int> v{100, 101, 102};\n  const std::vector<int>& get() const {\n    return v; }\n};\nBook load_book() { return {}; }\nint main() {\n  long sum = 0;\n  for (int px : load_book().get())\n    sum += px;\n  std::cout << sum << '\\n';\n}",
+        "options": [
+          "Dangling UB",
+          "Prints 303",
+          "Compile error",
+          "Prints 0"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Undefined behaviour",
+        "verdict_sub": "C++20 and earlier. C++23 (P2718) extends the temporaries: 303",
+        "bullets": [
+          "The loop starts with `auto&& __range = load_book().get();`",
+          "`__range` binds to the reference `get()` returns, not to the `Book` temporary.",
+          "So the `Book` dies at the end of that line, before the first iteration.",
+          "A plain GCC 11 run printed 354819955. ASan: `stack-use-after-scope`."
+        ],
+        "wrong": "\"Prints 303: range-for keeps the temporary alive\"",
+        "cta": "The fixes ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fixes",
+        "title": "Keep the owner alive",
+        "code": "// OK: direct member access extends\n// the whole Book temporary\nfor (int px : load_book().v)\n  sum += px;\n\n// OK: C++20 init-statement owns it\nfor (auto b = load_book(); int px : b.get())\n  sum += px;",
+        "takeaway": "Before C++23, range-for only extends what `__range` binds to directly. A getter breaks the chain."
+      }
+    ]
+  },
+  {
+    "id": "M01-Q8",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 1,
+    "topic_short": "Object Lifetime",
+    "source": "topic_01 qa Q8",
+    "text": {
+      "hook": "This passed code review.\nThe vector is alive the whole time,\nso the reference is fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "It even prints the right number in testing. That is why it survives.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Element lifetime",
+        "title": "What does it print?",
+        "code": "struct Order { std::string id; int qty; };\nint main() {\n  std::vector<Order> orders;\n  orders.push_back({\"ord1\", 100});\n  const Order& first = orders[0];\n  orders.push_back({\"ord2\", 200});\n  std::cout << first.qty << '\\n';\n}",
+        "options": [
+          "`100`",
+          "`200`",
+          "UB",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Undefined behaviour",
+        "verdict_sub": "`first` dangles: the 2nd `push_back` reallocated (libstdc++: capacity 1 ➜ 2)",
+        "bullets": [
+          "At `size() == capacity()`, `push_back` allocates a new block, moves every element and **destroys** the old ones.",
+          "`first` refers to an old element whose lifetime has ended.",
+          "GCC `-O0` printed 100: the freed bytes were not overwritten yet. ASan: `heap-use-after-free`.",
+          "`const&` extends only a temporary. `orders[0]` is an existing element."
+        ],
+        "wrong": "\"100: the vector is still alive\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Keep an index, not a reference",
+        "code": "orders.push_back({\"ord1\", 100});\nstd::size_t first = 0;   // index, not &\norders.push_back({\"ord2\", 200});\nstd::cout << orders[first].qty;  // 100",
+        "tip": "`reserve(n)` up front also works, but only when the bound is really known.",
+        "takeaway": "A reference into a `std::vector` survives only until the next reallocation. Same bug: `push_back` inside a range-for over the same vector."
+      }
+    ]
+  },
+  {
+    "id": "M01-Q12",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 1,
+    "topic_short": "Object Lifetime",
+    "source": "topic_01 qa Q12",
+    "text": {
+      "hook": "Two globals in two .cpp files. One reads the other.\nIt printed 9001 in every test.\nIs that guaranteed?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No threads, no pointers, no warnings. Then someone changes the build.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Static initialization",
+        "title": "What does `main` print?",
+        "code": "// config.cpp\nint compute() { return 9000; }\nint base_port = compute();\n\n// main.cpp\nextern int base_port;\nint order_port = base_port + 1;\nint main() {\n  std::cout << order_port << '\\n';\n}",
+        "options": [
+          "1 or 9001",
+          "Always 9001",
+          "Always 1",
+          "Link error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. 1 or 9001, by link order",
+        "verdict_sub": "g++: `main.cpp config.cpp` printed 1, `config.cpp main.cpp` printed 9001",
+        "bullets": [
+          "Dynamic initialization across files runs in an **unspecified** order.",
+          "Read too early, `base_port` is still zero-initialized: 0 + 1 = 1.",
+          "For class types (a global `std::string`) it is an object not yet alive: UB.",
+          "The `extern` declaration links fine. The problem is the run-time order."
+        ],
+        "wrong": "\"Always 9001: globals initialize in program order\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Initialize on first use",
+        "code": "// config.cpp\nint& base_port() {\n  static int p = compute();  // first use\n  return p;\n}\n// main.cpp\nint& base_port();\nint order_port = base_port() + 1;  // 9001",
+        "tip": "For constants: `constexpr` or `constinit` (C++20) need no run-time order at all.",
+        "takeaway": "Across files, dynamic static initialization has no order you can rely on. Mirror image: the destruction order fiasco at exit."
+      }
+    ]
+  }
+]

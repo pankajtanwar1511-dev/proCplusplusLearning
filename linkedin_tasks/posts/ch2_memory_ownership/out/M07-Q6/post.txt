@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"make_shared is faster" is what everyone says.
+So we counted every call to operator new.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The counter is a replaced global operator new. Nothing else is hidden.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

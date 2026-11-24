@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Lock, work, unlock. Three lines. It passed code review.
+Then one bad input made the work throw.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The exception is caught. So everything is fine afterwards. Right?
+
+#cpp #cplusplus #raii #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

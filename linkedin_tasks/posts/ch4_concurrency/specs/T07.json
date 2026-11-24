@@ -168,14 +168,14 @@
     ]
   },
   {
-    "id": "T07-P4",
+    "id": "T07-P7",
     "type": "code_puzzle",
     "topic_no": 7,
     "topic_short": "Spinlocks",
-    "source": "topic_07 practice Q4",
+    "source": "topic_07 practice Q7",
     "text": {
-      "hook": "A \"spinlock\" made from a plain bool.\nMain sleeps 100 ms, sets data = 42, then unlocks. 🤔\n\nWhat does the waiter print?\nComment your answer, then swipe ➜ to check it.",
-      "body": "Compiled with g++ -O2. Read it the way the optimizer does.",
+      "hook": "This spinlock works fine with std::lock_guard.\nSo locking two of them with std::scoped_lock works too. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No threads needed. The compiler decides this one.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -184,53 +184,53 @@
         "interviewprep"
       ]
     },
-    "first_comment": "🧠 Bonus: what does the x86 `pause` instruction do inside a spin loop? Reply with your answer 👇 I'll post the answer here tomorrow.",
-    "bonus_answer": "It is a spin-wait hint: it slows the loop, saves power, frees resources for the hyper-threaded sibling and avoids a pipeline flush when the loop exits. The thread does not sleep.",
     "slides": [
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Spinlocks",
-        "title": "g++ -O2. What does it print?",
-        "code": "bool locked = true;  // \"held\"\nint data = 0;\nvoid waiter() {\n  while (locked) {}\n  std::cout << \"data=\" << data;\n}\nint main() {\n  std::thread t(waiter);\n  std::this_thread::sleep_for(100ms);\n  data = 42; locked = false;\n  t.join();\n}",
+        "title": "`lock_guard` works.<br>What about `scoped_lock`?",
+        "code": "class SpinLock {\n  std::atomic_flag f_;\npublic:\n  void lock() { while (f_.test_and_set()) {} }\n  void unlock() { f_.clear(); }\n};\nSpinLock a, b;\n\n{ std::lock_guard g(a); }   // fine\n{ std::scoped_lock both(a, b); }",
         "options": [
-          "data=42 after 100 ms",
-          "data=0 after 100 ms",
-          "Hangs forever",
-          "Undefined behaviour"
+          "Compiles, runs fine",
+          "Deadlocks at run time",
+          "Compile error",
+          "UB: flag never cleared"
         ],
         "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. Undefined behaviour",
-        "verdict_sub": "a data race on `locked` and `data`",
+        "verdict": "C. Compile error",
+        "verdict_sub": "GCC 11: `SpinLock` has no member named `try_lock`",
         "bullets": [
-          "No atomics, so the optimizer may assume no other thread changes `locked`.",
-          "An empty loop may be assumed to terminate. **GCC 11 deletes it**: prints `data=0` at once.",
-          "Also legal: load `locked` once and spin forever.",
-          "`volatile` forces reloads but still races and orders nothing."
+          "`lock_guard` and one-lock `scoped_lock` need only `lock()` and `unlock()`.",
+          "Two locks: `scoped_lock` calls `std::lock`, which avoids deadlock by lock one, `try_lock` the rest, back off.",
+          "So it needs `try_lock()` too.",
+          "C++20: a default-built `atomic_flag` starts clear."
         ],
-        "wrong": "\"A: it waits 100 ms, then sees 42\"",
+        "wrong": "\"It works with lock_guard, so it works everywhere\"",
         "cta": "The fix ➜"
       },
       {
         "layout": "code",
         "kicker": "The fix",
-        "code": "std::atomic<bool> locked{true};\nint data = 0;\nvoid waiter() {\n  while (locked.load(\n           std::memory_order_acquire)) {}\n  std::cout << \"data=\" << data;  // 42\n}\n// main:\ndata = 42;\nlocked.store(false,\n             std::memory_order_release);",
-        "tip": "Both racy outcomes are \"correct\" compilations. Passing tests prove nothing.",
-        "takeaway": "Shared flags must be `std::atomic`. Release/acquire also publishes the data written before."
+        "title": "Add `try_lock()`",
+        "code": "bool try_lock() {\n  return !f_.test_and_set();\n}\n// now: std::scoped_lock both(a, b);\n// compiles, runs, no deadlock",
+        "tip": "`std::unique_lock` and `std::lock` need it too.",
+        "takeaway": "Give custom locks the full `lock` / `try_lock` / `unlock` interface, so every standard wrapper works."
       }
     ]
   },
   {
     "id": "T07-Q3",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 7,
     "topic_short": "Spinlocks",
     "source": "topic_07 qa Q3",
     "text": {
-      "hook": "\"Spinlocks are faster than mutexes.\"\n\nAgree or disagree? Most answers miss the condition that decides it.\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "Slide 2 has real measurements: same work, 8 threads vs 80 threads.",
+      "hook": "\"Spinlocks are faster than mutexes. No syscalls.\"\nSo the team used one: 80 threads, 20 CPUs.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Real measurements on slide 2. The condition that decides it is on slide 3.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -244,52 +244,50 @@
     "bonus_answer": "The writer bumps a sequence counter to odd, writes the data, then bumps it to even. The reader retries if the sequence was odd or changed during its read.",
     "slides": [
       {
-        "layout": "question",
-        "title": "\"Spinlocks are faster than mutexes.\" Do you agree?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Spinlocks",
+        "title": "80 threads on 20 CPUs.<br>Which lock finishes first?",
+        "code": "class TasLock {\n  std::atomic<bool> locked_{false};\npublic:\n  void lock() { while (locked_.exchange(\n      true, std::memory_order_acquire)) {} }\n  void unlock() { locked_.store(\n      false, std::memory_order_release); }\n};\n// 80 threads x 100k iterations each:\n//   std::lock_guard<L> g(lk); ++counter;\n// L = TasLock  vs  L = std::mutex",
         "options": [
-          "Yes. A spinlock never makes a syscall, so it always wins.",
-          "No. Spinning wastes CPU, so a mutex always wins.",
-          "Yes, once you switch from TAS to TTAS.",
-          "Only for tiny sections on dedicated cores, with no more threads than cores."
+          "TasLock: it never syscalls",
+          "About a tie",
+          "std::mutex, by far",
+          "TasLock, by about 2x"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. Only in a narrow case.",
-        "verdict_sub": "Spinning is a bet that the lock frees up before a sleep would pay off.",
+        "verdict": "C. std::mutex, by about 20x",
+        "verdict_sub": "Measured on a 20-CPU x86-64 Linux laptop: TAS 16 to 19 s, `std::mutex` under 1 s",
         "bullets": [
-          "Sleep/wake: syscall, context switch, cache pollution. A few µs or more.",
-          "Spinning: a whole core for the entire wait.",
-          "20 CPUs, 8 threads: TTAS ≈ 0.6 to 0.8 s, `std::mutex` ≈ 0.9 s.",
-          "20 CPUs, 80 threads: TAS ≈ 16 to 19 s, `std::mutex` under 1 s."
+          "80 threads, 20 CPUs: the lock holder gets preempted.",
+          "Waiters then spin on the CPU time the holder needs to finish.",
+          "Mutex waiters sleep, so the holder runs. Sleep/wake costs a few µs.",
+          "Each spin `exchange` is a write: the lock's cache line ping-pongs between cores."
         ],
-        "cta": "Why not A, B or C ➜"
+        "wrong": "\"Spinlocks are faster: no syscall\"",
+        "cta": "When does a spinlock win? ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: an uncontended mutex makes no syscall either. And oversubscribed, the spinlock loses by 4x to 20x.",
-          "B: with threads ≤ cores and a tiny section, TTAS beat `std::mutex` in the same benchmark.",
-          "C: TTAS at 80 threads still took 3.3 to 4 s. Preempted holders hurt every spinlock."
-        ],
-        "takeaway": "Senior answer: \"A spinlock wins when the expected wait is shorter than a context switch and the holder is guaranteed to be running.\""
+        "layout": "code",
+        "kicker": "The twist · 8 threads, TTAS lock",
+        "code": "void lock() {\n  while (true) {\n    if (!locked.exchange(true,\n          std::memory_order_acquire))\n      return;\n    while (locked.load(\n             std::memory_order_relaxed))\n      cpu_relax();\n  }\n}",
+        "tip": "8 threads: TTAS ≈ 0.6 to 0.8 s, `std::mutex` ≈ 0.9 s. At 80: TTAS 3.3 to 4 s.",
+        "takeaway": "A spinlock wins only when the wait is shorter than a context switch and the holder is guaranteed to be running."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"Spinlocks are faster than mutexes.\"\n\nAgree or disagree? Most answers miss the condition that decides it.\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "Slide 2 has real measurements: same work, 8 threads vs 80 threads."
-    }
+    ]
   },
   {
-    "id": "T07-Q5",
-    "type": "concept",
+    "id": "T07-Q7",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 7,
     "topic_short": "Spinlocks",
-    "source": "topic_07 qa Q5",
+    "source": "topic_07 qa Q7",
     "text": {
-      "hook": "32 threads spin on one line of C++:\nwhile (locked.exchange(true)) {}\n\nWhat is the hardware doing meanwhile? ⚠️\nComment A, B, C or D, then swipe ➜",
-      "body": "The fix is one extra loop. Slide 2 shows it.",
+      "hook": "The spinlock holder gets preempted mid-section.\n\"The waiters just wait a bit longer.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Two threads, one core, a TAS spinlock. Measured on Linux, slide 2.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -299,45 +297,40 @@
         "interviewprep"
       ]
     },
-    "first_comment": "🧠 Bonus: a spinlock's flag sits on the same cache line as the data it protects. What goes wrong under contention? Reply with your answer 👇 I'll post the answer here tomorrow.",
-    "bonus_answer": "Waiters hammering the lock word keep invalidating the line the holder is writing, so the critical section itself slows down. Give the lock word its own line: `alignas(64)`.",
     "slides": [
       {
-        "layout": "question",
-        "title": "32 threads spin like this. What happens in hardware?",
-        "code": "while (locked.exchange(true)) {}",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Spinlocks",
+        "title": "The holder is preempted here.<br>How long does the waiter spin?",
+        "code": "// 2 threads pinned to ONE core\n// (taskset -c 0). TAS spinlock lk.\nvoid worker() {\n  for (int i = 0; i < 20'000'000; ++i) {\n    lk.lock();\n    log.push_back(i);  // <- preempted\n    lk.unlock();\n  }\n}",
         "options": [
-          "Nothing much: waiters only read until it changes.",
-          "Each `exchange` is a write: the cache line ping-pongs and delays the unlock.",
-          "The OS sees the spinning and sleeps the waiters.",
-          "Fine if `exchange` uses `memory_order_relaxed`."
+          "A whole time slice (ms)",
+          "One context switch (µs)",
+          "Zero: OS runs the holder",
+          "Forever: a deadlock"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "B. Cache-line ping-pong",
-        "verdict_sub": "Fix: test-and-test-and-set (TTAS)",
+        "verdict": "A. A whole time slice (ms)",
+        "verdict_sub": "Linux 6.8, x86-64: each contended `lock()` spun 5 to 330 ms",
         "bullets": [
-          "Every waiter keeps demanding exclusive ownership of the line.",
-          "TTAS: one RMW to try, then spin on a **load** (shared copy, no traffic)."
+          "The OS sees a busy thread. It does not know it waits for the holder.",
+          "The holder cannot unlock until it runs, and the spinner holds its core.",
+          "More threads than cores: it cascades. Ticket locks convoy too.",
+          "User code cannot disable preemption. Kernel spinlocks do."
         ],
-        "code": "while (locked.exchange(true,\n         std::memory_order_acquire)) {\n  while (locked.load(\n           std::memory_order_relaxed))\n    cpu_relax();\n}",
-        "cta": "Why not A, C or D ➜"
+        "wrong": "\"Waiters just wait a bit longer\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: in this loop waiters **write**, not read. That is the whole problem.",
-          "C: a spinlock never sleeps. The kernel does not even know it exists.",
-          "D: relaxed is still an RMW write, and the lock stops protecting the data."
-        ],
-        "takeaway": "Senior answer: TTAS still bursts on every release. Backoff, ticket locks or MCS queue locks (one line per waiter) scale further."
+        "layout": "code",
+        "kicker": "The fix · let waiters sleep (C++20)",
+        "code": "void lock() {\n  while (locked.exchange(true,\n           std::memory_order_acquire))\n    locked.wait(true,     // sleeps\n      std::memory_order_relaxed);\n}\nvoid unlock() {\n  locked.store(false,\n               std::memory_order_release);\n  locked.notify_one();\n}",
+        "tip": "Or keep spinning, but give each spinning thread its own dedicated core.",
+        "takeaway": "A spinlock assumes the holder is running. Preemption breaks that assumption badly."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n32 threads spin on one line of C++:\nwhile (locked.exchange(true)) {}\n\nWhat is the hardware doing meanwhile? ⚠️\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The fix is one extra loop. Slide 2 shows it."
-    }
+    ]
   }
 ]

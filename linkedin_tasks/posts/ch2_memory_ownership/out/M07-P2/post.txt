@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two shared_ptrs, one Session, one raw pointer.
+Shared ownership, right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+It compiles without a single warning. That is exactly why interviewers like it.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

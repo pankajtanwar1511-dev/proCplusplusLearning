@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two objects hold shared_ptrs to each other.
+Both owners call reset(). Someone in the room says "deadlock".
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One of the wrong answers is a word every interviewer is listening for.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

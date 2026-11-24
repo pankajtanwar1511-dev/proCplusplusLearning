@@ -374,13 +374,14 @@
   },
   {
     "id": "T10-Q8",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 10,
     "topic_short": "async & thread_local",
     "source": "topic_10 qa Q8",
     "text": {
-      "hook": "One std::async per incoming market-data message.\n\nClean, modern C++. Would you ship it in a low-latency hot path?\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "Think about what each call really costs on Linux, not what the code looks like.",
+      "hook": "One std::async per market-data message.\nClean, modern C++. It passed code review.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Think about what each call really does on Linux, not what the code looks like.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -393,52 +394,50 @@
     "bonus_answer": "A guard variable. Fast path: an acquire load of the guard byte and a branch. The first use goes through __cxa_guard_acquire/release, which lock, construct once and make other callers wait.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Low latency",
-        "title": "Would you call std::async once per market-data message in a hot path?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::async",
+        "title": "Called once per message.<br>What does each call cost?",
+        "code": "// GCC / libstdc++ on Linux\n// Called for every market-data message\nvoid on_message(const Msg& m) {\n  pending.push_back(std::async(\n      std::launch::async,\n      [m] { update_book(m); }));\n}",
         "options": [
-          "No. Each call can spawn a thread, allocate a shared state and wait on OS scheduling.",
-          "Yes. The library optimizes `std::async`, so it is cheap.",
-          "Yes, with the default policy: the runtime picks the fastest option.",
-          "Yes, as long as you keep the futures so no destructor blocks."
+          "A new thread + a heap alloc",
+          "A pooled task, nanoseconds",
+          "Nothing until `get()`",
+          "Runs inline on this thread"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "A. Keep it off the hot path",
-        "verdict_sub": "Convenient is not cheap",
+        "verdict": "A. A new thread, every call",
+        "verdict_sub": "libstdc++: thread creation per `launch::async` call, tens of microseconds",
         "bullets": [
-          "libstdc++ creates a thread per `launch::async` call: tens of microseconds.",
           "Plus a heap-allocated shared state, context switches and a cold cache.",
           "No control over core affinity, priority, queue bounds or allocation.",
-          "Hot paths: a preallocated SPSC ring feeding a worker pinned to an isolated core."
+          "`launch::async` runs the task now, on its own thread. It does not wait for `get()`.",
+          "The standard gives no performance guarantees. MSVC's pool still allocates."
         ],
-        "cta": "Why not B, C or D ➜"
+        "wrong": "\"async is cheap, the library optimizes it\"",
+        "cta": "The hot-path pattern ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "B: the standard gives no performance guarantees. Mainstream Linux implementations spawn a thread per call.",
-          "C: the default lets the implementation pick async or deferred. That is not a speed choice, and a deferred task may never run.",
-          "D: keeping the futures avoids the blocking destructor, not thread creation and allocation."
-        ],
-        "takeaway": "Senior answer: \"std::async is fine for coarse, occasional work like startup or batch jobs. Never on a path measured in microseconds.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Preallocated ring + one pinned worker",
+        "code": "SpscRing<Msg, 4096> ring;  // preallocated\nvoid on_message(const Msg& m) {\n  if (!ring.try_push(m)) on_overflow(m);\n}\nvoid worker() {  // pinned, isolated core\n  for (Msg m;;)\n    if (ring.try_pop(m)) update_book(m);\n}",
+        "tip": "`std::async` is fine for coarse work: startup, batch jobs.",
+        "takeaway": "Convenient is not cheap: keep `std::async` off any path measured in microseconds."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nOne std::async per incoming market-data message.\n\nClean, modern C++. Would you ship it in a low-latency hot path?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "Think about what each call really costs on Linux, not what the code looks like."
-    }
+    ]
   },
   {
     "id": "T10-Q14",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 10,
     "topic_short": "async & thread_local",
     "source": "topic_10 qa Q14",
     "text": {
-      "hook": "Three lines of lazy initialization. Many threads call them.\n\nBroken? And does std::atomic<bool> fix it?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "hook": "Review flagged a data race on the init flag.\nThe fix: make it std::atomic<bool>. Done?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "The most common answer is only half right.",
       "hashtags": [
         "cpp",
@@ -452,43 +451,38 @@
     "bonus_answer": "Acquire on the fast-path load, release on the store after construction. The recheck under the mutex may be relaxed. With a plain T* it is a data race.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Initialization",
-        "title": "Many threads run this. Broken?",
-        "code": "if (!initialized) {\n    init();\n    initialized = true;\n}",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Initialization",
+        "title": "`initialized` is atomic now.<br>Is this safe?",
+        "code": "std::atomic<bool> initialized{false};\n\n// called by many threads\nvoid get_config() {\n  if (!initialized) {\n    init();            // loads config\n    initialized = true;\n  }\n  use_config();\n}",
         "options": [
-          "Fine: bool writes are atomic",
-          "Broken; `atomic<bool>` fixes it",
-          "Broken only if `init()` throws",
-          "`bool`: UB. `atomic`: `init()` may run twice"
+          "Yes: the flag is atomic",
+          "No: `init()` can run twice",
+          "Unsafe only if `init()` throws",
+          "No: it can deadlock"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. Atomic steps, non-atomic sequence",
-        "verdict_sub": "Use `std::call_once` or a function-local static",
+        "verdict": "B. `init()` can run twice",
+        "verdict_sub": "Atomic steps, non-atomic sequence. Test run, 8 threads, slow `init()`: \"init ran 8 times\"",
         "bullets": [
           "T1 reads false, T2 reads false, both call `init()`, both set true.",
-          "With a plain `bool` it is also a data race: undefined behaviour.",
-          "A plain `bool` also gives no release/acquire: a reader may see `true` before `init()`'s writes.",
-          "`call_once` elects one executor, blocks the rest, publishes, retries on exception."
+          "`atomic` removed the UB. The check-then-act gap is still there.",
+          "With a plain `bool` it was also a data race: undefined behaviour."
         ],
-        "cta": "Why not A, B or C ➜"
+        "wrong": "\"atomic<bool> fixes it\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: a data race is UB by the C++ rules, whatever the hardware. And two threads can still both run `init()`.",
-          "B: each load and store is atomic. The check-then-act sequence is not.",
-          "C: the race sits between the check and the set. No exception needed."
-        ],
-        "takeaway": "Senior answer: \"once-only init needs election, waiting and publication. That is exactly what `call_once` is.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Let the library elect one initializer",
+        "code": "std::once_flag once;\n\nvoid get_config() {\n  std::call_once(once, init);\n  use_config();\n}",
+        "tip": "`call_once` elects one executor, blocks the rest, publishes its writes, retries on exception. A function-local `static` works too.",
+        "takeaway": "Once-only init needs election, waiting and publication. That is exactly what `call_once` is."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nThree lines of lazy initialization. Many threads call them.\n\nBroken? And does std::atomic<bool> fix it?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The most common answer is only half right."
-    }
+    ]
   }
 ]

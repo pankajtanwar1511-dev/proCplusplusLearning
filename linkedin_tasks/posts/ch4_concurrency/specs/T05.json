@@ -359,13 +359,14 @@
   },
   {
     "id": "T05-Q6",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 5,
     "topic_short": "Atomics",
     "source": "topic_05 qa Q6",
     "text": {
-      "hook": "\"It's just a bool stop flag. The CPU writes a bool atomically.\"\n\nDoes it still need std::atomic<bool>? 🧠\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "The code is 5 lines. What the optimizer does with it surprises a lot of people.",
+      "hook": "\"It's just a bool stop flag. The CPU writes a bool atomically.\"\nThis passed code review. Then someone built with -O2.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Twelve lines. What the optimizer does with them surprises a lot of people.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -378,52 +379,51 @@
     "bonus_answer": "`memory_order_relaxed`. It is still fully atomic; release/acquire is only needed when the flag publishes other data.",
     "slides": [
       {
-        "layout": "question",
-        "title": "Does this flag need `std::atomic`?",
-        "code": "bool running = true; long work = 0;\nstd::thread t([&] { while (running) ++work; });\nstd::this_thread::sleep_for(100ms);\nrunning = false; t.join();",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Atomics",
+        "title": "GCC 11, `-O2`, x86-64.<br>What happens?",
+        "code": "bool running = true;   // plain bool\nlong work = 0;\nint main() {\n    std::thread t([] {\n        while (running) ++work;\n    });\n    std::this_thread::sleep_for(100ms);\n    running = false;\n    t.join(); std::cout << work << '\\n';\n}",
         "options": [
-          "No. A bool write is atomic on every CPU.",
-          "Yes. It is a data race (UB).",
-          "No. It stops within an iteration or two.",
-          "No, if declared `volatile bool`."
+          "Prints a count after ~100 ms",
+          "Prints `0`",
+          "Hangs forever",
+          "Compile error: needs `atomic`"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "B. Yes, it needs std::atomic",
-        "verdict_sub": "Plain concurrent read + write is a data race: undefined behaviour",
+        "verdict": "C. Hangs forever",
+        "verdict_sub": "GCC 11 `-O2` reads `running` once, then loops forever. At `-O0` it stops.",
         "bullets": [
-          "Same location, two threads, one writes, not atomic, no sync: **data race**.",
-          "GCC `-O2`: reads `running` once, then loops forever. At `-O0` it stops.",
-          "`std::atomic<bool>` forces a real load on every iteration."
+          "One thread writes, one reads, not atomic, no sync: a **data race**, UB.",
+          "So the optimizer may assume no other thread changes `running` and hoist the load.",
+          "Hardware atomicity is not C++ synchronization. The compiler reasons with the language rules.",
+          "`volatile bool` forces re-reads in practice, but it is still a data race."
         ],
-        "cta": "Why not A, C or D ➜"
+        "wrong": "\"It stops within an iteration or two\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: hardware atomicity is not C++ synchronization. The optimizer reasons with the language rules.",
-          "C: there is no such guarantee. The loop may never re-read the flag.",
-          "D: `volatile` forces re-reads in practice, but it is still a data race with no ordering."
-        ],
-        "takeaway": "Senior answer: \"any variable written by one thread and read by another needs an atomic or a lock, even a bool.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Make the flag atomic",
+        "code": "std::atomic<bool> running{true};\nlong work = 0;\nint main() {\n    std::thread t([] {\n        while (running) ++work;\n    });\n    std::this_thread::sleep_for(100ms);\n    running = false;\n    t.join(); std::cout << work;\n}",
+        "tip": "Stops after ~100 ms at `-O2`. Relaxed order is enough here.",
+        "takeaway": "Any variable written by one thread and read by another needs an atomic or a lock, even a bool."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"It's just a bool stop flag. The CPU writes a bool atomically.\"\n\nDoes it still need std::atomic<bool>? 🧠\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "The code is 5 lines. What the optimizer does with it surprises a lot of people."
-    }
+    ]
   },
   {
     "id": "T05-Q17",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 5,
     "topic_short": "Atomics",
     "source": "topic_05 qa Q17",
     "text": {
-      "hook": "One std::atomic<long> counter, shared by every thread.\nAdd more threads and it gets slower, not faster. Why? 🧠\n\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "No mutex, no lock, and it still does not scale. The reason lives below the C++ level.",
+      "hook": "One std::atomic<long> counter. No mutex, fully lock-free.\nAdd more threads and it gets slower, not faster.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No lock anywhere, and it still does not scale. The reason lives below the C++ level.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -436,41 +436,39 @@
     "bonus_answer": "A `lock cmpxchg` retry loop. x86 has no single instruction that ORs and returns the old value, so this fetch_or is not wait-free there.",
     "slides": [
       {
-        "layout": "question",
-        "title": "Many threads call `hits.fetch_add(1)` on one `std::atomic<long>`. Why does it not scale?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Atomics",
+        "title": "Lock-free, yet more threads make it slower. Why?",
+        "code": "std::atomic<long> hits{0};\nstatic_assert(\n    std::atomic<long>::is_always_lock_free);\n\nvoid worker() {   // run on 8 threads\n    for (int i = 0; i < 10'000'000; ++i)\n        hits.fetch_add(1,\n            std::memory_order_relaxed);\n}",
         "options": [
-          "`std::atomic<long>` takes a hidden lock on every `fetch_add`.",
-          "Atomics cause false sharing.",
-          "Every contended `fetch_add` enters the kernel.",
-          "Every `fetch_add` needs exclusive ownership of one cache line, which ping-pongs between cores."
+          "A hidden lock in `atomic<long>`",
+          "Each `fetch_add` enters the kernel",
+          "False sharing between threads",
+          "One cache line ping-pongs"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
         "verdict": "D. Cache-line ping-pong",
         "verdict_sub": "Contention lives at the cache-line level",
         "bullets": [
-          "Every RMW needs the line in exclusive state: other copies are invalidated.",
+          "Each RMW needs the line in exclusive state, so other cores' copies are invalidated.",
           "Operations serialize on line transfers. Throughput can drop as threads are added.",
-          "Fix: per-thread slots on separate lines, summed on read."
+          "No hidden lock, no kernel: GCC on x86-64 emits one `lock add`.",
+          "False sharing is *independent* data in one line. Here all threads share one variable."
         ],
-        "code": "struct alignas(64) Slot {\n    std::atomic<long> v{0};\n};\nSlot slots[16];  // one cache line each\nslots[tid % 16].v.fetch_add(1,\n    std::memory_order_relaxed);",
-        "cta": "Why not A, B or C ➜"
+        "wrong": "\"Lock-free means no contention\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: `atomic<long>` is lock-free on x86-64 (`lock xadd`). The cost is the cache line, not a lock.",
-          "B: false sharing is *independent* hot data in one line. Here all threads share one variable.",
-          "C: `fetch_add` is one locked instruction. It never enters the kernel."
-        ],
-        "takeaway": "Senior answer: \"scale writes by not sharing them. Pad per-thread state to separate cache lines.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Do not share the hot write",
+        "code": "struct alignas(64) Slot {\n    std::atomic<long> v{0};\n};\nSlot slots[16];  // a line each\n\nvoid add(std::size_t tid) {\n    slots[tid % 16].v.fetch_add(1,\n        std::memory_order_relaxed);\n}\n// read(): sum the 16 slots",
+        "tip": "No `alignas(64)`? Slots share lines: false sharing, just as bad.",
+        "takeaway": "Scale writes by not sharing them. Pad per-thread state to separate cache lines."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nOne std::atomic<long> counter, shared by every thread.\nAdd more threads and it gets slower, not faster. Why? 🧠\n\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "No mutex, no lock, and it still does not scale. The reason lives below the C++ level."
-    }
+    ]
   }
 ]

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+64 TiB requested with plain new, then with nothrow.
+The code even checks for nullptr. What prints?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two forms of new, two different failure contracts. Mixing them up leaves dead error handling in real code.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

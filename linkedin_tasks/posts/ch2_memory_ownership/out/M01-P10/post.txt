@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A range-for over a getter of a temporary.
+It compiles cleanly. Is it well-defined in C++20?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One of the few lifetime bugs the language itself changed in C++23.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

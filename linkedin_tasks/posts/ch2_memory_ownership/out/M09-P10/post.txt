@@ -1,0 +1,12 @@
+=== POST TEXT ===
+To avoid a shared_ptr cycle, this callback captures the button by reference.
+Problem solved?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+It avoids one bug by trading it for a worse one.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

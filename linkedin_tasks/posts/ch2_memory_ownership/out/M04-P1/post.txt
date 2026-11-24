@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Four constructor calls in the source.
+How many actually run in C++17?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Count the objects, not the parentheses.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

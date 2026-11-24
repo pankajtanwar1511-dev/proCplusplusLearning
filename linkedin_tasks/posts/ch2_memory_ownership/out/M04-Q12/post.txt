@@ -1,0 +1,13 @@
+=== POST TEXT ===
+"Always take a std::string by const&. It avoids copies."
+This constructor stores its argument.
+How many copies happen?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Three callers: an lvalue, a std::move and a temporary.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

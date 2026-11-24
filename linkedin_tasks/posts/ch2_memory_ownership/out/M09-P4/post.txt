@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The code checks expired() before it calls lock().
+Careful code, right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+In production the release comes from another thread, so this crashes once a week. Here it crashes every time.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

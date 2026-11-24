@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Allocate 64 bytes from an arena. Free them. Allocate 64 again.
+Surely you get the same block back?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Pick this resource for the wrong workload and memory grows without bound.
+
+#cpp #cplusplus #memorymanagement #lowlatency #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

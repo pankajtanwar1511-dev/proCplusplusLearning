@@ -1,0 +1,418 @@
+[
+  {
+    "id": "M09-TH",
+    "type": "theory",
+    "topic_no": 9,
+    "topic_short": "weak_ptr",
+    "source": "topic_09 theory",
+    "text": {
+      "hook": "weak_ptr has no operator->, no get(), no *.\nThat is not a missing feature. It is the whole design.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Owning vs observing\n2. The weak_ptr API contract\n3. Object vs control block lifetime\n4. Which link becomes weak, enable_shared_from_this\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "weak_ptr:<br>the mental model<br>+ 6 myths",
+        "lead": "Observing without owning, breaking cycles, and the answers that fail.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Owning vs observing",
+        "cards": [
+          {
+            "label": "shared_ptr",
+            "text": "\"I own this. While I exist, it stays alive.\""
+          },
+          {
+            "label": "weak_ptr",
+            "text": "\"I observe this. I do not keep it alive.\""
+          },
+          {
+            "label": "lock()",
+            "text": "To touch the object, become an owner for a moment: a `shared_ptr`, or empty if it is gone."
+          }
+        ],
+        "takeaway": "A `weak_ptr` keeps the **control block** alive, never the object."
+      },
+      {
+        "layout": "table",
+        "kicker": "The API contract",
+        "title": "What each call really does",
+        "header": [
+          "Call",
+          "Result"
+        ],
+        "rows": [
+          [
+            "`w.lock()`",
+            "`shared_ptr`, or empty if expired. Never throws"
+          ],
+          [
+            "`shared_ptr<T> sp(w);`",
+            "throws `std::bad_weak_ptr` if expired"
+          ],
+          [
+            "`w.use_count()`",
+            "the **strong** count, not the weak one"
+          ],
+          [
+            "`w->`, `*w`, `w.get()`",
+            "do not exist: it does not compile"
+          ]
+        ],
+        "takeaway": "No constructor from a raw pointer: a `weak_ptr` always comes from a `shared_ptr`."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Two lifetimes",
+        "title": "`p.reset()` with a `weak_ptr` watching",
+        "steps": [
+          "Strong count 1 ➜ 0: the object is destroyed **right there**",
+          "The control block survives, so `w.expired()` can say `true`",
+          "`w.lock()` returns empty. A dead object never comes back",
+          "`w` destroyed: weak count 0, control block freed"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Breaking cycles",
+        "title": "Which link becomes weak?",
+        "header": [
+          "Structure",
+          "Weak link"
+        ],
+        "rows": [
+          [
+            "Parent owns children",
+            "child ➜ parent"
+          ],
+          [
+            "Doubly linked list",
+            "`prev` (keep `next` strong)"
+          ],
+          [
+            "Object stores its own callback",
+            "the callback's capture"
+          ],
+          [
+            "Subject notifies observers",
+            "subject ➜ observers"
+          ]
+        ],
+        "takeaway": "Strong edges must form a tree. Make the wrong edge weak and the owner stops keeping its child alive."
+      },
+      {
+        "layout": "cards",
+        "kicker": "enable_shared_from_this",
+        "title": "A `shared_ptr` to yourself",
+        "cards": [
+          {
+            "label": "The problem",
+            "text": "A member function needs a `shared_ptr` to its own object, but only has `this`."
+          },
+          {
+            "label": "The bug",
+            "text": "`shared_ptr<T>(this)`: a **second** control block, so a double delete."
+          },
+          {
+            "label": "The fix",
+            "text": "Inherit publicly from `enable_shared_from_this<T>`. `shared_from_this()` shares the existing block."
+          }
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Design",
+        "title": "Pick the pointer by ownership",
+        "header": [
+          "Relationship",
+          "Use"
+        ],
+        "rows": [
+          [
+            "One clear owner",
+            "`unique_ptr`"
+          ],
+          [
+            "Several owners, last one unknown",
+            "`shared_ptr`"
+          ],
+          [
+            "Observer that must detect death",
+            "`weak_ptr`"
+          ],
+          [
+            "Observer with a guaranteed lifetime",
+            "`T*` or `T&`"
+          ]
+        ],
+        "takeaway": "`shared_ptr` everywhere is not a design: it hides who owns what and invites cycles."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`weak_ptr` keeps the object alive until the weak count is 0.\"",
+            "truth": "The object dies at strong 0. Only the control block waits."
+          },
+          {
+            "myth": "\"`lock()` gives a raw pointer to the memory.\"",
+            "truth": "It returns a `shared_ptr` (temporary co-ownership), empty if expired."
+          },
+          {
+            "myth": "\"`w.use_count()` counts the weak pointers.\"",
+            "truth": "It is the strong count of the observed object."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`w->member` works like any smart pointer.\"",
+            "truth": "`weak_ptr` has no `->`, `*` or `get()`. It does not compile."
+          },
+          {
+            "myth": "\"Make any link weak: one weak link breaks the cycle.\"",
+            "truth": "It must be the non-owning (back) link, or ownership semantics change."
+          },
+          {
+            "myth": "\"Raw pointers are always dangerous. Use `shared_ptr`.\"",
+            "truth": "Raw is right for non-owning access with a guaranteed lifetime."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Own with `shared_ptr`.<br>Observe with `weak_ptr`.<br><br>Touch it only<br>through `lock()`.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M09-P4",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "weak_ptr",
+    "source": "topic_09 practice Q4",
+    "text": {
+      "hook": "The code checks expired() before it calls lock().\nCareful code, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "In production the release comes from another thread, so this crashes once a week. Here it crashes every time.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · weak_ptr",
+        "title": "It checks `expired()` first. Safe?",
+        "code": "struct Feed { std::string name = \"md\"; };\nauto g_feed = std::make_shared<Feed>();\nvoid on_heartbeat() { g_feed.reset(); }\nvoid poll(const std::weak_ptr<Feed>& w) {\n  if (!w.expired()) {\n    on_heartbeat();   // \"another thread\"\n    auto f = w.lock();\n    std::cout << f->name << '\\n';\n  }\n}\nint main() { poll(g_feed); }",
+        "options": [
+          "Prints `md`",
+          "Null deref: UB",
+          "`lock()` throws",
+          "Use-after-free"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. **Null dereference** (UB)",
+        "verdict_sub": "Typically a segfault, nothing printed. UBSan: \"member access within null pointer\"",
+        "bullets": [
+          "`expired()` said false, then the last owner was released.",
+          "`lock()` correctly returns an **empty** `shared_ptr`. It never throws.",
+          "`f->name` dereferences null.",
+          "Each call is atomic. The check-then-act sequence is not."
+        ],
+        "wrong": "\"lock() throws bad_weak_ptr\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "`lock()` is the check",
+        "code": "void poll(const std::weak_ptr<Feed>& w) {\n  if (auto f = w.lock()) {   // owner now\n    on_heartbeat();          // cannot kill it\n    std::cout << f->name << '\\n';\n  } else {\n    std::cout << \"feed gone\\n\";\n  }\n}\n// poll twice: md, then feed gone",
+        "takeaway": "Test and own in one step. Use `expired()` only for cleanup, never as a guard for access."
+      }
+    ]
+  },
+  {
+    "id": "M09-P10",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "weak_ptr",
+    "source": "topic_09 practice Q10",
+    "text": {
+      "hook": "To avoid a shared_ptr cycle, this callback captures the button by reference.\nProblem solved?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "It avoids one bug by trading it for a worse one.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Callbacks",
+        "title": "No cycle here. Output?",
+        "code": "struct Button {\n  const char* name = \"ok\";\n  ~Button() { std::puts(\"~Button\"); }\n};\nint main() {\n  std::function<void()> cb;\n  {\n    auto btn = std::make_shared<Button>();\n    cb = [&btn] { std::puts(btn->name); };\n  }\n  cb();\n}",
+        "options": [
+          "`ok`, then `~Button`",
+          "Leak: `~Button` never runs",
+          "Compile error",
+          "`~Button`, then UB"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `~Button`, then **UB** in `cb()`",
+        "verdict_sub": "GCC 11, -O0: printed `~Button` then a stale `ok`. ASan: stack-use-after-scope",
+        "bullets": [
+          "`[&btn]` captures a reference to the **local variable**, not ownership.",
+          "At the closing brace `btn` dies, and with it the `Button`.",
+          "`cb()` reads a dead stack object and follows whatever pointer is there.",
+          "The cycle is gone, but a leak became a use-after-free."
+        ],
+        "wrong": "\"ok, then ~Button\" (it even printed ok)",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Capture a `weak_ptr` by value",
+        "code": "{\n  auto btn = std::make_shared<Button>();\n  cb = [w = std::weak_ptr(btn)] {\n    if (auto b = w.lock()) std::puts(b->name);\n    else std::puts(\"button gone\");\n  };\n  cb();   // ok\n}         // ~Button\ncb();     // button gone",
+        "takeaway": "No cycle, no dangling: the callback observes, and `lock()` tells it when the object is gone."
+      }
+    ]
+  },
+  {
+    "id": "M09-Q6",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "weak_ptr",
+    "source": "topic_09 qa Q6",
+    "text": {
+      "hook": "Two objects hold shared_ptrs to each other.\nBoth owners call reset(). Someone in the room says \"deadlock\".\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One of the wrong answers is a word every interviewer is listening for.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Reference cycles",
+        "title": "What does it print?",
+        "code": "struct B;\nstruct A { std::shared_ptr<B> b;\n  ~A() { std::cout << \"~A \"; } };\nstruct B { std::shared_ptr<A> a;\n  ~B() { std::cout << \"~B \"; } };\n\nint main() {\n  auto a = std::make_shared<A>();\n  auto b = std::make_shared<B>();\n  a->b = b;  b->a = a;\n  a.reset(); b.reset();\n  std::cout << \"end\\n\";\n}",
+        "options": [
+          "`end`",
+          "`~A ~B end`",
+          "Hangs: deadlock",
+          "Crash: double delete"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Just `end`: a silent leak",
+        "verdict_sub": "Counts never reach 0, so no destructor runs",
+        "bullets": [
+          "After `make_shared`: A = 1, B = 1.",
+          "`a->b = b`: B = 2. `b->a = a`: A = 2.",
+          "`a.reset()`: A = 1. `b.reset()`: B = 1. Nothing can reach 0.",
+          "LeakSanitizer reports it only as \"Indirect leak\"."
+        ],
+        "wrong": "\"Deadlock: each waits for the other to be destroyed\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Make the back link a `weak_ptr`",
+        "code": "struct B {\n  std::weak_ptr<A> a;  // does not own\n  ~B() { std::cout << \"~B \"; }\n};\n// a.reset(): A hits 0, ~A runs,\n// A's member b drops B to 1.\n// b.reset(): B hits 0, ~B runs.",
+        "bullets": [
+          "Nothing waits in a cycle, so it is not a deadlock. Nothing is deleted, so no double delete."
+        ],
+        "takeaway": "The destructors' side effects are lost too: sockets never closed, files never flushed."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M09-Q11",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "weak_ptr",
+    "source": "topic_09 qa Q11",
+    "text": {
+      "hook": "enable_shared_from_this, and an object on the stack.\nA common answer: \"shared_from_this() returns nullptr\".\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "C++17 changed what this line does.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · shared_from_this",
+        "title": "C++17. What does it print?",
+        "code": "struct S : std::enable_shared_from_this<S> {};\n\nint main() {\n  S local;\n  try {\n    auto p = local.shared_from_this();\n    std::cout << (p ? \"owned\" : \"null\");\n  } catch (const std::exception& e) {\n    std::cout << \"threw \" << e.what();\n  }\n}",
+        "options": [
+          "`null`",
+          "`owned`",
+          "Compile error",
+          "`threw bad_weak_ptr`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `threw bad_weak_ptr`",
+        "verdict_sub": "Guaranteed since C++17. Before C++17: undefined behaviour",
+        "bullets": [
+          "It needs an existing `shared_ptr` owner. A stack object has none.",
+          "Same failure in the constructor (no owner yet) and the destructor (count already 0).",
+          "It never creates a new control block, and it compiles fine.",
+          "`weak_from_this()` (C++17) never throws: it returns an empty `weak_ptr`."
+        ],
+        "wrong": "\"It returns nullptr if the object is not shared\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Enforce the owner with a factory",
+        "code": "class Session\n  : public std::enable_shared_from_this<Session> {\n  Session() = default;  // no stack objects\npublic:\n  static std::shared_ptr<Session> create() {\n    std::shared_ptr<Session> s(new Session);\n    s->start();  // now shared_from_this works\n    return s;\n  }\n  void start();\n};",
+        "takeaway": "Private constructor + `static create()` returning `shared_ptr`, then `start()` registers callbacks."
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

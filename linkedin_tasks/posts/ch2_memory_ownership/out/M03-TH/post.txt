@@ -1,0 +1,19 @@
+=== POST TEXT ===
+std::move does not move anything.
+Interviewers use move semantics to test value categories and moved-from state.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. lvalue, xvalue, prvalue in one picture
+2. What actually performs a move
+3. Moved-from state, type by type
+4. Pointers into a moved resource
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

@@ -1,0 +1,19 @@
+=== POST TEXT ===
+std::unique_ptr is the default owning pointer.
+Interviewers use it to test ownership, deleters and moved-from state.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. One owner plus a cleanup policy
+2. What a move really transfers
+3. get, release, reset
+4. Custom deleters and their size
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

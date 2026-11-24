@@ -1,12 +1,13 @@
 === POST TEXT ===
-notify_all() wakes three consumers. C1 grabs the mutex and holds it for 40 seconds.
+notify_all() wakes three consumers.
+C1 grabs the mutex and holds it for 40 seconds.
+Do C2 and C3 need another notify?
 
-What are C2 and C3 doing?
-Comment A, B, C or D, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
 Two kinds of waiting hide in this question. Interviewers check whether you can tell them apart.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-👉 Pick A, B, C or D below, then swipe right to check your answer.
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

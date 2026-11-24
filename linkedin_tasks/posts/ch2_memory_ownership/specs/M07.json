@@ -1,0 +1,408 @@
+[
+  {
+    "id": "M07-TH",
+    "type": "theory",
+    "topic_no": 7,
+    "topic_short": "shared_ptr",
+    "source": "topic_07 theory",
+    "text": {
+      "hook": "std::shared_ptr is two pointers and a control block.\nInterviewers use it to test what you really know about ownership.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. Handle, control block, object\n2. What copy, move and reset cost\n3. Two lifetimes: object vs control block\n4. Type-erased deleters and when not to use make_shared\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "shared_ptr:<br>the internals<br>+ 6 myths",
+        "lead": "Handle, control block, counts and deleters: what interviewers actually check.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three things, keep them apart",
+        "cards": [
+          {
+            "label": "Handle",
+            "text": "The `shared_ptr` object itself. Typically two pointers: stored pointer + control-block pointer."
+          },
+          {
+            "label": "Control block",
+            "text": "Heap bookkeeping shared by all owners: counts, deleter, allocator."
+          },
+          {
+            "label": "Managed object",
+            "text": "The `T` you care about."
+          }
+        ],
+        "takeaway": "Copying a `shared_ptr` copies the handle and adds one owner. It never copies the `T`."
+      },
+      {
+        "layout": "table",
+        "kicker": "The control block",
+        "title": "What lives inside it",
+        "header": [
+          "Field",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Strong count",
+            "reaches 0: the object is destroyed"
+          ],
+          [
+            "Weak count",
+            "reaches 0: the block itself is freed"
+          ],
+          [
+            "Deleter + allocator",
+            "type-erased behind virtual functions"
+          ],
+          [
+            "Owned pointer, or the `T` itself",
+            "`make_shared` embeds the `T` in the block"
+          ]
+        ],
+        "takeaway": "16 bytes per handle is typical on 64-bit. The standard specifies no size."
+      },
+      {
+        "layout": "table",
+        "kicker": "Counting rules",
+        "title": "What each operation costs",
+        "header": [
+          "Operation",
+          "Strong count / cost"
+        ],
+        "rows": [
+          [
+            "`auto q = p;` (copy)",
+            "+1: one atomic increment"
+          ],
+          [
+            "`auto r = std::move(p);`",
+            "unchanged, no atomic, `p` is empty"
+          ],
+          [
+            "`p.reset()` or `p` destroyed",
+            "-1: may run the destructor"
+          ],
+          [
+            "`p.get()` or `*p`",
+            "unchanged: free, but not an owner"
+          ]
+        ],
+        "takeaway": "Returning a `shared_ptr` by value does not bump the count: elision or implicit move."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Two lifetimes",
+        "title": "Object vs control block",
+        "steps": [
+          "Strong count hits 0: the deleter runs **now**, even if `weak_ptr`s exist",
+          "The control block stays, so `weak_ptr`s can report \"expired\"",
+          "With `make_shared` the object lives **inside** the block: its storage waits too",
+          "Weak count hits 0: the block (and that storage) is freed"
+        ]
+      },
+      {
+        "layout": "cards",
+        "kicker": "Deleters",
+        "title": "The deleter is not part of the type",
+        "cards": [
+          {
+            "label": "Type-erased",
+            "text": "Different deleters, same `shared_ptr<T>` type: one vector can hold them all. `unique_ptr<T, D>` cannot."
+          },
+          {
+            "label": "Remembers the real type",
+            "text": "`shared_ptr<Base> p = make_shared<Derived>();` runs `~Derived`, even with a non-virtual `~Base`."
+          },
+          {
+            "label": "Except",
+            "text": "When the constructor only sees a `Base*`. Then it deletes through `Base*`: UB."
+          }
+        ],
+        "takeaway": "Still give polymorphic bases a virtual destructor: `unique_ptr` and `delete` have no safety net."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "make_shared",
+        "title": "When not to use it",
+        "items": [
+          "You need a custom deleter: it has no deleter parameter",
+          "The constructor is private: compile error",
+          "Big object + long-lived `weak_ptr`s: memory stays allocated",
+          "Adopting an existing pointer (C API, `release()`)",
+          "Braces: `make_shared<vector<int>>(2, 5)` is `{5, 5}`"
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`shared_ptr` is always 16 bytes.\"",
+            "truth": "Typical on 64-bit implementations. Not guaranteed."
+          },
+          {
+            "myth": "\"Returning a `shared_ptr` by value makes the count 2 for a moment.\"",
+            "truth": "Elision or move: no extra owner, no atomic."
+          },
+          {
+            "myth": "\"The object is destroyed when both counts reach 0.\"",
+            "truth": "Destroyed at strong 0. Only the control block waits for the weak count."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`shared_ptr<Base>` needs a virtual destructor to destroy a `Derived`.\"",
+            "truth": "Not when built from `Derived*` or `make_shared<Derived>`. Declare one anyway."
+          },
+          {
+            "myth": "\"Moving a `shared_ptr` costs the same as copying.\"",
+            "truth": "A move touches no counter."
+          },
+          {
+            "myth": "\"Dereferencing a reset `shared_ptr` throws.\"",
+            "truth": "Dereferencing an empty `shared_ptr` is UB."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Copy: one more owner.<br>Move: free.<br><br>A raw pointer:<br>owned exactly once.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M07-P2",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "shared_ptr",
+    "source": "topic_07 practice Q2",
+    "text": {
+      "hook": "Two shared_ptrs, one Session, one raw pointer.\nShared ownership, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "It compiles without a single warning. That is exactly why interviewers like it.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Control blocks",
+        "title": "Both handles own `raw`.<br>What happens?",
+        "code": "struct Session {\n  int id;\n  ~Session() { std::cout << \"~Session\\n\"; }\n};\nint main() {\n  Session* raw = new Session{1};\n  std::shared_ptr<Session> owner(raw);\n  std::shared_ptr<Session> observer(raw);\n  std::cout << owner.use_count() << ' '\n            << observer.use_count() << '\\n';\n}",
+        "options": [
+          "`2 2`, one `~Session`",
+          "`1 1`, one `~Session`",
+          "`1 1`, then a double delete",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `1 1`, then a **double delete** (UB)",
+        "verdict_sub": "GCC 11 / glibc: `~Session` twice, then \"free(): double free detected\", abort",
+        "bullets": [
+          "Every constructor that takes a raw pointer allocates a **new** control block.",
+          "Two blocks, each with count 1, each sure it is the only owner.",
+          "`observer` destroys the Session, then `owner` destroys freed memory again.",
+          "No global table maps addresses to blocks. A `shared_ptr` cannot find the other one."
+        ],
+        "wrong": "\"`2 2`: they point to the same object\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Copy the `shared_ptr`, not the raw pointer",
+        "code": "int main() {\n  auto owner = std::make_shared<Session>(1);\n  std::shared_ptr<Session> observer = owner;\n  std::cout << owner.use_count() << ' '\n            << observer.use_count() << '\\n';\n}   // 2 2, then ~Session once",
+        "tip": "Same bug in disguise: `shared_ptr<T>(this)` and `shared_ptr<D>(static_cast<D*>(b.get()))`.",
+        "takeaway": "A raw pointer becomes owned once. Every further owner is a copy of a `shared_ptr`."
+      }
+    ]
+  },
+  {
+    "id": "M07-P11",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "shared_ptr",
+    "source": "topic_07 practice Q11",
+    "text": {
+      "hook": "fopen fails and returns nullptr.\nThe shared_ptr is empty, so the deleter never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "This one surprises people who port code from unique_ptr to shared_ptr.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Custom deleters",
+        "title": "`missing.cfg` does not exist.<br>What happens?",
+        "code": "std::shared_ptr<FILE> open_cfg(const char* p) {\n  return std::shared_ptr<FILE>(\n      std::fopen(p, \"r\"),\n      [](FILE* f) { std::fclose(f); });\n}\nint main() {\n  auto f = open_cfg(\"missing.cfg\");\n  std::cout << (f != nullptr) << ' '\n            << f.use_count() << '\\n';\n}",
+        "options": [
+          "`0 1`, then `fclose(nullptr)`",
+          "`0 0`, deleter never runs",
+          "`0 0`, then `fclose(nullptr)`",
+          "Throws `std::bad_alloc`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `0 1`, then **`fclose(nullptr)`**",
+        "verdict_sub": "UB in C. Observed (GCC 11 / glibc): SIGSEGV inside `fclose`",
+        "bullets": [
+          "`shared_ptr(p, d)` with `p == nullptr` still allocates a control block: `use_count() == 1`.",
+          "When the last owner goes away, it calls `d(nullptr)`.",
+          "`unique_ptr` never calls its deleter on null. `shared_ptr` with a deleter does.",
+          "Piped to a file, `0 1` may vanish: the crash happens before the flush."
+        ],
+        "wrong": "\"`0 0`: a null pointer has no owner\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Filter null, or make the deleter null-safe",
+        "code": "std::shared_ptr<FILE> open_cfg(const char* p) {\n  FILE* raw = std::fopen(p, \"r\");\n  if (!raw) return nullptr;  // no block\n  return std::shared_ptr<FILE>(\n      raw, [](FILE* f) { std::fclose(f); });\n}\n// now prints: 0 0",
+        "tip": "Or make the deleter null-safe: `[](FILE* f) { if (f) std::fclose(f); }`",
+        "takeaway": "Deleters passed to `shared_ptr` must handle null, or null must be filtered before wrapping."
+      }
+    ]
+  },
+  {
+    "id": "M07-Q6",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "shared_ptr",
+    "source": "topic_07 qa Q6",
+    "text": {
+      "hook": "\"make_shared is faster\" is what everyone says.\nSo we counted every call to operator new.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The counter is a replaced global operator new. Nothing else is hidden.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · make_shared",
+        "title": "What does it print?",
+        "code": "int n = 0;  // counts operator new calls\nvoid* operator new(std::size_t s) {\n  ++n; return std::malloc(s);\n}\n// matching operator delete not shown\n\nint main() {\n  auto a = std::make_shared<int>(1);\n  std::cout << n << ' ';\n  std::shared_ptr<int> b(new int(2));\n  std::cout << n << '\\n';\n}",
+        "options": [
+          "`1 3`",
+          "`1 2`",
+          "`2 4`",
+          "`2 3`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `1 3`",
+        "verdict_sub": "Measured, libstdc++ x86-64: `make_shared<int>` = one 24-byte block; `new int` form = 4 + 24 bytes",
+        "bullets": [
+          "`make_shared`: object and control block in **one** allocation.",
+          "`shared_ptr(new int)`: `new int`, then a separate control block. Two calls.",
+          "One allocator call: less time, less per-allocation overhead.",
+          "Counts next to the object: often better locality. A bonus, not the reason."
+        ],
+        "wrong": "\"`2 4`: a `shared_ptr` always needs two allocations\"",
+        "cta": "The other reason ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The other reason",
+        "title": "No naked `new`",
+        "code": "// Before C++17 this could leak:\n// new A, then g() throws, before\n// the shared_ptr owns the A.\nf(std::shared_ptr<A>(new A), g());\n\n// No naked new, nothing to leak:\nf(std::make_shared<A>(), g());",
+        "bullets": [
+          "C++17 sequences each argument fully, so that leak is gone. The idiom stays."
+        ],
+        "takeaway": "One allocation, no naked `new`. Skip it for custom deleters, private constructors, and big objects with long-lived `weak_ptr`s."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M07-Q18",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "shared_ptr",
+    "source": "topic_07 qa Q18",
+    "text": {
+      "hook": "A linked list built from shared_ptr. No raw new, no delete, no cycles.\nSmart pointers clean it up automatically. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One million nodes, one reset. Linux, default stack size.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "smartpointers",
+        "memorymanagement",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Destroying a list",
+        "title": "What happens at `head.reset()`?",
+        "code": "struct Node {\n  std::shared_ptr<Node> next;\n};\nint main() {\n  auto head = std::make_shared<Node>();\n  auto cur = head;\n  for (int i = 0; i < 1'000'000; ++i)\n    cur = cur->next = std::make_shared<Node>();\n  cur.reset();\n  head.reset();  // ?\n  std::cout << \"done\\n\";\n}",
+        "options": [
+          "Prints `done`",
+          "Crash: stack overflow",
+          "Leak: the nodes form a cycle",
+          "Prints `done`, then leaks"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Crash: stack overflow",
+        "verdict_sub": "Linux, 8 MB default stack, GCC 11: segfault at -O0 and -O2. ASan: stack-overflow",
+        "bullets": [
+          "Destroying a node destroys its `next`, which destroys the next node, and so on.",
+          "That is recursion: stack depth equals list length.",
+          "Measured: 40,000 nodes already crash at -O0. -O2 survives 80,000, not 1,000,000.",
+          "Same for `unique_ptr` lists and deep trees."
+        ],
+        "wrong": "\"Smart pointers make destruction automatic\". Automatic is recursive.",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Unlink the chain in a loop",
+        "code": "void destroy(std::shared_ptr<Node> head) {\n  while (head)\n    head = std::move(head->next);\n}\n// each old node dies with an empty next\n// destroy(std::move(head)); prints done",
+        "bullets": [
+          "If another owner still shares a middle node, the loop just drops our reference. That tail survives."
+        ],
+        "takeaway": "Recursive ownership means recursive destruction. Unlink long chains iteratively."
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

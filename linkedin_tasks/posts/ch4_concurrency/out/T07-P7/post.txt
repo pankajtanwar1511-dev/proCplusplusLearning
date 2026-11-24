@@ -1,0 +1,12 @@
+=== POST TEXT ===
+This spinlock works fine with std::lock_guard.
+So locking two of them with std::scoped_lock works too. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+No threads needed. The compiler decides this one.
+
+#cpp #cplusplus #concurrency #multithreading #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

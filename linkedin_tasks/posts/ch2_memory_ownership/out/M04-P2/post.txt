@@ -1,0 +1,12 @@
+=== POST TEXT ===
+"Add std::move to make sure it moves."
+A code review comment you have probably seen.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+What does the program print, and which line would you flag in review?
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

@@ -1,12 +1,12 @@
 === POST TEXT ===
-"Release works because it flushes the store buffer, and MESI pushes the line to the other core."
+"Release works because it flushes the store buffer."
+An interviewer said this. Sounds senior. Is it right?
 
-Sounds senior. Is it right? 🧠
-Comment A, B, C or D, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
 The best answer here is about layers, not about hardware.
 
 #cpp #cplusplus #memorymodel #concurrency #interviewprep
 
 === FIRST COMMENT ===
-👉 Pick A, B, C or D below, then swipe right to check your answer.
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

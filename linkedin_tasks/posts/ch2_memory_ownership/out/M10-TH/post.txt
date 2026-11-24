@@ -1,0 +1,19 @@
+=== POST TEXT ===
+You write new every week.
+But can you say what it does, in which order, and what happens when it fails?
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Storage is not an object
+2. The pairing rules
+3. When the constructor throws
+4. Wire buffers and what malloc really costs
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

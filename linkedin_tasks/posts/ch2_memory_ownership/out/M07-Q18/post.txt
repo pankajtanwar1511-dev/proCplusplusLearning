@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A linked list built from shared_ptr. No raw new, no delete, no cycles.
+Smart pointers clean it up automatically. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One million nodes, one reset. Linux, default stack size.
+
+#cpp #cplusplus #smartpointers #memorymanagement #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

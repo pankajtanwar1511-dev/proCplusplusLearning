@@ -1,0 +1,13 @@
+=== POST TEXT ===
+a is const. You write std::move(a).
+The class has a noexcept move constructor.
+No warning from GCC or Clang.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+That silence is exactly why it hides in real code.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

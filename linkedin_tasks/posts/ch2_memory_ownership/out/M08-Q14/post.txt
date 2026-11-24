@@ -1,0 +1,12 @@
+=== POST TEXT ===
+main creates a big object. A reader thread holds a copy.
+Which thread pays for destroying it?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+In low-latency code this decides who pays for freeing a big object.
+
+#cpp #cplusplus #smartpointers #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

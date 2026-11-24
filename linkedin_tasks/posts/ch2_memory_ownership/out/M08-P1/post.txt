@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The reference count is atomic.
+One thread copies a global shared_ptr, another replaces it.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Most engineers answer this one from the word "atomic". The program disagrees.
+
+#cpp #cplusplus #smartpointers #concurrency #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

@@ -1,0 +1,408 @@
+[
+  {
+    "id": "M03-TH",
+    "type": "theory",
+    "topic_no": 3,
+    "topic_short": "Move Semantics",
+    "source": "topic_03 theory",
+    "text": {
+      "hook": "std::move does not move anything.\nInterviewers use move semantics to test value categories and moved-from state.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. lvalue, xvalue, prvalue in one picture\n2. What actually performs a move\n3. Moved-from state, type by type\n4. Pointers into a moved resource\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Move semantics:<br>the mental model<br>+ 6 myths",
+        "lead": "Value categories, what really moves, and what a moved-from object holds.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Every expression has a value category",
+        "cards": [
+          {
+            "label": "lvalue",
+            "text": "Has identity, not movable by default: `x`, `*p`, `\"abc\"`."
+          },
+          {
+            "label": "xvalue",
+            "text": "Identity **and** movable: `std::move(x)`, a call returning `T&&`."
+          },
+          {
+            "label": "prvalue",
+            "text": "No identity, a recipe for a value: `42`, `a + b`, `T{}`."
+          }
+        ],
+        "takeaway": "Categories belong to **expressions**, not variables or types. lvalue and xvalue = glvalue; xvalue and prvalue = rvalue."
+      },
+      {
+        "layout": "table",
+        "kicker": "Categorize these",
+        "title": "The ones people get wrong",
+        "header": [
+          "Expression",
+          "Category"
+        ],
+        "rows": [
+          [
+            "`r` declared `int&& r`",
+            "lvalue: it has a name"
+          ],
+          [
+            "`\"abc\"`",
+            "lvalue: an array with static storage"
+          ],
+          [
+            "`x++`",
+            "prvalue: a new value"
+          ],
+          [
+            "`std::move(obj).member`",
+            "xvalue: member of an expiring object"
+          ]
+        ],
+        "takeaway": "Ask the compiler: `decltype((expr))` is `T&` for lvalue, `T&&` for xvalue, `T` for prvalue."
+      },
+      {
+        "layout": "chain",
+        "kicker": "The protocol",
+        "title": "What actually performs a move",
+        "steps": [
+          "An expression is marked \"may be moved from\" (an rvalue). `std::move` does only this",
+          "Overload resolution prefers a `T&&` overload for rvalues",
+          "The chosen function (move ctor, `push_back(T&&)`) transfers the resource",
+          "The source stays **alive**: valid but unspecified"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Moved-from state",
+        "title": "What is left after `T b = std::move(a);`",
+        "header": [
+          "Type of `a`",
+          "Left behind"
+        ],
+        "rows": [
+          [
+            "`int`, raw pointer",
+            "unchanged: move = copy"
+          ],
+          [
+            "`std::unique_ptr`",
+            "`nullptr`, guaranteed"
+          ],
+          [
+            "`std::vector` (move ctor)",
+            "empty, effectively guaranteed"
+          ],
+          [
+            "`std::string`",
+            "empty in practice, **not** guaranteed"
+          ]
+        ],
+        "takeaway": "Always allowed on a moved-from object: destroy it, assign to it, call `size()`, `clear()`."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Pointers into the resource",
+        "title": "Is the old pointer still valid?",
+        "cards": [
+          {
+            "label": "unique_ptr, shared_ptr",
+            "text": "Valid: the pointee never moved, only the owner changed."
+          },
+          {
+            "label": "vector, list, map",
+            "text": "Valid in every implementation, now pointing into `b` (`std::array` excluded)."
+          },
+          {
+            "label": "std::string",
+            "text": "**May be invalidated.** A short string (SSO) keeps its chars inside the object."
+          }
+        ]
+      },
+      {
+        "layout": "statement",
+        "kicker": "Argument order",
+        "hero": "Never move and read<br>the same object<br>in one call.",
+        "lead": "`f(std::move(s), s.size())`: argument order is unspecified. GCC 11 passed 30, Clang 14 passed 0. Read into a local first."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`std::move` produces a prvalue.\"",
+            "truth": "It produces an xvalue: identity kept, movable."
+          },
+          {
+            "myth": "\"lvalue and rvalue are part of the type.\"",
+            "truth": "They are properties of an expression. `std::string&&` is a type, xvalue is a category."
+          },
+          {
+            "myth": "\"After `f(std::move(s))`, `s` is empty.\"",
+            "truth": "Only if `f` actually moved from it. Binding to `T&&` moves nothing."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A moved-from object is destroyed or dangling.\"",
+            "truth": "It is alive, in a valid but unspecified state. Its destructor still runs."
+          },
+          {
+            "myth": "\"A moved-from `std::string` is guaranteed empty.\"",
+            "truth": "Valid but unspecified. Empty in practice, not by the standard."
+          },
+          {
+            "myth": "\"If the move constructor is deleted, the copy is used.\"",
+            "truth": "A deleted function still wins overload resolution: compile error."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "`std::move` casts.<br>A move constructor<br>moves.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M03-P1",
+    "type": "code_puzzle",
+    "topic_no": 3,
+    "topic_short": "Move Semantics",
+    "source": "topic_03 practice Q1",
+    "text": {
+      "hook": "wrap() takes a T&&. Inside, it calls f(x).\nf has a const T& and a T&& overload.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The rule behind this one explains half of all \"why did it copy?\" questions.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Value categories",
+        "title": "What does this print?",
+        "code": "struct T {};\nvoid f(const T&) { std::cout << \"copy\\n\"; }\nvoid f(T&&)      { std::cout << \"move\\n\"; }\n\nvoid wrap(T&& x) {\n    f(x);\n    f(std::move(x));\n}\nint main() {\n    T t;\n    wrap(std::move(t));\n    wrap(T{});\n}",
+        "options": [
+          "move move move move",
+          "copy move copy move",
+          "move move copy move",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. copy, move, copy, move",
+        "verdict_sub": "A named rvalue reference is an lvalue",
+        "bullets": [
+          "Inside `wrap`, `x` has **type** `T&&`, but the **expression** `x` is an lvalue: it has a name.",
+          "So `f(x)` picks `f(const T&)`.",
+          "`f(std::move(x))` casts back to an xvalue and picks `f(T&&)`.",
+          "xvalue or prvalue at the call site: no difference once it is bound to a name."
+        ],
+        "wrong": "\"move, move: `x` is an rvalue reference\"",
+        "cta": "Where this bites ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Where this bites",
+        "title": "The constructor that silently copies",
+        "columns": [
+          {
+            "label": "copies",
+            "code": "Order(std::string&& id)\n: id_(id)\n{}",
+            "verdict": "`id` is an lvalue"
+          },
+          {
+            "label": "moves",
+            "code": "Order(std::string&& id)\n: id_(std::move(id))\n{}",
+            "verdict": "moved on its last use",
+            "verdict_ok": true
+          }
+        ],
+        "tip": "Simpler sink: one by-value parameter `std::string id`, then `id_(std::move(id))`.",
+        "takeaway": "If it has a name, it is an lvalue. `std::move` it again on its last use."
+      }
+    ]
+  },
+  {
+    "id": "M03-P7",
+    "type": "code_puzzle",
+    "topic_no": 3,
+    "topic_short": "Move Semantics",
+    "source": "topic_03 practice Q7",
+    "text": {
+      "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.",
+      "body": "A real duplicate-message bug. The code looks like it consumes the value.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Moved-from state",
+        "title": "GCC/libstdc++. What does this print?",
+        "code": "std::optional<std::string> pending =\n    std::string(25, 'o');\nvoid send_pending() {\n  if (pending) {\n    auto msg = std::move(*pending);\n    std::cout << \"sent \" << msg.size()\n              << \" bytes\\n\";\n  }\n}\nint main() { send_pending(); send_pending(); }",
+        "options": [
+          "sent 25 once",
+          "sent 25, sent 25",
+          "sent 25, sent 0",
+          "UB: dangling"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. sent 25 bytes, then sent 0 bytes",
+        "verdict_sub": "Empty moved-from string: libstdc++ behaviour, not guaranteed",
+        "bullets": [
+          "`std::move(*pending)` moves the contained **string**, not the optional.",
+          "`pending` stays engaged: `if (pending)` is still true.",
+          "The second call sends the moved-from string: a duplicate, empty message.",
+          "No UB: the string is alive, just moved-from."
+        ],
+        "wrong": "\"sent 25 bytes once: moving empties the optional\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Consume explicitly",
+        "code": "void send_pending() {\n  if (pending) {\n    auto msg = std::move(*pending);\n    pending.reset();      // now consumed\n    std::cout << \"sent \" << msg.size()\n              << \" bytes\\n\";\n  }\n}\n// prints: sent 25 bytes (once)",
+        "tip": "Or: `auto msg = std::exchange(pending, std::nullopt);` then use `*msg`.",
+        "takeaway": "A moved-from `std::optional` is still engaged. Moved is not empty."
+      }
+    ]
+  },
+  {
+    "id": "M03-Q2",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 3,
+    "topic_short": "Move Semantics",
+    "source": "topic_03 qa Q2",
+    "text": {
+      "hook": "No assignment. No function call around it.\nJust std::move(a); on its own line.\nThe string is gone now. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The answer is the foundation of every move semantics question.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::move",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::string a = \"hello\";\n  std::move(a);\n  std::cout << \"[\" << a << \"]\\n\";\n}",
+        "options": [
+          "`[hello]`",
+          "`[]`",
+          "Compile error",
+          "Unspecified"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `[hello]`",
+        "verdict_sub": "GCC also warns \"ignoring return value\" (`[[nodiscard]]` in libstdc++)",
+        "bullets": [
+          "`std::move(x)` is a cast: `static_cast<std::remove_reference_t<T>&&>(x)`.",
+          "It produces an xvalue. No code runs, no memory changes.",
+          "The move happens in the function that receives the xvalue, e.g. a move constructor.",
+          "After the line, the expression `a` is an lvalue again."
+        ],
+        "wrong": "\"`[]`: std::move emptied the string\"",
+        "cta": "Where it moves ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "Where the move really happens",
+        "code": "std::string a = \"hello\";\nstd::string b = std::move(a);\n// the move constructor of b moved it\n// a: valid but unspecified state",
+        "tip": "If only a `const T&` overload is viable, `std::move` still ends in a copy.",
+        "takeaway": "`std::move` is permission, not action. Whether anything moves depends on the overload chosen."
+      }
+    ]
+  },
+  {
+    "id": "M03-Q4",
+    "type": "code_puzzle",
+    "converted_from": "concept",
+    "topic_no": 3,
+    "topic_short": "Move Semantics",
+    "source": "topic_03 qa Q4",
+    "text": {
+      "hook": "a is const. You write std::move(a).\nThe class has a noexcept move constructor.\nNo warning from GCC or Clang.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "That silence is exactly why it hides in real code.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "movesemantics",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · const and std::move",
+        "title": "What does it print?",
+        "code": "struct Data {\n  Data() = default;\n  Data(const Data&) { puts(\"copy\"); }\n  Data(Data&&) noexcept { puts(\"move\"); }\n};\nint main() {\n  const Data a;\n  Data b = std::move(a);\n}",
+        "options": [
+          "`move`",
+          "Compile error",
+          "`copy`",
+          "UB"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `copy`",
+        "verdict_sub": "`std::move(a)` is `const Data&&`: only `Data(const Data&)` binds",
+        "bullets": [
+          "`std::move` keeps `const`.",
+          "`Data(Data&&)` cannot bind a const rvalue: moving would modify the source.",
+          "`Data(const Data&)` accepts it, so the copy is selected.",
+          "Silent in GCC and Clang. clang-tidy `performance-move-const-arg` flags it."
+        ],
+        "wrong": "\"Compile error: cannot move from const\"",
+        "cta": "Same trap ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Same trap",
+        "title": "In a loop it copies every element",
+        "code": "for (const auto& e : v)\n  out.push_back(std::move(e)); // copy\n\nfor (auto& e : v)        // not const\n  out.push_back(std::move(e)); // move",
+        "takeaway": "Never move from something declared `const`: const rvalues copy."
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+This passed code review.
+The vector is alive the whole time,
+so the reference is fine. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+It even prints the right number in testing. That is why it survives.
+
+#cpp #cplusplus #memorymanagement #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

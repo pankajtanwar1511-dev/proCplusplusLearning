@@ -305,13 +305,14 @@
   },
   {
     "id": "T09-Q4",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 9,
     "topic_short": "Queues",
     "source": "topic_09 qa Q4",
     "text": {
-      "hook": "Why is a ring buffer's capacity almost always a power of two?\n\nThe popular answer is half right.\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "Bonus points if you know when the compiler already does the trick for you.",
+      "hook": "A reviewer swapped % for a bit mask to save a division.\nTests use capacity 8. Production uses 6.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Bonus on slide 2: when the compiler already does this trick for you.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -325,53 +326,51 @@
     "bonus_answer": "No. A 32-bit counter wraps after about 4 billion operations, minutes at market-data rates. Use 64-bit counters; with N a power of two, `tail - head` stays correct across wraparound.",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Ring buffers",
-        "title": "Why is a ring buffer's capacity usually a power of two?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Ring buffers",
+        "title": "`%` became `& mask`. Capacity 6.<br>What happens?",
+        "code": "struct Ring {\n  std::vector<int> buf;\n  std::size_t mask;\n  explicit Ring(std::size_t cap)\n    : buf(cap), mask(cap - 1) {}\n  int& slot(std::size_t i) {\n    return buf[i & mask];  // was i % cap\n  }\n};\nRing r(6);  // i = 0, 1, 2, ... 7",
         "options": [
-          "Masking is required for correctness: `%` cannot wrap an index.",
-          "So `i % N` becomes `i & (N - 1)`: one AND instead of a division.",
-          "Any N works with `& (N - 1)`; a power of two just saves memory.",
-          "The compiler can never optimize `% N`, even for a constant N."
+          "Slots collide, some never used",
+          "Same slots, just faster",
+          "Out-of-bounds access",
+          "Compile error"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "B. A mask instead of a division",
-        "verdict_sub": "`i & (N - 1) == i % N` only for unsigned `i` and N a power of two",
+        "verdict": "A. Slots collide",
+        "verdict_sub": "`i & 5` for i = 0..7 gives 0 1 0 1 4 5 4 5: slots 2 and 3 are never used",
         "bullets": [
-          "A 64-bit division costs tens of cycles on many CPUs; an AND costs one.",
+          "`i & (N - 1) == i % N` only for unsigned `i` and N a power of two.",
+          "That is why rings use power-of-two N: one AND instead of a division (tens of cycles).",
           "For a compile-time constant N, compilers already turn unsigned `% N` into a mask.",
-          "The mask matters when N is a runtime value or the index is signed.",
-          "Power-of-two N also keeps monotonic `size_t` indices correct across 2^64 wraparound."
+          "In bounds, though: `i & 5` never exceeds 5."
         ],
-        "cta": "Why not A, C or D ➜"
+        "wrong": "\"Same result, the mask is just faster\"",
+        "cta": "The fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "A: a true `%`, or `if (++i == N) i = 0;`, is also correct. The power of two buys speed and wrap safety.",
-          "C: with N = 6, `i & 5` maps 0..7 to 0,1,0,1,4,5,4,5. Slots collide, others are never used.",
-          "D: for a constant power-of-two N, unsigned `% N` already compiles to an AND."
-        ],
-        "takeaway": "Senior answer: \"power of two makes wrapping a mask, so `static_assert` it. The cost: need 1100 slots, get 2048.\""
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Only mask if N really is a power of two",
+        "code": "template <std::size_t N>\nstruct Ring {\n  static_assert(N && (N & (N - 1)) == 0,\n                \"N must be a power of two\");\n  std::array<int, N> buf;\n  int& slot(std::size_t i) {\n    return buf[i & (N - 1)];\n  }\n};",
+        "tip": "The cost: need 1100 slots, get 2048. Any N works with `if (++i == N) i = 0;`.",
+        "takeaway": "A power of two makes wrapping a mask. It also keeps monotonic `size_t` indices correct across wraparound."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nWhy is a ring buffer's capacity almost always a power of two?\n\nThe popular answer is half right.\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "Bonus points if you know when the compiler already does the trick for you."
-    }
+    ]
   },
   {
     "id": "T09-Q14",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 9,
     "topic_short": "Queues",
     "source": "topic_09 qa Q14",
     "text": {
-      "hook": "Your market-data SPSC ring is full. The feed handler has one more message.\n\nWhat do you do?\nComment A, B, C or D, then swipe ➜ for the answer.",
-      "body": "There is no free option here. Every choice loses something: the question is what, and who finds out.",
+      "hook": "The feed handler has one more update. The ring is full.\nEvery option loses something. Which loss is acceptable?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Think about who finds out, and when.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -385,52 +384,50 @@
     "bonus_answer": "Producers use head to decide which slots are free: moving past 100 could let a producer reuse its storage while its owner is still writing, and FIFO breaks. The consumer waits (head-of-line blocking).",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Backpressure",
-        "title": "The SPSC ring is full and the next incremental market-data message arrives. What do you do?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Backpressure",
+        "title": "The SPSC ring is full.<br>What should this branch do?",
+        "code": "// Feed handler thread (producer).\n// Each Msg is an incremental update:\n//   \"bid level 3: qty 500 -> 200\"\nvoid on_packet(const Msg& m) {\n  if (ring.try_push(m)) return;\n  // Ring is full. What now?\n  ???\n}",
         "options": [
-          "Overwrite the oldest slot, so the consumer sees the newest data first.",
-          "Block the feed handler until a slot frees up. Nothing is lost.",
-          "Drop it: UDP gap recovery and sequence numbers will handle it.",
-          "Never lose it silently: flag the overflow, alarm, resync from a snapshot, fix the consumer."
+          "Overwrite the oldest slot",
+          "Spin until a slot frees up",
+          "Drop it: gap recovery fixes it",
+          "Count it, flag a gap, resync"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "D. Overflow means resync",
-        "verdict_sub": "The full policy comes from the data semantics",
+        "verdict": "D. Flag the gap, then resync",
+        "verdict_sub": "For incremental data, overflow means resync, not silent loss",
         "bullets": [
-          "Incremental feed: each message updates book state. Dropping or overwriting creates a sequence gap.",
-          "Count the overflow, raise the gap, resynchronise from a snapshot.",
+          "Each message updates book state. Lose one and the book is silently wrong.",
+          "Count the overflow, alarm, resynchronise from a snapshot.",
           "Conflating per instrument is only valid if messages are full snapshots.",
-          "A ring that stays full means the consumer's sustained rate is too low: profile and fix it."
+          "A ring that stays full means the consumer is too slow: profile and fix it."
         ],
         "cta": "Why not A, B or C ➜"
       },
       {
         "layout": "wrong_options",
         "items": [
-          "A: the consumer still reads in order. You destroyed a message it had not processed, and `head` now has two writers: a race.",
+          "A: the consumer still reads in order. You destroyed an unprocessed message, and `head` now has two writers: a race.",
           "B: backpressure moves upstream. The socket buffer fills and the kernel drops UDP packets instead.",
-          "C: gap recovery handles **network** loss. Internal overflow is a capacity problem in your own pipeline."
+          "C: gap recovery handles **network** loss. This is a capacity problem in your own pipeline."
         ],
-        "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental feeds, overflow means resync, not silent loss.\""
+        "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental feeds, overflow means resync.\""
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\nYour market-data SPSC ring is full. The feed handler has one more message.\n\nWhat do you do?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "There is no free option here. Every choice loses something: the question is what, and who finds out."
-    }
+    ]
   },
   {
     "id": "T09-Q16",
-    "type": "concept",
+    "type": "code_puzzle",
+    "converted_from": "concept",
     "topic_no": 9,
     "topic_short": "Queues",
     "source": "topic_09 qa Q16",
     "text": {
-      "hook": "\"The queue keeps filling up. Just make it 10x bigger.\"\n\nWhy is that usually the wrong fix?\nComment A, B, C or D, then swipe ➜ for the answer.",
+      "hook": "\"The queue keeps filling up. Just make it 8x bigger.\"\nThe ticket got closed. Was anything fixed?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Memory is cheap. That is not what this question is about.",
       "hashtags": [
         "cpp",
@@ -445,42 +442,39 @@
     "bonus_answer": "Backlog grows at 30k/s, so about 3.33 s (not 4 s). Once full, a new message waits about 5 s (100k / 20k).",
     "slides": [
       {
-        "layout": "question",
-        "kicker": "Interview question · Capacity",
-        "title": "Why not simply make the ring buffer huge so it never fills?",
+        "layout": "puzzle",
+        "kicker": "Puzzle · Capacity",
+        "title": "The ring is now 8x bigger.<br>What did that buy?",
+        "code": "// Feed:     50,000 msgs/s, sustained\n// Consumer: 20,000 msgs/s\n// Ticket: \"Queue keeps filling up\"\n// Fix (was 1 << 14):\nSpscRing<Msg, (1 << 17)> ring;",
         "options": [
-          "Under sustained overload it only postpones overflow, and queue depth becomes latency.",
-          "No reason: the queued data stays valid, so bigger is pure upside.",
-          "It is fine, as long as you also throttle the producer.",
-          "It is fine: queue depth does not change per-message latency."
+          "It never fills now",
+          "Overflow later, plus stale data",
+          "Lower latency per message",
+          "Nothing: it fills just as fast"
         ],
-        "cta": "Pick one, then swipe ➜"
+        "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "A. Bigger only delays the failure",
-        "verdict_sub": "and turns overload into latency",
+        "verdict": "B. Overflow later, plus stale data",
+        "verdict_sub": "Backlog grows at 30k/s: full after ~4.4 s instead of ~0.5 s",
         "bullets": [
-          "If sustained arrival > service, any finite queue fills. Size only changes **when**.",
-          "Depth is delay (Little's law): 90k queued at 20k/s means acting on prices 4.5 s old.",
+          "Arrival > service: any finite queue fills. Size only changes **when**.",
+          "Depth is delay: 131k queued at 20k/s means acting on prices ~6.6 s old.",
           "Valid but stale: correct records of the past, useless for a decision now.",
-          "A huge ring also hurts locality and hides overload from monitoring."
+          "A huge ring also hurts cache locality and hides overload from monitoring."
         ],
-        "cta": "Why not B, C or D ➜"
+        "wrong": "\"The data is all valid, so bigger is pure upside\"",
+        "cta": "The real fix ➜"
       },
       {
-        "layout": "wrong_options",
-        "items": [
-          "B: \"valid\" is not \"useful\". Seconds-old prices are correct and still worthless.",
-          "C: you cannot throttle an exchange feed. Consumer capacity must be ≥ the arrival rate.",
-          "D: a new message waits ≈ depth / service rate. Depth **is** latency."
-        ],
-        "takeaway": "Senior answer: \"size for legitimate bursts, export depth and high-water mark, alarm on them, and watch p99/p99.9.\""
+        "layout": "code",
+        "kicker": "The real fix",
+        "title": "Size for bursts, export the depth",
+        "code": "SpscRing<Msg, (1 << 14)> ring; // bursts\n\n// consumer loop:\nstd::size_t d = ring.size();\ndepth_gauge.set(d);\nhigh_water = std::max(high_water, d);\n// queueing delay ≈ depth / service rate\nif (d > kAlarmDepth) raise_alarm();",
+        "tip": "You cannot throttle an exchange feed. Consumer capacity must be ≥ the arrival rate.",
+        "takeaway": "Capacity absorbs bursts. It never fixes a rate mismatch, and depth is latency."
       }
-    ],
-    "video_text": {
-      "hook": "⏱ 30-second C++ challenge.\n\"The queue keeps filling up. Just make it 10x bigger.\"\n\nWhy is that usually the wrong fix?\nComment A, B, C or D. The answer appears at 0:36.",
-      "body": "Memory is cheap. That is not what this question is about."
-    }
+    ]
   }
 ]

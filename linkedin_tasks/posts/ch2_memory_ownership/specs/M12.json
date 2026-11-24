@@ -1,0 +1,377 @@
+[
+  {
+    "id": "M12-TH",
+    "type": "theory",
+    "topic_no": 12,
+    "topic_short": "Alignment",
+    "source": "topic_12 theory",
+    "text": {
+      "hook": "Alignment questions look like trivia.\nThey are really about arrays, threads and wire formats.\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. sizeof vs alignof\n2. Computing a layout by hand\n3. What empty classes cost\n4. Layout bugs only threads expose\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "systemsprogramming",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Alignment & padding:<br>the mental model<br>+ 6 myths",
+        "lead": "Size vs alignment, how a layout is computed, and the layout bugs interviewers ask about.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Every type has two numbers",
+        "cards": [
+          {
+            "label": "Size",
+            "text": "`sizeof(T)`: bytes the object occupies, padding included. Also the array stride."
+          },
+          {
+            "label": "Alignment",
+            "text": "`alignof(T)`: every `T` address is a multiple of it. Always a power of two."
+          }
+        ],
+        "takeaway": "`sizeof` is always a multiple of `alignof`, but not equal: `struct { double d; char c; }` is size 16, alignment 8."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Computing a layout",
+        "title": "What the ABI does, member by member",
+        "steps": [
+          "Start at offset 0.",
+          "For each member in declaration order: round the offset up to its alignment, place it, advance by its size.",
+          "Struct alignment = the largest member alignment.",
+          "Round the end up to that alignment: that is `sizeof` (tail padding)."
+        ]
+      },
+      {
+        "layout": "statement",
+        "kicker": "Why tail padding exists",
+        "hero": "`sizeof` is<br>the array stride.",
+        "lead": "`struct A { char c; int i; char d; }`: at 9 bytes, `arr[1].i` would sit at offset 13. Rounding up to 12 keeps every element aligned."
+      },
+      {
+        "layout": "table",
+        "kicker": "Empty classes (x86-64 GCC)",
+        "title": "What an empty `E` really costs",
+        "header": [
+          "Struct body",
+          "sizeof"
+        ],
+        "rows": [
+          [
+            "member: `E e; int x;`",
+            "8: one byte + padding"
+          ],
+          [
+            "base: `: E { int x; }`",
+            "4: empty base optimization"
+          ],
+          [
+            "`[[no_unique_address]] E e; int x;`",
+            "4 (C++20)"
+          ],
+          [
+            "`: E { E e; int x; }`",
+            "8: two `E`s need two addresses"
+          ]
+        ],
+        "takeaway": "This is why `std::unique_ptr<T>` with a stateless deleter is 8 bytes. MSVC needs `[[msvc::no_unique_address]]`."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Layout and threads",
+        "title": "Two layout bugs only threads expose",
+        "cards": [
+          {
+            "label": "False sharing",
+            "text": "Two threads write different variables on one 64-byte line: it bounces between cores. Fix: `alignas(64)` each hot variable."
+          },
+          {
+            "label": "Bit-fields",
+            "text": "Adjacent bit-fields are **one** memory location. Two threads writing different fields: a data race (TSan reports it)."
+          }
+        ],
+        "takeaway": "Cache-line padding wastes memory: use it for a few hot, contended objects, not for millions of small ones."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Shared memory, files, wire",
+        "title": "Lock the layout at compile time",
+        "items": [
+          "Fixed-width types: `long` is 4 bytes on Windows, 8 on Linux",
+          "Find holes with `-Wpadded` or `pahole`"
+        ],
+        "code": "static_assert(sizeof(Header) == 16);\nstatic_assert(alignof(Header) == 8);\nstatic_assert(offsetof(Header, seq) == 8);\nstatic_assert(\n  std::is_trivially_copyable_v<Header>);",
+        "takeaway": "A later edit that changes the layout now fails the build instead of corrupting data."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"An address must be divisible by `sizeof(T)`.\"",
+            "truth": "By `alignof(T)`. A 12-byte struct with alignment 4 can start at address 100."
+          },
+          {
+            "myth": "\"`sizeof(struct)` is a multiple of its largest member's size.\"",
+            "truth": "It is a multiple of the struct's **alignment**."
+          },
+          {
+            "myth": "\"The compiler reorders members to minimise padding.\"",
+            "truth": "C++ compilers never reorder data members. Ordering them is your job."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Padding exists to keep a struct in one cache line.\"",
+            "truth": "Padding satisfies alignment. Cache-line placement is a separate, explicit choice: `alignas(64)`."
+          },
+          {
+            "myth": "\"Misaligned access is fine on x86.\"",
+            "truth": "It is UB in C++, slower across cache lines, non-atomic for atomics, and faults on other CPUs."
+          },
+          {
+            "myth": "\"Struct of arrays is always faster than array of structs.\"",
+            "truth": "It depends on which fields the hot loop touches. Choose by access pattern."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Offsets: multiples of<br>each member's alignment.<br><br>`sizeof`: rounded up to<br>the struct's alignment.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M12-P1",
+    "type": "code_puzzle",
+    "topic_no": 12,
+    "topic_short": "Alignment",
+    "source": "topic_12 practice Q1",
+    "text": {
+      "hook": "Same three fields. Only the order differs.\nWhat does this print on x86-64 Linux?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Four numbers. Each one tests a different layout rule.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "systemsprogramming",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Padding",
+        "title": "What prints? (x86-64 Linux, GCC)",
+        "code": "struct Trade {\n  char side; double px; char flag;\n};\nstruct Trade2 {\n  double px; char side; char flag;\n};\nint main() {\n  Trade t[3];\n  std::cout << sizeof(Trade) << ' '\n            << sizeof(Trade2) << ' '\n            << sizeof(t) << ' ' << alignof(Trade);\n}",
+        "options": [
+          "`10 10 30 1`",
+          "`24 16 72 8`",
+          "`24 24 72 8`",
+          "`16 16 48 8`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `24 16 72 8`",
+        "verdict_sub": "x86-64 Linux: `double` has size 8 and alignment 8",
+        "bullets": [
+          "`Trade`: `side`@0, 7 padding, `px`@8, `flag`@16, 7 tail padding = 24.",
+          "`Trade2`: `px`@0, `side`@8, `flag`@9, 6 tail padding = 16.",
+          "Arrays add no extra padding: 3 × 24 = 72.",
+          "Struct alignment = the strictest member's: `double`, 8."
+        ],
+        "wrong": "\"16 16 48 8\" (the compiler never reorders members)",
+        "cta": "The rule ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "Order members by decreasing alignment",
+        "code": "struct Trade {      // 24 bytes\n  char   side;      // @0, pad 1-7\n  double px;        // @8\n  char   flag;      // @16, pad 17-23\n};\nstruct Trade2 {     // 16 bytes\n  double px;        // @0\n  char   side;      // @8\n  char   flag;      // @9, pad 10-15\n};",
+        "takeaway": "One third less memory and more objects per cache line. Unless hot/cold grouping or ABI stability says otherwise."
+      }
+    ]
+  },
+  {
+    "id": "M12-P2",
+    "type": "code_puzzle",
+    "topic_no": 12,
+    "topic_short": "Alignment",
+    "source": "topic_12 practice Q2",
+    "text": {
+      "hook": "The author added alignas(1) to \"pack\" the struct and remove its padding.\nWhat does GCC print?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One attribute, two compilers, two different reactions.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "systemsprogramming",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · alignas",
+        "title": "What does GCC print? (x86-64)",
+        "code": "struct alignas(1) Msg {\n    char tag;\n    int value;\n};\n\nint main() {\n    std::cout << alignof(Msg) << ' '\n              << sizeof(Msg) << '\\n';\n}",
+        "options": [
+          "`1 5`",
+          "`1 8`",
+          "`4 5`",
+          "`4 8`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. `4 8`: the request is ignored",
+        "verdict_sub": "GCC 11 and 13 compile it silently. Clang rejects it. The program is ill-formed.",
+        "bullets": [
+          "`alignas` can only make alignment **stricter**.",
+          "Asking for less than the natural alignment (4, from `int`) is ill-formed.",
+          "Clang: \"requested alignment is less than minimum alignment of 4\".",
+          "So `value` stays at offset 4, and the size stays 8."
+        ],
+        "wrong": "\"1 5\" (alignas(1) packs the struct)",
+        "cta": "What really packs ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Packing is a different tool",
+        "title": "`#pragma pack` really removes padding",
+        "code": "#pragma pack(push, 1)\nstruct Msg {\n    char tag;\n    int value;     // offset 1\n};\n#pragma pack(pop)\n// alignof(Msg) == 1, sizeof(Msg) == 5",
+        "tip": "The price: `value` is misaligned. Slower, non-atomic, and `&m.value` is a dangerous `int*`.",
+        "takeaway": "`alignas` raises alignment. It never packs."
+      }
+    ]
+  },
+  {
+    "id": "M12-Q7",
+    "type": "code_puzzle",
+    "topic_no": 12,
+    "topic_short": "Alignment",
+    "source": "topic_12 qa Q7",
+    "text": {
+      "hook": "A packed struct saves 3 bytes per message.\nGCC compiles it with -Wall -Wextra: zero warnings.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Packing shows up in every wire-format codebase. So does this bug.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "systemsprogramming",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Alignment (x86-64 GCC)",
+        "title": "Which line is the bug?",
+        "code": "#pragma pack(push, 1)\nstruct P { char c; int i; };\n#pragma pack(pop)\n\nP p{};\nstatic_assert(sizeof(P) == 5);  // 1\nint v = p.i;                    // 2\nint* q = &p.i;\n*q = 42;                        // 3",
+        "options": [
+          "Line 1",
+          "Line 2",
+          "Line 3",
+          "None: all fine"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Line 3: `*q = 42`",
+        "verdict_sub": "Packed: size 5, alignment 1, `i` at offset 1",
+        "bullets": [
+          "`p.i`: the compiler knows `i` is packed and emits unaligned-safe code.",
+          "`q` claims to be an ordinary, aligned `int*`. Using it on a misaligned `i` is UB.",
+          "GCC 11 is silent here. UBSan at run time: \"store to misaligned address\".",
+          "Misaligned members also break atomics and SIMD, and fault on strict-alignment CPUs."
+        ],
+        "wrong": "\"Packing is a free memory saving\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Pack only at the I/O boundary",
+        "code": "struct Msg { int i; char c; };  // natural\n\nMsg parse(const std::byte* wire) {\n  Msg m{};\n  m.c = static_cast<char>(wire[0]);\n  std::memcpy(&m.i, wire + 1, sizeof m.i);\n  return m;\n}",
+        "bullets": [
+          "Reorder members first; pack only when an external byte format forces it."
+        ],
+        "takeaway": "Keep packing at the I/O boundary. Even there, `memcpy` into a naturally aligned struct is usually cleaner."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M12-Q9",
+    "type": "code_puzzle",
+    "topic_no": 12,
+    "topic_short": "Alignment",
+    "source": "topic_12 qa Q9",
+    "text": {
+      "hook": "Two keys with identical fields.\nA one-line memcmp says they are different. Bug or not?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "A one-liner that shows up in hash maps, caches and dedup code.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "systemsprogramming",
+        "performance",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Padding",
+        "title": "Is `same()` a correct equality check?",
+        "code": "struct Key { char a; int b; char c; };\n\nbool same(const Key& x, const Key& y) {\n  return !std::memcmp(&x, &y, sizeof x);\n}\n\nKey x{1, 2, 3};\nKey y = make_key(1, 2, 3);\nsame(x, y);  // ?",
+        "options": [
+          "Yes: equal members, equal bytes",
+          "Yes, if both use `{}` init",
+          "No: padding may differ",
+          "No: `memcmp` can't read structs"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. No: padding breaks it",
+        "verdict_sub": "`Key` is 12 bytes, but only 6 of them are data (x86-64)",
+        "bullets": [
+          "Padding bytes have unspecified values: equal keys can compare different.",
+          "Aggregate `{}` init does not promise zeroed padding; copies need not keep it.",
+          "`memcmp` on a trivially copyable object is fine. The bytes are the problem.",
+          "`std::has_unique_object_representations_v<Key>` is `false`."
+        ],
+        "wrong": "\"memcmp is just a fast `==`\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Compare members, not bytes",
+        "code": "struct Key {\n  char a; int b; char c;\n  bool operator==(const Key&) const\n      = default;  // C++20, member-wise\n};\n\n// hash the members too, not the bytes",
+        "bullets": [
+          "Byte-wise hashing has the same bug: equal keys, different buckets.",
+          "Guard any raw-byte hash: `static_assert(std::has_unique_object_representations_v<K>)`."
+        ],
+        "takeaway": "Writing a padded struct to a socket or file also leaks stale bytes."
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

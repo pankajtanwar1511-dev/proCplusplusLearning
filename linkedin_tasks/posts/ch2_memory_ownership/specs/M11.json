@@ -1,0 +1,393 @@
+[
+  {
+    "id": "M11-TH",
+    "type": "theory",
+    "topic_no": 11,
+    "topic_short": "Memory Pools",
+    "source": "topic_11 theory",
+    "text": {
+      "hook": "malloc's fast path takes tens of nanoseconds.\nSo why do low-latency systems still write memory pools?\n\nHere is the mental model, plus 6 myths that fail interviews. Save it. 💡",
+      "body": "Inside:\n1. What a pool exploits\n2. Designing a fixed-size pool\n3. The exhaustion policy\n4. std::pmr resources and their traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Memory pools<br>& std::pmr:<br>the mental model<br>+ 6 myths",
+        "lead": "Why pools exist, how to design one, and the pmr rules that surprise people.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "A pool exploits what you know",
+        "cards": [
+          {
+            "label": "Fixed size",
+            "text": "One type (orders, messages): a fixed-size pool with a free list."
+          },
+          {
+            "label": "Grouped lifetime",
+            "text": "Everything for one request dies together: an arena, freed in one step."
+          },
+          {
+            "label": "Known thread",
+            "text": "One thread allocates and frees: no synchronization at all."
+          }
+        ],
+        "takeaway": "The win is **predictability** (tail latency), not a faster average. Measure both."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Fixed-size object pool",
+        "title": "Storage once, objects many times",
+        "steps": [
+          "Startup: one raw, aligned block for N slots. Not `new T[N]`: that runs N constructors.",
+          "Free slots form an intrusive list: each stores the next pointer in its own bytes.",
+          "Acquire: pop the head, placement new. Constructor throws? Push the slot back.",
+          "Release: `~T()`, push the slot. Never `delete p`. Hand out `unique_ptr<T, PoolDeleter>`."
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Sizing",
+        "title": "All slots in use. Now what?",
+        "header": [
+          "Policy",
+          "Fits when"
+        ],
+        "rows": [
+          [
+            "Fail fast, return an error",
+            "Order entry: reject and alert"
+          ],
+          [
+            "Drop and count",
+            "Data you can recover by snapshot"
+          ],
+          [
+            "Block until a release",
+            "Back-pressure is safe"
+          ],
+          [
+            "Fall back to the heap",
+            "Only if it shows in metrics"
+          ]
+        ],
+        "takeaway": "Size from measured peak + headroom, export the high-water mark, pre-fault the pages at startup."
+      },
+      {
+        "layout": "table",
+        "kicker": "std::pmr (C++17)",
+        "title": "The standard memory resources",
+        "header": [
+          "Resource",
+          "Strategy"
+        ],
+        "rows": [
+          [
+            "`monotonic_buffer_resource`",
+            "bump pointer, free all at `release()`"
+          ],
+          [
+            "`unsynchronized_pool_resource`",
+            "size-class pools, one thread"
+          ],
+          [
+            "`synchronized_pool_resource`",
+            "the same, thread-safe"
+          ],
+          [
+            "`null_memory_resource()`",
+            "every allocation throws `bad_alloc`"
+          ]
+        ],
+        "takeaway": "Resources chain through an upstream. `null_memory_resource()` as upstream turns a buffer into a hard bound."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Pools and threads",
+        "hero": "One shared free list<br>is one hot<br>cache line.",
+        "lead": "Usual answer: per-thread pools. A cross-thread free goes back through a queue or a remote-free list."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "std::pmr traps",
+        "title": "Where pmr surprises people",
+        "items": [
+          "The resource must outlive its containers: declare it first",
+          "Move-assign across different resources: element-wise, O(n), allocates",
+          "`swap` across different resources: undefined behaviour",
+          "`monotonic` and `unsynchronized_pool` resources: one thread only"
+        ],
+        "takeaway": "Decide the resource at construction and pass it explicitly. Assignment never moves data into an arena."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A pool makes allocation faster.\"",
+            "truth": "Its main value is bounded, predictable cost. Measure average and tail separately."
+          },
+          {
+            "myth": "\"`new T[N]` is a good way to create the pool's storage.\"",
+            "truth": "It runs N constructors. A pool needs raw aligned storage and constructs on acquire."
+          },
+          {
+            "myth": "\"Releasing a pooled object means `delete p`.\"",
+            "truth": "Run the destructor and return the slot. The storage belongs to the pool."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A monotonic resource over a 4096-byte buffer never touches the heap.\"",
+            "truth": "When the buffer runs out it asks its upstream: the heap, unless that is `null_memory_resource()`."
+          },
+          {
+            "myth": "\"`std::pmr::pool_resource` is the pool allocator.\"",
+            "truth": "It does not exist. Use `unsynchronized_pool_resource` or `synchronized_pool_resource`."
+          },
+          {
+            "myth": "\"A pool freeing a block returns memory to the OS.\"",
+            "truth": "The block goes back to the pool. Chunks return only on `release()` or destruction."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Pools trade generality<br>for predictability.<br><br>pmr: choose the resource<br>at construction.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "M11-P3",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "Memory Pools",
+    "source": "topic_11 practice Q3",
+    "text": {
+      "hook": "The loader builds a vector in a fast local arena and returns it by value.\nMove semantics make that safe, right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "It looks like textbook modern C++. Read it the way a reviewer would.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · pmr lifetime",
+        "title": "What does `main` print?",
+        "code": "std::pmr::vector<int> load() {\n  std::pmr::monotonic_buffer_resource arena;\n  std::pmr::vector<int> v(&arena);\n  for (int i = 0; i < 100; ++i)\n    v.push_back(i);\n  return v;\n}\nint main() {\n  auto v = load();\n  std::cout << v[99] << '\\n';\n}",
+        "options": [
+          "`99`",
+          "Compile error",
+          "`99`, arena leaks",
+          "Use-after-free (UB)"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Undefined behaviour: use-after-free",
+        "verdict_sub": "Here (GCC, -O0): segfault. ASan: heap-use-after-free on `v[99]`",
+        "bullets": [
+          "`return v;` moves the vector. A moved pmr vector keeps the **source's** resource.",
+          "So the returned `v` still points into `arena`'s chunks and holds `&arena`.",
+          "`arena` dies at the end of `load()` and frees every chunk.",
+          "`v[99]` reads freed memory; `v`'s destructor then calls a dead resource."
+        ],
+        "wrong": "\"99: move semantics make it safe\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "The caller owns the resource",
+        "code": "std::pmr::vector<int>\nload(std::pmr::memory_resource* res) {\n  std::pmr::vector<int> v(res);\n  for (int i = 0; i < 100; ++i)\n    v.push_back(i);\n  return v;\n}\nint main() {\n  std::pmr::monotonic_buffer_resource arena;\n  auto v = load(&arena);\n  std::cout << v[99] << '\\n';  // 99\n}",
+        "takeaway": "A pmr container stores a raw `memory_resource*`. It never owns the resource: the resource must outlive it."
+      }
+    ]
+  },
+  {
+    "id": "M11-P6",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "Memory Pools",
+    "source": "topic_11 practice Q6",
+    "text": {
+      "hook": "One arena-backed vector, passed by value twice: once copied, once moved.\nWhich call still uses the arena?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Same function, same vector, two calls. The only difference is std::move.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · pmr propagation",
+        "title": "What does this print?",
+        "code": "std::pmr::monotonic_buffer_resource arena;\n\nvoid process(std::pmr::vector<int> v) {\n    auto* r = v.get_allocator().resource();\n    std::cout << (r == &arena) << '\\n';\n}\n\nint main() {\n    std::pmr::vector<int> d({1, 2, 3}, &arena);\n    process(d);\n    process(std::move(d));\n}",
+        "options": [
+          "`1`, then `1`",
+          "`0`, then `1`",
+          "`1`, then `0`",
+          "`0`, then `0`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `0`, then `1`",
+        "verdict_sub": "Copy construction drops the arena. Move construction keeps it.",
+        "bullets": [
+          "Call 1 copy-constructs the parameter.",
+          "pmr copy construction uses `select_on_container_copy_construction()`: a default allocator, so the default resource (normally the heap).",
+          "Call 2 move-constructs: the parameter takes the source's resource, `arena`.",
+          "Copy **assignment** differs again: the target keeps its own resource."
+        ],
+        "wrong": "\"1, then 1: a copy keeps the resource\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Never leave the arena by accident",
+        "code": "// pass by const&: no copy, stays in arena\nvoid process(const std::pmr::vector<int>& v);\n\n// copy on purpose: allocator-extended copy\nstd::pmr::vector<int> copy(src, &arena);",
+        "takeaway": "Hidden copies (by-value parameters, `auto x = member;`) silently move data to the heap."
+      }
+    ]
+  },
+  {
+    "id": "M11-Q9",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "Memory Pools",
+    "source": "topic_11 qa Q9",
+    "text": {
+      "hook": "Allocate 64 bytes from an arena. Free them. Allocate 64 again.\nSurely you get the same block back?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Pick this resource for the wrong workload and memory grows without bound.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Memory pools",
+        "title": "What does it print?",
+        "code": "std::pmr::monotonic_buffer_resource arena;\n\nvoid* p1 = arena.allocate(64);\narena.deallocate(p1, 64);\nvoid* p2 = arena.allocate(64);\n\nstd::cout << (p1 == p2 ? \"reused\"\n                       : \"new block\");",
+        "options": [
+          "`new block`",
+          "`reused`: it has a free list",
+          "Crash: `p1` went to the OS",
+          "`reused`: merged like `malloc`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. `new block`",
+        "verdict_sub": "`deallocate` does nothing: it is an arena",
+        "bullets": [
+          "Allocate = align + bump a pointer. When full, ask upstream for a bigger chunk.",
+          "No per-block free list or merging: that is why allocation is so cheap.",
+          "Memory comes back only on `release()` or destruction, all at once.",
+          "A free list is a pool resource (`unsynchronized_pool_resource`)."
+        ],
+        "wrong": "\"A freed block is reused by the next allocation\"",
+        "cta": "When to use it ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Use it right",
+        "title": "One arena per unit of work",
+        "code": "for (const Msg& msg : inbox) {\n  {\n    std::pmr::vector<Field> f(&arena);\n    f.reserve(msg.count);  // no dead arrays\n    parse(msg, f);\n    handle(f);\n  }                // f gone, memory kept\n  arena.release(); // all of it, at once\n}",
+        "bullets": [
+          "Harmful: independent lifetimes, growing or churning containers."
+        ],
+        "takeaway": "Monotonic = bump allocate, never free individually, release everything together."
+      }
+    ],
+    "converted_from": "concept"
+  },
+  {
+    "id": "M11-Q12",
+    "type": "code_puzzle",
+    "topic_no": 11,
+    "topic_short": "Memory Pools",
+    "source": "topic_11 qa Q12",
+    "text": {
+      "hook": "The vector lives in your arena. You push one 100-char string.\nHow many times does it touch the global heap?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "A favourite pmr follow-up in low-latency interviews.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "memorymanagement",
+        "lowlatency",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · pmr",
+        "title": "What does it print? (GCC/libstdc++)",
+        "code": "// heap = global operator new calls\nchar buf[1024];\nstd::pmr::monotonic_buffer_resource\n    arena(buf, sizeof buf);\nstd::pmr::vector<std::string> v(&arena);\nv.reserve(1);\n\nint before = heap;\nv.emplace_back(100, 'x');\nstd::cout << heap - before;",
+        "options": [
+          "`0`: all in the arena",
+          "`1`",
+          "`0`: SSO holds the chars",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `1`",
+        "verdict_sub": "Only the vector's own array comes from `arena`",
+        "bullets": [
+          "`std::string` uses `std::allocator`: its 100 chars go to the global heap.",
+          "SSO holds only short strings (15 chars in libstdc++).",
+          "It compiles: a `pmr::vector` can hold any element type.",
+          "Short strings in tests hide the leak: nothing allocates at all."
+        ],
+        "wrong": "\"Once the outer container is pmr, everything inside is in the arena\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "pmr all the way down",
+        "code": "std::pmr::vector<std::pmr::string> v(&arena);\nv.reserve(1);\n\nint before = heap;\nv.emplace_back(100, 'x');\nstd::cout << heap - before;  // prints 0",
+        "bullets": [
+          "The vector passes `arena` to each `pmr::string`: uses-allocator construction.",
+          "It works recursively: `pmr::map<pmr::string, pmr::vector<pmr::string>>`."
+        ],
+        "takeaway": "Use pmr types all the way down, and prove where allocations go with a counting resource in tests."
+      }
+    ],
+    "converted_from": "concept"
+  }
+]

@@ -1,12 +1,12 @@
 === POST TEXT ===
-One std::async per incoming market-data message.
+One std::async per market-data message.
+Clean, modern C++. It passed code review.
 
-Clean, modern C++. Would you ship it in a low-latency hot path?
-Comment A, B, C or D, then swipe ➜ for the answer.
+Lock in your answer below, then swipe ➜ to verify.
 
-Think about what each call really costs on Linux, not what the code looks like.
+Think about what each call really does on Linux, not what the code looks like.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 
 === FIRST COMMENT ===
-Which option did you pick? Reply with the letter, then swipe right for the answer ➜
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

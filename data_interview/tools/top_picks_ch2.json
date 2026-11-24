@@ -1,0 +1,19 @@
+{
+  "chapter_dir": "chapter_2_memory_ownership",
+  "output_slug": "topic_00_top_picks",
+  "title": "Top 50: Must-Know Memory and Ownership Interview Questions",
+  "picks": {
+    "01": {"practice": [2, 10], "qa": [4, 12], "edge": [1], "example": []},
+    "02": {"practice": [3, 7], "qa": [6, 12], "edge": [2], "example": [4]},
+    "03": {"practice": [8, 9], "qa": [2, 4], "edge": [1], "example": []},
+    "04": {"practice": [2, 4], "qa": [5, 7], "edge": [3], "example": []},
+    "05": {"practice": [1, 2], "qa": [5, 8], "edge": [1], "example": []},
+    "06": {"practice": [5, 6], "qa": [5, 12], "edge": [4], "example": [2]},
+    "07": {"practice": [2, 11], "qa": [6, 8, 14], "edge": [1], "example": [2]},
+    "08": {"practice": [1, 5, 6], "qa": [1, 7], "edge": [3], "example": [3]},
+    "09": {"practice": [4, 10], "qa": [6, 11], "edge": [1], "example": []},
+    "10": {"practice": [1, 9], "qa": [1, 11], "edge": [7], "example": []},
+    "11": {"practice": [2, 3], "qa": [9, 12], "edge": [3], "example": [1]},
+    "12": {"practice": [1, 8], "qa": [1, 7], "edge": [3], "example": []}
+  }
+}

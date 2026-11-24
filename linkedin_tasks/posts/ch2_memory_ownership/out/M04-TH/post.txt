@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"RVO is guaranteed since C++17."
+Half true, and interviewers ask about the other half.
+
+Here is the mental model, plus 6 myths that fail interviews. Save it. 💡
+
+Inside:
+1. Guaranteed vs optional elision
+2. What every return statement costs
+3. How NRVO works in the ABI
+4. Implicit move, standard by standard
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #movesemantics #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The spinlock holder gets preempted mid-section.
+"The waiters just wait a bit longer." Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two threads, one core, a TAS spinlock. Measured on Linux, slide 2.
+
+#cpp #cplusplus #concurrency #multithreading #performance #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.
