@@ -144,7 +144,7 @@ def s_wrong_options(s):
 
 
 def s_cover(s):
-    h = kicker(s.get("kicker", "C++ Concurrency"))
+    h = kicker(s.get("kicker", "C++ Interview Prep"))
     h += f'<div class="hero">{md(s["hero"])}</div>'
     if s.get("lead"):
         h += f'<p class="lead">{md(s["lead"])}</p>'
@@ -340,11 +340,17 @@ def render_post(post, out_dir, tmp):
 
 
 def load_specs(specs_dir):
+    # The cover kicker defaults to the chapter title from <chapter>/chapter.json.
+    meta = Path(specs_dir).parent / "chapter.json"
+    title = json.loads(meta.read_text()).get("title") if meta.exists() else None
     posts = []
     for f in sorted(Path(specs_dir).glob("*.json")):
         data = json.loads(f.read_text())
         for p in (data if isinstance(data, list) else data.get("posts", [data])):
             p["_file"] = f.name
+            for s in p.get("slides", []):
+                if s.get("layout") == "cover" and "kicker" not in s and title:
+                    s["kicker"] = title
             posts.append(p)
     return posts
 
