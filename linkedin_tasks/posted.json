@@ -121,5 +121,14 @@
   "comment_ok": true,
   "for_slot": "2026-11-24T11:30+09:00",
   "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/45312884282"
+ },
+ "M03-TH": {
+  "posted_at": "2026-11-24T23:01:00+09:00",
+  "post_urn": "urn:li:ugcPost:7530993881967017984",
+  "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7530993881967017984/",
+  "chapter": "posts/ch2_memory_ownership",
+  "comment_ok": true,
+  "for_slot": "2026-11-24T23:00+09:00",
+  "run": "https://github.com/pankajtanwar1511-dev/proCplusplusLearning/actions/runs/45409354821"
  }
 }
