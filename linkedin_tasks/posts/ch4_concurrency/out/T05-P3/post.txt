@@ -2,7 +2,8 @@
 counter is a std::atomic<int>.
 Two threads add 4 to it, 1000 times each. 🧵
 
-What can it print? Comment your answer, then swipe ➜ to check it.
+What can it print?
+Lock in your answer below, then swipe ➜ to verify.
 
 Two questions in one: the printed value, and whether this is a data race. Both parts matter.
 

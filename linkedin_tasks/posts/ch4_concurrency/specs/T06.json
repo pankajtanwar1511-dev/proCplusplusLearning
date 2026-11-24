@@ -137,7 +137,7 @@
     "topic_short": "Memory Ordering",
     "source": "topic_06 practice Q2",
     "text": {
-      "hook": "The consumer was \"fixed\" to use memory_order_acquire.\nThe producer was left alone. 🧵\n\nIs it thread-safe now? Think it through, comment your answer, then swipe ➜",
+      "hook": "The consumer was \"fixed\" to use memory_order_acquire.\nThe producer was left alone. 🧵\n\nIs it thread-safe now?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "This is the most common half-fix in memory ordering code reviews. Look at both sides before you answer.",
       "hashtags": [
         "cpp",
@@ -197,7 +197,7 @@
     "topic_short": "Memory Ordering",
     "source": "topic_06 practice Q5",
     "text": {
-      "hook": "Everything is memory_order_relaxed.\nOne writer stores 10 then 20. One reader loads twice. 🧵\n\nWhich outputs are possible? Pick all that apply, then swipe ➜",
+      "hook": "Everything is memory_order_relaxed.\nOne writer stores 10 then 20. One reader loads twice. 🧵\n\nWhich outputs are possible?\nLock in your picks below, then swipe ➜ to verify.",
       "body": "\"Relaxed means anything goes\" is the answer that fails here. Slide 3 shows where relaxed really does surprise you.",
       "hashtags": [
         "cpp",
@@ -264,7 +264,7 @@
         ],
         "bullets": [
           "Each atomic has its own modification order. Nothing links `x` and `y`.",
-          "No data race: the stale `0` is defined, just unwanted. This is the `data` + `ready` flag bug: fix with release/acquire."
+          "No data race: the stale `0` is a defined value, just unwanted. Publishing `x` through a flag `y` needs release/acquire."
         ],
         "takeaway": "One modification order **per object**: relaxed keeps per-object coherence, not cross-object order."
       }
@@ -277,7 +277,7 @@
     "topic_short": "Memory Ordering",
     "source": "topic_06 practice Q6",
     "text": {
-      "hook": "Two threads. Two flags. Four possible outputs.\nOnly some of them can actually happen. 🧵\n\nPick all that apply, then swipe ➜",
+      "hook": "Two threads. Two flags. Four possible outputs.\nOnly some of them can actually happen. 🧵\n\nLock in your picks below, then swipe ➜ to verify.",
       "body": "This is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.",
       "hashtags": [
         "cpp",
@@ -340,7 +340,7 @@
           {
             "label": "release / acquire",
             "code": "x.store(true, release);\np1 = y.load(acquire);",
-            "verdict": "\"nothing\" really happens"
+            "verdict": "\"nothing\" seen on x86"
           }
         ],
         "takeaway": "Store then load on two different variables (Dekker pattern) needs seq_cst. Release/acquire does not forbid it."

@@ -2,7 +2,7 @@
 A std::jthread goes out of scope while its worker is still looping.
 
 What prints, and in what order? 🧵
-Think it through, comment your answer, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
 Slide 3 shows what changes if you swap jthread for std::thread.
 

@@ -2,7 +2,7 @@
 Nobody ever calls notify in this program. 🔔
 
 Does it hang? If not, what does it print?
-Comment your answer, then swipe ➜ to check it.
+Lock in your answer below, then swipe ➜ to verify.
 
 Two numbers to predict: how often the predicate runs, and whether the lock is held at the end.
 

@@ -257,7 +257,7 @@
       {
         "layout": "answer",
         "verdict": "C. Either one: no guarantee",
-        "verdict_sub": "Observed on x86-64 Linux: `T2` printed first in 837 of 2000 runs",
+        "verdict_sub": "One x86-64 Linux machine: `T2` printed first in 704 of 2000 runs",
         "bullets": [
           "Creation order says nothing about scheduling. Whoever reaches `lock()` first wins.",
           "`std::mutex` promises exclusion. No FIFO queue, no fairness.",
@@ -301,7 +301,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · shared_mutex",
         "title": "One thread only.<br>Can this deadlock?",
-        "code": "std::shared_mutex m;\nstd::unordered_map<std::string, int> tbl;\nint get_or_create(const std::string& key) {\n  std::shared_lock read(m);\n  auto it = tbl.find(key);\n  if (it != tbl.end()) return it->second;\n  std::cout << \"key missing, upgrading\\n\";\n  std::unique_lock write(m);\n  return tbl[key] = 1;\n}\n// main: get_or_create(\"AAPL\");",
+        "code": "std::shared_mutex m;\nstd::unordered_map<std::string, int> tbl;\nint get_or_create(const std::string& key) {\n  std::shared_lock read(m);\n  auto it = tbl.find(key);\n  if (it != tbl.end()) return it->second;\n  std::cout << \"key missing, upgrading\\n\";\n  std::unique_lock write(m);\n  return tbl[key] = 1;\n}\n// main: get_or_create(\"user42\");",
         "options": [
           "No, one thread",
           "Yes, every time",
@@ -313,7 +313,7 @@
       {
         "layout": "answer",
         "verdict": "B. Yes, every time",
-        "verdict_sub": "prints the \"upgrading\" line, then hangs: self-deadlock (UB)",
+        "verdict_sub": "glibc: prints the \"upgrading\" line, then hangs. Self-deadlock, formally UB",
         "bullets": [
           "The exclusive lock waits until **all** shared owners release.",
           "The thread itself is still a shared owner, and it is now blocked. It waits for itself forever.",
@@ -396,7 +396,7 @@
     "topic_no": 3,
     "topic_short": "Mutexes",
     "text": {
-      "hook": "p50 latency is normal. p99.9 jumps to milliseconds.\nTracing points at one function holding the book mutex.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "hook": "p50 latency is normal. p99.9 jumps to milliseconds.\nTracing points at a report holding the stats mutex.\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "A classic low-latency design question. The tempting answer fixes the wrong thing.",
       "hashtags": [
         "cpp",
@@ -413,7 +413,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Tail latency",
         "title": "`report()` holds the lock 5 to 8 ms.<br>Best fix?",
-        "code": "std::mutex m;\nstd::map<std::string, long> book;\nvoid on_tick(Tick t) {  // hot path\n    std::lock_guard g(m);\n    book[t.sym] = t.px;\n}\nstd::string report() {  // reporter\n    std::lock_guard g(m);\n    return build_report(book); // 8 ms\n}",
+        "code": "std::mutex m;\nstd::map<std::string, long> stats;\nvoid on_event(const Event& e) { // hot\n    std::lock_guard g(m);\n    stats[e.key] = e.value;\n}\nstd::string report() {  // reporter\n    std::lock_guard g(m);\n    return build_report(stats); // 8 ms\n}",
         "options": [
           "Copy under lock, build outside",
           "Use a spinlock instead",
@@ -427,7 +427,7 @@
         "verdict": "A. Shrink the critical section",
         "verdict_sub": "The lock is not slow. The hold time is.",
         "bullets": [
-          "Most ticks never meet a report. The few that do wait ms: only the tail suffers.",
+          "Most events never meet a report. The few that do wait ms: only the tail suffers.",
           "Spinlock: still waits the full 5 to 8 ms, and burns a core.",
           "Reader/writer lock (`shared_mutex`): the hot path *writes*, so it still waits.",
           "Timed lock (`timed_mutex`): the hot path still waits, then must drop or defer work."
@@ -439,7 +439,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Lock for one copy, not for the report",
-        "code": "std::string report() {\n    std::map<std::string, long> snap;\n    {\n        std::lock_guard g(m);\n        snap = book;            // one copy\n    }\n    return build_report(snap);  // no lock\n}",
+        "code": "std::string report() {\n    std::map<std::string, long> snap;\n    {\n        std::lock_guard g(m);\n        snap = stats;           // one copy\n    }\n    return build_report(snap);  // no lock\n}",
         "tip": "Better still: the hot path publishes snapshots or events to the reporter through a queue.",
         "takeaway": "Never hold a lock across I/O, logging, allocation or callbacks. Shorten hold time, do not change the lock type."
       }

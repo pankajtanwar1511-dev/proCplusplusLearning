@@ -123,7 +123,7 @@
             "an **unprocessed** item; only for \"latest value wins\" data"
           ]
         ],
-        "takeaway": "Incremental market data: any drop is a sequence gap. Keep up, or detect and resync."
+        "takeaway": "Incremental updates (deltas): any drop silently corrupts state. Keep up, or detect and resync."
       },
       {
         "layout": "statement",
@@ -178,7 +178,7 @@
     "topic_short": "Queues",
     "source": "topic_09 practice Q1",
     "text": {
-      "hook": "This ring buffer \"full\" check looks correct. 🔁\n\nPush 4 items into a 4-slot ring. What prints?\nComment your answer, then swipe ➜ to check it.",
+      "hook": "This ring buffer \"full\" check looks correct. 🔁\n\nPush 4 items into a 4-slot ring. What prints?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Single-threaded on purpose: no races, just index arithmetic. The bug is the same in a lock-free SPSC queue.",
       "hashtags": [
         "cpp",
@@ -238,7 +238,7 @@
     "topic_short": "Queues",
     "source": "topic_09 practice Q13",
     "text": {
-      "hook": "One alignas(64) on head. Problem solved? 🧱\n\nThree layouts for the two indices of an SPSC queue. Which ones really stop false sharing?\nThink it through, comment your answer, then swipe ➜",
+      "hook": "One alignas(64) on head. Problem solved? 🧱\n\nThree layouts for an SPSC queue's two indices. Which really stop false sharing?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "x86-64, GCC or Clang. Work out the three sizeofs first: they give the answer away.",
       "hashtags": [
         "cpp",
@@ -254,7 +254,7 @@
     "slides": [
       {
         "layout": "puzzle",
-        "kicker": "Puzzle · False sharing",
+        "kicker": "Puzzle · False sharing · x86-64",
         "title": "The three sizeofs? Which<br>layout avoids false sharing?",
         "code": "using A = std::atomic<std::size_t>;\nstruct Packed { A head{0}; A tail{0}; };\nstruct HeadOnly {\n  alignas(64) A head{0};\n  A tail{0};\n};\nstruct Both {\n  alignas(64) A head{0};\n  alignas(64) A tail{0};\n};",
         "options": [
@@ -344,7 +344,7 @@
         "verdict_sub": "`i & 5` for i = 0..7 gives 0 1 0 1 4 5 4 5: slots 2 and 3 are never used",
         "bullets": [
           "`i & (N - 1) == i % N` only for unsigned `i` and N a power of two.",
-          "That is why rings use power-of-two N: one AND instead of a division (tens of cycles).",
+          "That is why rings use power-of-two N: one AND instead of a much slower integer division.",
           "For a compile-time constant N, compilers already turn unsigned `% N` into a mask.",
           "In bounds, though: `i & 5` never exceeds 5."
         ],
@@ -369,7 +369,7 @@
     "topic_short": "Queues",
     "source": "topic_09 qa Q14",
     "text": {
-      "hook": "The feed handler has one more update. The ring is full.\nEvery option loses something. Which loss is acceptable?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "hook": "The network thread has one more update. The ring is full.\nEvery option loses something. Which loss is acceptable?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Think about who finds out, and when.",
       "hashtags": [
         "cpp",
@@ -387,11 +387,11 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Backpressure",
         "title": "The SPSC ring is full.<br>What should this branch do?",
-        "code": "// Feed handler thread (producer).\n// Each Msg is an incremental update:\n//   \"bid level 3: qty 500 -> 200\"\nvoid on_packet(const Msg& m) {\n  if (ring.try_push(m)) return;\n  // Ring is full. What now?\n  ???\n}",
+        "code": "// Network receiver thread (producer).\n// Each Msg is an incremental update:\n//   \"key 42: count 500 -> 200\"\nvoid on_packet(const Msg& m) {\n  if (ring.try_push(m)) return;\n  // Ring is full. What now?\n  ???\n}",
         "options": [
           "Overwrite the oldest slot",
           "Spin until a slot frees up",
-          "Drop it: gap recovery fixes it",
+          "Drop it: retransmit fixes it",
           "Count it, flag a gap, resync"
         ],
         "cta": "Work it out, then swipe ➜"
@@ -401,9 +401,9 @@
         "verdict": "D. Flag the gap, then resync",
         "verdict_sub": "For incremental data, overflow means resync, not silent loss",
         "bullets": [
-          "Each message updates book state. Lose one and the book is silently wrong.",
+          "Each message changes replicated state. Lose one and that state is silently wrong.",
           "Count the overflow, alarm, resynchronise from a snapshot.",
-          "Conflating per instrument is only valid if messages are full snapshots.",
+          "Keeping only the latest per key is valid only if messages are full snapshots.",
           "A ring that stays full means the consumer is too slow: profile and fix it."
         ],
         "cta": "Why not A, B or C ➜"
@@ -413,9 +413,9 @@
         "items": [
           "A: the consumer still reads in order. You destroyed an unprocessed message, and `head` now has two writers: a race.",
           "B: backpressure moves upstream. The socket buffer fills and the kernel drops UDP packets instead.",
-          "C: gap recovery handles **network** loss. This is a capacity problem in your own pipeline."
+          "C: retransmission handles **network** loss. This is a capacity problem in your own pipeline."
         ],
-        "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental feeds, overflow means resync.\""
+        "takeaway": "Senior answer: \"pick the full policy from message semantics. For incremental updates, overflow means resync.\""
       }
     ]
   },
@@ -445,7 +445,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Capacity",
         "title": "The ring is now 8x bigger.<br>What did that buy?",
-        "code": "// Feed:     50,000 msgs/s, sustained\n// Consumer: 20,000 msgs/s\n// Ticket: \"Queue keeps filling up\"\n// Fix (was 1 << 14):\nSpscRing<Msg, (1 << 17)> ring;",
+        "code": "// Input:    50,000 msgs/s, sustained\n// Consumer: 20,000 msgs/s\n// Ticket: \"Queue keeps filling up\"\n// Fix (was 1 << 14):\nSpscRing<Msg, (1 << 17)> ring;",
         "options": [
           "It never fills now",
           "Overflow later, plus stale data",
@@ -460,7 +460,7 @@
         "verdict_sub": "Backlog grows at 30k/s: full after ~4.4 s instead of ~0.5 s",
         "bullets": [
           "Arrival > service: any finite queue fills. Size only changes **when**.",
-          "Depth is delay: 131k queued at 20k/s means acting on prices ~6.6 s old.",
+          "Depth is delay: 131k queued at 20k/s means acting on data ~6.6 s old.",
           "Valid but stale: correct records of the past, useless for a decision now.",
           "A huge ring also hurts cache locality and hides overload from monitoring."
         ],
@@ -472,7 +472,7 @@
         "kicker": "The real fix",
         "title": "Size for bursts, export the depth",
         "code": "SpscRing<Msg, (1 << 14)> ring; // bursts\n\n// consumer loop:\nstd::size_t d = ring.size();\ndepth_gauge.set(d);\nhigh_water = std::max(high_water, d);\n// queueing delay ≈ depth / service rate\nif (d > kAlarmDepth) raise_alarm();",
-        "tip": "You cannot throttle an exchange feed. Consumer capacity must be ≥ the arrival rate.",
+        "tip": "If you cannot throttle the source, consumer capacity must be ≥ the arrival rate.",
         "takeaway": "Capacity absorbs bursts. It never fixes a rate mismatch, and depth is latency."
       }
     ]

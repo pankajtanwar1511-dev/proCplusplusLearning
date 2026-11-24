@@ -2,7 +2,8 @@
 The consumer was "fixed" to use memory_order_acquire.
 The producer was left alone. 🧵
 
-Is it thread-safe now? Think it through, comment your answer, then swipe ➜
+Is it thread-safe now?
+Lock in your answer below, then swipe ➜ to verify.
 
 This is the most common half-fix in memory ordering code reviews. Look at both sides before you answer.
 

@@ -3,7 +3,7 @@ Main waits for both workers in every round with a std::latch.
 Round 1 prints the right answer. 🤔
 
 What about rounds 2 and 3?
-Comment your answer, then swipe ➜ to check it.
+Lock in your answer below, then swipe ➜ to verify.
 
 Find the bug before you swipe. It compiles cleanly with -Wall -Wextra.
 

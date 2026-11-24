@@ -2,7 +2,7 @@
 send_pending() moves the message out, then sends it.
 You call it twice.
 
-How many messages go out? Lock in your answer, then swipe ➜ to verify.
+How many messages go out? Lock in your answer below, then swipe ➜ to verify.
 
 A real duplicate-message bug. The code looks like it consumes the value.
 

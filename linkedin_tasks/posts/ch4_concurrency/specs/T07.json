@@ -94,7 +94,7 @@
           "Threads pinned, no more runnable threads than cores",
           "A sleep/wake (a few µs) is too expensive for this path"
         ],
-        "warn": "80 threads on 20 CPUs: a TAS spinlock took 16 to 19 s for work `std::mutex` did in under 1 s.",
+        "warn": "Measured on one 20-CPU laptop, 80 threads: TAS spinlock 7 to 19 s, `std::mutex` about 1 s for the same work.",
         "takeaway": "Before reaching for a spinlock, ask if you need a lock at all: SPSC queue, seqlock, per-thread data."
       },
       {
@@ -131,7 +131,7 @@
         "items": [
           {
             "myth": "\"Spinlocks are faster than mutexes.\"",
-            "truth": "Only for tiny, rarely contended sections on dedicated cores. Oversubscribed they can be 10x to 20x slower."
+            "truth": "Only for tiny, rarely contended sections on dedicated cores. Oversubscribed they can be an order of magnitude slower."
           },
           {
             "myth": "\"Waiters in `while (exchange(true))` are only reading.\"",
@@ -258,8 +258,8 @@
       },
       {
         "layout": "answer",
-        "verdict": "C. std::mutex, by about 20x",
-        "verdict_sub": "Measured on a 20-CPU x86-64 Linux laptop: TAS 16 to 19 s, `std::mutex` under 1 s",
+        "verdict": "C. std::mutex, by far",
+        "verdict_sub": "One 20-CPU x86-64 Linux laptop, several runs: TAS 7 to 19 s, `std::mutex` about 1 s",
         "bullets": [
           "80 threads, 20 CPUs: the lock holder gets preempted.",
           "Waiters then spin on the CPU time the holder needs to finish.",
@@ -273,7 +273,7 @@
         "layout": "code",
         "kicker": "The twist · 8 threads, TTAS lock",
         "code": "void lock() {\n  while (true) {\n    if (!locked.exchange(true,\n          std::memory_order_acquire))\n      return;\n    while (locked.load(\n             std::memory_order_relaxed))\n      cpu_relax();\n  }\n}",
-        "tip": "8 threads: TTAS ≈ 0.6 to 0.8 s, `std::mutex` ≈ 0.9 s. At 80: TTAS 3.3 to 4 s.",
+        "tip": "Same laptop: at 8 threads TTAS edged out `std::mutex`. At 80 threads TTAS was still several times slower.",
         "takeaway": "A spinlock wins only when the wait is shorter than a context switch and the holder is guaranteed to be running."
       }
     ]
@@ -314,7 +314,7 @@
       {
         "layout": "answer",
         "verdict": "A. A whole time slice (ms)",
-        "verdict_sub": "Linux 6.8, x86-64: each contended `lock()` spun 5 to 330 ms",
+        "verdict_sub": "Observed on one Linux 6.8 x86-64 machine: contended `lock()` calls spun 5 to 330 ms",
         "bullets": [
           "The OS sees a busy thread. It does not know it waits for the holder.",
           "The holder cannot unlock until it runs, and the spinner holds its core.",

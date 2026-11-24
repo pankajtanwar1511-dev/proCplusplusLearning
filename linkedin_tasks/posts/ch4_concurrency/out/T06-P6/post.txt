@@ -2,7 +2,7 @@
 Two threads. Two flags. Four possible outputs.
 Only some of them can actually happen. 🧵
 
-Pick all that apply, then swipe ➜
+Lock in your picks below, then swipe ➜ to verify.
 
 This is the classic store-buffering (Dekker) test. Slide 3 shows why one small change in memory order changes the answer.
 

@@ -1,5 +1,5 @@
 === POST TEXT ===
-One std::async per market-data message.
+One std::async per incoming message.
 Clean, modern C++. It passed code review.
 
 Lock in your answer below, then swipe ➜ to verify.

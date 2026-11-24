@@ -2,7 +2,8 @@
 Everything is memory_order_relaxed.
 One writer stores 10 then 20. One reader loads twice. 🧵
 
-Which outputs are possible? Pick all that apply, then swipe ➜
+Which outputs are possible?
+Lock in your picks below, then swipe ➜ to verify.
 
 "Relaxed means anything goes" is the answer that fails here. Slide 3 shows where relaxed really does surprise you.
 

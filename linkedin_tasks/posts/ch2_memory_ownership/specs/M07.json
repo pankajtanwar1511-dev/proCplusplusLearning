@@ -97,7 +97,7 @@
             "unchanged: free, but not an owner"
           ]
         ],
-        "takeaway": "Returning a `shared_ptr` by value does not bump the count: elision or implicit move."
+        "takeaway": "Returning a local `shared_ptr` by value does not bump the count: elision or implicit move."
       },
       {
         "layout": "chain",
@@ -139,7 +139,7 @@
           "The constructor is private: compile error",
           "Big object + long-lived `weak_ptr`s: memory stays allocated",
           "Adopting an existing pointer (C API, `release()`)",
-          "Braces: `make_shared<vector<int>>(2, 5)` is `{5, 5}`"
+          "Braces: `make_shared<vector<int>>(2, 5)` is `{5, 5}`, not `{2, 5}`"
         ]
       },
       {
@@ -150,7 +150,7 @@
             "truth": "Typical on 64-bit implementations. Not guaranteed."
           },
           {
-            "myth": "\"Returning a `shared_ptr` by value makes the count 2 for a moment.\"",
+            "myth": "\"Returning a local `shared_ptr` by value makes the count 2 for a moment.\"",
             "truth": "Elision or move: no extra owner, no atomic."
           },
           {
@@ -368,7 +368,7 @@
     "slides": [
       {
         "layout": "puzzle",
-        "kicker": "Puzzle · Destroying a list",
+        "kicker": "Puzzle · Linux, default 8 MB stack",
         "title": "What happens at `head.reset()`?",
         "code": "struct Node {\n  std::shared_ptr<Node> next;\n};\nint main() {\n  auto head = std::make_shared<Node>();\n  auto cur = head;\n  for (int i = 0; i < 1'000'000; ++i)\n    cur = cur->next = std::make_shared<Node>();\n  cur.reset();\n  head.reset();  // ?\n  std::cout << \"done\\n\";\n}",
         "options": [

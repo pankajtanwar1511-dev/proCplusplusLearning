@@ -2,7 +2,7 @@
 Three threads, one counter variable, 100 increments each. 🧵
 
 No mutex, no atomic. What prints?
-Comment your answer, then swipe ➜ to check it.
+Lock in your answer below, then swipe ➜ to verify.
 
 Read every line before you answer.
 

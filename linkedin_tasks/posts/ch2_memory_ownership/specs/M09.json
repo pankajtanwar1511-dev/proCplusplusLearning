@@ -108,7 +108,7 @@
             "subject ➜ observers"
           ]
         ],
-        "takeaway": "Strong edges must form a tree. Make the wrong edge weak and the owner stops keeping its child alive."
+        "takeaway": "Strong edges must form a tree (or DAG), never a cycle. Make the wrong edge weak and the owner stops keeping its child alive."
       },
       {
         "layout": "cards",
@@ -220,9 +220,9 @@
         "layout": "puzzle",
         "kicker": "Puzzle · weak_ptr",
         "title": "It checks `expired()` first. Safe?",
-        "code": "struct Feed { std::string name = \"md\"; };\nauto g_feed = std::make_shared<Feed>();\nvoid on_heartbeat() { g_feed.reset(); }\nvoid poll(const std::weak_ptr<Feed>& w) {\n  if (!w.expired()) {\n    on_heartbeat();   // \"another thread\"\n    auto f = w.lock();\n    std::cout << f->name << '\\n';\n  }\n}\nint main() { poll(g_feed); }",
+        "code": "struct Conn { std::string name = \"db\"; };\nauto g_conn = std::make_shared<Conn>();\nvoid on_timeout() { g_conn.reset(); }\nvoid poll(const std::weak_ptr<Conn>& w) {\n  if (!w.expired()) {\n    on_timeout();     // \"another thread\"\n    auto f = w.lock();\n    std::cout << f->name << '\\n';\n  }\n}\nint main() { poll(g_conn); }",
         "options": [
-          "Prints `md`",
+          "Prints `db`",
           "Null deref: UB",
           "`lock()` throws",
           "Use-after-free"
@@ -246,7 +246,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "`lock()` is the check",
-        "code": "void poll(const std::weak_ptr<Feed>& w) {\n  if (auto f = w.lock()) {   // owner now\n    on_heartbeat();          // cannot kill it\n    std::cout << f->name << '\\n';\n  } else {\n    std::cout << \"feed gone\\n\";\n  }\n}\n// poll twice: md, then feed gone",
+        "code": "void poll(const std::weak_ptr<Conn>& w) {\n  if (auto f = w.lock()) {   // owner now\n    on_timeout();            // cannot kill it\n    std::cout << f->name << '\\n';\n  } else {\n    std::cout << \"conn gone\\n\";\n  }\n}\n// poll twice: db, then conn gone",
         "takeaway": "Test and own in one step. Use `expired()` only for cleanup, never as a guard for access."
       }
     ]

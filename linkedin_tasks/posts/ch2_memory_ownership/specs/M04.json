@@ -141,7 +141,7 @@
           },
           {
             "myth": "\"A deleted move constructor makes `return local;` fall back to copy.\"",
-            "truth": "The deleted move is selected: ill-formed. GCC C++20: \"use of deleted function\"."
+            "truth": "The deleted move is selected: ill-formed. Rejected by GCC in C++20 and by Clang in every mode (GCC 11 in C++17 mode still accepts it)."
           }
         ]
       },

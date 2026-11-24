@@ -333,7 +333,7 @@
         "layout": "wrong_options",
         "items": [
           "A: CAS only checks equality at the moment of the CAS. head is A again, so it cannot see the change.",
-          "C: no retry happens: the CAS succeeds on its first try, with the stale `next`.",
+          "C: the values match, so the CAS succeeds with the stale `next`. Only a spurious weak failure would retry, and nothing guarantees one.",
           "D: this interleaving is legal even with `seq_cst`. Ordering does not add history."
         ],
         "takeaway": "Senior answer: ABA matters when the CAS value stands for more state. Fix it with a version tag, or never reuse a node while it is referenced."
@@ -365,20 +365,20 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Lock-free",
-        "title": "Same work, 4 threads.<br>Which stack is faster?",
+        "title": "Same work, 4 threads.<br>How do the two stacks compare?",
         "code": "// 4 threads x 500k push + pop each\nvoid push_mutex(Node* n) {\n  std::lock_guard g(m);\n  n->next = top; top = n;\n}\nvoid push_lockfree(Node* n) {\n  n->next = head.load();\n  while (!head.compare_exchange_weak(\n           n->next, n)) {}\n}",
         "options": [
-          "Lock-free, many times faster",
-          "Mutex: CAS retries cost more",
-          "Lock-free, only modestly",
+          "Lock-free, 10x faster or more",
+          "Mutex, 10x faster or more",
+          "Same ballpark: neither scales",
           "Both scale with 4 threads"
         ],
         "cta": "Work it out, then swipe ➜"
       },
       {
         "layout": "answer",
-        "verdict": "C. Lock-free, only modestly",
-        "verdict_sub": "Measured on a 20-core x86 machine: mutex 310 to 380 ms, lock-free 230 to 315 ms",
+        "verdict": "C. Same ballpark: neither scales",
+        "verdict_sub": "One 20-core x86 machine: mutex 310 to 380 ms, lock-free 230 to 315 ms",
         "bullets": [
           "Both got about 20x slower than 1 thread: every op fights for the cache line holding `head`.",
           "An uncontended mutex is just two atomic RMWs. No syscall.",
@@ -391,7 +391,7 @@
         "layout": "wrong_options",
         "items": [
           "A: both serialize on the same hot cache line. Lock-free removes the lock, not the contention.",
-          "B: failed CASes do cost something, but here lock-free still came out a bit ahead.",
+          "B: failed CASes cost something, but a mutex pays two atomic RMWs per op too. Neither side wins by 10x.",
           "D: one shared `head` serializes every operation. Neither version scales."
         ],
         "takeaway": "Senior answer: choose lock-free for its progress guarantee, not assumed speed. Removing sharing beats both. Measure p50 and p99."

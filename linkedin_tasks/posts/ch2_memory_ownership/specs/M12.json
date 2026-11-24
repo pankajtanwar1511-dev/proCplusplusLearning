@@ -105,7 +105,7 @@
         "kicker": "Shared memory, files, wire",
         "title": "Lock the layout at compile time",
         "items": [
-          "Fixed-width types: `long` is 4 bytes on Windows, 8 on Linux",
+          "Fixed-width types: `long` is 4 bytes on 64-bit Windows, 8 on 64-bit Linux",
           "Find holes with `-Wpadded` or `pahole`"
         ],
         "code": "static_assert(sizeof(Header) == 16);\nstatic_assert(alignof(Header) == 8);\nstatic_assert(offsetof(Header, seq) == 8);\nstatic_assert(\n  std::is_trivially_copyable_v<Header>);",
@@ -124,7 +124,7 @@
           },
           {
             "myth": "\"The compiler reorders members to minimise padding.\"",
-            "truth": "C++ compilers never reorder data members. Ordering them is your job."
+            "truth": "GCC, Clang and MSVC never reorder data members. Ordering them is your job."
           }
         ]
       },
@@ -137,7 +137,7 @@
           },
           {
             "myth": "\"Misaligned access is fine on x86.\"",
-            "truth": "It is UB in C++, slower across cache lines, non-atomic for atomics, and faults on other CPUs."
+            "truth": "It is UB in C++, slower across cache lines, non-atomic for atomics, and can fault on other CPUs."
           },
           {
             "myth": "\"Struct of arrays is always faster than array of structs.\"",
@@ -173,13 +173,13 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Padding",
-        "title": "What prints? (x86-64 Linux, GCC)",
-        "code": "struct Trade {\n  char side; double px; char flag;\n};\nstruct Trade2 {\n  double px; char side; char flag;\n};\nint main() {\n  Trade t[3];\n  std::cout << sizeof(Trade) << ' '\n            << sizeof(Trade2) << ' '\n            << sizeof(t) << ' ' << alignof(Trade);\n}",
+        "title": "x86-64 Linux, GCC.<br>What prints?",
+        "code": "struct Rec {\n  char tag; double val; char flag;\n};\nstruct Rec2 {\n  double val; char tag; char flag;\n};\nint main() {\n  Rec t[3];\n  std::cout << sizeof(Rec) << ' '\n            << sizeof(Rec2) << ' '\n            << sizeof(t) << ' ' << alignof(Rec);\n}",
         "options": [
-          "`10 10 30 1`",
-          "`24 16 72 8`",
-          "`24 24 72 8`",
-          "`16 16 48 8`"
+          "10 10 30 1",
+          "24 16 72 8",
+          "24 24 72 8",
+          "16 16 48 8"
         ],
         "cta": "Work it out, then swipe ➜"
       },
@@ -188,8 +188,8 @@
         "verdict": "B. `24 16 72 8`",
         "verdict_sub": "x86-64 Linux: `double` has size 8 and alignment 8",
         "bullets": [
-          "`Trade`: `side`@0, 7 padding, `px`@8, `flag`@16, 7 tail padding = 24.",
-          "`Trade2`: `px`@0, `side`@8, `flag`@9, 6 tail padding = 16.",
+          "`Rec`: `tag`@0, 7 padding, `val`@8, `flag`@16, 7 tail padding = 24.",
+          "`Rec2`: `val`@0, `tag`@8, `flag`@9, 6 tail padding = 16.",
           "Arrays add no extra padding: 3 × 24 = 72.",
           "Struct alignment = the strictest member's: `double`, 8."
         ],
@@ -200,7 +200,7 @@
         "layout": "code",
         "kicker": "The rule",
         "title": "Order members by decreasing alignment",
-        "code": "struct Trade {      // 24 bytes\n  char   side;      // @0, pad 1-7\n  double px;        // @8\n  char   flag;      // @16, pad 17-23\n};\nstruct Trade2 {     // 16 bytes\n  double px;        // @0\n  char   side;      // @8\n  char   flag;      // @9, pad 10-15\n};",
+        "code": "struct Rec {        // 24 bytes\n  char   tag;       // @0, pad 1-7\n  double val;       // @8\n  char   flag;      // @16, pad 17-23\n};\nstruct Rec2 {       // 16 bytes\n  double val;       // @0\n  char   tag;       // @8\n  char   flag;      // @9, pad 10-15\n};",
         "takeaway": "One third less memory and more objects per cache line. Unless hot/cold grouping or ABI stability says otherwise."
       }
     ]

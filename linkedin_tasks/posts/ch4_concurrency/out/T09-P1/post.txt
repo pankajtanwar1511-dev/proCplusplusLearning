@@ -2,7 +2,7 @@
 This ring buffer "full" check looks correct. 🔁
 
 Push 4 items into a 4-slot ring. What prints?
-Comment your answer, then swipe ➜ to check it.
+Lock in your answer below, then swipe ➜ to verify.
 
 Single-threaded on purpose: no races, just index arithmetic. The bug is the same in a lock-free SPSC queue.
 

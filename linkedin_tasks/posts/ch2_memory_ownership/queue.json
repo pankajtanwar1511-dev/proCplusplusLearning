@@ -83,7 +83,7 @@
    "topic_no": 3,
    "topic_short": "Move Semantics",
    "source": "topic_03 practice Q7",
-   "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.",
+   "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer below, then swipe ➜ to verify.",
    "body": "A real duplicate-message bug. The code looks like it consumes the value.",
    "hashtags": [
     "cpp",
@@ -92,7 +92,7 @@
     "moderncpp",
     "interviewprep"
    ],
-   "post_text": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.\n\nA real duplicate-message bug. The code looks like it consumes the value.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
+   "post_text": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer below, then swipe ➜ to verify.\n\nA real duplicate-message bug. The code looks like it consumes the value.\n\n#cpp #cplusplus #movesemantics #moderncpp #interviewprep",
    "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
    "slide_count": 4,
    "slides": [
@@ -667,7 +667,7 @@
    "topic_no": 1,
    "topic_short": "Object Lifetime",
    "source": "topic_01 practice Q10",
-   "hook": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "hook": "A range-for over a getter of a temporary.\nGCC 11 compiles it cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
    "body": "One of the few lifetime bugs the language itself changed in C++23.",
    "hashtags": [
     "cpp",
@@ -676,7 +676,7 @@
     "moderncpp",
     "interviewprep"
    ],
-   "post_text": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of the few lifetime bugs the language itself changed in C++23.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
+   "post_text": "A range-for over a getter of a temporary.\nGCC 11 compiles it cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of the few lifetime bugs the language itself changed in C++23.\n\n#cpp #cplusplus #memorymanagement #moderncpp #interviewprep",
    "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
    "slide_count": 4,
    "slides": [

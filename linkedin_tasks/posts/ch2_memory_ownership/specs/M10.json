@@ -76,7 +76,7 @@
         "kicker": "Constructor throws",
         "title": "`new Order(-1)`, step by step",
         "steps": [
-          "`operator new(4)` allocates the storage",
+          "`operator new(sizeof(Order))` allocates the storage",
           "the constructor runs and throws",
           "the new-expression calls the **matching** `operator delete`",
           "no leak, and no destructor: the object never existed"
@@ -150,7 +150,7 @@
           },
           {
             "myth": "\"RSS keeps growing, so it is a leak.\"",
-            "truth": "Retention, fragmentation, kept capacity and unbounded queues grow RSS with every block freed."
+            "truth": "Retention, fragmentation, kept capacity and unbounded queues grow RSS even when every block is freed."
           }
         ]
       },
@@ -262,7 +262,7 @@
       {
         "layout": "answer",
         "verdict": "A. `caught std::bad_alloc`, then `nullptr`",
-        "verdict_sub": "Linux x86-64: 64 TiB is more than the kernel will reserve, so both fail at once",
+        "verdict_sub": "Linux x86-64, default overcommit: 64 TiB is more than the kernel will reserve, so both fail at once",
         "bullets": [
           "Plain `new` never returns `nullptr`: it throws `std::bad_alloc`.",
           "So the `if (p == nullptr)` branch is dead code.",

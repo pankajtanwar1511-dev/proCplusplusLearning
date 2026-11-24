@@ -2,9 +2,9 @@
 "Fire and forget" with std::async. 🚀
 
 The task sleeps 200 ms. In what order do the three lines print?
-Think it through, comment your answer, then swipe ➜
+Lock in your answer below, then swipe ➜ to verify.
 
-The answer is deterministic. GCC even warns about this line.
+Read the call to std::async carefully. One line does more than it looks.
 
 #cpp #cplusplus #concurrency #multithreading #interviewprep
 

@@ -108,7 +108,7 @@
             "empty in practice, **not** guaranteed"
           ]
         ],
-        "takeaway": "Always allowed on a moved-from object: destroy it, assign to it, call `size()`, `clear()`."
+        "takeaway": "Always allowed on a moved-from object: destroy it, assign to it, call functions with no preconditions (`size()`, `clear()`)."
       },
       {
         "layout": "cards",
@@ -164,7 +164,7 @@
             "truth": "Valid but unspecified. Empty in practice, not by the standard."
           },
           {
-            "myth": "\"If the move constructor is deleted, the copy is used.\"",
+            "myth": "\"If the move constructor is `= delete`, the copy is used.\"",
             "truth": "A deleted function still wins overload resolution: compile error."
           }
         ]
@@ -249,7 +249,7 @@
     "topic_short": "Move Semantics",
     "source": "topic_03 practice Q7",
     "text": {
-      "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer, then swipe ➜ to verify.",
+      "hook": "send_pending() moves the message out, then sends it.\nYou call it twice.\n\nHow many messages go out? Lock in your answer below, then swipe ➜ to verify.",
       "body": "A real duplicate-message bug. The code looks like it consumes the value.",
       "hashtags": [
         "cpp",

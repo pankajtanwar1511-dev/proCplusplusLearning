@@ -266,7 +266,7 @@
     "topic_short": "Object Lifetime",
     "source": "topic_01 practice Q10",
     "text": {
-      "hook": "A range-for over a getter of a temporary.\nIt compiles cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "hook": "A range-for over a getter of a temporary.\nGCC 11 compiles it cleanly. Is it well-defined in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "One of the few lifetime bugs the language itself changed in C++23.",
       "hashtags": [
         "cpp",
@@ -281,7 +281,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Range-for",
         "title": "C++20. What does it print?",
-        "code": "struct Book {\n  std::vector<int> v{100, 101, 102};\n  const std::vector<int>& get() const {\n    return v; }\n};\nBook load_book() { return {}; }\nint main() {\n  long sum = 0;\n  for (int px : load_book().get())\n    sum += px;\n  std::cout << sum << '\\n';\n}",
+        "code": "struct Book {\n  std::vector<int> v{100, 101, 102};\n  const std::vector<int>& get() const {\n    return v; }\n};\nBook load_book() { return {}; }\nint main() {\n  long sum = 0;\n  for (int n : load_book().get())\n    sum += n;\n  std::cout << sum << '\\n';\n}",
         "options": [
           "Dangling UB",
           "Prints 303",
@@ -307,7 +307,7 @@
         "layout": "code",
         "kicker": "The fixes",
         "title": "Keep the owner alive",
-        "code": "// OK: direct member access extends\n// the whole Book temporary\nfor (int px : load_book().v)\n  sum += px;\n\n// OK: C++20 init-statement owns it\nfor (auto b = load_book(); int px : b.get())\n  sum += px;",
+        "code": "// OK: direct member access extends\n// the whole Book temporary\nfor (int n : load_book().v)\n  sum += n;\n\n// OK: C++20 init-statement owns it\nfor (auto b = load_book(); int n : b.get())\n  sum += n;",
         "takeaway": "Before C++23, range-for only extends what `__range` binds to directly. A getter breaks the chain."
       }
     ]

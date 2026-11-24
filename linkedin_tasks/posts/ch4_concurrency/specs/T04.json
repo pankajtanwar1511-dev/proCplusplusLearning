@@ -55,7 +55,7 @@
         "title": "What happens to the mutex",
         "steps": [
           "**Atomically** release the mutex and register as a waiter. No gap between the two.",
-          "Block until `notify_one`, `notify_all`, a spurious wakeup, or a timeout.",
+          "Block until `notify_one`, `notify_all` or a spurious wakeup (or a timeout, for `wait_for`).",
           "Reacquire the mutex. This is a normal lock and may block again.",
           "Return. The mutex is **always** held when `wait` returns."
         ]
@@ -90,11 +90,11 @@
             "`notify_all`"
           ],
           [
-            "Waiters on one CV wait for different predicates",
+            "Waiters on one CV, different predicates",
             "`notify_all`, or one CV per predicate"
           ],
           [
-            "Waiter may destroy the CV right after waking",
+            "Waiter may destroy the CV on waking",
             "Notify while holding the mutex"
           ]
         ],
@@ -166,7 +166,7 @@
     "topic_no": 4,
     "topic_short": "Condition Variables",
     "text": {
-      "hook": "The producer sets ready = true and notifies.\nOnly then does the consumer start waiting.\n\nWhat is printed? Comment your answer, then swipe ➜ to check it.",
+      "hook": "The producer sets ready = true and notifies.\nOnly then does the consumer start waiting.\n\nWhat is printed?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Four plausible outputs. One rule about notifications decides which one you will see.",
       "hashtags": [
         "cpp",
@@ -290,7 +290,7 @@
     "topic_no": 4,
     "topic_short": "Condition Variables",
     "text": {
-      "hook": "Nobody ever calls notify in this program. 🔔\n\nDoes it hang? If not, what does it print?\nComment your answer, then swipe ➜ to check it.",
+      "hook": "Nobody ever calls notify in this program. 🔔\n\nDoes it hang? If not, what does it print?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Two numbers to predict: how often the predicate runs, and whether the lock is held at the end.",
       "hashtags": [
         "cpp",
@@ -403,7 +403,7 @@
         "kicker": "The twist",
         "title": "When version 2 is a bug",
         "code": "// waiter, then frees the job\n{\n  std::unique_lock lk(j->m);\n  j->cv.wait(lk, [&] { return j->done; });\n}\ndelete j;\n// worker, version 2\n{ std::lock_guard g(j->m); j->done = 1; }\nj->cv.notify_one();   // j may be gone!",
-        "tip": "TSan: heap-use-after-free in `notify_one`. Under the lock, the waiter cannot return first.",
+        "tip": "TSan reports a race between `delete j` and `notify_one`. Notify under the lock: the waiter cannot return first.",
         "takeaway": "State under the mutex for correctness. Notify after unlock for speed, unless the waiter may destroy the CV."
       }
     ]

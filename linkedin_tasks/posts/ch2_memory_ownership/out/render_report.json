@@ -129,7 +129,7 @@
    },
    {
     "n": 4,
-    "code_px": 32,
+    "code_px": 33,
     "zoom": 1,
     "overflow": false
    }
@@ -137,7 +137,7 @@
   "overflow": [],
   "small_code": [],
   "small_text": [],
-  "chars": 272,
+  "chars": 279,
   "png": 4
  },
  "M01-Q8": {
@@ -559,7 +559,7 @@
   "overflow": [],
   "small_code": [],
   "small_text": [],
-  "chars": 275,
+  "chars": 281,
   "png": 4
  },
  "M03-Q2": {
@@ -949,13 +949,13 @@
   "chars": 225,
   "png": 4
  },
- "M05-P9": {
-  "id": "M05-P9",
+ "M05-P11": {
+  "id": "M05-P11",
   "slides": 4,
   "fit": [
    {
     "n": 1,
-    "code_px": 29,
+    "code_px": 28,
     "zoom": 1,
     "overflow": false
    },
@@ -973,7 +973,7 @@
    },
    {
     "n": 4,
-    "code_px": 37,
+    "code_px": 34,
     "zoom": 1,
     "overflow": false
    }
@@ -981,7 +981,7 @@
   "overflow": [],
   "small_code": [],
   "small_text": [],
-  "chars": 275,
+  "chars": 270,
   "png": 4
  },
  "M05-Q8": {
@@ -1441,13 +1441,13 @@
   "chars": 277,
   "png": 4
  },
- "M07-Q17": {
-  "id": "M07-Q17",
+ "M07-Q18": {
+  "id": "M07-Q18",
   "slides": 4,
   "fit": [
    {
     "n": 1,
-    "code_px": 36,
+    "code_px": 28,
     "zoom": 1,
     "overflow": false
    },
@@ -1465,7 +1465,7 @@
    },
    {
     "n": 4,
-    "code_px": 30,
+    "code_px": 34,
     "zoom": 1,
     "overflow": false
    }
@@ -1473,7 +1473,7 @@
   "overflow": [],
   "small_code": [],
   "small_text": [],
-  "chars": 310,
+  "chars": 294,
   "png": 4
  },
  "M08-TH": {
@@ -2199,7 +2199,7 @@
    {
     "n": 3,
     "code_px": null,
-    "zoom": 1,
+    "zoom": 0.96,
     "overflow": false
    },
    {
@@ -2529,76 +2529,6 @@
   "small_code": [],
   "small_text": [],
   "chars": 267,
-  "png": 4
- },
- "M05-P11": {
-  "id": "M05-P11",
-  "slides": 4,
-  "fit": [
-   {
-    "n": 1,
-    "code_px": 28,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 2,
-    "code_px": null,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 3,
-    "code_px": null,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 4,
-    "code_px": 34,
-    "zoom": 1,
-    "overflow": false
-   }
-  ],
-  "overflow": [],
-  "small_code": [],
-  "small_text": [],
-  "chars": 270,
-  "png": 4
- },
- "M07-Q18": {
-  "id": "M07-Q18",
-  "slides": 4,
-  "fit": [
-   {
-    "n": 1,
-    "code_px": 28,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 2,
-    "code_px": null,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 3,
-    "code_px": null,
-    "zoom": 1,
-    "overflow": false
-   },
-   {
-    "n": 4,
-    "code_px": 34,
-    "zoom": 1,
-    "overflow": false
-   }
-  ],
-  "overflow": [],
-  "small_code": [],
-  "small_text": [],
-  "chars": 294,
   "png": 4
  }
 }

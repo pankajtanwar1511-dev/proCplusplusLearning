@@ -189,7 +189,7 @@
     "topic_short": "async & thread_local",
     "source": "topic_10 practice Q1",
     "text": {
-      "hook": "Three threads, one counter variable, 100 increments each. 🧵\n\nNo mutex, no atomic. What prints?\nComment your answer, then swipe ➜ to check it.",
+      "hook": "Three threads, one counter variable, 100 increments each. 🧵\n\nNo mutex, no atomic. What prints?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Read every line before you answer.",
       "hashtags": [
         "cpp",
@@ -257,8 +257,8 @@
     "topic_short": "async & thread_local",
     "source": "topic_10 practice Q2",
     "text": {
-      "hook": "\"Fire and forget\" with std::async. 🚀\n\nThe task sleeps 200 ms. In what order do the three lines print?\nThink it through, comment your answer, then swipe ➜",
-      "body": "The answer is deterministic. GCC even warns about this line.",
+      "hook": "\"Fire and forget\" with std::async. 🚀\n\nThe task sleeps 200 ms. In what order do the three lines print?\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Read the call to std::async carefully. One line does more than it looks.",
       "hashtags": [
         "cpp",
         "cplusplus",
@@ -380,7 +380,7 @@
     "topic_short": "async & thread_local",
     "source": "topic_10 qa Q8",
     "text": {
-      "hook": "One std::async per market-data message.\nClean, modern C++. It passed code review.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "hook": "One std::async per incoming message.\nClean, modern C++. It passed code review.\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Think about what each call really does on Linux, not what the code looks like.",
       "hashtags": [
         "cpp",
@@ -397,7 +397,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · std::async",
         "title": "Called once per message.<br>What does each call cost?",
-        "code": "// GCC / libstdc++ on Linux\n// Called for every market-data message\nvoid on_message(const Msg& m) {\n  pending.push_back(std::async(\n      std::launch::async,\n      [m] { update_book(m); }));\n}",
+        "code": "// GCC / libstdc++ on Linux\n// Called for every incoming message\nvoid on_message(const Msg& m) {\n  pending.push_back(std::async(\n      std::launch::async,\n      [m] { handle(m); }));\n}",
         "options": [
           "A new thread + a heap alloc",
           "A pooled task, nanoseconds",
@@ -409,7 +409,7 @@
       {
         "layout": "answer",
         "verdict": "A. A new thread, every call",
-        "verdict_sub": "libstdc++: thread creation per `launch::async` call, tens of microseconds",
+        "verdict_sub": "libstdc++ starts a new thread per `launch::async` call: about 15 µs each on one test machine",
         "bullets": [
           "Plus a heap-allocated shared state, context switches and a cold cache.",
           "No control over core affinity, priority, queue bounds or allocation.",
@@ -423,7 +423,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "Preallocated ring + one pinned worker",
-        "code": "SpscRing<Msg, 4096> ring;  // preallocated\nvoid on_message(const Msg& m) {\n  if (!ring.try_push(m)) on_overflow(m);\n}\nvoid worker() {  // pinned, isolated core\n  for (Msg m;;)\n    if (ring.try_pop(m)) update_book(m);\n}",
+        "code": "SpscRing<Msg, 4096> ring;  // preallocated\nvoid on_message(const Msg& m) {\n  if (!ring.try_push(m)) on_overflow(m);\n}\nvoid worker() {  // pinned, isolated core\n  for (Msg m;;)\n    if (ring.try_pop(m)) handle(m);\n}",
         "tip": "`std::async` is fine for coarse work: startup, batch jobs.",
         "takeaway": "Convenient is not cheap: keep `std::async` off any path measured in microseconds."
       }

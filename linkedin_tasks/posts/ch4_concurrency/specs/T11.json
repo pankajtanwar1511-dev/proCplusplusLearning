@@ -186,7 +186,7 @@
     "topic_short": "C++20 Sync",
     "source": "topic_11 practice Q1",
     "text": {
-      "hook": "Main waits for both workers in every round with a std::latch.\nRound 1 prints the right answer. 🤔\n\nWhat about rounds 2 and 3?\nComment your answer, then swipe ➜ to check it.",
+      "hook": "Main waits for both workers in every round with a std::latch.\nRound 1 prints the right answer. 🤔\n\nWhat about rounds 2 and 3?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Find the bug before you swipe. It compiles cleanly with -Wall -Wextra.",
       "hashtags": [
         "cpp",
@@ -221,7 +221,7 @@
           "After round 1 the counter is 0 and **stays** 0. There is no reset.",
           "Round 2: if `wait()` runs first it returns at once, and main reads `results` while workers write: data race.",
           "`count_down()` past 0 breaks its precondition: UB. libstdc++ drives the counter negative, so a later `wait()` can block forever.",
-          "Seen with GCC 11: usually a hang right after round 1, sometimes \"round 2: 21\" (stale) first."
+          "Seen with GCC 11 on one machine: a hang after round 1, often after a stale \"round 2: 21\"."
         ],
         "wrong": "\"A: the latch rearms after wait() returns\"",
         "cta": "The fix ➜"
@@ -242,7 +242,7 @@
     "topic_short": "C++20 Sync",
     "source": "topic_11 practice Q6",
     "text": {
-      "hook": "A std::jthread goes out of scope while its worker is still looping.\n\nWhat prints, and in what order? 🧵\nThink it through, comment your answer, then swipe ➜",
+      "hook": "A std::jthread goes out of scope while its worker is still looping.\n\nWhat prints, and in what order? 🧵\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Slide 3 shows what changes if you swap jthread for std::thread.",
       "hashtags": [
         "cpp",

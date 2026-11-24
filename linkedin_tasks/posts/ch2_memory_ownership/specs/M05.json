@@ -353,8 +353,8 @@
       {
         "layout": "puzzle",
         "kicker": "Puzzle · Exception guarantees",
-        "title": "`add_all` throws. What is in `book`?",
-        "code": "struct Order {   // copying id 3 throws\n  int id;\n  Order(int i) : id(i) {}\n  Order(const Order& o) : id(o.id) {\n    if (id == 3) throw std::runtime_error(\"\");\n  }\n};\nvoid add_all(std::vector<Order>& book,\n             const std::vector<Order>& batch) {\n  for (const Order& o : batch)\n    book.push_back(o);\n}\n// book empty, batch holds ids 1..5",
+        "title": "`add_all` throws. What is in `out`?",
+        "code": "struct Order {   // copying id 3 throws\n  int id;\n  Order(int i) : id(i) {}\n  Order(const Order& o) : id(o.id) {\n    if (id == 3) throw std::runtime_error(\"\");\n  }\n};\nvoid add_all(std::vector<Order>& out,\n             const std::vector<Order>& batch) {\n  for (const Order& o : batch)\n    out.push_back(o);\n}\n// out empty, batch holds ids 1..5",
         "options": [
           "Empty",
           "Broken state",
@@ -368,7 +368,7 @@
         "verdict": "C. `1 2`: valid, nothing leaked",
         "verdict_sub": "Basic guarantee: invariants hold, values may have changed",
         "bullets": [
-          "Each `push_back` is **strong**: the failed 3rd one left `book` as it was.",
+          "Each `push_back` is **strong**: the failed 3rd one left `out` as it was.",
           "The loop as a whole is only **basic**: orders 1 and 2 stay in.",
           "**No-throw**: never fails (destructors, `swap`). **Strong**: commit or rollback.",
           "Each level includes the weaker ones. RAII gets you basic, design gets you strong."
@@ -380,7 +380,7 @@
         "layout": "code",
         "kicker": "Upgrade to strong",
         "title": "Work on a copy, commit with a no-throw swap",
-        "code": "void add_all(std::vector<Order>& book,\n             const std::vector<Order>& batch) {\n  std::vector<Order> tmp = book;  // may throw\n  for (const Order& o : batch)\n    tmp.push_back(o);             // may throw\n  book.swap(tmp);                 // no-throw\n}  // throws: book unchanged",
+        "code": "void add_all(std::vector<Order>& out,\n             const std::vector<Order>& batch) {\n  std::vector<Order> tmp = out;  // may throw\n  for (const Order& o : batch)\n    tmp.push_back(o);             // may throw\n  out.swap(tmp);                  // no-throw\n}  // throws: out unchanged",
         "takeaway": "Strong is built from no-throw steps. It costs a copy, so libraries choose it only where it is cheap or essential."
       }
     ]

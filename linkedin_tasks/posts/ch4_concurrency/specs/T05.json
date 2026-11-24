@@ -179,7 +179,7 @@
     "topic_short": "Atomics",
     "source": "topic_05 practice Q3",
     "text": {
-      "hook": "`counter` is a std::atomic<int>.\nTwo threads add 4 to it, 1000 times each. 🧵\n\nWhat can it print? Comment your answer, then swipe ➜ to check it.",
+      "hook": "`counter` is a std::atomic<int>.\nTwo threads add 4 to it, 1000 times each. 🧵\n\nWhat can it print?\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Two questions in one: the printed value, and whether this is a data race. Both parts matter.",
       "hashtags": [
         "cpp",
@@ -251,7 +251,7 @@
     "topic_short": "Atomics",
     "source": "topic_05 practice Q4",
     "text": {
-      "hook": "The single most asked detail about compare-and-swap.\nWhat happens to `expected` when CAS fails? 🧠\n\nComment your answer, then swipe ➜ to check it.",
+      "hook": "The single most asked detail about compare-and-swap.\nWhat happens to `expected` when CAS fails? 🧠\n\nLock in your answer below, then swipe ➜ to verify.",
       "body": "Two CAS calls, two lines of output. Read the second call carefully.",
       "hashtags": [
         "cpp",
@@ -466,7 +466,7 @@
         "kicker": "The fix",
         "title": "Do not share the hot write",
         "code": "struct alignas(64) Slot {\n    std::atomic<long> v{0};\n};\nSlot slots[16];  // a line each\n\nvoid add(std::size_t tid) {\n    slots[tid % 16].v.fetch_add(1,\n        std::memory_order_relaxed);\n}\n// read(): sum the 16 slots",
-        "tip": "No `alignas(64)`? Slots share lines: false sharing, just as bad.",
+        "tip": "No `alignas(64)`? Slots share lines: false sharing again.",
         "takeaway": "Scale writes by not sharing them. Pad per-thread state to separate cache lines."
       }
     ]

@@ -134,7 +134,7 @@
         "layout": "statement",
         "kicker": "Refcount cost",
         "hero": "No mutex does not<br>mean no cost.",
-        "lead": "Every copy is an atomic RMW on one cache line. Measured (GCC 11 -O2, x86-64): 8 threads on one block, about 20x slower per copy than one thread."
+        "lead": "Every copy is an atomic RMW on one cache line. One measurement (GCC 11 -O2, 20-core x86-64): 8 threads on one block were about 20x slower per copy than one thread."
       },
       {
         "layout": "myths",
@@ -305,7 +305,7 @@
         "layout": "puzzle",
         "kicker": "Puzzle · Config hot-reload",
         "title": "What can go wrong?",
-        "code": "std::atomic<std::shared_ptr<const Config>>\n    cfg;\n\nbool check(const Order& o) {  // reader\n  return o.qty   <= cfg.load()->max_qty\n      && o.price <= cfg.load()->max_px;\n}\n\n// writer thread, at any moment:\ncfg.store(std::make_shared<const Config>(\n    next));",
+        "code": "std::atomic<std::shared_ptr<const Config>>\n    cfg;\n\nbool check(const Order& o) {  // reader\n  return o.qty   <= cfg.load()->max_qty\n      && o.price <= cfg.load()->max_price;\n}\n\n// writer thread, at any moment:\ncfg.store(std::make_shared<const Config>(\n    next));",
         "options": [
           "Nothing: every load is atomic",
           "Use-after-free on reload",
@@ -319,7 +319,7 @@
         "verdict": "C. Limits from two versions",
         "verdict_sub": "Two `load()` calls can return two different configs",
         "bullets": [
-          "`max_qty` from v1, `max_px` from v2: a combination nobody configured.",
+          "`max_qty` from v1, `max_price` from v2: a combination nobody configured.",
           "Not B: `load()` returns an **owning** copy. A `store()` cannot free it under you.",
           "Not D: readers only read, and `const Config` stops them from writing.",
           "Rule: one `load()` per operation, read every field through it."
@@ -331,7 +331,7 @@
         "layout": "code",
         "kicker": "The fix",
         "title": "One snapshot per operation",
-        "code": "bool check(const Order& o) {\n  auto c = cfg.load();  // one snapshot\n  return o.qty   <= c->max_qty\n      && o.price <= c->max_px;\n}\n\n// writer: build a complete Config, then\ncfg.store(std::move(next_ptr));",
+        "code": "bool check(const Order& o) {\n  auto c = cfg.load();  // one snapshot\n  return o.qty   <= c->max_qty\n      && o.price <= c->max_price;\n}\n\n// writer: build a complete Config, then\ncfg.store(std::move(next_ptr));",
         "bullets": [
           "Old configs die when their last reader drops its copy.",
           "`atomic<shared_ptr>` is C++20: GCC 12+ (not GCC 11), and `is_lock_free()` is `false`."

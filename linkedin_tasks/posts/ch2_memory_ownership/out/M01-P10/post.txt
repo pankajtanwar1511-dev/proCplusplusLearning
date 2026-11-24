@@ -1,6 +1,6 @@
 === POST TEXT ===
 A range-for over a getter of a temporary.
-It compiles cleanly. Is it well-defined in C++20?
+GCC 11 compiles it cleanly. Is it well-defined in C++20?
 
 Lock in your answer below, then swipe ➜ to verify.
 

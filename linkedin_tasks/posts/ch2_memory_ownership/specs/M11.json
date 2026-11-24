@@ -65,11 +65,11 @@
         "rows": [
           [
             "Fail fast, return an error",
-            "Order entry: reject and alert"
+            "Request handling: reject and alert"
           ],
           [
             "Drop and count",
-            "Data you can recover by snapshot"
+            "Telemetry, or data a snapshot replaces"
           ],
           [
             "Block until a release",
@@ -203,9 +203,9 @@
       {
         "layout": "answer",
         "verdict": "D. Undefined behaviour: use-after-free",
-        "verdict_sub": "Here (GCC, -O0): segfault. ASan: heap-use-after-free on `v[99]`",
+        "verdict_sub": "Here (GCC 11, -O0): a stale `99` on a terminal, then a segfault. ASan: heap-use-after-free on `v[99]`",
         "bullets": [
-          "`return v;` moves the vector. A moved pmr vector keeps the **source's** resource.",
+          "`return v;` moves (or elides) the vector. A moved pmr vector keeps the **source's** resource.",
           "So the returned `v` still points into `arena`'s chunks and holds `&arena`.",
           "`arena` dies at the end of `load()` and frees every chunk.",
           "`v[99]` reads freed memory; `v`'s destructor then calls a dead resource."
@@ -371,7 +371,7 @@
           "`std::string` uses `std::allocator`: its 100 chars go to the global heap.",
           "SSO holds only short strings (15 chars in libstdc++).",
           "It compiles: a `pmr::vector` can hold any element type.",
-          "Short strings in tests hide the leak: nothing allocates at all."
+          "Short strings in tests hide it: they allocate nothing at all."
         ],
         "wrong": "\"Once the outer container is pmr, everything inside is in the arena\"",
         "cta": "The fix ➜"

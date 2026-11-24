@@ -2,7 +2,7 @@
 The single most asked detail about compare-and-swap.
 What happens to expected when CAS fails? 🧠
 
-Comment your answer, then swipe ➜ to check it.
+Lock in your answer below, then swipe ➜ to verify.
 
 Two CAS calls, two lines of output. Read the second call carefully.
 

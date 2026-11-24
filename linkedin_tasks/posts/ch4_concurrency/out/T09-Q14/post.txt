@@ -1,5 +1,5 @@
 === POST TEXT ===
-The feed handler has one more update. The ring is full.
+The network thread has one more update. The ring is full.
 Every option loses something. Which loss is acceptable?
 
 Lock in your answer below, then swipe ➜ to verify.

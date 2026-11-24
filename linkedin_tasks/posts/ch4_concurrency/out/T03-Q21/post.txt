@@ -1,6 +1,6 @@
 === POST TEXT ===
 p50 latency is normal. p99.9 jumps to milliseconds.
-Tracing points at one function holding the book mutex.
+Tracing points at a report holding the stats mutex.
 
 Lock in your answer below, then swipe ➜ to verify.
 
