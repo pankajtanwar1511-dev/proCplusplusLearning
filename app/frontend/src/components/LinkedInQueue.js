@@ -78,13 +78,17 @@ const StatusBadge = ({ p, tz }) => {
 const PostCard = ({ p, tz }) => {
   const [open, setOpen] = useState(false);
   return (
-    <article className={`lq-post st-${p.status}`} id={`post-${p.id}`}>
+    <article className={`lq-post st-${p.status} ch-${(p.chapter_index || 0) % 10}`} id={`post-${p.id}`}>
       <header className="lq-post-head">
-        <div className="lq-when"><b>#{p.seq}</b> <StatusBadge p={p} tz={tz} /></div>
+        <div className="lq-when">
+          <b title={`Post ${p.chapter_seq} of ${p.chapter_total} in ${p.chapter_title}`}>
+            #{p.chapter_seq ?? p.seq}<small className="lq-of">/{p.chapter_total}</small>
+          </b> <StatusBadge p={p} tz={tz} />
+        </div>
         <div className="lq-tags">
           <span className={`lq-type t-${p.type}`}>{TYPE_LABEL[p.type] || p.type}</span>
           {p.format === 'video' && <span className="lq-type t-video">30 s video</span>}
-          <span className="lq-topic">{p.chapter_title} · T{p.topic_no} {p.topic_short}</span>
+          <span className="lq-topic lq-chapter">{p.chapter_title} · T{p.topic_no} {p.topic_short}</span>
           <span className="lq-id">{p.id}</span>
         </div>
       </header>
@@ -151,7 +155,11 @@ const LinkedInQueue = () => {
     && (status === 'all'
       || (status === 'upcoming' && (p.status === 'next' || p.status === 'scheduled'))
       || (status === 'posted' && p.status === 'posted')
-      || (status === 'skipped' && p.status === 'skipped'))) : []), [data, type, chapter, status]);
+      || (status === 'skipped' && p.status === 'skipped')))
+    // Grouped by chapter (series.json order), each chapter in its own order 1..N.
+    // Posting dates are random across chapters; each card still shows its own date.
+    .sort((a, b) => (a.chapter_index - b.chapter_index) || (a.chapter_seq - b.chapter_seq)) : []),
+  [data, type, chapter, status]);
 
   if (error) return <div className="lq-page"><div className="lq-empty">{error}</div></div>;
   if (!data) return <div className="lq-page"><div className="lq-empty">Loading posts...</div></div>;
@@ -212,7 +220,16 @@ const LinkedInQueue = () => {
         <span className="lq-shown">{visible.length} shown</span>
       </div>
       {visible.length === 0 && <div className="lq-empty">No posts match these filters.</div>}
-      {visible.map((p) => <PostCard key={p.id} p={p} tz={tz} />)}
+      {visible.map((p, i) => (
+        <React.Fragment key={p.id}>
+          {(i === 0 || visible[i - 1].chapter !== p.chapter) && (
+            <h2 className={`lq-chapter-head ch-${(p.chapter_index || 0) % 10}`}>
+              {p.chapter_title} <small>{p.chapter_total} posts</small>
+            </h2>
+          )}
+          <PostCard p={p} tz={tz} />
+        </React.Fragment>
+      ))}
     </div>
   );
 };

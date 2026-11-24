@@ -181,8 +181,18 @@ def build_view(cfg=None, posted=None, now=None):
 
     skipped = [dict(make(p), status="skipped") for p in seq if p["id"] in skip and p["id"] not in posted]
     items = done + planned + skipped
+    # Numbering for display: each post's position inside its own chapter queue (1..N),
+    # plus the chapter's index in series.json (the app colours each chapter).
+    pos, total = {}, {}
+    for p in seq:
+        total[p["chapter"]] = total.get(p["chapter"], 0) + 1
+        pos[p["id"]] = total[p["chapter"]]
+    chapter_index = {c: i for i, c in enumerate(cfg["chapters"])}
     for i, item in enumerate(items, 1):
         item["seq"] = i
+        item["chapter_seq"] = pos[item["id"]]
+        item["chapter_total"] = total[item["chapter"]]
+        item["chapter_index"] = chapter_index.get(item["chapter"], 0)
 
     remaining = sum(1 for x in items if x["status"] in ("next", "scheduled"))
     per_day = len(cfg["slots"])

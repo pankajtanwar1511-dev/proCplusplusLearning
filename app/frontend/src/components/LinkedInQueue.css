@@ -66,3 +66,29 @@
 .lq-sub a { color: #0a66c2; font-weight: 600; }
 .lq-video { display: block; width: 100%; aspect-ratio: 1 / 1; background: #0f172a; border-radius: 10px; align-self: start; }
 .lq-type.t-video { background: rgba(220,38,38,.12); color: #dc2626; border-color: rgba(220,38,38,.45); }
+
+/* Chapter colours: one very light pastel per chapter (series.json order, repeats after 10).
+   Tints the card header and the chapter tag only, so cards stay calm. */
+.lq-of { font-weight: 500; opacity: .55; margin-left: 1px; }
+.lq-post { --ch: 148,163,184; }
+.lq-post.ch-0 { --ch: 96,165,250; }   /* blue */
+.lq-post.ch-1 { --ch: 52,211,153; }   /* mint */
+.lq-post.ch-2 { --ch: 251,146,60; }   /* peach */
+.lq-post.ch-3 { --ch: 167,139,250; }  /* lavender */
+.lq-post.ch-4 { --ch: 244,114,182; }  /* pink */
+.lq-post.ch-5 { --ch: 45,212,191; }   /* teal */
+.lq-post.ch-6 { --ch: 250,204,21; }   /* butter */
+.lq-post.ch-7 { --ch: 248,113,113; }  /* coral */
+.lq-post.ch-8 { --ch: 129,140,248; }  /* periwinkle */
+.lq-post.ch-9 { --ch: 163,230,53; }   /* lime */
+.lq-post { border-left: 4px solid rgba(var(--ch), .55); }
+.lq-post .lq-post-head { background: rgba(var(--ch), .08); }
+.lq-post .lq-chapter { background: rgba(var(--ch), .14); border-color: rgba(var(--ch), .45) !important; }
+.lq-chapter-head { --ch: 148,163,184; margin: 26px 0 12px; padding: 8px 14px; border-radius: 10px; font-size: 1.15rem;
+  background: rgba(var(--ch), .12); border-left: 4px solid rgba(var(--ch), .6); }
+.lq-chapter-head small { font-weight: 500; opacity: .6; margin-left: 6px; font-size: .8rem; }
+.lq-chapter-head.ch-0 { --ch: 96,165,250; } .lq-chapter-head.ch-1 { --ch: 52,211,153; }
+.lq-chapter-head.ch-2 { --ch: 251,146,60; } .lq-chapter-head.ch-3 { --ch: 167,139,250; }
+.lq-chapter-head.ch-4 { --ch: 244,114,182; } .lq-chapter-head.ch-5 { --ch: 45,212,191; }
+.lq-chapter-head.ch-6 { --ch: 250,204,21; } .lq-chapter-head.ch-7 { --ch: 248,113,113; }
+.lq-chapter-head.ch-8 { --ch: 129,140,248; } .lq-chapter-head.ch-9 { --ch: 163,230,53; }
