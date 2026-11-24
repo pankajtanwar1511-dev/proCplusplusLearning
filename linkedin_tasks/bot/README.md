@@ -16,10 +16,15 @@ linkedin_tasks/
 
 ## How the next post is chosen
 
-1. Read `series.json` → load each chapter's `queue.json` in the listed order.
+1. Read `series.json` → each listed chapter's `queue.json` is its own queue.
 2. Drop ids already in `posted.json` and ids in `skip` (or `"skip": true` in a spec).
-3. Post the first one left. Record it in `posted.json` **before** adding the first
-   comment, so a failure afterwards can never cause a double post.
+   A chapter with nothing left drops out of the draw.
+3. Pick a random chapter among those left (equal odds per chapter), seeded with the
+   number of posts made so far, so the bot, a retried run and the app preview agree.
+   Runs from one chapter can happen; that is intended.
+4. Post that chapter's first post left (each chapter stays in its own order). Record
+   it in `posted.json` **before** adding the first comment, so a failure afterwards
+   can never cause a double post.
 
 There is no position counter: reordering chapters, adding chapters or appending
 topics can never double post or miss a post. Dates in the app are projected from

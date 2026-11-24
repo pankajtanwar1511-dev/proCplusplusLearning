@@ -5,12 +5,16 @@ Files (all under linkedin_tasks/):
   posted.json                 what has been posted, keyed by post id (written by the bot only)
   posts/<chapter>/queue.json  each chapter's ordered posts (written by generator/build_queue.py)
 
-The full sequence is every chapter's queue in series.json order. The next post is
-simply the first post that is not in posted.json and not skipped. Nothing keeps a
+Each chapter is its own queue, posted strictly in its own order. For every post the
+bot picks a random chapter among those that still have posts left (equal odds per
+chapter), then posts that chapter's first post not in posted.json and not skipped.
+The random pick is seeded with the number of posts made so far, so the bot, a
+retried run and the app's preview all agree on what comes next. Nothing keeps a
 cursor, so reordering, adding chapters or appending topics can never cause a
 double post or a missed post.
 """
 import json
+import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -139,23 +143,46 @@ def build_view(cfg=None, posted=None, now=None):
         start = max(start, first)
     slots = slot_times_from(start, cfg)
 
-    items, next_id = [], None
-    for i, p in enumerate(seq, 1):
+    def make(p):
         item = {k: v for k, v in p.items()}
-        item["seq"] = i
         pdf = ROOT / p["chapter"] / "out" / p["id"] / "slides.pdf"
         item["rendered_at"] = int(pdf.stat().st_mtime) if pdf.exists() else 0   # cache-busting stamp
+        return item
+
+    # Already posted, in the order they went out.
+    done = []
+    for p in seq:
         if p["id"] in posted:
-            item["status"] = "posted"
-            item.update({"posted_at": posted[p["id"]]["posted_at"], "post_url": posted[p["id"]].get("url"),
-                         "comment_ok": posted[p["id"]].get("comment_ok")})
-        elif p["id"] in skip:
-            item["status"] = "skipped"
-        else:
-            item["status"] = "next" if next_id is None else "scheduled"
-            next_id = next_id or p["id"]
-            item["planned_at"] = next(slots).isoformat()
-        items.append(item)
+            item = make(p)
+            item.update({"status": "posted", "posted_at": posted[p["id"]]["posted_at"],
+                         "post_url": posted[p["id"]].get("url"), "comment_ok": posted[p["id"]].get("comment_ok")})
+            done.append(item)
+    done.sort(key=lambda x: datetime.fromisoformat(x["posted_at"]))
+
+    # Unposted: one queue per chapter, each in its own order. Every pick is a random
+    # chapter among those with posts left, seeded by the post number (len(posted) + n).
+    queues = {}
+    for p in seq:
+        if p["id"] not in posted and p["id"] not in skip:
+            queues.setdefault(p["chapter"], []).append(p)
+    planned, n = [], len(posted)
+    while queues:
+        chapter = random.Random(n).choice(sorted(queues))
+        item = make(queues[chapter].pop(0))
+        item["status"] = "scheduled"
+        item["planned_at"] = next(slots).isoformat()
+        planned.append(item)
+        if not queues[chapter]:
+            del queues[chapter]
+        n += 1
+    next_id = planned[0]["id"] if planned else None
+    if planned:
+        planned[0]["status"] = "next"
+
+    skipped = [dict(make(p), status="skipped") for p in seq if p["id"] in skip and p["id"] not in posted]
+    items = done + planned + skipped
+    for i, item in enumerate(items, 1):
+        item["seq"] = i
 
     remaining = sum(1 for x in items if x["status"] in ("next", "scheduled"))
     per_day = len(cfg["slots"])
