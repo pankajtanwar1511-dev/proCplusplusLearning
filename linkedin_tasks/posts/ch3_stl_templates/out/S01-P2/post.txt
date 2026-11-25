@@ -1,0 +1,13 @@
+=== POST TEXT ===
+One reserve(100) on a 5-char string.
+Then the old c_str() pointer is printed.
+ASan runs clean.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Results: libstdc++ / GCC 11, x86-64. Short strings live somewhere unusual.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

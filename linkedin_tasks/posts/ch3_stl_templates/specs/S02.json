@@ -1,0 +1,413 @@
+[
+  {
+    "id": "S02-TH",
+    "type": "theory",
+    "topic_no": 2,
+    "topic_short": "string_view & span",
+    "source": "topic_02 theory",
+    "text": {
+      "hook": "\"string_view is just a faster const std::string&.\"\nIt is a pointer and a length. Every rule follows from that.\n\nThe mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+      "body": "Inside:\n1. What a view is made of\n2. Views that dangle at the semicolon\n3. `data()` and C APIs\n4. Choosing a text parameter, and `std::span`\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "string_view & span:<br>the mental model<br>+ 6 myths",
+        "lead": "A pointer and a length. Every rule follows from that.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "A borrow with no borrow checker",
+        "cards": [
+          {
+            "label": "string_view (C++17)",
+            "text": "`{const char* data; size_t size;}`. Read-only."
+          },
+          {
+            "label": "span<T> (C++20)",
+            "text": "`{T* data; size_t size;}` over any contiguous `T`."
+          },
+          {
+            "label": "Never",
+            "text": "Allocates, frees, or extends any lifetime."
+          }
+        ],
+        "takeaway": "Great parameters. Risky return values, members, map keys and captured lambda state."
+      },
+      {
+        "layout": "table",
+        "kicker": "Lifetime",
+        "title": "Views that dangle at the semicolon",
+        "header": [
+          "Code",
+          "Verdict"
+        ],
+        "rows": [
+          [
+            "`sv = \"name\";`",
+            "Safe: static storage"
+          ],
+          [
+            "`sv = std::string(\"hello\");`",
+            "Dangles: a temporary `std::string`"
+          ],
+          [
+            "`sv = s + \"x\";`",
+            "Dangles: `operator+` returns a temporary"
+          ],
+          [
+            "`g(std::string(\"x\"));`",
+            "Safe: `g` takes a view and does not store it"
+          ]
+        ],
+        "takeaway": "Lifetime extension needs a reference. A `string_view` is an object: binding it to a temporary extends nothing."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Not null-terminated",
+        "hero": "`sv.data()` is not<br>a C string.",
+        "lead": "A view from `substr` or `(ptr, len)` usually has no terminator. `strlen`, `printf(\"%s\")`, `fopen` read past it. `std::cout << sv` is fine: it uses the size."
+      },
+      {
+        "layout": "cards",
+        "kicker": "When the owner changes",
+        "title": "The view never finds out",
+        "cards": [
+          {
+            "label": "`s[i] = c`",
+            "text": "Valid: same memory, the view sees the write."
+          },
+          {
+            "label": "`s += ...`, `clear()`",
+            "text": "Formally invalid, even without reallocation. The view's size never updates."
+          },
+          {
+            "label": "Reallocation",
+            "text": "Points into freed memory. ASan: `heap-use-after-free`."
+          }
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Choosing a parameter",
+        "title": "Which type for text?",
+        "header": [
+          "Parameter",
+          "Use when"
+        ],
+        "rows": [
+          [
+            "`std::string_view` (by value)",
+            "Read only, during the call, no terminator needed"
+          ],
+          [
+            "`const std::string&`",
+            "You need `c_str()`"
+          ],
+          [
+            "`std::string` (by value)",
+            "You store it: `member_ = std::move(p);`"
+          ],
+          [
+            "`const char*`",
+            "C interop"
+          ]
+        ],
+        "takeaway": "A view parameter does not stop the function from storing the view. Storing needs an owning copy."
+      },
+      {
+        "layout": "cards",
+        "kicker": "std::span (C++20)",
+        "title": "Static or dynamic extent",
+        "cards": [
+          {
+            "label": "`span<int>`",
+            "text": "Pointer + size: 16 bytes on 64-bit."
+          },
+          {
+            "label": "`span<int, 4>`",
+            "text": "Size in the type, only a pointer: 8 bytes."
+          },
+          {
+            "label": "`operator[]`",
+            "text": "Unchecked. C++26 adds `at()`."
+          }
+        ],
+        "takeaway": "A `std::span<const T>` parameter accepts a vector, a `std::array` or a C array: no template, no copy."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A `string_view` keeps the string alive.\"",
+            "truth": "It owns nothing and extends nothing."
+          },
+          {
+            "myth": "\"A view of a returned temporary lives until the caller's statement ends.\"",
+            "truth": "`return std::string(\"x\");` as a view dies at the end of that `return`, inside the callee."
+          },
+          {
+            "myth": "\"If the string does not reallocate, my view is still valid.\"",
+            "truth": "Any non-exempt mutation formally invalidates it, and its size never updates."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A `string_view` can modify the characters it views.\"",
+            "truth": "It is read-only. `std::span<char>` can write through."
+          },
+          {
+            "myth": "\"`string_view` is always faster than `const std::string&`.\"",
+            "truth": "Not if the function needs `c_str()`: the view forces a copy later."
+          },
+          {
+            "myth": "\"`span` checks bounds.\"",
+            "truth": "`operator[]` is unchecked. C++26 adds `at()`."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "A view is exactly<br>as valid as<br>its owner.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S02-P4",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "string_view & span",
+    "source": "topic_02 practice Q4",
+    "text": {
+      "hook": "Slice a record into a string_view.\nOne line, no copy, no warning from GCC.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The kind of line that ships in a parser refactor.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · string_view",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::string record =\n    \"customer-account-identifier-42:active\";\n  std::string_view name =\n    record.substr(0, record.find(':'));\n  std::cout << '[' << name << \"]\\n\";\n}",
+        "options": [
+          "UB: `name` dangles",
+          "Prints the identifier",
+          "Compile error",
+          "Prints the whole record"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. UB: name dangles",
+        "verdict_sub": "GCC 11 printed garbage. ASan: `heap-use-after-free`",
+        "bullets": [
+          "`record.substr(...)` is `std::string::substr`: a new owning string, not a view of `record`.",
+          "The view binds to that temporary, which dies at the semicolon.",
+          "The 30-char substring lives on the heap, so the print reads freed memory.",
+          "A short substring sits in the SSO buffer and may print correctly: still UB."
+        ],
+        "wrong": "\"Prints the identifier: string_view slices are zero-copy\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Make the view first, then slice",
+        "columns": [
+          {
+            "label": "dangles",
+            "code": "record.substr(\n  0, record.find(':'))",
+            "verdict": "slices a temporary string"
+          },
+          {
+            "label": "safe",
+            "code": "std::string_view whole\n  = record;\nwhole.substr(\n  0, whole.find(':'))",
+            "verdict": "a view of `record`",
+            "verdict_ok": true
+          }
+        ],
+        "tip": "Clang warns here with `-Wdangling-gsl`. GCC 11 with `-Wall -Wextra` is silent.",
+        "takeaway": "`string_view::substr` is O(1). `std::string::substr` allocates a temporary."
+      }
+    ]
+  },
+  {
+    "id": "S02-P7",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "string_view & span",
+    "source": "topic_02 practice Q7",
+    "text": {
+      "hook": "`use_default` is false.\nSo `label` just views `configured`. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No threads, no heap tricks. One conditional operator.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · string_view",
+        "title": "Run with no arguments.<br>What happens?",
+        "code": "int main(int argc, char**) {\n  std::string configured =\n    \"primary-event-logger-with-a-long-name\";\n  bool use_default = argc > 5;\n  std::string_view label =\n    use_default ? \"default\" : configured;\n  std::cout << label << '\\n';\n}",
+        "options": [
+          "Prints the configured name",
+          "Prints `default`",
+          "UB: `label` dangles",
+          "Compile error: branch types differ"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. UB: label dangles",
+        "verdict_sub": "Even on the false branch. ASan: `heap-use-after-free`",
+        "bullets": [
+          "`?:` needs one type for both branches: `const char[8]` and `std::string` give a `std::string` prvalue.",
+          "So the expression makes a **temporary copy** of `configured`.",
+          "The view binds to the copy, which dies at the semicolon. It never pointed at `configured`."
+        ],
+        "wrong": "\"Prints the configured name: the false branch is just `configured`\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Make both branches views",
+        "code": "using namespace std::literals;\nstd::string_view label = use_default\n  ? \"default\"sv\n  : std::string_view(configured);",
+        "tip": "Now the common type is `std::string_view`: no temporary, no copy.",
+        "takeaway": "The conditional operator's type can be an owning temporary."
+      }
+    ]
+  },
+  {
+    "id": "S02-P8",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "string_view & span",
+    "source": "topic_02 practice Q8",
+    "text": {
+      "hook": "A 3-character view of \"abcdef\".\nHand its `data()` to `strlen`. What comes back?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Every C API boundary in your codebase asks this question.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · string_view",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::string t = \"abcdef\";\n  std::string_view v =\n    std::string_view(t).substr(0, 3);\n  std::cout << v << ' ' << v.size() << ' '\n            << std::strlen(v.data());\n}",
+        "options": [
+          "`abc 3 3`",
+          "`abc 3 6`",
+          "`abcdef 3 6`",
+          "UB: `strlen` reads past `t`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. abc 3 6",
+        "verdict_sub": "`strlen` ignores the view's size",
+        "bullets": [
+          "`std::cout << v` uses the view's size: `abc`.",
+          "`strlen(v.data())` scans for `'\\0'`, which only comes after `\"def\"` in `t`'s buffer: 6.",
+          "The scan stays inside `t`, so it is not UB, just wrong. A view into a raw buffer may have no terminator at all."
+        ],
+        "wrong": "\"`abc 3 3`: the view ends after 3 characters\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Pass the size, or a terminated copy",
+        "code": "std::printf(\"%.*s\\n\", int(v.size()),\n            v.data());       // abc\n\nstd::string owned(v);  // copy + '\\0'\nstd::puts(owned.c_str());     // abc",
+        "tip": "Functions that forward to C APIs should take `const std::string&`, not a view.",
+        "takeaway": "Never hand `string_view::data()` to an API that expects a null-terminated string."
+      }
+    ]
+  },
+  {
+    "id": "S02-P10",
+    "type": "code_puzzle",
+    "topic_no": 2,
+    "topic_short": "string_view & span",
+    "source": "topic_02 practice Q10",
+    "text": {
+      "hook": "A span over a vector with spare capacity.\npush_back, then write `v[0]`.\nWhat does the span see?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "`reserve` runs before the span is made. That detail matters.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::span (C++20)",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::vector<int> v{1, 2, 3};\n  v.reserve(10);\n  std::span<int> s = v;\n  v.push_back(4);\n  v[0] = 100;\n  std::cout << s.size() << ' ' << s[0]\n            << ' ' << v.size() << '\\n';\n}",
+        "options": [
+          "`4 100 4`",
+          "`3 1 4`",
+          "UB: `s` dangles",
+          "`3 100 4`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. 3 100 4",
+        "verdict_sub": "Well-defined: `push_back` does not reallocate",
+        "bullets": [
+          "`reserve(10)` ran before the span was made, so `push_back` keeps the same block.",
+          "The span stored `(data(), 3)` at construction: its size stays 3.",
+          "`v[0] = 100` writes the shared memory, so `s[0]` sees 100."
+        ],
+        "wrong": "\"`4 100 4`: the span is a live view of the vector\"",
+        "cta": "The twist ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The twist",
+        "title": "Drop the `reserve`",
+        "code": "std::vector<int> v{1, 2, 3};  // cap 3\nstd::span<int> s = v;\nv.push_back(4);  // reallocates\nstd::cout << s[0];  // UB: freed memory",
+        "tip": "libstdc++ grows capacity 3 to 6 here. ASan: `heap-use-after-free` on `s[0]`.",
+        "takeaway": "A span shares elements, never size changes, and dies on reallocation."
+      }
+    ]
+  }
+]

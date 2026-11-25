@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Three vectors built from the same source.
+C++17 CTAD deduces every element type.
+They all hold 4 ints. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Braces vs parentheses is the whole puzzle.
+
+#cpp #cplusplus #templates #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

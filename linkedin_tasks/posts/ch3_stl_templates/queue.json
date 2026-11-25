@@ -1,0 +1,1771 @@
+{
+ "chapter_title": "C++ STL & Templates",
+ "summary": {
+  "chapter": "ch3_stl_templates",
+  "chapter_title": "C++ STL & Templates",
+  "total_posts": 60,
+  "by_type": {
+   "theory": 12,
+   "code_puzzle": 48,
+   "concept": 0
+  },
+  "total_slides": 312,
+  "unrendered": [],
+  "appended": [],
+  "dropped": []
+ },
+ "posts": [
+  {
+   "id": "S05-TH",
+   "type": "theory",
+   "topic_no": 5,
+   "topic_short": "vector",
+   "source": "topic_05 theory",
+   "hook": "\"clear() gives the memory back.\"\nIt does not. The capacity stays.\n\nThe std::vector mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+   "body": "Inside:\n1. Three pointers, one heap block\n2. Growth factors by library\n3. reserve vs resize\n4. What reallocation does, in order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "\"clear() gives the memory back.\"\nIt does not. The capacity stays.\n\nThe std::vector mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.\n\nInside:\n1. Three pointers, one heap block\n2. Growth factors by library\n3. reserve vs resize\n4. What reallocation does, in order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "S05-TH/s-01.png",
+    "S05-TH/s-02.png",
+    "S05-TH/s-03.png",
+    "S05-TH/s-04.png",
+    "S05-TH/s-05.png",
+    "S05-TH/s-06.png",
+    "S05-TH/s-07.png",
+    "S05-TH/s-08.png",
+    "S05-TH/s-09.png",
+    "S05-TH/s-10.png"
+   ],
+   "pdf": "S05-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S05-P1",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "vector",
+   "source": "topic_05 practice Q1",
+   "hook": "reserve(n) first, so the loop never reallocates.\nThen fill by index.\nApproved in review.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A rotate by index that looks correct line by line.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "reserve(n) first, so the loop never reallocates.\nThen fill by index.\nApproved in review.\n\nLock in your answer below, then swipe ➜ to verify.\n\nA rotate by index that looks correct line by line.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S05-P1/s-01.png",
+    "S05-P1/s-02.png",
+    "S05-P1/s-03.png",
+    "S05-P1/s-04.png"
+   ],
+   "pdf": "S05-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S05-P4",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "vector",
+   "source": "topic_05 practice Q4",
+   "hook": "v(10), v{10}, v(10, 5), v{10, 5}.\nThen emplace_back(10) vs push_back({10}).\nSix sizes.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Every C++ developer has written one of these by accident.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "v(10), v{10}, v(10, 5), v{10, 5}.\nThen emplace_back(10) vs push_back({10}).\nSix sizes.\n\nLock in your answer below, then swipe ➜ to verify.\n\nEvery C++ developer has written one of these by accident.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S05-P4/s-01.png",
+    "S05-P4/s-02.png",
+    "S05-P4/s-03.png",
+    "S05-P4/s-04.png"
+   ],
+   "pdf": "S05-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S05-P5",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "vector",
+   "source": "topic_05 practice Q5",
+   "hook": "auto first = flags[0]; copies the flag.\nThen flags[0] = true;.\nfirst is still false. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "With std::vector<int> this is boring. This one is a vector<bool>.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "auto first = flags[0]; copies the flag.\nThen flags[0] = true;.\nfirst is still false. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nWith std::vector<int> this is boring. This one is a vector<bool>.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S05-P5/s-01.png",
+    "S05-P5/s-02.png",
+    "S05-P5/s-03.png",
+    "S05-P5/s-04.png"
+   ],
+   "pdf": "S05-P5/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S05-P6",
+   "type": "code_puzzle",
+   "topic_no": 5,
+   "topic_short": "vector",
+   "source": "topic_05 practice Q6",
+   "hook": "Remove every 2 from the vector with std::remove.\nThen print the size.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The algorithm's name promises more than it can do.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Remove every 2 from the vector with std::remove.\nThen print the size.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe algorithm's name promises more than it can do.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S05-P6/s-01.png",
+    "S05-P6/s-02.png",
+    "S05-P6/s-03.png",
+    "S05-P6/s-04.png"
+   ],
+   "pdf": "S05-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S06-TH",
+   "type": "theory",
+   "topic_no": 6,
+   "topic_short": "Iterators",
+   "source": "topic_06 theory",
+   "hook": "\"deque push_back keeps my iterators valid.\"\nReferences survive. Iterators do not.\n\nThe full invalidation table, plus 6 myths. Swipe ➜ and save it. 💡",
+   "body": "Inside:\n1. Three ways an iterator breaks\n2. vector rules, with and without reallocation\n3. deque, list, map, unordered, array\n4. Safe erase patterns\n5. What debug tools catch and miss\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "\"deque push_back keeps my iterators valid.\"\nReferences survive. Iterators do not.\n\nThe full invalidation table, plus 6 myths. Swipe ➜ and save it. 💡\n\nInside:\n1. Three ways an iterator breaks\n2. vector rules, with and without reallocation\n3. deque, list, map, unordered, array\n4. Safe erase patterns\n5. What debug tools catch and miss\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "S06-TH/s-01.png",
+    "S06-TH/s-02.png",
+    "S06-TH/s-03.png",
+    "S06-TH/s-04.png",
+    "S06-TH/s-05.png",
+    "S06-TH/s-06.png",
+    "S06-TH/s-07.png",
+    "S06-TH/s-08.png",
+    "S06-TH/s-09.png",
+    "S06-TH/s-10.png"
+   ],
+   "pdf": "S06-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S06-P3",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "Iterators",
+   "source": "topic_06 practice Q3",
+   "hook": "This loop already uses it = v.erase(it).\nThe reviewer said: \"Correct now, ship it.\"\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No crash, no sanitizer report. Read the loop header twice.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "This loop already uses it = v.erase(it).\nThe reviewer said: \"Correct now, ship it.\"\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo crash, no sanitizer report. Read the loop header twice.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S06-P3/s-01.png",
+    "S06-P3/s-02.png",
+    "S06-P3/s-03.png",
+    "S06-P3/s-04.png"
+   ],
+   "pdf": "S06-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S06-P1",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "Iterators",
+   "source": "topic_06 practice Q1",
+   "hook": "Capacity is reserved. Nothing reallocates.\nSo the iterator to 300 is still fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The buffer address does not change. ASan stays silent.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Capacity is reserved. Nothing reallocates.\nSo the iterator to 300 is still fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe buffer address does not change. ASan stays silent.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S06-P1/s-01.png",
+    "S06-P1/s-02.png",
+    "S06-P1/s-03.png",
+    "S06-P1/s-04.png"
+   ],
+   "pdf": "S06-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S06-P9",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "Iterators",
+   "source": "topic_06 practice Q9",
+   "hook": "Print every second element.\nit += 2, stop at end(). Three lines, looks fine.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Tests with an even size pass every time.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Print every second element.\nit += 2, stop at end(). Three lines, looks fine.\n\nLock in your answer below, then swipe ➜ to verify.\n\nTests with an even size pass every time.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S06-P9/s-01.png",
+    "S06-P9/s-02.png",
+    "S06-P9/s-03.png",
+    "S06-P9/s-04.png"
+   ],
+   "pdf": "S06-P9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S06-P10",
+   "type": "code_puzzle",
+   "topic_no": 6,
+   "topic_short": "Iterators",
+   "source": "topic_06 practice Q10",
+   "hook": "Find the 3 from the back with a reverse iterator.\nThen erase it with rit.base(). Clean, short, compiles.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One of those bugs that only shows up in the output.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Find the 3 from the back with a reverse iterator.\nThen erase it with rit.base(). Clean, short, compiles.\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne of those bugs that only shows up in the output.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S06-P10/s-01.png",
+    "S06-P10/s-02.png",
+    "S06-P10/s-03.png",
+    "S06-P10/s-04.png"
+   ],
+   "pdf": "S06-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S01-TH",
+   "type": "theory",
+   "topic_no": 1,
+   "topic_short": "std::string",
+   "source": "topic_01 theory",
+   "hook": "\"A string copy shares the buffer until someone writes.\"\nThat answer stopped being true in C++11.\n\nThe std::string mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+   "body": "Inside:\n1. The object vs the characters\n2. SSO, library by library\n3. Which calls kill your pointers\n4. Capacity and construction traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"A string copy shares the buffer until someone writes.\"\nThat answer stopped being true in C++11.\n\nThe std::string mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.\n\nInside:\n1. The object vs the characters\n2. SSO, library by library\n3. Which calls kill your pointers\n4. Capacity and construction traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "S01-TH/s-01.png",
+    "S01-TH/s-02.png",
+    "S01-TH/s-03.png",
+    "S01-TH/s-04.png",
+    "S01-TH/s-05.png",
+    "S01-TH/s-06.png",
+    "S01-TH/s-07.png",
+    "S01-TH/s-08.png",
+    "S01-TH/s-09.png",
+    "S01-TH/s-10.png"
+   ],
+   "pdf": "S01-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S01-P3",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "std::string",
+   "source": "topic_01 practice Q3",
+   "hook": "if (text.find(\"key\")) reads like \"contains\".\nIt passed code review.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two ifs and one comparison. Three characters of output.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "if (text.find(\"key\")) reads like \"contains\".\nIt passed code review.\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo ifs and one comparison. Three characters of output.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S01-P3/s-01.png",
+    "S01-P3/s-02.png",
+    "S01-P3/s-03.png",
+    "S01-P3/s-04.png"
+   ],
+   "pdf": "S01-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S01-P2",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "std::string",
+   "source": "topic_01 practice Q2",
+   "hook": "One reserve(100) on a 5-char string.\nThen the old c_str() pointer is printed.\nASan runs clean.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Results: libstdc++ / GCC 11, x86-64. Short strings live somewhere unusual.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "One reserve(100) on a 5-char string.\nThen the old c_str() pointer is printed.\nASan runs clean.\n\nLock in your answer below, then swipe ➜ to verify.\n\nResults: libstdc++ / GCC 11, x86-64. Short strings live somewhere unusual.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S01-P2/s-01.png",
+    "S01-P2/s-02.png",
+    "S01-P2/s-03.png",
+    "S01-P2/s-04.png"
+   ],
+   "pdf": "S01-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S01-P5",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "std::string",
+   "source": "topic_01 practice Q5",
+   "hook": "\"Config value missing? Pass nullptr.\nstd::string makes it an empty string.\"\nA review comment. True in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "C++23 changed half of this story. Slide 3 shows which half.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"Config value missing? Pass nullptr.\nstd::string makes it an empty string.\"\nA review comment. True in C++20?\n\nLock in your answer below, then swipe ➜ to verify.\n\nC++23 changed half of this story. Slide 3 shows which half.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S01-P5/s-01.png",
+    "S01-P5/s-02.png",
+    "S01-P5/s-03.png",
+    "S01-P5/s-04.png"
+   ],
+   "pdf": "S01-P5/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S01-P6",
+   "type": "code_puzzle",
+   "topic_no": 1,
+   "topic_short": "std::string",
+   "source": "topic_01 practice Q6",
+   "hook": "Same 5 bytes: \"ab\\0cd\".\nTwo strings, three sizes printed.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Binary data in a std::string is legal. The question is who is counting.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Same 5 bytes: \"ab\\0cd\".\nTwo strings, three sizes printed.\n\nLock in your answer below, then swipe ➜ to verify.\n\nBinary data in a std::string is legal. The question is who is counting.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S01-P6/s-01.png",
+    "S01-P6/s-02.png",
+    "S01-P6/s-03.png",
+    "S01-P6/s-04.png"
+   ],
+   "pdf": "S01-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S08-TH",
+   "type": "theory",
+   "topic_no": 8,
+   "topic_short": "map & set",
+   "source": "topic_08 theory",
+   "hook": "\"std::set uses operator== to find duplicates.\"\nThat answer fails C++ interviews.\n\nThe map and set mental model, plus 6 myths. Swipe ➜ and save it. 💡",
+   "body": "Inside:\n1. A tree with a comparator that decides identity\n2. The insertion family, side by side\n3. The comparator contract\n4. Heterogeneous lookup with std::less<>\n5. extract, merge and the alternatives\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "\"std::set uses operator== to find duplicates.\"\nThat answer fails C++ interviews.\n\nThe map and set mental model, plus 6 myths. Swipe ➜ and save it. 💡\n\nInside:\n1. A tree with a comparator that decides identity\n2. The insertion family, side by side\n3. The comparator contract\n4. Heterogeneous lookup with std::less<>\n5. extract, merge and the alternatives\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "S08-TH/s-01.png",
+    "S08-TH/s-02.png",
+    "S08-TH/s-03.png",
+    "S08-TH/s-04.png",
+    "S08-TH/s-05.png",
+    "S08-TH/s-06.png",
+    "S08-TH/s-07.png",
+    "S08-TH/s-08.png",
+    "S08-TH/s-09.png",
+    "S08-TH/s-10.png"
+   ],
+   "pdf": "S08-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S08-P1",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "map & set",
+   "source": "topic_08 practice Q1",
+   "hook": "Only checking stock. Nothing is written.\nSo the map cannot grow. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One map, three lookups, one size at the end.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Only checking stock. Nothing is written.\nSo the map cannot grow. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne map, three lookups, one size at the end.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S08-P1/s-01.png",
+    "S08-P1/s-02.png",
+    "S08-P1/s-03.png",
+    "S08-P1/s-04.png"
+   ],
+   "pdf": "S08-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S08-P3",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "map & set",
+   "source": "topic_08 practice Q3",
+   "hook": "Sort orders by price, highest first: a.price >= b.price.\nTests with distinct prices pass. Then 40 orders share one price.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No compiler warning. The comparator reads naturally.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Sort orders by price, highest first: a.price >= b.price.\nTests with distinct prices pass. Then 40 orders share one price.\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo compiler warning. The comparator reads naturally.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S08-P3/s-01.png",
+    "S08-P3/s-02.png",
+    "S08-P3/s-03.png",
+    "S08-P3/s-04.png"
+   ],
+   "pdf": "S08-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S08-P4",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "map & set",
+   "source": "topic_08 practice Q4",
+   "hook": "Greatest key <= k: lower_bound, then step back once.\nWorks for 25. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two calls, one of them a key that exists.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Greatest key <= k: lower_bound, then step back once.\nWorks for 25. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo calls, one of them a key that exists.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S08-P4/s-01.png",
+    "S08-P4/s-02.png",
+    "S08-P4/s-03.png",
+    "S08-P4/s-04.png"
+   ],
+   "pdf": "S08-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S08-P5",
+   "type": "code_puzzle",
+   "topic_no": 8,
+   "topic_short": "map & set",
+   "source": "topic_08 practice Q5",
+   "hook": "A range-for over a map with the pair type spelled out.\nNo auto, very explicit. And a pointer to the value.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One word is missing from the loop variable's type.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "A range-for over a map with the pair type spelled out.\nNo auto, very explicit. And a pointer to the value.\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne word is missing from the loop variable's type.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S08-P5/s-01.png",
+    "S08-P5/s-02.png",
+    "S08-P5/s-03.png",
+    "S08-P5/s-04.png"
+   ],
+   "pdf": "S08-P5/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S02-TH",
+   "type": "theory",
+   "topic_no": 2,
+   "topic_short": "string_view & span",
+   "source": "topic_02 theory",
+   "hook": "\"string_view is just a faster const std::string&.\"\nIt is a pointer and a length. Every rule follows from that.\n\nThe mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+   "body": "Inside:\n1. What a view is made of\n2. Views that dangle at the semicolon\n3. data() and C APIs\n4. Choosing a text parameter, and std::span\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"string_view is just a faster const std::string&.\"\nIt is a pointer and a length. Every rule follows from that.\n\nThe mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.\n\nInside:\n1. What a view is made of\n2. Views that dangle at the semicolon\n3. data() and C APIs\n4. Choosing a text parameter, and std::span\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "S02-TH/s-01.png",
+    "S02-TH/s-02.png",
+    "S02-TH/s-03.png",
+    "S02-TH/s-04.png",
+    "S02-TH/s-05.png",
+    "S02-TH/s-06.png",
+    "S02-TH/s-07.png",
+    "S02-TH/s-08.png",
+    "S02-TH/s-09.png",
+    "S02-TH/s-10.png"
+   ],
+   "pdf": "S02-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S02-P4",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "string_view & span",
+   "source": "topic_02 practice Q4",
+   "hook": "Slice a record into a string_view.\nOne line, no copy, no warning from GCC.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The kind of line that ships in a parser refactor.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Slice a record into a string_view.\nOne line, no copy, no warning from GCC.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe kind of line that ships in a parser refactor.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S02-P4/s-01.png",
+    "S02-P4/s-02.png",
+    "S02-P4/s-03.png",
+    "S02-P4/s-04.png"
+   ],
+   "pdf": "S02-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S02-P7",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "string_view & span",
+   "source": "topic_02 practice Q7",
+   "hook": "use_default is false.\nSo label just views configured. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No threads, no heap tricks. One conditional operator.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "use_default is false.\nSo label just views configured. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo threads, no heap tricks. One conditional operator.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S02-P7/s-01.png",
+    "S02-P7/s-02.png",
+    "S02-P7/s-03.png",
+    "S02-P7/s-04.png"
+   ],
+   "pdf": "S02-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S02-P8",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "string_view & span",
+   "source": "topic_02 practice Q8",
+   "hook": "A 3-character view of \"abcdef\".\nHand its data() to strlen. What comes back?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Every C API boundary in your codebase asks this question.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A 3-character view of \"abcdef\".\nHand its data() to strlen. What comes back?\n\nLock in your answer below, then swipe ➜ to verify.\n\nEvery C API boundary in your codebase asks this question.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S02-P8/s-01.png",
+    "S02-P8/s-02.png",
+    "S02-P8/s-03.png",
+    "S02-P8/s-04.png"
+   ],
+   "pdf": "S02-P8/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S02-P10",
+   "type": "code_puzzle",
+   "topic_no": 2,
+   "topic_short": "string_view & span",
+   "source": "topic_02 practice Q10",
+   "hook": "A span over a vector with spare capacity.\npush_back, then write v[0].\nWhat does the span see?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "reserve runs before the span is made. That detail matters.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A span over a vector with spare capacity.\npush_back, then write v[0].\nWhat does the span see?\n\nLock in your answer below, then swipe ➜ to verify.\n\nreserve runs before the span is made. That detail matters.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S02-P10/s-01.png",
+    "S02-P10/s-02.png",
+    "S02-P10/s-03.png",
+    "S02-P10/s-04.png"
+   ],
+   "pdf": "S02-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S09-P3",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "Unordered & Hashing",
+   "source": "topic_09 practice Q3",
+   "hook": "reserve(1000) forces a rehash.\nA reference, a pointer and an iterator all point at the same element.\nWhich ones are still safe?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "All three lines print \"one\" on GCC. That proves less than it seems.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "reserve(1000) forces a rehash.\nA reference, a pointer and an iterator all point at the same element.\nWhich ones are still safe?\n\nLock in your answer below, then swipe ➜ to verify.\n\nAll three lines print \"one\" on GCC. That proves less than it seems.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S09-P3/s-01.png",
+    "S09-P3/s-02.png",
+    "S09-P3/s-03.png",
+    "S09-P3/s-04.png"
+   ],
+   "pdf": "S09-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S09-TH",
+   "type": "theory",
+   "topic_no": 9,
+   "topic_short": "Unordered & Hashing",
+   "source": "topic_09 theory",
+   "hook": "\"unordered_map lookup is O(1).\"\nOnly on average. Worst case is O(n), and every rehash invalidates your iterators.\n\nSwipe ➜ for the mental model and 6 myths that fail interviews.",
+   "body": "Inside:\n1. Buckets of linked nodes\n2. Average, worst and amortized cost\n3. When a rehash happens\n4. What survives a rehash\n5. Custom keys and hash quality\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "\"unordered_map lookup is O(1).\"\nOnly on average. Worst case is O(n), and every rehash invalidates your iterators.\n\nSwipe ➜ for the mental model and 6 myths that fail interviews.\n\nInside:\n1. Buckets of linked nodes\n2. Average, worst and amortized cost\n3. When a rehash happens\n4. What survives a rehash\n5. Custom keys and hash quality\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "S09-TH/s-01.png",
+    "S09-TH/s-02.png",
+    "S09-TH/s-03.png",
+    "S09-TH/s-04.png",
+    "S09-TH/s-05.png",
+    "S09-TH/s-06.png",
+    "S09-TH/s-07.png",
+    "S09-TH/s-08.png",
+    "S09-TH/s-09.png",
+    "S09-TH/s-10.png"
+   ],
+   "pdf": "S09-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S09-P6",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "Unordered & Hashing",
+   "source": "topic_09 practice Q6",
+   "hook": "The key \"order\" is in the map.\nThe lookup string is \"order\" too.\nSame characters. Same count?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The lookup text arrives at runtime, e.g. read from a socket.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "The key \"order\" is in the map.\nThe lookup string is \"order\" too.\nSame characters. Same count?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe lookup text arrives at runtime, e.g. read from a socket.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S09-P6/s-01.png",
+    "S09-P6/s-02.png",
+    "S09-P6/s-03.png",
+    "S09-P6/s-04.png"
+   ],
+   "pdf": "S09-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S09-P2",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "Unordered & Hashing",
+   "source": "topic_09 practice Q2",
+   "hook": "Point has a defaulted operator==.\nSo it can be an unordered_map key. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Three lines of code, one familiar struct. Read the first error carefully.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Point has a defaulted operator==.\nSo it can be an unordered_map key. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThree lines of code, one familiar struct. Read the first error carefully.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S09-P2/s-01.png",
+    "S09-P2/s-02.png",
+    "S09-P2/s-03.png",
+    "S09-P2/s-04.png"
+   ],
+   "pdf": "S09-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S09-P1",
+   "type": "code_puzzle",
+   "topic_no": 9,
+   "topic_short": "Unordered & Hashing",
+   "source": "topic_09 practice Q1",
+   "hook": "Five int keys: 0, 10, 20, 30, 40.\nPrint the map, call rehash, print it again.\nThe keys did not change. Does the output?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Measured on GCC 11 / libstdc++, x86-64. Another library may differ, which is the point.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Five int keys: 0, 10, 20, 30, 40.\nPrint the map, call rehash, print it again.\nThe keys did not change. Does the output?\n\nLock in your answer below, then swipe ➜ to verify.\n\nMeasured on GCC 11 / libstdc++, x86-64. Another library may differ, which is the point.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S09-P1/s-01.png",
+    "S09-P1/s-02.png",
+    "S09-P1/s-03.png",
+    "S09-P1/s-04.png"
+   ],
+   "pdf": "S09-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S03-TH",
+   "type": "theory",
+   "topic_no": 3,
+   "topic_short": "optional & expected",
+   "source": "topic_03 theory",
+   "hook": "std::optional allocates nothing of its own.\nAnd assigning to a full one keeps the old object alive.\n\nThe mental model for optional and expected, plus 6 myths. Swipe ➜",
+   "body": "Inside:\n1. A value plus a flag, in place\n2. How an empty optional compares\n3. What happens to the T inside\n4. expected: a value or a typed error\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "std::optional allocates nothing of its own.\nAnd assigning to a full one keeps the old object alive.\n\nThe mental model for optional and expected, plus 6 myths. Swipe ➜\n\nInside:\n1. A value plus a flag, in place\n2. How an empty optional compares\n3. What happens to the T inside\n4. expected: a value or a typed error\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "S03-TH/s-01.png",
+    "S03-TH/s-02.png",
+    "S03-TH/s-03.png",
+    "S03-TH/s-04.png",
+    "S03-TH/s-05.png",
+    "S03-TH/s-06.png",
+    "S03-TH/s-07.png",
+    "S03-TH/s-08.png",
+    "S03-TH/s-09.png",
+    "S03-TH/s-10.png"
+   ],
+   "pdf": "S03-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S03-P2",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "optional & expected",
+   "source": "topic_03 practice Q2",
+   "hook": "The cache already holds a value.\nSo the fallback never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A one-liner that shows up in every config and cache lookup.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The cache already holds a value.\nSo the fallback never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nA one-liner that shows up in every config and cache lookup.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S03-P2/s-01.png",
+    "S03-P2/s-02.png",
+    "S03-P2/s-03.png",
+    "S03-P2/s-04.png"
+   ],
+   "pdf": "S03-P2/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S03-P6",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "optional & expected",
+   "source": "topic_03 practice Q6",
+   "hook": "The config file does not exist.\nThe function returns an error message.\nWhat does the caller see?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "C++23 std::expected. Both branches look right.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The config file does not exist.\nThe function returns an error message.\nWhat does the caller see?\n\nLock in your answer below, then swipe ➜ to verify.\n\nC++23 std::expected. Both branches look right.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S03-P6/s-01.png",
+    "S03-P6/s-02.png",
+    "S03-P6/s-03.png",
+    "S03-P6/s-04.png"
+   ],
+   "pdf": "S03-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S03-Q5",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "optional & expected",
+   "source": "topic_03 qa Q5",
+   "hook": "The feature flag is explicitly set to false.\nThe code checks if (enabled).\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "std::optional<bool>: a three-state flag that reads like a two-state one.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The feature flag is explicitly set to false.\nThe code checks if (enabled).\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.\n\nstd::optional<bool>: a three-state flag that reads like a two-state one.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S03-Q5/s-01.png",
+    "S03-Q5/s-02.png",
+    "S03-Q5/s-03.png",
+    "S03-Q5/s-04.png"
+   ],
+   "pdf": "S03-Q5/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S03-P10",
+   "type": "code_puzzle",
+   "topic_no": 3,
+   "topic_short": "optional & expected",
+   "source": "topic_03 practice Q10",
+   "hook": "The parser correctly returns std::nullopt.\nThe caller skipped one check.\nWhat does *port do now?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two accessors look alike. Only one is checked.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The parser correctly returns std::nullopt.\nThe caller skipped one check.\nWhat does *port do now?\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo accessors look alike. Only one is checked.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S03-P10/s-01.png",
+    "S03-P10/s-02.png",
+    "S03-P10/s-03.png",
+    "S03-P10/s-04.png"
+   ],
+   "pdf": "S03-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S10-TH",
+   "type": "theory",
+   "topic_no": 10,
+   "topic_short": "Templates",
+   "source": "topic_10 theory",
+   "hook": "\"Templates go in headers because .cpp files cannot hold them.\"\nWrong. The real rule is visibility at instantiation.\n\nSwipe ➜ for the template rules interviewers probe, plus 6 myths.",
+   "body": "Inside:\n1. Instantiation and why templates live in headers\n2. The deduction table\n3. Overload vs specialize\n4. Disambiguators and CTAD\n5. Folds and CRTP vs deducing this\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"Templates go in headers because .cpp files cannot hold them.\"\nWrong. The real rule is visibility at instantiation.\n\nSwipe ➜ for the template rules interviewers probe, plus 6 myths.\n\nInside:\n1. Instantiation and why templates live in headers\n2. The deduction table\n3. Overload vs specialize\n4. Disambiguators and CTAD\n5. Folds and CRTP vs deducing this\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #templates #moderncpp #interviewprep",
+   "first_comment": "Which slide was new to you? Comment the number 👇 and save the post for your interview prep.",
+   "slide_count": 10,
+   "slides": [
+    "S10-TH/s-01.png",
+    "S10-TH/s-02.png",
+    "S10-TH/s-03.png",
+    "S10-TH/s-04.png",
+    "S10-TH/s-05.png",
+    "S10-TH/s-06.png",
+    "S10-TH/s-07.png",
+    "S10-TH/s-08.png",
+    "S10-TH/s-09.png",
+    "S10-TH/s-10.png"
+   ],
+   "pdf": "S10-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S10-P1",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "Templates",
+   "source": "topic_10 practice Q1",
+   "hook": "A two-line generic add.\nCalled with an int and a double.\n\"The int just converts to double.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Ordinary functions convert arguments all the time. Templates play by a different rule.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A two-line generic add.\nCalled with an int and a double.\n\"The int just converts to double.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOrdinary functions convert arguments all the time. Templates play by a different rule.\n\n#cpp #cplusplus #templates #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S10-P1/s-01.png",
+    "S10-P1/s-02.png",
+    "S10-P1/s-03.png",
+    "S10-P1/s-04.png"
+   ],
+   "pdf": "S10-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S10-P8",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "Templates",
+   "source": "topic_10 practice Q8",
+   "hook": "Three vectors built from the same source.\nC++17 CTAD deduces every element type.\nThey all hold 4 ints. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Braces vs parentheses is the whole puzzle.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Three vectors built from the same source.\nC++17 CTAD deduces every element type.\nThey all hold 4 ints. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nBraces vs parentheses is the whole puzzle.\n\n#cpp #cplusplus #templates #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S10-P8/s-01.png",
+    "S10-P8/s-02.png",
+    "S10-P8/s-03.png",
+    "S10-P8/s-04.png"
+   ],
+   "pdf": "S10-P8/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S10-P7",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "Templates",
+   "source": "topic_10 practice Q7",
+   "hook": "Cache inherits reset() from Storage.\nCalling an inherited member is basic C++.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Without the templates this compiles fine. Add them and the compiler stops trusting the base.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "Cache inherits reset() from Storage.\nCalling an inherited member is basic C++.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.\n\nWithout the templates this compiles fine. Add them and the compiler stops trusting the base.\n\n#cpp #cplusplus #templates #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S10-P7/s-01.png",
+    "S10-P7/s-02.png",
+    "S10-P7/s-03.png",
+    "S10-P7/s-04.png"
+   ],
+   "pdf": "S10-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S10-P11",
+   "type": "code_puzzle",
+   "topic_no": 10,
+   "topic_short": "Templates",
+   "source": "topic_10 practice Q11",
+   "hook": "\"A plain function always beats a template.\"\nTwo plain overloads, one template, three calls.\nThe last one is a short.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The first two calls are warm-up. The third is the interview question.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "\"A plain function always beats a template.\"\nTwo plain overloads, one template, three calls.\nThe last one is a short.\n\nLock in your answer below, then swipe ➜ to verify.\n\nThe first two calls are warm-up. The third is the interview question.\n\n#cpp #cplusplus #templates #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S10-P11/s-01.png",
+    "S10-P11/s-02.png",
+    "S10-P11/s-03.png",
+    "S10-P11/s-04.png"
+   ],
+   "pdf": "S10-P11/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S07-TH",
+   "type": "theory",
+   "topic_no": 7,
+   "topic_short": "Sequence Containers",
+   "source": "topic_07 theory",
+   "hook": "\"deque is just a vector that can also grow at the front.\"\nThat answer fails C++ interviews.\n\nFive containers, their real memory layouts, plus 6 myths. Swipe ➜ and save it. 💡",
+   "body": "Inside:\n1. Four memory layouts\n2. deque by the numbers\n3. list, forward_list, array\n4. Adaptors and pop() returning void\n5. Which container for which need\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "\"deque is just a vector that can also grow at the front.\"\nThat answer fails C++ interviews.\n\nFive containers, their real memory layouts, plus 6 myths. Swipe ➜ and save it. 💡\n\nInside:\n1. Four memory layouts\n2. deque by the numbers\n3. list, forward_list, array\n4. Adaptors and pop() returning void\n5. Which container for which need\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "S07-TH/s-01.png",
+    "S07-TH/s-02.png",
+    "S07-TH/s-03.png",
+    "S07-TH/s-04.png",
+    "S07-TH/s-05.png",
+    "S07-TH/s-06.png",
+    "S07-TH/s-07.png",
+    "S07-TH/s-08.png",
+    "S07-TH/s-09.png",
+    "S07-TH/s-10.png"
+   ],
+   "pdf": "S07-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S07-P3",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "Sequence Containers",
+   "source": "topic_07 practice Q3",
+   "hook": "A list of 3 numbers. std::sort, the algorithm everyone knows.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Same code with a vector works. The list changes one thing.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "A list of 3 numbers. std::sort, the algorithm everyone knows.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.\n\nSame code with a vector works. The list changes one thing.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S07-P3/s-01.png",
+    "S07-P3/s-02.png",
+    "S07-P3/s-03.png",
+    "S07-P3/s-04.png"
+   ],
+   "pdf": "S07-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S07-P7",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "Sequence Containers",
+   "source": "topic_07 practice Q7",
+   "hook": "Two priority queues. One uses the default, one uses std::greater.\n\"greater\" means biggest first. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Same four values pushed into both queues.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "Two priority queues. One uses the default, one uses std::greater.\n\"greater\" means biggest first. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nSame four values pushed into both queues.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S07-P7/s-01.png",
+    "S07-P7/s-02.png",
+    "S07-P7/s-03.png",
+    "S07-P7/s-04.png"
+   ],
+   "pdf": "S07-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S07-P4",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "Sequence Containers",
+   "source": "topic_07 practice Q4",
+   "hook": "list::unique(). The name says it all:\nevery value appears once afterwards. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Seven values, three distinct. Count what is left.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "list::unique(). The name says it all:\nevery value appears once afterwards. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nSeven values, three distinct. Count what is left.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S07-P4/s-01.png",
+    "S07-P4/s-02.png",
+    "S07-P4/s-03.png",
+    "S07-P4/s-04.png"
+   ],
+   "pdf": "S07-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S07-P6",
+   "type": "code_puzzle",
+   "topic_no": 7,
+   "topic_short": "Sequence Containers",
+   "source": "topic_07 practice Q6",
+   "hook": "std::array is the safe, modern C array.\nSo std::array<int, 3> a; starts zeroed. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Three declarations, three different initializations.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "datastructures",
+    "interviewprep"
+   ],
+   "post_text": "std::array is the safe, modern C array.\nSo std::array<int, 3> a; starts zeroed. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThree declarations, three different initializations.\n\n#cpp #cplusplus #stl #datastructures #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S07-P6/s-01.png",
+    "S07-P6/s-02.png",
+    "S07-P6/s-03.png",
+    "S07-P6/s-04.png"
+   ],
+   "pdf": "S07-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S04-TH",
+   "type": "theory",
+   "topic_no": 4,
+   "topic_short": "variant & any",
+   "source": "topic_04 theory",
+   "hook": "std::visit is not resolved at compile time.\nAnd a variant can end up holding nothing.\n\nThe mental model for variant and any, plus 6 myths. Swipe ➜",
+   "body": "Inside:\n1. Closed set vs open set\n2. Size and construction rules\n3. visit vs virtual functions\n4. monostate vs valueless_by_exception\n5. std::any rules\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "std::visit is not resolved at compile time.\nAnd a variant can end up holding nothing.\n\nThe mental model for variant and any, plus 6 myths. Swipe ➜\n\nInside:\n1. Closed set vs open set\n2. Size and construction rules\n3. visit vs virtual functions\n4. monostate vs valueless_by_exception\n5. std::any rules\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇",
+   "slide_count": 10,
+   "slides": [
+    "S04-TH/s-01.png",
+    "S04-TH/s-02.png",
+    "S04-TH/s-03.png",
+    "S04-TH/s-04.png",
+    "S04-TH/s-05.png",
+    "S04-TH/s-06.png",
+    "S04-TH/s-07.png",
+    "S04-TH/s-08.png",
+    "S04-TH/s-09.png",
+    "S04-TH/s-10.png"
+   ],
+   "pdf": "S04-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S04-P3",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "variant & any",
+   "source": "topic_04 practice Q3",
+   "hook": "The visitor has no double handler.\nThe variant holds 101.75.\nDoes std::visit catch the gap?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "std::visit promises exhaustiveness. What exactly does it check?\nC++20 (aggregate CTAD). In C++17, add the usual overloaded deduction guide.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "The visitor has no double handler.\nThe variant holds 101.75.\nDoes std::visit catch the gap?\n\nLock in your answer below, then swipe ➜ to verify.\n\nstd::visit promises exhaustiveness. What exactly does it check?\nC++20 (aggregate CTAD). In C++17, add the usual overloaded deduction guide.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S04-P3/s-01.png",
+    "S04-P3/s-02.png",
+    "S04-P3/s-03.png",
+    "S04-P3/s-04.png"
+   ],
+   "pdf": "S04-P3/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S04-P4",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "variant & any",
+   "source": "topic_04 practice Q4",
+   "hook": "A reference into a variant holding 42.\nThen the variant gets a new value.\nSame storage, same address.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Is the reference still good?",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A reference into a variant holding 42.\nThen the variant gets a new value.\nSame storage, same address.\n\nLock in your answer below, then swipe ➜ to verify.\n\nIs the reference still good?\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S04-P4/s-01.png",
+    "S04-P4/s-02.png",
+    "S04-P4/s-03.png",
+    "S04-P4/s-04.png"
+   ],
+   "pdf": "S04-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S04-P9",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "variant & any",
+   "source": "topic_04 practice Q9",
+   "hook": "A slot that is empty until the first order arrives.\nstd::variant<Order, std::string> slot;\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Order has one explicit constructor taking an int.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "A slot that is empty until the first order arrives.\nstd::variant<Order, std::string> slot;\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOrder has one explicit constructor taking an int.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S04-P9/s-01.png",
+    "S04-P9/s-02.png",
+    "S04-P9/s-03.png",
+    "S04-P9/s-04.png"
+   ],
+   "pdf": "S04-P9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S04-P7",
+   "type": "code_puzzle",
+   "topic_no": 4,
+   "topic_short": "variant & any",
+   "source": "topic_04 practice Q7",
+   "hook": "std::any a = 42;\nAsk for a long, an int, an unsigned.\nAll integers. All should work. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Pointer form and value form of any_cast fail in different ways.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ],
+   "post_text": "std::any a = 42;\nAsk for a long, an int, an unsigned.\nAll integers. All should work. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nPointer form and value form of any_cast fail in different ways.\n\n#cpp #cplusplus #stl #moderncpp #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S04-P7/s-01.png",
+    "S04-P7/s-02.png",
+    "S04-P7/s-03.png",
+    "S04-P7/s-04.png"
+   ],
+   "pdf": "S04-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S12-TH",
+   "type": "theory",
+   "topic_no": 12,
+   "topic_short": "constexpr",
+   "source": "topic_12 theory",
+   "hook": "A constexpr function with constant arguments\ncan still run at run time.\n\nThe real rules, plus 6 myths that fail interviews. Swipe ➜",
+   "body": "Inside:\n1. constexpr vs consteval vs constinit\n2. The context decides, not the arguments\n3. What the constant evaluator rejects\n4. is_constant_evaluated traps and if consteval\n5. How constexpr grew, C++11 to C++23\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "A constexpr function with constant arguments\ncan still run at run time.\n\nThe real rules, plus 6 myths that fail interviews. Swipe ➜\n\nInside:\n1. constexpr vs consteval vs constinit\n2. The context decides, not the arguments\n3. What the constant evaluator rejects\n4. is_constant_evaluated traps and if consteval\n5. How constexpr grew, C++11 to C++23\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #moderncpp #metaprogramming #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "S12-TH/s-01.png",
+    "S12-TH/s-02.png",
+    "S12-TH/s-03.png",
+    "S12-TH/s-04.png",
+    "S12-TH/s-05.png",
+    "S12-TH/s-06.png",
+    "S12-TH/s-07.png",
+    "S12-TH/s-08.png",
+    "S12-TH/s-09.png",
+    "S12-TH/s-10.png"
+   ],
+   "pdf": "S12-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S12-P1",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "constexpr",
+   "source": "topic_12 practice Q1",
+   "hook": "The same call sq(10) five times.\nConstant argument, constexpr function.\nSo all five run at compile time. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "is_constant_evaluated() reports which calls really ran in the compiler.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "The same call sq(10) five times.\nConstant argument, constexpr function.\nSo all five run at compile time. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nis_constant_evaluated() reports which calls really ran in the compiler.\n\n#cpp #cplusplus #moderncpp #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S12-P1/s-01.png",
+    "S12-P1/s-02.png",
+    "S12-P1/s-03.png",
+    "S12-P1/s-04.png"
+   ],
+   "pdf": "S12-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S12-P5",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "constexpr",
+   "source": "topic_12 practice Q5",
+   "hook": "The unit test is a static_assert.\nThe expected sum is correct.\nGreen build?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Sum the last k elements of an array.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "The unit test is a static_assert.\nThe expected sum is correct.\nGreen build?\n\nLock in your answer below, then swipe ➜ to verify.\n\nSum the last k elements of an array.\n\n#cpp #cplusplus #moderncpp #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S12-P5/s-01.png",
+    "S12-P5/s-02.png",
+    "S12-P5/s-03.png",
+    "S12-P5/s-04.png"
+   ],
+   "pdf": "S12-P5/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S12-P10",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "constexpr",
+   "source": "topic_12 practice Q10",
+   "hook": "Three variables, all initialized to 3.\nTwo of them are const.\nWhich ones can size a std::array?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One old rule still decides this.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "Three variables, all initialized to 3.\nTwo of them are const.\nWhich ones can size a std::array?\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne old rule still decides this.\n\n#cpp #cplusplus #moderncpp #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S12-P10/s-01.png",
+    "S12-P10/s-02.png",
+    "S12-P10/s-03.png",
+    "S12-P10/s-04.png"
+   ],
+   "pdf": "S12-P10/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S12-P7",
+   "type": "code_puzzle",
+   "topic_no": 12,
+   "topic_short": "constexpr",
+   "source": "topic_12 practice Q7",
+   "hook": "A static constexpr limit inside a struct.\nPassed to std::max.\nSame code, C++14 and C++17. Same result?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No templates, no headers of your own, 10 lines.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "A static constexpr limit inside a struct.\nPassed to std::max.\nSame code, C++14 and C++17. Same result?\n\nLock in your answer below, then swipe ➜ to verify.\n\nNo templates, no headers of your own, 10 lines.\n\n#cpp #cplusplus #moderncpp #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S12-P7/s-01.png",
+    "S12-P7/s-02.png",
+    "S12-P7/s-03.png",
+    "S12-P7/s-04.png"
+   ],
+   "pdf": "S12-P7/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S11-TH",
+   "type": "theory",
+   "topic_no": 11,
+   "topic_short": "SFINAE & Concepts",
+   "source": "topic_11 theory",
+   "hook": "Two overloads, each with class = enable_if_t<...>.\nDifferent conditions. The compiler sees one template, defined twice.\n\nSwipe ➜ from SFINAE to concepts, plus 6 myths that fail interviews.",
+   "body": "Inside:\n1. Three generations of constraints\n2. What SFINAE does and does not catch\n3. enable_if forms and traps\n4. if constexpr limits\n5. Concepts, requires and subsumption\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "Two overloads, each with class = enable_if_t<...>.\nDifferent conditions. The compiler sees one template, defined twice.\n\nSwipe ➜ from SFINAE to concepts, plus 6 myths that fail interviews.\n\nInside:\n1. Three generations of constraints\n2. What SFINAE does and does not catch\n3. enable_if forms and traps\n4. if constexpr limits\n5. Concepts, requires and subsumption\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.\n\n#cpp #cplusplus #templates #metaprogramming #interviewprep",
+   "first_comment": "The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇",
+   "slide_count": 10,
+   "slides": [
+    "S11-TH/s-01.png",
+    "S11-TH/s-02.png",
+    "S11-TH/s-03.png",
+    "S11-TH/s-04.png",
+    "S11-TH/s-05.png",
+    "S11-TH/s-06.png",
+    "S11-TH/s-07.png",
+    "S11-TH/s-08.png",
+    "S11-TH/s-09.png",
+    "S11-TH/s-10.png"
+   ],
+   "pdf": "S11-TH/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S11-P1",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "SFINAE & Concepts",
+   "source": "topic_11 practice Q1",
+   "hook": "A special print for floating point, enable_if guarded.\nA generic print for everything else.\nClassic SFINAE. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two calls: one int, one double.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "A special print for floating point, enable_if guarded.\nA generic print for everything else.\nClassic SFINAE. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.\n\nTwo calls: one int, one double.\n\n#cpp #cplusplus #templates #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S11-P1/s-01.png",
+    "S11-P1/s-02.png",
+    "S11-P1/s-03.png",
+    "S11-P1/s-04.png"
+   ],
+   "pdf": "S11-P1/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S11-P6",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "SFINAE & Concepts",
+   "source": "topic_11 practice Q6",
+   "hook": "A C++20 concept for types bigger than 4 bytes.\nIs char Big? Is double?\nTwo versions, one keyword apart.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Each concept is tested with char (1 byte) and double (8 bytes on x86-64).",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "A C++20 concept for types bigger than 4 bytes.\nIs char Big? Is double?\nTwo versions, one keyword apart.\n\nLock in your answer below, then swipe ➜ to verify.\n\nEach concept is tested with char (1 byte) and double (8 bytes on x86-64).\n\n#cpp #cplusplus #templates #metaprogramming #interviewprep",
+   "first_comment": "👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S11-P6/s-01.png",
+    "S11-P6/s-02.png",
+    "S11-P6/s-03.png",
+    "S11-P6/s-04.png"
+   ],
+   "pdf": "S11-P6/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S11-P4",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "SFINAE & Concepts",
+   "source": "topic_11 practice Q4",
+   "hook": "Only process<int> is ever called.\nThe else branch of if constexpr is discarded.\nSo its broken code never compiles. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "There are two suspicious calls in the else branch. Only one of them matters.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "Only process<int> is ever called.\nThe else branch of if constexpr is discarded.\nSo its broken code never compiles. Right?\n\nLock in your answer below, then swipe ➜ to verify.\n\nThere are two suspicious calls in the else branch. Only one of them matters.\n\n#cpp #cplusplus #templates #metaprogramming #interviewprep",
+   "first_comment": "The answer is on the next page ➜ Comment your answer first, then compare.",
+   "slide_count": 4,
+   "slides": [
+    "S11-P4/s-01.png",
+    "S11-P4/s-02.png",
+    "S11-P4/s-03.png",
+    "S11-P4/s-04.png"
+   ],
+   "pdf": "S11-P4/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  },
+  {
+   "id": "S11-P9",
+   "type": "code_puzzle",
+   "topic_no": 11,
+   "topic_short": "SFINAE & Concepts",
+   "source": "topic_11 practice Q9",
+   "hook": "check(x) with int x.\nIs T int? Is T integral?\nAsk any engineer and they say yes, twice.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One forwarding reference, three calls, three type traits each.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ],
+   "post_text": "check(x) with int x.\nIs T int? Is T integral?\nAsk any engineer and they say yes, twice.\n\nLock in your answer below, then swipe ➜ to verify.\n\nOne forwarding reference, three calls, three type traits each.\n\n#cpp #cplusplus #templates #metaprogramming #interviewprep",
+   "first_comment": "Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇",
+   "slide_count": 4,
+   "slides": [
+    "S11-P9/s-01.png",
+    "S11-P9/s-02.png",
+    "S11-P9/s-03.png",
+    "S11-P9/s-04.png"
+   ],
+   "pdf": "S11-P9/slides.pdf",
+   "rendered": true,
+   "format": "carousel"
+  }
+ ]
+}

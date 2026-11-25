@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The key "order" is in the map.
+The lookup string is "order" too.
+Same characters. Same count?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The lookup text arrives at runtime, e.g. read from a socket.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

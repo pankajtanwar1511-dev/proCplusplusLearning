@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A 3-character view of "abcdef".
+Hand its data() to strlen. What comes back?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Every C API boundary in your codebase asks this question.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

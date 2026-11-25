@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Find the 3 from the back with a reverse iterator.
+Then erase it with rit.base(). Clean, short, compiles.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One of those bugs that only shows up in the output.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

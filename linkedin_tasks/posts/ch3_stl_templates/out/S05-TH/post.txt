@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"clear() gives the memory back."
+It does not. The capacity stays.
+
+The std::vector mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.
+
+Inside:
+1. Three pointers, one heap block
+2. Growth factors by library
+3. reserve vs resize
+4. What reallocation does, in order
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

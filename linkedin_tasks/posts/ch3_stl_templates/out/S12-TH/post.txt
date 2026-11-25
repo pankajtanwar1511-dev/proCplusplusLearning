@@ -1,0 +1,20 @@
+=== POST TEXT ===
+A constexpr function with constant arguments
+can still run at run time.
+
+The real rules, plus 6 myths that fail interviews. Swipe ➜
+
+Inside:
+1. constexpr vs consteval vs constinit
+2. The context decides, not the arguments
+3. What the constant evaluator rejects
+4. is_constant_evaluated traps and if consteval
+5. How constexpr grew, C++11 to C++23
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #moderncpp #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

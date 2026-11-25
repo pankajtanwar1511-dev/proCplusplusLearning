@@ -1,0 +1,413 @@
+[
+  {
+    "id": "S07-TH",
+    "type": "theory",
+    "topic_no": 7,
+    "topic_short": "Sequence Containers",
+    "source": "topic_07 theory",
+    "text": {
+      "hook": "\"deque is just a vector that can also grow at the front.\"\nThat answer fails C++ interviews.\n\nFive containers, their real memory layouts, plus 6 myths. Swipe ➜ and save it. 💡",
+      "body": "Inside:\n1. Four memory layouts\n2. deque by the numbers\n3. list, forward_list, array\n4. Adaptors and pop() returning void\n5. Which container for which need\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Sequence containers:<br>the memory layouts<br>+ 6 myths",
+        "lead": "deque, list, forward_list, array and the adaptors: what each one costs and why.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "The layout decides everything",
+        "cards": [
+          {
+            "label": "Contiguous",
+            "text": "`vector`, `string`: one contiguous buffer. `std::array` inside the object."
+          },
+          {
+            "label": "Blocks + map",
+            "text": "`deque`: fixed-size blocks and an array of block pointers."
+          },
+          {
+            "label": "One node per element",
+            "text": "`list` (doubly linked), `forward_list` (singly linked)."
+          }
+        ],
+        "takeaway": "Default to `vector`. Pick another one for a concrete reason: front growth, stable addresses, splicing, fixed size."
+      },
+      {
+        "layout": "table",
+        "kicker": "std::deque",
+        "title": "Random access without contiguity",
+        "header": [
+          "Fact",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Block size (libstdc++, x86-64)",
+            "512 bytes: 128 `int`s per block"
+          ],
+          [
+            "Why `d[i]` is O(1)",
+            "fixed blocks: index math is division and modulo"
+          ],
+          [
+            "Missing vs vector",
+            "no `data()`, no `capacity()`, no `reserve()`"
+          ],
+          [
+            "Empty deque (libstdc++)",
+            "80 bytes plus two allocations: map and one block"
+          ]
+        ],
+        "takeaway": "End insertion never moves elements: references survive, iterators do not."
+      },
+      {
+        "layout": "cards",
+        "kicker": "The others",
+        "title": "list, forward_list, array",
+        "cards": [
+          {
+            "label": "std::list",
+            "text": "O(1) insert and erase **at an iterator you hold**. `splice` relinks nodes. Member `sort`, `merge`, `unique`."
+          },
+          {
+            "label": "std::forward_list",
+            "text": "One pointer (8 bytes, libstdc++). No `size()`. Works *after* a position: `insert_after`, `before_begin()`."
+          },
+          {
+            "label": "std::array",
+            "text": "Aggregate around `T[N]`: no heap, copyable, comparable, `constexpr`. `swap` is O(N)."
+          }
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Adaptors",
+        "title": "Wrappers, not containers",
+        "header": [
+          "Adaptor",
+          "Default container"
+        ],
+        "rows": [
+          [
+            "`std::stack`",
+            "`deque`: `push`, `pop`, `top`"
+          ],
+          [
+            "`std::queue`",
+            "`deque`: needs `pop_front`, so not `vector`"
+          ],
+          [
+            "`std::priority_queue`",
+            "`vector` as a binary heap: O(log n) push and pop"
+          ],
+          [
+            "All of them",
+            "no iterators, `pop()` returns `void`"
+          ]
+        ],
+        "takeaway": "`pop()` returns `void` because returning by value could throw after removal and lose the element. Read `top()` first."
+      },
+      {
+        "layout": "table",
+        "kicker": "Choosing",
+        "title": "Need, then container",
+        "header": [
+          "Need",
+          "Choose"
+        ],
+        "rows": [
+          [
+            "General purpose, random access",
+            "`vector`"
+          ],
+          [
+            "Push and pop at both ends, indexing",
+            "`deque`"
+          ],
+          [
+            "Iterators must survive, O(1) splice",
+            "`list`"
+          ],
+          [
+            "Size fixed at compile time",
+            "`array`"
+          ]
+        ],
+        "takeaway": "Stable addresses with indexing: `deque` grown only at the ends, or `vector<unique_ptr<T>>`."
+      },
+      {
+        "layout": "statement",
+        "kicker": "Performance",
+        "hero": "A vector shift<br>usually beats<br>a list relink.",
+        "lead": "For small and medium N, a sequential `memmove` beats a chain of cache misses. Choose `list` for semantics, not speed. Measure."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"deque is a vector that can also grow at the front.\"",
+            "truth": "It is a block map: not contiguous, no `data()`, no `reserve()`, bigger fixed cost."
+          },
+          {
+            "myth": "\"deque blocks have varying sizes.\"",
+            "truth": "Fixed per element type (libstdc++: 512 bytes). That is what makes indexing O(1)."
+          },
+          {
+            "myth": "\"deque `push_back` may invalidate references, like vector.\"",
+            "truth": "References never move on end insertion. Only iterators are invalidated."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"list insertion is O(1), so list beats vector for inserts.\"",
+            "truth": "Only with an iterator in hand. Finding the position is O(n) and dominates."
+          },
+          {
+            "myth": "\"`list::size()` is O(n).\"",
+            "truth": "O(1) since C++11."
+          },
+          {
+            "myth": "\"`queue::pop()` returns the element.\"",
+            "truth": "It returns `void`. Read `front()` first."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Pick the layout.<br>The container<br>follows.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S07-P3",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "Sequence Containers",
+    "source": "topic_07 practice Q3",
+    "text": {
+      "hook": "A list of 3 numbers. std::sort, the algorithm everyone knows.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Same code with a vector works. The list changes one thing.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Algorithms",
+        "title": "Sort a list.<br>What happens?",
+        "code": "int main() {\n  std::list<int> l{3, 1, 2};\n  std::sort(l.begin(), l.end());\n  for (int x : l) std::cout << x << ' ';\n}",
+        "options": [
+          "Prints 1 2 3",
+          "Compile error",
+          "Prints 3 1 2",
+          "UB at run time"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Compile error",
+        "verdict_sub": "GCC 11: no match for `operator-` on `std::_List_iterator<int>`",
+        "bullets": [
+          "`std::sort` needs **random access** iterators: it computes `last - first` and jumps to midpoints.",
+          "`list` iterators are bidirectional: no `-`, no `+ n`.",
+          "The error appears deep inside `std::sort`. C++20 `std::ranges::sort(l)` names the unmet `random_access_range` constraint instead."
+        ],
+        "wrong": "\"Prints 1 2 3: std::sort works on any container\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Use the member sort",
+        "code": "std::list<int> l{3, 1, 2};\nl.sort();                // 1 2 3",
+        "tip": "`l.sort()` is a stable merge sort, O(n log n). It relinks nodes, so every iterator stays valid.",
+        "takeaway": "The iterator category decides which algorithms you can call."
+      }
+    ]
+  },
+  {
+    "id": "S07-P7",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "Sequence Containers",
+    "source": "topic_07 practice Q7",
+    "text": {
+      "hook": "Two priority queues. One uses the default, one uses std::greater.\n\"greater\" means biggest first. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Same four values pushed into both queues.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · priority_queue",
+        "title": "What does it print?",
+        "code": "std::priority_queue<int> maxq;\nstd::priority_queue<int, std::vector<int>,\n                    std::greater<int>> minq;\nfor (int x : {5, 1, 4, 2}) {\n  maxq.push(x);\n  minq.push(x);\n}\nwhile (!maxq.empty()) {\n  std::cout << maxq.top() << ' '; maxq.pop(); }\nstd::cout << \"| \";\nwhile (!minq.empty()) {\n  std::cout << minq.top() << ' '; minq.pop(); }",
+        "options": [
+          "Both largest first",
+          "Smallest first, then largest",
+          "Both smallest first",
+          "Largest first, then smallest"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. 5 4 2 1 | 1 2 4 5",
+        "verdict_sub": "The default is a max-heap. `std::greater` gives a min-heap",
+        "bullets": [
+          "The comparator means \"has lower priority than\", not \"comes first\".",
+          "With `std::less` (default), the largest value has the highest priority: max-heap.",
+          "With `std::greater`, a larger value counts as **lower** priority, so the smallest comes out first.",
+          "`pop()` returns `void`: read `top()` before popping."
+        ],
+        "wrong": "\"std::greater puts the greatest on top\"",
+        "cta": "A real use ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "Custom comparator",
+        "title": "Earliest event first",
+        "code": "struct Later {  // a has lower priority\n  bool operator()(const Event& a,\n                  const Event& b) const {\n    if (a.time != b.time)\n      return a.time > b.time;\n    return a.seq > b.seq;  // FIFO on ties\n  }\n};",
+        "tip": "`priority_queue` is not stable: without `seq`, equal times come out in unspecified order.",
+        "takeaway": "\"Earliest first\" needs `a.time > b.time`, the opposite of what the name suggests."
+      }
+    ]
+  },
+  {
+    "id": "S07-P4",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "Sequence Containers",
+    "source": "topic_07 practice Q4",
+    "text": {
+      "hook": "list::unique(). The name says it all:\nevery value appears once afterwards. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Seven values, three distinct. Count what is left.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · list::unique",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::list<int> l{1, 2, 1, 2, 2, 3, 3};\n  l.unique();\n  for (int x : l) std::cout << x << ' ';\n}",
+        "options": [
+          "1 2 1 2 3",
+          "1 2 3",
+          "1 2 1 2 2 3 3",
+          "3"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Prints 1 2 1 2 3",
+        "verdict_sub": "Only adjacent duplicates are removed",
+        "bullets": [
+          "`unique()` collapses runs of **consecutive** equal elements, like `std::unique`.",
+          "The runs `2 2` and `3 3` collapse. The separate 1s and 2s stay.",
+          "Since C++20, `unique()` returns the number removed: 2 here."
+        ],
+        "wrong": "\"1 2 3: unique keeps one of each value\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Sort first, then unique",
+        "code": "std::list<int> l{1, 2, 1, 2, 2, 3, 3};\nl.sort();\nauto n = l.unique();   // C++20: count\n// l: 1 2 3, n == 4",
+        "tip": "For a vector: `std::sort`, then `v.erase(std::unique(...), v.end())`.",
+        "takeaway": "unique means \"collapse adjacent equal elements\", not \"make the values unique\"."
+      }
+    ]
+  },
+  {
+    "id": "S07-P6",
+    "type": "code_puzzle",
+    "topic_no": 7,
+    "topic_short": "Sequence Containers",
+    "source": "topic_07 practice Q6",
+    "text": {
+      "hook": "std::array is the safe, modern C array.\nSo std::array<int, 3> a; starts zeroed. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Three declarations, three different initializations.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::array · C++20",
+        "title": "Which statement is true?",
+        "code": "int main() {\n  std::array<int, 3> a;\n  std::array<int, 3> b{};\n  std::array<int, 3> c{7};\n  std::cout << b[0] << b[1] << b[2] << ' '\n            << c[0] << c[1] << c[2] << '\\n';\n  std::cout << a[0] << '\\n';\n}",
+        "options": [
+          "`000 777`, then `0`",
+          "`000 700`, then `0`",
+          "`000 700`, then UB",
+          "`000 777`, then UB"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `000 700`, then UB",
+        "verdict_sub": "Line 1 is guaranteed. Reading `a[0]` reads an indeterminate value",
+        "bullets": [
+          "`std::array` is an aggregate. `a` is default-initialized: for `int`, no initialization at all.",
+          "`b{}` value-initializes every element to 0.",
+          "`c{7}` sets the first element and value-initializes the rest: `7 0 0`.",
+          "Our GCC 11 runs printed a different garbage number each time."
+        ],
+        "wrong": "\"std::array always zero-fills\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Write the braces",
+        "code": "std::array<int, 3> a{};   // 0 0 0",
+        "bullets": [
+          "GCC 11 warns (`-Wuninitialized`) only with `-O2`, not at `-O0`.",
+          "`std::array<std::string, 3> s;` is fine: class types are default-constructed."
+        ],
+        "takeaway": "`std::array` follows C array initialization rules. `{}` gives zeros."
+      }
+    ]
+  }
+]

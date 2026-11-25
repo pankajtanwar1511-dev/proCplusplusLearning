@@ -30,6 +30,14 @@ def verify_critical_content():
         16: ['std::optional', 'std::variant', 'if constexpr'],  # C++17
         19: ['concept', 'requires', 'ranges', 'coroutine'],  # C++20
     }
+    # The Interview Prep catalog numbers its chapters differently (data_interview/CHAPTER_PLAN.md).
+    if 'interview' in json_dir.name:
+        critical_patterns = {
+            2: ['unique_ptr', 'shared_ptr', 'weak_ptr', 'std::move', 'placement new'],  # Memory & Ownership
+            3: ['std::string', 'string_view', 'std::vector', 'iterator', 'unordered_map',
+                'template', 'SFINAE', 'concept', 'constexpr'],  # STL & Templates
+            4: ['std::thread', 'mutex', 'condition_variable', 'atomic', 'memory_order'],  # Concurrency
+        }
 
     missing_patterns = []
     total_checks = 0

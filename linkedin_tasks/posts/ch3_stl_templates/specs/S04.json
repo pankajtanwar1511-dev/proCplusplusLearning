@@ -1,0 +1,416 @@
+[
+ {
+  "id": "S04-TH",
+  "type": "theory",
+  "topic_no": 4,
+  "topic_short": "variant & any",
+  "source": "topic_04 theory",
+  "text": {
+   "hook": "std::visit is not resolved at compile time.\nAnd a variant can end up holding nothing.\n\nThe mental model for variant and any, plus 6 myths. Swipe ➜",
+   "body": "Inside:\n1. Closed set vs open set\n2. Size and construction rules\n3. visit vs virtual functions\n4. monostate vs valueless_by_exception\n5. std::any rules\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "cover",
+    "hero": "variant & any:<br>the mental model<br>+ 6 myths",
+    "lead": "A tagged union that knows its type, a type-erased box, and when to use neither.",
+    "cta": "Swipe ➜"
+   },
+   {
+    "layout": "cards",
+    "kicker": "The core idea",
+    "title": "Closed set or open set?",
+    "cards": [
+     {
+      "label": "variant<A, B, C> (C++17)",
+      "text": "Exactly one of a **fixed** list of types. Stored in place, plus an index."
+     },
+     {
+      "label": "any (C++17)",
+      "text": "One object of any copyable type, decided at run time. Ask for the exact type back."
+     },
+     {
+      "label": "Virtual functions",
+      "text": "Types added later by other modules, with common behaviour."
+     }
+    ],
+    "takeaway": "All known where you declare it: `variant`. Extended later: a virtual interface. Payload you never inspect: `any`."
+   },
+   {
+    "layout": "table",
+    "kicker": "Size (libstdc++ / GCC, x86-64)",
+    "title": "Largest alternative + an index",
+    "header": [
+     "Type",
+     "sizeof"
+    ],
+    "rows": [
+     [
+      "`variant<char, int>`",
+      "8"
+     ],
+     [
+      "`variant<int, double>`",
+      "16"
+     ],
+     [
+      "`variant<int, std::string>`",
+      "40 (string is 32)"
+     ],
+     [
+      "`std::any`",
+      "16 (storage + manager pointer)"
+     ]
+    ],
+    "takeaway": "The variant never allocates by itself. One huge alternative makes every element huge."
+   },
+   {
+    "layout": "table",
+    "kicker": "Construction",
+    "title": "Which alternative do you get?",
+    "header": [
+     "Code",
+     "Result"
+    ],
+    "rows": [
+     [
+      "`variant<int, std::string> v;`",
+      "`int` 0: the **first** alternative"
+     ],
+     [
+      "`variant<std::string, std::string_view> v = \"x\";`",
+      "Compile error: two user-defined conversions"
+     ],
+     [
+      "`variant<bool, std::string> v = \"hello\";`",
+      "The string (P0608, C++20 DR, GCC 10+). Older libraries: `true`"
+     ],
+     [
+      "`variant<int, double> v = 1L;`",
+      "Compile error: narrowing is excluded"
+     ]
+    ]
+   },
+   {
+    "layout": "table",
+    "kicker": "visit vs virtual",
+    "title": "Two kinds of dispatch",
+    "header": [
+     "Aspect",
+     "`variant` + `visit` / virtual"
+    ],
+    "rows": [
+     [
+      "Set of types",
+      "Closed / open"
+     ],
+     [
+      "Storage",
+      "In place / usually `unique_ptr<Base>`"
+     ],
+     [
+      "Add a type",
+      "Visitors with no viable handler fail to compile / old code untouched"
+     ],
+     [
+      "Add an operation",
+      "Write one new visitor / new virtual in every class"
+     ]
+    ],
+    "takeaway": "`visit` branches on the run-time index (no vptr). The usual win is memory layout, not the dispatch instruction."
+   },
+   {
+    "layout": "cards",
+    "kicker": "Two empty states",
+    "title": "monostate vs valueless",
+    "cards": [
+     {
+      "label": "std::monostate",
+      "text": "Deliberate: \"nothing yet\". Put it first so the variant is default-constructible."
+     },
+     {
+      "label": "valueless_by_exception",
+      "text": "Accidental: the old alternative was destroyed, then the new one's construction threw."
+     },
+     {
+      "label": "When valueless",
+      "text": "`index()` is `variant_npos`. `get` and `visit` throw `bad_variant_access`."
+     }
+    ],
+    "takeaway": "Make alternatives nothrow-move-constructible. Assigning a new value recovers the variant."
+   },
+   {
+    "layout": "checklist",
+    "kicker": "std::any",
+    "title": "Rules that surprise people",
+    "items": [
+     "Copy-constructible types only: a `unique_ptr` does not compile",
+     "By-value `any_cast<T>(a)` copies the object: use `any_cast<T&>` or the pointer form for big ones",
+     "Copying an `any` deep-copies the held object: it is never shared",
+     "libstdc++ stores only pointer-sized, nothrow-movable types inline: a `std::string` allocates",
+     "No compile-time checks: every access is a run-time type comparison"
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"`std::variant` allocates the alternative on the heap.\"",
+      "truth": "It lives in place. Size is the largest alternative plus an index."
+     },
+     {
+      "myth": "\"`std::visit` is resolved at compile time.\"",
+      "truth": "It branches on the run-time index. The handlers can be inlined."
+     },
+     {
+      "myth": "\"`std::variant` is just a C union.\"",
+      "truth": "It tracks the active type, runs the right constructors and destructors, and checks access."
+     }
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"A variant can never be empty.\"",
+      "truth": "It can be valueless after a throwing alternative change."
+     },
+     {
+      "myth": "\"`get<T>` returns nullptr on the wrong type.\"",
+      "truth": "`get` throws `bad_variant_access`. `get_if` returns nullptr."
+     },
+     {
+      "myth": "\"`variant` is always faster than virtual functions.\"",
+      "truth": "It wins on layout and allocation. Dispatch cost is similar."
+     }
+    ]
+   },
+   {
+    "layout": "takeaway",
+    "hero": "Closed set: variant.<br>Open set: virtual.<br>Opaque payload: any.",
+    "lead": "Save this. Follow for a C++ interview puzzle every day."
+   }
+  ]
+ },
+ {
+  "id": "S04-P3",
+  "type": "code_puzzle",
+  "topic_no": 4,
+  "topic_short": "variant & any",
+  "source": "topic_04 practice Q3",
+  "text": {
+   "hook": "The visitor has no `double` handler.\nThe variant holds 101.75.\nDoes std::visit catch the gap?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "std::visit promises exhaustiveness. What exactly does it check?\nC++20 (aggregate CTAD). In C++17, add the usual `overloaded` deduction guide.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · std::visit (C++20)",
+    "title": "No double handler. What prints?",
+    "code": "template <class... Ts> struct overloaded\n  : Ts... { using Ts::operator()...; };\nusing Field =\n    std::variant<int, double, std::string>;\nint main() {\n  Field price = 101.75;\n  std::visit(overloaded{\n    [](int v) { std::cout << \"int \" << v; },\n    [](const std::string& s) {\n      std::cout << \"text \" << s; },\n  }, price);\n}",
+    "options": [
+     "Compile error: no double case",
+     "int 101",
+     "int 102",
+     "text 101.75"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "B. int 101",
+    "verdict_sub": "Compiles silently. GCC 11, `-Wall -Wextra`: no warning",
+    "bullets": [
+     "`visit` checks that the visitor is **callable** with every alternative.",
+     "It is: overload resolution converts `double` to `int`.",
+     "The `int` lambda runs and 101.75 is truncated to 101.",
+     "The conversion happens inside the library, so no warning fires."
+    ],
+    "wrong": "\"A: a missing alternative is always a compile error\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Handle it, and forbid fallbacks",
+    "code": "std::visit(overloaded{\n  [](int v) { std::cout << \"int \" << v; },\n  [](double v) { std::cout << v; },\n  [](const std::string& s) {\n    std::cout << \"text \" << s; },\n  [](const auto& x) {\n    static_assert(sizeof(x) == 0, \"unhandled\");\n  },\n}, price);                       // 101.75",
+    "tip": "Remove the `double` lambda now and the `static_assert` fires: the catch-all accepts only types with no exact handler.",
+    "takeaway": "Exhaustiveness in `visit` means \"callable with\". Implicit conversions count."
+   }
+  ]
+ },
+ {
+  "id": "S04-P4",
+  "type": "code_puzzle",
+  "topic_no": 4,
+  "topic_short": "variant & any",
+  "source": "topic_04 practice Q4",
+  "text": {
+   "hook": "A reference into a variant holding 42.\nThen the variant gets a new value.\nSame storage, same address.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Is the reference still good?",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Reference into a variant",
+    "title": "Is this well-defined?<br>What does it print?",
+    "code": "int main() {\n  std::variant<int, std::string> field = 42;\n  int& qty = std::get<int>(field);\n\n  field = std::string(\n      \"waiting-for-confirmation-reply\");\n  std::cout << qty << '\\n';\n}",
+    "options": [
+     "42",
+     "0",
+     "Throws an exception",
+     "UB: qty refers to a dead int"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "D. Undefined behaviour",
+    "verdict_sub": "GCC 11, `-O0`: a different number each run. ASan: silent",
+    "bullets": [
+     "Assigning a `std::string` **destroys** the `int` and constructs a string in the same storage.",
+     "`qty` now points at bytes of the string object (libstdc++: part of its data pointer).",
+     "Writing through `qty` would corrupt the string and crash later in its destructor.",
+     "`field = 7;` would have been fine: same alternative, plain assignment."
+    ],
+    "wrong": "\"A: the storage is still there, so the reference is fine\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Copy the value out, re-fetch later",
+    "code": "int qty = std::get<int>(field);  // a copy\nfield = std::string(\n    \"waiting-for-confirmation-reply\");\nstd::cout << qty << '\\n';        // 42\n\nif (auto* p = std::get_if<int>(&field))\n  std::cout << *p;               // not printed",
+    "takeaway": "A reference into a variant is valid only while that alternative stays active."
+   }
+  ]
+ },
+ {
+  "id": "S04-P9",
+  "type": "code_puzzle",
+  "topic_no": 4,
+  "topic_short": "variant & any",
+  "source": "topic_04 practice Q9",
+  "text": {
+   "hook": "A slot that is empty until the first order arrives.\n`std::variant<Order, std::string> slot;`\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Order has one explicit constructor taking an int.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Default variant",
+    "title": "Does this compile?<br>If yes, what does it print?",
+    "code": "struct Order {\n  explicit Order(int id) : id(id) {}\n  int id;\n};\n\nint main() {\n  std::variant<Order, std::string> slot;\n  slot = Order{5};\n  std::cout << std::get<Order>(slot).id << '\\n';\n}",
+    "options": [
+     "Compile error",
+     "Prints 5",
+     "Throws at run time",
+     "Prints 5, slot starts empty"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "A. Compile error",
+    "verdict_sub": "GCC 11: use of deleted function `std::variant<...>::variant()`",
+    "bullets": [
+     "A default-constructed variant holds a value-initialized **first** alternative.",
+     "`Order` has no default constructor, so the variant's default constructor is deleted.",
+     "A variant is never \"empty by default\".",
+     "Even with a default `Order`, a fake order is a poor initial state."
+    ],
+    "wrong": "\"D: a default variant is empty\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Make \"nothing yet\" explicit",
+    "code": "std::variant<std::monostate, Order,\n             std::string> slot;\nstd::cout << slot.index() << '\\n';   // 0\n\nslot = Order{5};\nstd::cout << std::get<Order>(slot).id; // 5",
+    "takeaway": "The first alternative decides default construction. Use `std::monostate` for an explicit empty state."
+   }
+  ]
+ },
+ {
+  "id": "S04-P7",
+  "type": "code_puzzle",
+  "topic_no": 4,
+  "topic_short": "variant & any",
+  "source": "topic_04 practice Q7",
+  "text": {
+   "hook": "`std::any a = 42;`\nAsk for a `long`, an `int`, an `unsigned`.\nAll integers. All should work. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Pointer form and value form of any_cast fail in different ways.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · any_cast",
+    "title": "What does it print?",
+    "code": "int main() {\n  std::any a = 42;\n  long* l = std::any_cast<long>(&a);\n  int*  i = std::any_cast<int>(&a);\n  std::cout << (l == nullptr) << ' '\n            << (i == nullptr) << ' ';\n  try {\n    std::cout << std::any_cast<unsigned>(a);\n  } catch (const std::bad_any_cast&) {\n    std::cout << \"bad cast\";\n  }\n  std::cout << '\\n';\n}",
+    "options": [
+     "0 0 42",
+     "1 0 42",
+     "1 0 bad cast",
+     "0 0 bad cast"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "C. 1 0 bad cast",
+    "verdict_sub": "Only the exact stored type matches",
+    "bullets": [
+     "`any` remembers the exact type: `int`.",
+     "Pointer form: `any_cast<long>(&a)` returns `nullptr` (prints 1). `int` matches (prints 0).",
+     "Value form: `any_cast<unsigned>(a)` throws `std::bad_any_cast`.",
+     "The check is a `type_info` comparison. No promotions, no conversions."
+    ],
+    "wrong": "\"B: any_cast converts like `static_cast`\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The twist",
+    "title": "Decay happens on the way in",
+    "code": "std::any s = \"hello\";\n\nstd::any_cast<const char*>(&s); // found\nstd::any_cast<std::string>(&s); // nullptr",
+    "tip": "Store `std::string(\"hello\")` if readers will ask for a `std::string`.",
+    "takeaway": "`any_cast` matches the exact stored type. There are no conversions."
+   }
+  ]
+ }
+]

@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"std::set uses operator== to find duplicates."
+That answer fails C++ interviews.
+
+The map and set mental model, plus 6 myths. Swipe ➜ and save it. 💡
+
+Inside:
+1. A tree with a comparator that decides identity
+2. The insertion family, side by side
+3. The comparator contract
+4. Heterogeneous lookup with std::less<>
+5. extract, merge and the alternatives
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

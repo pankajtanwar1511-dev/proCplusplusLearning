@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A special print for floating point, enable_if guarded.
+A generic print for everything else.
+Classic SFINAE. Ship it?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two calls: one int, one double.
+
+#cpp #cplusplus #templates #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A C++20 concept for types bigger than 4 bytes.
+Is char Big? Is double?
+Two versions, one keyword apart.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Each concept is tested with char (1 byte) and double (8 bytes on x86-64).
+
+#cpp #cplusplus #templates #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

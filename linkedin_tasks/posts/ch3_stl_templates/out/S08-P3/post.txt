@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Sort orders by price, highest first: a.price >= b.price.
+Tests with distinct prices pass. Then 40 orders share one price.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+No compiler warning. The comparator reads naturally.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

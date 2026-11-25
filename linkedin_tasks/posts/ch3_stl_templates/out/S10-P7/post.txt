@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Cache inherits reset() from Storage.
+Calling an inherited member is basic C++.
+What could go wrong?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Without the templates this compiles fine. Add them and the compiler stops trusting the base.
+
+#cpp #cplusplus #templates #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

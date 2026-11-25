@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The config file does not exist.
+The function returns an error message.
+What does the caller see?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+C++23 std::expected. Both branches look right.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

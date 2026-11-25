@@ -1,0 +1,13 @@
+=== POST TEXT ===
+"Config value missing? Pass nullptr.
+std::string makes it an empty string."
+A review comment. True in C++20?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+C++23 changed half of this story. Slide 3 shows which half.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

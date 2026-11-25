@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A static constexpr limit inside a struct.
+Passed to std::max.
+Same code, C++14 and C++17. Same result?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+No templates, no headers of your own, 10 lines.
+
+#cpp #cplusplus #moderncpp #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

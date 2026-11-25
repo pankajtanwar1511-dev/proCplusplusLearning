@@ -1,0 +1,13 @@
+=== POST TEXT ===
+check(x) with int x.
+Is T int? Is T integral?
+Ask any engineer and they say yes, twice.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One forwarding reference, three calls, three type traits each.
+
+#cpp #cplusplus #templates #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

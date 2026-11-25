@@ -1,0 +1,12 @@
+=== POST TEXT ===
+list::unique(). The name says it all:
+every value appears once afterwards. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Seven values, three distinct. Count what is left.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

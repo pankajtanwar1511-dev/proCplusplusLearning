@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"unordered_map lookup is O(1)."
+Only on average. Worst case is O(n), and every rehash invalidates your iterators.
+
+Swipe ➜ for the mental model and 6 myths that fail interviews.
+
+Inside:
+1. Buckets of linked nodes
+2. Average, worst and amortized cost
+3. When a rehash happens
+4. What survives a rehash
+5. Custom keys and hash quality
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

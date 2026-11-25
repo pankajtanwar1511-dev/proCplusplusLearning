@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A reference into a variant holding 42.
+Then the variant gets a new value.
+Same storage, same address.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Is the reference still good?
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

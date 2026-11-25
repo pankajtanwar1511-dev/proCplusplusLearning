@@ -111,7 +111,7 @@ const std::string& getName() {
 - If returning a reference is required, the referenced object must outlive every use by the caller: a data member (`const std::string& name() const { return name_; }`) or a static.
 - Even returning a reference to a member has a lifetime contract: it dangles if the owning object is destroyed or the member is reassigned.
 - ❌ Common wrong answer: "Return `const&` to avoid a copy." There is no copy to avoid with return by value; there is a dead object to avoid with the reference.
-- ✅ What a strong answer adds: compilers warn (`-Wreturn-local-addr` in GCC, `-Wreturn-stack-address` in Clang), and `string_view` return types hide the same bug without any warning.
+- ✅ What a strong answer adds: compilers warn (`-Wreturn-local-addr` in GCC, `-Wreturn-stack-address` in Clang), and `string_view` return types hide the same bug: GCC (11 to 14) gives no warning for them, only Clang does.
 
 **Key takeaway:** Never return a reference or view to a local; return by value.
 

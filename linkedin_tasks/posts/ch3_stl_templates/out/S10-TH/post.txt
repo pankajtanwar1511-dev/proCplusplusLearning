@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"Templates go in headers because .cpp files cannot hold them."
+Wrong. The real rule is visibility at instantiation.
+
+Swipe ➜ for the template rules interviewers probe, plus 6 myths.
+
+Inside:
+1. Instantiation and why templates live in headers
+2. The deduction table
+3. Overload vs specialize
+4. Disambiguators and CTAD
+5. Folds and CRTP vs deducing this
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #templates #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

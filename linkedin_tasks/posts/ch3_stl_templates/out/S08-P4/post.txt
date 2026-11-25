@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Greatest key <= k: lower_bound, then step back once.
+Works for 25. Ship it?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two calls, one of them a key that exists.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

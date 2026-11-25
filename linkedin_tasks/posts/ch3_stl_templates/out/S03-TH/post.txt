@@ -1,0 +1,19 @@
+=== POST TEXT ===
+std::optional allocates nothing of its own.
+And assigning to a full one keeps the old object alive.
+
+The mental model for optional and expected, plus 6 myths. Swipe ➜
+
+Inside:
+1. A value plus a flag, in place
+2. How an empty optional compares
+3. What happens to the T inside
+4. expected: a value or a typed error
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Which slide was new to you? Comment the number 👇 and save the post for your interview prep.

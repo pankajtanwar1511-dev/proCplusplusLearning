@@ -1,0 +1,13 @@
+=== POST TEXT ===
+reserve(n) first, so the loop never reallocates.
+Then fill by index.
+Approved in review.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A rotate by index that looks correct line by line.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

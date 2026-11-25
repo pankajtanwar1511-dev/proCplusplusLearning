@@ -1,0 +1,400 @@
+[
+  {
+    "id": "S06-TH",
+    "type": "theory",
+    "topic_no": 6,
+    "topic_short": "Iterators",
+    "source": "topic_06 theory",
+    "text": {
+      "hook": "\"deque `push_back` keeps my iterators valid.\"\nReferences survive. Iterators do not.\n\nThe full invalidation table, plus 6 myths. Swipe ➜ and save it. 💡",
+      "body": "Inside:\n1. Three ways an iterator breaks\n2. vector rules, with and without reallocation\n3. deque, list, map, unordered, array\n4. Safe erase patterns\n5. What debug tools catch and miss\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "Iterator invalidation:<br>the full table<br>+ 6 myths",
+        "lead": "What survives each container operation, and why \"it still prints the right value\" proves nothing.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three ways an iterator breaks",
+        "cards": [
+          {
+            "label": "Storage moved",
+            "text": "Elements copied or moved to a new buffer: vector or string reallocation."
+          },
+          {
+            "label": "Position shifted",
+            "text": "Same slot, different element: vector insert or erase **without** reallocation."
+          },
+          {
+            "label": "Bookkeeping changed",
+            "text": "Element stays put, the iterator's internals do not: deque map, unordered buckets."
+          }
+        ],
+        "takeaway": "On an invalid iterator you may only assign or destroy it. Even `it == v.end()` is UB."
+      },
+      {
+        "layout": "table",
+        "kicker": "vector and string",
+        "title": "What dies after each call",
+        "header": [
+          "Operation",
+          "Invalidated"
+        ],
+        "rows": [
+          [
+            "Any reallocation",
+            "**everything**: iterators, pointers, refs"
+          ],
+          [
+            "`push_back`, no reallocation",
+            "only `end()`"
+          ],
+          [
+            "`insert(pos)`, no reallocation",
+            "everything **at or after** `pos`"
+          ],
+          [
+            "`erase(pos)`",
+            "everything at or after `pos`, incl. `end()`"
+          ]
+        ],
+        "takeaway": "`insert` and `erase` return the iterator to continue from. Always use it."
+      },
+      {
+        "layout": "table",
+        "kicker": "Other containers",
+        "title": "Insert vs erase, per layout",
+        "header": [
+          "Container",
+          "Rule"
+        ],
+        "rows": [
+          [
+            "`deque`",
+            "end insert: all iterators, **no** refs. End erase: only the erased one (+ `end()` at the back)"
+          ],
+          [
+            "`list`, `map`, `set`",
+            "insert: nothing. Erase: only the erased element"
+          ],
+          [
+            "`unordered_*`",
+            "rehash: all iterators, **no** refs or pointers"
+          ],
+          [
+            "`array`",
+            "never invalidated while the array lives"
+          ]
+        ],
+        "takeaway": "Node containers never move elements: pointers and references survive everything but erasing that element."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "Safe patterns",
+        "title": "Erasing while iterating",
+        "items": [
+          "`std::erase_if(c, pred);` (C++20, every container except `array`)",
+          "Before C++20: `v.erase(std::remove_if(...), v.end());`",
+          "`map`/`set` loop: `it = m.erase(it);` returns the next node (C++11)",
+          "`list`: the member `l.remove_if(pred);` relinks, never shifts",
+          "Never change the size inside a range-for: its `end()` is cached"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Tools",
+        "title": "What catches a stale iterator",
+        "header": [
+          "Tool",
+          "Catches / misses"
+        ],
+        "rows": [
+          [
+            "`-D_GLIBCXX_DEBUG`",
+            "singular iterators, wrong container. Misses: old `end()` after `push_back` (GCC 11)"
+          ],
+          [
+            "`-fsanitize=address`",
+            "use after reallocation, out of bounds. Misses: shifted elements"
+          ],
+          [
+            "`-D_GLIBCXX_ASSERTIONS`",
+            "`operator[]` out of range. Does not track iterators"
+          ]
+        ],
+        "takeaway": "Debug mode changes the ABI and is slow: run it in tests and CI."
+      },
+      {
+        "layout": "statement",
+        "kicker": "The rule",
+        "hero": "Validity is defined<br>by the operation,<br>not by the address.",
+        "lead": "An invalid iterator can still point at allocated, readable memory. \"It printed a sensible value\" proves nothing."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`list::sort()` invalidates the list's iterators.\"",
+            "truth": "It relinks nodes. Every iterator stays valid and follows its element."
+          },
+          {
+            "myth": "\"Comparing an invalid iterator with `end()` is harmless.\"",
+            "truth": "Any use other than assignment or destruction is UB."
+          },
+          {
+            "myth": "\"`deque::pop_front()` invalidates all iterators.\"",
+            "truth": "Erasing at either end invalidates only the erased element (plus `end()` for `pop_back`)."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`deque::push_back` invalidates nothing: elements never move.\"",
+            "truth": "References and pointers survive. Iterators do not."
+          },
+          {
+            "myth": "\"`swap` invalidates every iterator.\"",
+            "truth": "They stay valid, but now point into the other container (`end()` may not)."
+          },
+          {
+            "myth": "\"ASan will catch any stale iterator.\"",
+            "truth": "It only sees freed or out-of-bounds memory. Shifted elements look valid to it."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Check the rule<br>for that container<br>and that call.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S06-P3",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Iterators",
+    "source": "topic_06 practice Q3",
+    "text": {
+      "hook": "This loop already uses it = v.erase(it).\nThe reviewer said: \"Correct now, ship it.\"\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No crash, no sanitizer report. Read the loop header twice.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Erase in a loop",
+        "title": "Remove every 2.<br>What does it print?",
+        "code": "int main() {\n  std::vector<int> v{1, 2, 2, 3};\n  for (auto it = v.begin();\n       it != v.end(); ++it) {\n    if (*it == 2)\n      it = v.erase(it);\n  }\n  for (int x : v) std::cout << x << ' ';\n}",
+        "options": [
+          "1 3",
+          "UB: invalid iterator",
+          "1 2 3",
+          "1 2 2 3"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Prints 1 2 3",
+        "verdict_sub": "Well-defined here, but one 2 survives",
+        "bullets": [
+          "`it = v.erase(it)` already points at the **next** element: the second 2.",
+          "The loop header's `++it` then skips it. Double advance.",
+          "No UB with this input: `it` is always valid. It is a logic bug.",
+          "With `{1, 3, 2}` it becomes UB: erasing the last element returns `end()`, then `++it` steps past it."
+        ],
+        "wrong": "\"B: erase invalidates it\" (it was reassigned first)",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Advance only when nothing was erased",
+        "code": "for (auto it = v.begin(); it != v.end();) {\n  if (*it == 2) it = v.erase(it);\n  else ++it;\n}\n\n// C++20: one call, O(n)\nstd::erase_if(v, [](int x) { return x == 2; });",
+        "tip": "Both print `1 3`. The loop is O(n²) on a vector; `erase_if` is O(n).",
+        "takeaway": "When the header increments, the body must not move the iterator too."
+      }
+    ]
+  },
+  {
+    "id": "S06-P1",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Iterators",
+    "source": "topic_06 practice Q1",
+    "text": {
+      "hook": "Capacity is reserved. Nothing reallocates.\nSo the iterator to 300 is still fine. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The buffer address does not change. ASan stays silent.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Invalidation · GCC 11, libstdc++",
+        "title": "No reallocation.<br>What does `*it` give?",
+        "code": "int main() {\n  std::vector<int> v{100, 200, 300, 400};\n  v.reserve(10);\n  auto it = v.begin() + 2;   // 300\n  v.insert(v.begin(), 50);\n  std::cout << *it << '\\n';\n}",
+        "options": [
+          "UB: `it` is invalidated",
+          "300: no reallocation",
+          "200 on every compiler",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Undefined behaviour",
+        "verdict_sub": "Observed with GCC 11, libstdc++: prints 200. ASan: silent",
+        "bullets": [
+          "Without reallocation, `insert` invalidates every iterator **at or after** the insertion point.",
+          "`it` is at index 2, after `begin()`: invalid.",
+          "The buffer did not move, so `it` still addresses slot 2, which now holds the old `v[1]`: wrong data, no crash.",
+          "`-D_GLIBCXX_DEBUG` aborts: \"attempt to dereference a singular iterator\"."
+        ],
+        "wrong": "\"300: capacity was reserved, so nothing is invalidated\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Re-derive positions after the insert",
+        "code": "std::vector<int> v{100, 200, 300, 400};\nv.reserve(10);\nv.insert(v.begin(), 50);\nauto it = v.begin() + 3;   // 300\nstd::cout << *it << '\\n';",
+        "tip": "Or keep an index and bump it when the insert lands at or before it. `insert` returns an iterator to the new element.",
+        "takeaway": "Validity is defined by the operation, not by whether memory moved."
+      }
+    ]
+  },
+  {
+    "id": "S06-P9",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Iterators",
+    "source": "topic_06 practice Q9",
+    "text": {
+      "hook": "Print every second element.\nit += 2, stop at end(). Three lines, looks fine.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Tests with an even size pass every time.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Strided loop",
+        "title": "Every second element.<br>What happens?",
+        "code": "int main() {\n  std::vector<int> v{10, 20, 30, 40, 50};\n  for (auto it = v.begin(); it != v.end();\n       it += 2)\n    std::cout << *it << ' ';\n}",
+        "options": [
+          "Prints 10 30 50",
+          "Prints 10 30",
+          "Compile error",
+          "UB: steps past `end()`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Undefined behaviour",
+        "verdict_sub": "Our GCC 11 run: 10 30 50, then garbage, then a segfault",
+        "bullets": [
+          "After 50, `it += 2` forms `begin() + 6`: one **past** `end()`.",
+          "So `it != v.end()` is never false. Forming that iterator is already UB.",
+          "ASan: `heap-buffer-overflow`. `-D_GLIBCXX_DEBUG`: \"attempt to advance ... outside its valid range\".",
+          "With an even size the loop lands exactly on `end()`, so the bug hides."
+        ],
+        "wrong": "\"Prints 10 30 50: the loop stops at end()\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Check the distance before stepping",
+        "code": "for (std::size_t i = 0; i < v.size();\n     i += 2)\n  std::cout << v[i] << ' ';   // 10 30 50\n\n// iterator form:\n// if (v.end() - it <= 2) break;\n// else it += 2;",
+        "tip": "`std::next(it, 2)` does not check bounds either. `it < v.end()` still forms the bad iterator.",
+        "takeaway": "`!=` only works when every step can land exactly on `end()`."
+      }
+    ]
+  },
+  {
+    "id": "S06-P10",
+    "type": "code_puzzle",
+    "topic_no": 6,
+    "topic_short": "Iterators",
+    "source": "topic_06 practice Q10",
+    "text": {
+      "hook": "Find the 3 from the back with a reverse iterator.\nThen erase it with rit.base(). Clean, short, compiles.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One of those bugs that only shows up in the output.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · reverse_iterator",
+        "title": "Intended to erase the 3.<br>What does it print?",
+        "code": "int main() {\n  std::vector<int> v{1, 2, 3, 4, 5};\n  auto rit =\n    std::find(v.rbegin(), v.rend(), 3);\n  v.erase(rit.base());\n  for (int x : v) std::cout << x << ' ';\n}",
+        "options": [
+          "1 2 4 5",
+          "1 2 3 5",
+          "1 2 3 4",
+          "Compile error"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Prints 1 2 3 5",
+        "verdict_sub": "The 4 is erased, not the 3",
+        "bullets": [
+          "A reverse iterator stores `base()`, which points **one past** the element it refers to.",
+          "`*rit` is 3, so `rit.base()` is the 4.",
+          "If the found value were the last element, `rit.base()` would be `end()`, and `erase(end())` is UB."
+        ],
+        "wrong": "\"1 2 4 5: base() converts rit to the same element\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Step once, then take base()",
+        "code": "auto rit =\n  std::find(v.rbegin(), v.rend(), 3);\nv.erase(std::next(rit).base());\n// 1 2 4 5",
+        "tip": "`*rit` is always `*std::prev(rit.base())`. That is why `rbegin().base() == end()`.",
+        "takeaway": "Erase through a reverse iterator with `std::next(rit).base()`."
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+reserve(1000) forces a rehash.
+A reference, a pointer and an iterator all point at the same element.
+Which ones are still safe?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+All three lines print "one" on GCC. That proves less than it seems.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

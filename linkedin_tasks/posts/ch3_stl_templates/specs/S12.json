@@ -1,0 +1,390 @@
+[
+ {
+  "id": "S12-TH",
+  "type": "theory",
+  "topic_no": 12,
+  "topic_short": "constexpr",
+  "source": "topic_12 theory",
+  "text": {
+   "hook": "A constexpr function with constant arguments\ncan still run at run time.\n\nThe real rules, plus 6 myths that fail interviews. Swipe ➜",
+   "body": "Inside:\n1. constexpr vs consteval vs constinit\n2. The context decides, not the arguments\n3. What the constant evaluator rejects\n4. is_constant_evaluated traps and if consteval\n5. How constexpr grew, C++11 to C++23\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "cover",
+    "hero": "constexpr means<br>\"may\", not \"will\"",
+    "lead": "When compile-time evaluation is guaranteed, consteval vs constinit, and 6 myths.",
+    "cta": "Swipe ➜"
+   },
+   {
+    "layout": "table",
+    "kicker": "The keywords",
+    "title": "Eligibility, not speed",
+    "header": [
+     "Keyword",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "`constexpr` variable",
+      "Must be a constant. Implicitly `const`"
+     ],
+     [
+      "`constexpr` function",
+      "**May** run at compile time, in a constant context"
+     ],
+     [
+      "`consteval` (C++20)",
+      "**Must**: every call is evaluated at compile time"
+     ],
+     [
+      "`constinit` (C++20)",
+      "Constant-initialized static. Stays **mutable**"
+     ]
+    ],
+    "takeaway": "Constant folding at `-O2` is separate: not guaranteed, and it never makes a value usable as a template argument."
+   },
+   {
+    "layout": "table",
+    "kicker": "The context decides",
+    "title": "Is `f()` evaluated at compile time?",
+    "header": [
+     "Call site",
+     "Compile time?"
+    ],
+    "rows": [
+     [
+      "Initializer of a `constexpr` variable",
+      "Yes"
+     ],
+     [
+      "`static_assert`, array bound, template argument",
+      "Yes"
+     ],
+     [
+      "A `constinit` initializer, a `consteval` call",
+      "Yes"
+     ],
+     [
+      "Initializer of a plain local `int`",
+      "**No**: a run-time call"
+     ]
+    ],
+    "takeaway": "Parameters are never constant expressions inside the body, even in a compile-time call. Use template parameters."
+   },
+   {
+    "layout": "cards",
+    "kicker": "Constant evaluation",
+    "title": "What the evaluator rejects",
+    "cards": [
+     {
+      "label": "Undefined behaviour",
+      "text": "Signed overflow, null dereference, division by zero, uninitialized reads: compile error."
+     },
+     {
+      "label": "Non-constexpr work",
+      "text": "I/O, `malloc`, `reinterpret_cast`, evaluating a `throw` (until C++26)."
+     },
+     {
+      "label": "Escaping allocations",
+      "text": "`constexpr std::vector<int> v{1, 2};` fails: memory must be freed before evaluation ends."
+     }
+    ],
+    "takeaway": "Only for evaluations that really happen at compile time. The same call at run time is ordinary UB."
+   },
+   {
+    "layout": "checklist",
+    "kicker": "std::is_constant_evaluated() (C++20)",
+    "title": "Two traps, one fix",
+    "items": [
+     "`if constexpr (std::is_constant_evaluated())` is **always true**. GCC warns with `-Wall`",
+     "`if (std::is_constant_evaluated()) return ce(x);` with a `consteval` `ce` does not compile",
+     "C++23 `if consteval { } else { }` fixes both",
+     "The result depends on the call's context, not on `-O0` / `-O2`"
+    ]
+   },
+   {
+    "layout": "chain",
+    "kicker": "How constexpr grew",
+    "title": "C++11 to C++23",
+    "steps": [
+     "C++11: a single `return` statement",
+     "C++14: locals, loops, `if`, mutation",
+     "C++17: constexpr lambdas, `if constexpr`, more of the library (`std::array`, `string_view`)",
+     "C++20: `consteval`, `constinit`, transient `new`. C++23: `if consteval`"
+    ]
+   },
+   {
+    "layout": "statement",
+    "kicker": "Implementation limits (GCC)",
+    "hero": "Hitting a limit is<br>a compile error, not<br>a run-time fallback.",
+    "lead": "GCC defaults: recursion depth 512, 262144 iterations per loop, 33554432 operations in total."
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"A `constexpr` function is evaluated at compile time.\"",
+      "truth": "Only when the context makes it a constant evaluation. Elsewhere it is a normal call."
+     },
+     {
+      "myth": "\"`consteval` is just a stricter `constexpr`.\"",
+      "truth": "No run-time version exists, its address cannot escape, every call must be constant."
+     },
+     {
+      "myth": "\"`constinit` means constant.\"",
+      "truth": "It means initialized at compile time. The variable stays mutable."
+     }
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"In a compile-time call, my parameter is a constant expression.\"",
+      "truth": "Parameters never are. Use template parameters."
+     },
+     {
+      "myth": "\"`if constexpr (std::is_constant_evaluated())` picks the compile-time path.\"",
+      "truth": "It is always true. Use plain `if` or C++23 `if consteval`."
+     },
+     {
+      "myth": "\"C++20 allows a `constexpr std::vector` global.\"",
+      "truth": "Only transient allocations: the vector must die before evaluation ends."
+     }
+    ]
+   },
+   {
+    "layout": "takeaway",
+    "hero": "The context decides.<br>Not the keyword.<br>Not the argument.",
+    "lead": "Save this. Follow for a C++ interview puzzle every day."
+   }
+  ]
+ },
+ {
+  "id": "S12-P1",
+  "type": "code_puzzle",
+  "topic_no": 12,
+  "topic_short": "constexpr",
+  "source": "topic_12 practice Q1",
+  "text": {
+   "hook": "The same call `sq(10)` five times.\nConstant argument, constexpr function.\nSo all five run at compile time. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "`is_constant_evaluated()` reports which calls really ran in the compiler.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · constexpr (C++20)",
+    "title": "What does it print?",
+    "code": "constexpr int sq(int x) {\n  if (std::is_constant_evaluated()) return -1;\n  return x * x;\n}\nint main() {\n  constexpr int a = sq(10);\n  int b = sq(10);\n  const int n = 10; int c = sq(n);\n  static int d = sq(10);\n  const int e = sq(10);\n  std::cout << a << ' ' << b << ' ' << c\n            << ' ' << d << ' ' << e << '\\n';\n}",
+    "options": [
+     "-1 100 100 -1 -1",
+     "-1 -1 -1 -1 -1",
+     "-1 100 -1 -1 -1",
+     "-1 100 100 100 100"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "A. -1 100 100 -1 -1",
+    "verdict_sub": "Same output at `-O0` and `-O2` (GCC 11)",
+    "bullets": [
+     "`a`: a `constexpr` variable requires a constant: compile time.",
+     "`b`, `c`: plain locals. Run-time calls, even with a constant argument.",
+     "`d`: a static is constant-initialized when possible: compile time.",
+     "`e`: a `const int` with a constant initializer is constant-evaluated."
+    ],
+    "wrong": "\"B: the arguments are constants, so the compiler evaluates it at compile time\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The twist",
+    "title": "Change only the type of `e`",
+    "code": "const double f = sq(10);\nstd::cout << f;    // 100: run time",
+    "bullets": [
+     "The `const int` rule is integral-only.",
+     "A `const double` is never usable in constant expressions, so its initializer is an ordinary call.",
+     "Folding at `-O2` does not change `is_constant_evaluated()`."
+    ],
+    "takeaway": "The context of the call decides compile vs run time, never the arguments alone."
+   }
+  ]
+ },
+ {
+  "id": "S12-P5",
+  "type": "code_puzzle",
+  "topic_no": 12,
+  "topic_short": "constexpr",
+  "source": "topic_12 practice Q5",
+  "text": {
+   "hook": "The unit test is a `static_assert`.\nThe expected sum is correct.\nGreen build?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Sum the last k elements of an array.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · static_assert test",
+    "title": "Does the test pass?",
+    "code": "constexpr int sum_last(\n    const std::array<int, 5>& a, int k) {\n  int s = 0;\n  for (int i = 5 - k; i <= 5; ++i) s += a[i];\n  return s;\n}\nconstexpr std::array<int, 5> fills{\n    10, 20, 30, 40, 50};\nstatic_assert(sum_last(fills, 2) == 90);\nint main() {\n  std::printf(\"%d\\n\", sum_last(fills, 2));\n}",
+    "options": [
+     "Passes, prints 90",
+     "Passes, garbage at run time",
+     "Compile error",
+     "Passes, prints 140"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "C. Compile error",
+    "verdict_sub": "GCC 11: non-constant condition for static assertion. Subscript '5' is outside the bounds",
+    "bullets": [
+     "The loop condition `i <= 5` reads `a[5]`: one past the end.",
+     "During constant evaluation, UB **must** be diagnosed.",
+     "The `static_assert` turns the off-by-one into a build failure.",
+     "Without the test: run-time UB. One plain GCC 11 `-O0` build printed 681087."
+    ],
+    "wrong": "\"B: the test passes, the bug only shows at run time\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Stop before the end",
+    "code": "for (int i = 5 - k; i < 5; ++i) s += a[i];\n\nstatic_assert(sum_last(fills, 2) == 90);\n// builds, prints 90",
+    "tip": "This only covers inputs you actually test at compile time. The same call at run time is ordinary UB.",
+    "takeaway": "`static_assert` tests of constexpr functions are a free UB detector."
+   }
+  ]
+ },
+ {
+  "id": "S12-P10",
+  "type": "code_puzzle",
+  "topic_no": 12,
+  "topic_short": "constexpr",
+  "source": "topic_12 practice Q10",
+  "text": {
+   "hook": "Three variables, all initialized to 3.\nTwo of them are `const`.\nWhich ones can size a `std::array`?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One old rule still decides this.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Constant expressions",
+    "title": "Which declarations compile?",
+    "code": "int main() {\n  const int levels = 3;\n  const double ratio = 3.0;\n  int depth = 3;\n\n  std::array<int, levels> a{};      // (1)\n  std::array<int, int(ratio)> b{};  // (2)\n  std::array<int, depth> c{};       // (3)\n  std::cout << a.size() << b.size()\n            << c.size() << '\\n';\n}",
+    "options": [
+     "All three",
+     "Only (1)",
+     "(1) and (2)",
+     "None without constexpr"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "B. Only (1)",
+    "verdict_sub": "(2), (3): \"not usable in a constant expression\" (GCC 11)",
+    "bullets": [
+     "A `const` **integral** variable with a constant initializer is a constant expression: a C++98 rule.",
+     "A `const double` never is, even with a literal initializer.",
+     "`depth` is not `const` at all.",
+     "The cast in (2) does not help: `ratio` itself is not a constant."
+    ],
+    "wrong": "\"C: `const` means compile-time constant\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Say what you mean: constexpr",
+    "code": "constexpr int levels = 3;\nconstexpr double ratio = 3.0;\nstd::array<int, levels> a{};      // (1)\nstd::array<int, int(ratio)> b{};  // (2)\n// prints 33",
+    "takeaway": "Use `constexpr` for every compile-time constant. The `const int` special case does not extend to other types."
+   }
+  ]
+ },
+ {
+  "id": "S12-P7",
+  "type": "code_puzzle",
+  "topic_no": 12,
+  "topic_short": "constexpr",
+  "source": "topic_12 practice Q7",
+  "text": {
+   "hook": "A `static constexpr` limit inside a struct.\nPassed to `std::max`.\nSame code, C++14 and C++17. Same result?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "No templates, no headers of your own, 10 lines.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "moderncpp",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · static constexpr member",
+    "title": "Build with `-std=c++14 -O0`,<br>then `-std=c++17`",
+    "code": "struct Limits {\n  static constexpr int MaxQty = 100;\n};\n\nint main() {\n  int qty = 5;\n  std::cout << std::max(qty, Limits::MaxQty);\n  std::cout << '\\n';\n}",
+    "options": [
+     "Both print 100",
+     "C++14 compile error, C++17 prints 100",
+     "Link error in both",
+     "C++14 link error, C++17 prints 100"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "D. C++14 link error, C++17 prints 100",
+    "verdict_sub": "GCC 11, `-O0`: undefined reference to `Limits::MaxQty`",
+    "bullets": [
+     "`std::max` takes `const int&`. Binding a reference **odr-uses** `MaxQty`.",
+     "C++14: the in-class line is only a declaration. No storage exists.",
+     "C++17: `static constexpr` members are implicitly `inline`: the declaration is the definition.",
+     "C++14 at `-O2` linked here: the value was inlined. Still wrong, just hidden."
+    ],
+    "wrong": "\"A: constexpr values have no storage, so they cannot cause link errors\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "C++17, or define it once",
+    "code": "// C++14: in exactly one .cpp\nconstexpr int Limits::MaxQty;\n\n// C++17 and later: nothing needed",
+    "tip": "By value (`int m = Limits::MaxQty;`) was always fine. References, addresses and `const T&` parameters are odr-uses.",
+    "takeaway": "static constexpr members are inline since C++17. Before that, odr-use needs an out-of-class definition."
+   }
+  ]
+ }
+]

@@ -1,0 +1,409 @@
+[
+  {
+    "id": "S08-TH",
+    "type": "theory",
+    "topic_no": 8,
+    "topic_short": "map & set",
+    "source": "topic_08 theory",
+    "text": {
+      "hook": "\"std::set uses operator== to find duplicates.\"\nThat answer fails C++ interviews.\n\nThe map and set mental model, plus 6 myths. Swipe ➜ and save it. 💡",
+      "body": "Inside:\n1. A tree with a comparator that decides identity\n2. The insertion family, side by side\n3. The comparator contract\n4. Heterogeneous lookup with std::less<>\n5. extract, merge and the alternatives\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "std::map and std::set:<br>the mental model<br>+ 6 myths",
+        "lead": "A sorted tree where the comparator, not `operator==`, decides which keys are the same.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "A tree ordered by a comparator",
+        "cards": [
+          {
+            "label": "Red-black tree",
+            "text": "O(log n) find, insert, erase. Each level is a pointer dereference, often a cache miss."
+          },
+          {
+            "label": "Equivalence",
+            "text": "Keys are the same when `!comp(a, b) && !comp(b, a)`. `operator==` is never called."
+          },
+          {
+            "label": "Const keys",
+            "text": "`value_type` is `pair<const K, V>`: changing a key would break the order."
+          }
+        ],
+        "takeaway": "libstdc++, x86-64: a `map<int, int>` node is 40 bytes, plus allocator overhead."
+      },
+      {
+        "layout": "table",
+        "kicker": "Insertion family",
+        "title": "When the key already exists",
+        "header": [
+          "Call",
+          "Key exists"
+        ],
+        "rows": [
+          [
+            "`insert({k, v})`",
+            "no change, returns `{it, false}`"
+          ],
+          [
+            "`try_emplace(k, args...)` (C++17)",
+            "no change, arguments **untouched**"
+          ],
+          [
+            "`insert_or_assign(k, v)` (C++17)",
+            "assigns `v`, no default construction"
+          ],
+          [
+            "`emplace(k, std::move(s))`",
+            "may already have moved `s` (GCC 11 did)"
+          ]
+        ],
+        "takeaway": "Insert if absent: `try_emplace`. Insert or overwrite: `insert_or_assign`."
+      },
+      {
+        "layout": "checklist",
+        "kicker": "The comparator contract",
+        "title": "A strict weak ordering",
+        "items": [
+          "Irreflexive: `comp(a, a)` is false",
+          "Asymmetric: `comp(a, b)` implies `!comp(b, a)`",
+          "Transitive: `comp(a, b)`, `comp(b, c)` give `comp(a, c)`",
+          "Equivalence is transitive too",
+          "Callable as `const`, no mutable state"
+        ],
+        "warn": "Broken by NaN keys and tolerance-based compares. The result is UB, not a slower map.",
+        "takeaway": "Compound keys: `std::tie(...) < std::tie(...)` or C++20 `operator<=> = default`."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Heterogeneous lookup",
+        "title": "Find by `string_view`, no temporaries",
+        "cards": [
+          {
+            "label": "The problem",
+            "text": "With `map<string, int>`, `find(sv)` does not compile and `find(\"lit\")` builds a `std::string`."
+          },
+          {
+            "label": "The fix (C++14)",
+            "text": "`std::map<std::string, int, std::less<>>`: transparent `find`, `count`, bounds."
+          },
+          {
+            "label": "Later",
+            "text": "C++20: `contains`, and unordered containers. C++23: `erase`, `extract`."
+          }
+        ]
+      },
+      {
+        "layout": "cards",
+        "kicker": "Node handles (C++17)",
+        "title": "Move nodes, not values",
+        "cards": [
+          {
+            "label": "extract",
+            "text": "Unlinks a node with no copy and no allocation. Returns a node handle."
+          },
+          {
+            "label": "Change a key",
+            "text": "`nh.key() = new_key;` then `m.insert(std::move(nh))`. The only legal way."
+          },
+          {
+            "label": "merge",
+            "text": "`dst.merge(src)` splices nodes. Keys already in `dst` stay in `src`."
+          }
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "Alternatives",
+        "title": "map is not always the answer",
+        "header": [
+          "Structure",
+          "Best for"
+        ],
+        "rows": [
+          [
+            "`std::map`",
+            "ordered iteration, range queries, stable references"
+          ],
+          [
+            "`std::unordered_map`",
+            "point lookups: O(1) average"
+          ],
+          [
+            "Sorted `std::vector<pair>`",
+            "read-mostly data: contiguous binary search"
+          ],
+          [
+            "`std::flat_map` (C++23)",
+            "the packaged sorted vector (GCC 15+ library)"
+          ]
+        ],
+        "takeaway": "For tens of elements, a contiguous scan often beats a tree walk."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Set uses `operator==` to detect duplicates.\"",
+            "truth": "It uses equivalence under the comparator: `!comp(a, b) && !comp(b, a)`."
+          },
+          {
+            "myth": "\"`emplace` does nothing when the key exists.\"",
+            "truth": "It may already have moved its arguments. `try_emplace` never does."
+          },
+          {
+            "myth": "\"`std::lower_bound` on a map is O(log n).\"",
+            "truth": "O(log n) comparisons, O(n) iterator steps. Use the member `m.lower_bound(k)`."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"A key can change through an iterator if the order stays the same.\"",
+            "truth": "Keys are `const`. Use `extract`, edit `key()`, re-insert."
+          },
+          {
+            "myth": "\"Heterogeneous lookup works with the default comparator.\"",
+            "truth": "It needs a transparent comparator such as `std::less<>`."
+          },
+          {
+            "myth": "\"O(log n) map always beats an O(n) vector scan.\"",
+            "truth": "Not for small n: locality and branch prediction dominate."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "The comparator<br>decides identity.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S08-P1",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "map & set",
+    "source": "topic_08 practice Q1",
+    "text": {
+      "hook": "Only checking stock. Nothing is written.\nSo the map cannot grow. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One map, three lookups, one size at the end.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · operator[]",
+        "title": "Read-only check.<br>What does it print?",
+        "code": "int main() {\n  std::map<std::string, int> stock{\n    {\"apple\", 3}};\n  for (const char* name :\n       {\"apple\", \"pear\", \"plum\"}) {\n    if (stock[name] > 0)\n      std::cout << name << ' ';\n  }\n  std::cout << stock.size() << '\\n';\n}",
+        "options": [
+          "apple 1",
+          "Throws `out_of_range`",
+          "Compile error",
+          "apple 3"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Prints apple 3",
+        "verdict_sub": "The \"read-only\" check inserted pear and plum",
+        "bullets": [
+          "`stock[name]` on a missing key **inserts** `{name, 0}` and returns a reference to it.",
+          "So the loop added two products with zero stock that nobody created.",
+          "`operator[]` does not even compile on a `const` map, a hint that it may modify."
+        ],
+        "wrong": "\"apple 1: operator[] is just a lookup\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Read with find",
+        "code": "auto it = stock.find(name);\nif (it != stock.end() && it->second > 0)\n  std::cout << name << ' ';\n// prints apple 1",
+        "tip": "Yes/no only: `contains` (C++20). Missing is an error: `at`, which throws.",
+        "takeaway": "`operator[]` is find-or-insert. Never use it for a pure read."
+      }
+    ]
+  },
+  {
+    "id": "S08-P3",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "map & set",
+    "source": "topic_08 practice Q3",
+    "text": {
+      "hook": "Sort orders by price, highest first: a.price >= b.price.\nTests with distinct prices pass. Then 40 orders share one price.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "No compiler warning. The comparator reads naturally.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Comparators",
+        "title": "40 equal prices.<br>What happens?",
+        "code": "struct Order { int id; int price; };\nint main() {\n  std::vector<Order> orders;\n  for (int i = 0; i < 40; ++i)\n    orders.push_back({i, 100});  // same price\n  std::sort(orders.begin(), orders.end(),\n    [](const Order& a, const Order& b) {\n      return a.price >= b.price; });\n  std::cout << \"sorted \" << orders.size();\n}",
+        "options": [
+          "UB: it may crash",
+          "Prints sorted 40",
+          "Compile error",
+          "Infinite loop, always"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Undefined behaviour",
+        "verdict_sub": "Our GCC 11 run aborted: `free(): invalid size`. ASan: `heap-buffer-overflow`",
+        "bullets": [
+          "A comparator must be a strict weak ordering: `comp(a, a)` must be false. With `>=` it is true.",
+          "libstdc++'s partition uses the pivot as a sentinel. It never stops on an equal element and scans past the end.",
+          "It shows up only with many equal keys (17 or more in libstdc++), so tests with distinct prices pass.",
+          "`-D_GLIBCXX_DEBUG`: \"comparison doesn't meet irreflexive requirements\"."
+        ],
+        "wrong": "\"Prints sorted 40: >= just allows equal prices\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Strictly before: `>`, never `>=`",
+        "code": "std::stable_sort(orders.begin(), orders.end(),\n  [](const Order& a, const Order& b) {\n    return a.price > b.price; });\n// sorted 40, first id 0",
+        "tip": "`stable_sort` also keeps equal-price orders in arrival order.",
+        "takeaway": "`<=` in a `std::set` is UB too: libstdc++ inserts duplicates it then cannot find."
+      }
+    ]
+  },
+  {
+    "id": "S08-P4",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "map & set",
+    "source": "topic_08 practice Q4",
+    "text": {
+      "hook": "Greatest key <= k: lower_bound, then step back once.\nWorks for 25. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Two calls, one of them a key that exists.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · lower_bound",
+        "title": "Greatest key `<= k`.<br>What does it print?",
+        "code": "std::map<int, char> levels{\n  {10, 'a'}, {20, 'b'}, {30, 'c'}};\nint at_or_below(int k) {\n  auto it = levels.lower_bound(k);\n  --it;\n  return it->first;\n}\nint main() {\n  std::cout << at_or_below(25) << ' '\n            << at_or_below(20) << '\\n';\n}",
+        "options": [
+          "20 20",
+          "30 20",
+          "20 10",
+          "Undefined behaviour"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Prints 20 10",
+        "verdict_sub": "The second answer is wrong: 20 exists, so it should be 20",
+        "bullets": [
+          "`lower_bound(k)` is the first key **not less** than `k`: `>= k`.",
+          "For 25 it returns 30, one step back gives 20: correct.",
+          "For 20 it returns 20 itself, one step back gives 10: wrong.",
+          "For any `k < 10` it returns `begin()`, and `--it` is UB."
+        ],
+        "wrong": "\"20 20: lower_bound means first key below k\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Step back from upper_bound",
+        "code": "std::optional<int> at_or_below(int k) {\n  auto it = levels.upper_bound(k);  // > k\n  if (it == levels.begin())\n    return std::nullopt;   // nothing <= k\n  return std::prev(it)->first;\n}\n// 25 -> 20, 20 -> 20, 5 -> nullopt",
+        "takeaway": "lower_bound = first not before `k`. upper_bound = first after `k`."
+      }
+    ]
+  },
+  {
+    "id": "S08-P5",
+    "type": "code_puzzle",
+    "topic_no": 8,
+    "topic_short": "map & set",
+    "source": "topic_08 practice Q5",
+    "text": {
+      "hook": "A range-for over a map with the pair type spelled out.\nNo auto, very explicit. And a pointer to the value.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "One word is missing from the loop variable's type.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Range-for",
+        "title": "Is this well-defined?",
+        "code": "int main() {\n  std::map<std::string, int> m{\n    {\"limit\", 42}};\n  const int* p = nullptr;\n  for (const std::pair<std::string, int>& e\n       : m)\n    p = &e.second;\n  std::cout << *p << '\\n';\n}",
+        "options": [
+          "Yes, prints 42",
+          "UB: `p` dangles",
+          "Compile error",
+          "Yes, prints 0"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. Undefined behaviour",
+        "verdict_sub": "ASan: `stack-use-after-scope`. A plain GCC 11 run printed 42 by luck",
+        "bullets": [
+          "The element type is `std::pair<const std::string, int>`, with a **const** key.",
+          "`e` cannot bind to it directly, so each iteration builds a converted temporary pair (copying the string).",
+          "`p` points into that temporary, which dies at the end of the iteration.",
+          "GCC warns with `-Wall`: `-Wrange-loop-construct`, \"binds to a temporary\"."
+        ],
+        "wrong": "\"Prints 42: e refers to the element in the map\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Let auto spell the type",
+        "code": "for (const auto& [key, value] : m)\n  p = &value;   // into the map node\nstd::cout << *p << '\\n';   // 42",
+        "tip": "Spelled out correctly it is `const std::pair<const std::string, int>&`.",
+        "takeaway": "A map's element is `pair<const K, V>`. Iterate with `const auto&`."
+      }
+    ]
+  }
+]

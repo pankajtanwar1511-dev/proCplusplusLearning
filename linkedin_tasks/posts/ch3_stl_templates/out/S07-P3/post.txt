@@ -1,0 +1,12 @@
+=== POST TEXT ===
+A list of 3 numbers. std::sort, the algorithm everyone knows.
+What could go wrong?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Same code with a vector works. The list changes one thing.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

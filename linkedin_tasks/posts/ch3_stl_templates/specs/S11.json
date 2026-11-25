@@ -1,0 +1,404 @@
+[
+ {
+  "id": "S11-TH",
+  "type": "theory",
+  "topic_no": 11,
+  "topic_short": "SFINAE & Concepts",
+  "source": "topic_11 theory",
+  "text": {
+   "hook": "Two overloads, each with `class = enable_if_t<...>`.\nDifferent conditions. The compiler sees one template, defined twice.\n\nSwipe ➜ from SFINAE to concepts, plus 6 myths that fail interviews.",
+   "body": "Inside:\n1. Three generations of constraints\n2. What SFINAE does and does not catch\n3. enable_if forms and traps\n4. if constexpr limits\n5. Concepts, requires and subsumption\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "cover",
+    "hero": "SFINAE to concepts:<br>the constraint toolbox<br>+ 6 myths",
+    "lead": "enable_if, void_t, tag dispatch, if constexpr, requires and subsumption.",
+    "cta": "Swipe ➜"
+   },
+   {
+    "layout": "table",
+    "kicker": "The core idea",
+    "title": "Three generations, all still in use",
+    "header": [
+     "Era",
+     "Tool and how it selects"
+    ],
+    "rows": [
+     [
+      "C++98/11",
+      "SFINAE, `enable_if`, tag dispatch: remove overloads"
+     ],
+     [
+      "C++17",
+      "`if constexpr`, `void_t`: one template, discarded branches"
+     ],
+     [
+      "C++20",
+      "Concepts, `requires`: checked first, and **ordered**"
+     ]
+    ],
+    "takeaway": "All compile time, zero runtime cost. Type traits are the shared vocabulary."
+   },
+   {
+    "layout": "cards",
+    "kicker": "SFINAE",
+    "title": "Substitution Failure Is Not An Error",
+    "cards": [
+     {
+      "label": "Removed",
+      "text": "Invalid type or expression in the **signature** after substituting `T`: the overload silently drops out."
+     },
+     {
+      "label": "Hard error",
+      "text": "Errors in the **body**, in a trait's own definition, or in `noexcept(...)`."
+     },
+     {
+      "label": "`auto` return",
+      "text": "Signature is just `auto`: it stays viable and the body fails hard."
+     }
+    ],
+    "takeaway": "Put the check in the signature or in a constraint, never only in the body."
+   },
+   {
+    "layout": "checklist",
+    "kicker": "enable_if",
+    "title": "Forms and traps",
+    "items": [
+     "Preferred: `std::enable_if_t<C, int> = 0` as a template parameter",
+     "`class = enable_if_t<C>` twice: **redefinition** (defaults are not the signature)",
+     "Return-type form `enable_if_t<C, R> f(T)`: no use for constructors",
+     "Detect members: `std::void_t` + `std::declval` (C++17)"
+    ],
+    "takeaway": "C++20: a `requires` clause replaces most `enable_if` code."
+   },
+   {
+    "layout": "cards",
+    "kicker": "if constexpr (C++17)",
+    "title": "The discarded branch",
+    "cards": [
+     {
+      "label": "Skipped",
+      "text": "Inside a template, with a condition that depends on `T`, the discarded branch is not instantiated."
+     },
+     {
+      "label": "Return deduction",
+      "text": "`return` statements in a discarded branch do not take part in return type deduction."
+     },
+     {
+      "label": "static_assert(false)",
+      "text": "GCC 11 rejects it. P2593 (C++23, a DR): GCC 13+ accepts."
+     }
+    ],
+    "takeaway": "Portable old trick for the assert: `static_assert(always_false<T>)`."
+   },
+   {
+    "layout": "table",
+    "kicker": "Concepts (C++20)",
+    "title": "Four kinds of requirement",
+    "header": [
+     "Kind",
+     "Checks"
+    ],
+    "rows": [
+     [
+      "Simple: `a + b;`",
+      "Expression is **valid**"
+     ],
+     [
+      "Type: `typename T::value_type;`",
+      "Type exists"
+     ],
+     [
+      "Compound: `{ a.size() } -> C;`",
+      "Valid, result satisfies `C`"
+     ],
+     [
+      "Nested: `requires sizeof(T) <= 8;`",
+      "Expression is **true**"
+     ]
+    ],
+    "takeaway": "A requires-expression is itself a `bool` constant expression."
+   },
+   {
+    "layout": "cards",
+    "kicker": "Subsumption",
+    "title": "How concepts are ordered",
+    "cards": [
+     {
+      "label": "Ordering",
+      "text": "A constrained template beats an unconstrained one. `A && B` subsumes `A`."
+     },
+     {
+      "label": "By identity",
+      "text": "Atomic constraints compare by **source location**, not meaning."
+     },
+     {
+      "label": "So",
+      "text": "Two inline `is_integral_v<T>`: ambiguous. Named concepts: resolved."
+     }
+    ],
+    "takeaway": "Build constraints from named concepts and reuse them."
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"Any error during overload resolution is SFINAE.\"",
+      "truth": "Only failures in the immediate context of the signature."
+     },
+     {
+      "myth": "\"Two overloads with `class = enable_if_t<...>` defaults are fine.\"",
+      "truth": "Redefinition: defaults are not the signature. Use `enable_if_t<C, int> = 0`."
+     },
+     {
+      "myth": "\"Concepts change the generated code.\"",
+      "truth": "They only choose which template is used. No run-time cost."
+     }
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"`static_assert(false)` in an `if constexpr` else is always an error.\"",
+      "truth": "Accepted since P2593 (GCC 13+). Older compilers need a dependent `false`."
+     },
+     {
+      "myth": "\"`std::declval<T>()` makes a `T` I can use.\"",
+      "truth": "Only in unevaluated contexts (`decltype`, `sizeof`). Evaluated use fails to compile."
+     },
+     {
+      "myth": "\"Concepts with the same meaning subsume each other.\"",
+      "truth": "Subsumption compares atomic constraints by source identity."
+     }
+    ]
+   },
+   {
+    "layout": "takeaway",
+    "hero": "Constrain at the call site.<br>Name your concepts.<br>Reuse them.",
+    "lead": "Save this. Follow for a C++ interview puzzle every day."
+   }
+  ]
+ },
+ {
+  "id": "S11-P1",
+  "type": "code_puzzle",
+  "topic_no": 11,
+  "topic_short": "SFINAE & Concepts",
+  "source": "topic_11 practice Q1",
+  "text": {
+   "hook": "A special print for floating point, enable_if guarded.\nA generic print for everything else.\nClassic SFINAE. Ship it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two calls: one int, one double.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · enable_if",
+    "title": "What happens?",
+    "code": "template <class T, std::enable_if_t<\n    std::is_floating_point_v<T>, int> = 0>\nvoid print(T) { std::cout << \"float\\n\"; }\n\ntemplate <class T>\nvoid print(T) { std::cout << \"generic\\n\"; }\n\nint main() {\n  print(7);\n  print(2.5);\n}",
+    "options": [
+     "generic, float",
+     "generic, generic",
+     "Error: `print(2.5)` is ambiguous",
+     "Error: `print(7)` has no match"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "C. Compile error: `print(2.5)` is ambiguous",
+    "verdict_sub": "GCC: call of overloaded 'print(double)' is ambiguous",
+    "bullets": [
+     "`print(7)`: SFINAE removes the `enable_if` overload. Only the generic one is viable: fine.",
+     "`print(2.5)`: both are viable, both take a `double`.",
+     "Partial ordering compares parameter types only. The `enable_if` condition is not part of it."
+    ],
+    "wrong": "\"A: the constrained overload is more specialized\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix (C++20)",
+    "title": "A concept, which does take part in ordering",
+    "code": "template <std::floating_point T>\nvoid print(T) { std::cout << \"float\\n\"; }\n\ntemplate <class T>\nvoid print(T) { std::cout << \"generic\\n\"; }\n\nprint(7);    // generic\nprint(2.5);  // float",
+    "tip": "Pre-C++20: add `enable_if_t<!is_floating_point_v<T>, int> = 0` to the generic one.",
+    "takeaway": "SFINAE only removes candidates. It never makes one better."
+   }
+  ]
+ },
+ {
+  "id": "S11-P6",
+  "type": "code_puzzle",
+  "topic_no": 11,
+  "topic_short": "SFINAE & Concepts",
+  "source": "topic_11 practice Q6",
+  "text": {
+   "hook": "A C++20 concept for types bigger than 4 bytes.\nIs char Big? Is double?\nTwo versions, one keyword apart.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Each concept is tested with char (1 byte) and double (8 bytes on x86-64).",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · requires (C++20)",
+    "title": "What does this print?",
+    "code": "template <class T>\nconcept Big = requires { sizeof(T) > 4; };\n\ntemplate <class T>\nconcept ReallyBig =\n    requires { requires sizeof(T) > 4; };\n\nstd::cout << Big<char> << Big<double>\n          << ReallyBig<char>\n          << ReallyBig<double> << '\\n';",
+    "options": [
+     "`1101`",
+     "`0101`",
+     "`0100`",
+     "Compile error"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "A. `1101`",
+    "verdict_sub": "`Big<char>` is true: the size is never tested",
+    "bullets": [
+     "`Big` uses a **simple requirement**: it checks that `sizeof(T) > 4` is a valid expression.",
+     "For `char` it is valid (and false), so the concept is satisfied.",
+     "`ReallyBig` uses a **nested requirement**, which checks that the value is `true`."
+    ],
+    "wrong": "\"B: Big<char> is false because sizeof(char) is 1\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Say what you mean",
+    "code": "template <class T>\nconcept Big = sizeof(T) > 4;\n\n// Big<char> == false\n// Big<double> == true",
+    "tip": "Inside `requires { }` only a nested `requires` tests a value. Everything else tests validity.",
+    "takeaway": "A simple requirement asks \"does it compile?\", not \"is it true?\"."
+   }
+  ]
+ },
+ {
+  "id": "S11-P4",
+  "type": "code_puzzle",
+  "topic_no": 11,
+  "topic_short": "SFINAE & Concepts",
+  "source": "topic_11 practice Q4",
+  "text": {
+   "hook": "Only process<int> is ever called.\nThe else branch of if constexpr is discarded.\nSo its broken code never compiles. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "There are two suspicious calls in the else branch. Only one of them matters.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · if constexpr (C++17)",
+    "title": "Does this compile?",
+    "code": "template <class T>\nvoid process(T v) {\n  int counter = 0;\n  if constexpr (std::is_integral_v<T>) {\n    std::cout << \"integral \" << v << '\\n';\n  } else {\n    std::cout << v.name() << counter.size();\n  }\n}\n\nint main() { process(5); }",
+    "options": [
+     "Yes, prints integral 5",
+     "Error: `v` has no `name()`",
+     "Yes, with a warning",
+     "Error: `int` has no `size()`"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "D. Error: `int` has no `size()`",
+    "verdict_sub": "GCC: request for member 'size' in 'counter', which is of non-class type 'int'",
+    "bullets": [
+     "`v.name()` depends on `T`: in the discarded branch it is never instantiated. No error.",
+     "`counter` is always an `int`: not dependent. It is checked when the template is defined (phase 1).",
+     "Discarded means \"not instantiated\", not \"not compiled\"."
+    ],
+    "wrong": "\"A: the else branch is thrown away\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Only dependent code is skipped",
+    "code": "  } else {\n    std::cout << v.name() << counter;\n  }\n\n// process(5) prints: integral 5",
+    "tip": "Outside a template, `if constexpr` discards nothing for checking: both branches must compile.",
+    "takeaway": "`if constexpr` hides only code that depends on `T`."
+   }
+  ]
+ },
+ {
+  "id": "S11-P9",
+  "type": "code_puzzle",
+  "topic_no": 11,
+  "topic_short": "SFINAE & Concepts",
+  "source": "topic_11 practice Q9",
+  "text": {
+   "hook": "check(x) with int x.\nIs T int? Is T integral?\nAsk any engineer and they say yes, twice.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "One forwarding reference, three calls, three type traits each.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "metaprogramming",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Traits (C++20)",
+    "title": "What does this print?",
+    "code": "template <class T>\nvoid check(T&&) {\n  std::cout << std::is_same_v<T, int>\n            << std::is_integral_v<T>\n            << std::is_integral_v<\n              std::remove_cvref_t<T>> << ' ';\n}\n\nint main() {\n  int x = 1;\n  const int cx = 2;\n  check(x); check(cx); check(3);\n}",
+    "options": [
+     "111 111 111",
+     "001 001 111",
+     "111 001 111",
+     "111 011 111"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "B. `001 001 111`",
+    "verdict_sub": "`T` is `int&`, then `const int&`, then `int`",
+    "bullets": [
+     "Forwarding reference: an lvalue `int` deduces `T = int&`, a const lvalue `T = const int&`.",
+     "Only the rvalue `3` deduces plain `T = int`.",
+     "`is_integral_v<int&>` is false: a reference is not an integral type.",
+     "`remove_cvref_t` strips `const` and `&`: always `int`."
+    ],
+    "wrong": "\"C: T is int for check(x)\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Strip the reference first",
+    "code": "template <class T>\nvoid check(T&&) {\n  using U = std::remove_cvref_t<T>;\n  std::cout << std::is_same_v<U, int>\n            << std::is_integral_v<U> << ' ';\n}\n// 11 11 11",
+    "tip": "Same trap: `is_const_v<const int&>` is false. A reference itself is never const.",
+    "takeaway": "Ask traits about `remove_cvref_t<T>`, not a forwarded `T`."
+   }
+  ]
+ }
+]

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+v(10), v{10}, v(10, 5), v{10, 5}.
+Then emplace_back(10) vs push_back({10}).
+Six sizes.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Every C++ developer has written one of these by accident.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

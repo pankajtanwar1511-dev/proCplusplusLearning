@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A span over a vector with spare capacity.
+push_back, then write v[0].
+What does the span see?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+reserve runs before the span is made. That detail matters.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

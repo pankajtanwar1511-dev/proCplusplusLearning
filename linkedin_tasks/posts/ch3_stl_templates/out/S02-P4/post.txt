@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Slice a record into a string_view.
+One line, no copy, no warning from GCC.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The kind of line that ships in a parser refactor.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

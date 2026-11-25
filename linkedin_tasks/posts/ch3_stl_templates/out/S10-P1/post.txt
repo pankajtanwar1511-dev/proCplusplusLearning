@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A two-line generic add.
+Called with an int and a double.
+"The int just converts to double." Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Ordinary functions convert arguments all the time. Templates play by a different rule.
+
+#cpp #cplusplus #templates #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

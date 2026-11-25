@@ -1,0 +1,13 @@
+=== POST TEXT ===
+A slot that is empty until the first order arrives.
+std::variant<Order, std::string> slot;
+What could go wrong?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Order has one explicit constructor taking an int.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

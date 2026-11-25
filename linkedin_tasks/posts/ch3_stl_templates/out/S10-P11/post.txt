@@ -1,0 +1,13 @@
+=== POST TEXT ===
+"A plain function always beats a template."
+Two plain overloads, one template, three calls.
+The last one is a short.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The first two calls are warm-up. The third is the interview question.
+
+#cpp #cplusplus #templates #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

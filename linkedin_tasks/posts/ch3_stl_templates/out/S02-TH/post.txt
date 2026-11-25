@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"string_view is just a faster const std::string&."
+It is a pointer and a length. Every rule follows from that.
+
+The mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.
+
+Inside:
+1. What a view is made of
+2. Views that dangle at the semicolon
+3. data() and C APIs
+4. Choosing a text parameter, and std::span
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

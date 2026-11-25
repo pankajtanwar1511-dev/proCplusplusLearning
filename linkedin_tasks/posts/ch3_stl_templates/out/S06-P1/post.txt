@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Capacity is reserved. Nothing reallocates.
+So the iterator to 300 is still fine. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The buffer address does not change. ASan stays silent.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

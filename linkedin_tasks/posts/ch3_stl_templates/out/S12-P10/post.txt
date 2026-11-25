@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Three variables, all initialized to 3.
+Two of them are const.
+Which ones can size a std::array?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+One old rule still decides this.
+
+#cpp #cplusplus #moderncpp #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

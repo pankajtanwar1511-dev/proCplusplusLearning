@@ -1,0 +1,13 @@
+=== POST TEXT ===
+auto first = flags[0]; copies the flag.
+Then flags[0] = true;.
+first is still false. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+With std::vector<int> this is boring. This one is a vector<bool>.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

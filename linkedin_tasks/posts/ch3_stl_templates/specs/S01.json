@@ -1,0 +1,414 @@
+[
+  {
+    "id": "S01-TH",
+    "type": "theory",
+    "topic_no": 1,
+    "topic_short": "std::string",
+    "source": "topic_01 theory",
+    "text": {
+      "hook": "\"A string copy shares the buffer until someone writes.\"\nThat answer stopped being true in C++11.\n\nThe std::string mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+      "body": "Inside:\n1. The object vs the characters\n2. SSO, library by library\n3. Which calls kill your pointers\n4. Capacity and construction traps\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "std::string:<br>the mental model<br>+ 6 myths",
+        "lead": "SSO, capacity, which calls kill your pointers, and the construction traps.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Two places to keep apart",
+        "cards": [
+          {
+            "label": "The object",
+            "text": "Pointer, size, capacity. Lives where you declared it: stack, heap, a member."
+          },
+          {
+            "label": "The characters",
+            "text": "Inside the object for short strings (SSO), else in a heap block it owns."
+          },
+          {
+            "label": "Borrows",
+            "text": "Pointers, iterators, `string_view`: the string decides when they die."
+          }
+        ],
+        "takeaway": "A copy copies the characters. No sharing since C++11."
+      },
+      {
+        "layout": "table",
+        "kicker": "Implementation-specific",
+        "title": "Small string optimization (64-bit)",
+        "header": [
+          "Library",
+          "sizeof / inline chars"
+        ],
+        "rows": [
+          [
+            "libstdc++ (GCC)",
+            "32 bytes / 15 chars"
+          ],
+          [
+            "libc++ (Clang)",
+            "24 bytes / 22 chars"
+          ],
+          [
+            "MSVC STL",
+            "32 bytes / 15 chars"
+          ]
+        ],
+        "takeaway": "The standard does not require SSO. libstdc++ row verified with GCC 11, x86-64; the others are typical values."
+      },
+      {
+        "layout": "table",
+        "kicker": "The exact rule",
+        "title": "Does it invalidate `p = s.c_str()`?",
+        "header": [
+          "Operation",
+          "Standard"
+        ],
+        "rows": [
+          [
+            "`s[i]`, `at`, `data`, `begin`, `end`",
+            "No"
+          ],
+          [
+            "`+=`, `append`, `push_back`, `insert`, `erase`",
+            "Yes, even within capacity"
+          ],
+          [
+            "`clear`, `resize`, `reserve`, `shrink_to_fit`",
+            "Yes"
+          ],
+          [
+            "`swap`, moving from `s`",
+            "Yes"
+          ]
+        ],
+        "takeaway": "Stricter than `std::vector`. Reacquire, or store an index."
+      },
+      {
+        "layout": "statement",
+        "kicker": "An SSO consequence",
+        "hero": "Short strings<br>move by copying.",
+        "lead": "With SSO the characters sit inside the object, so a move or `swap` copies them. That is why both invalidate pointers into a string, while `vector::swap` keeps them valid."
+      },
+      {
+        "layout": "table",
+        "kicker": "Size and capacity",
+        "title": "What each call really changes",
+        "header": [
+          "Call",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "`reserve(n)`",
+            "capacity ≥ n, size unchanged; never shrinks (C++20)"
+          ],
+          [
+            "`resize(n)`",
+            "size n; new chars are `'\\0'`"
+          ],
+          [
+            "`clear()`",
+            "size 0, capacity kept"
+          ],
+          [
+            "`shrink_to_fit()`",
+            "non-binding request"
+          ]
+        ],
+        "takeaway": "Growth is geometric: libstdc++ doubles (15, 30, 60, 120), MSVC typically grows 1.5x."
+      },
+      {
+        "layout": "table",
+        "kicker": "Construction traps",
+        "title": "Compiles. Not what you meant.",
+        "header": [
+          "Code",
+          "Result"
+        ],
+        "rows": [
+          [
+            "`std::string s(5, 'a');`",
+            "`\"aaaaa\"`"
+          ],
+          [
+            "`std::string s{5, 'a'};`",
+            "2 chars: `'\\x05'`, `'a'`"
+          ],
+          [
+            "`s = 65;`",
+            "`\"A\"`: the int converts to char"
+          ],
+          [
+            "`std::string s(\"hello\"s, 2);`",
+            "`\"llo\"`: 2 is a position. From `\"hello\"` (a `const char*`) it is a count: `\"he\"`"
+          ]
+        ],
+        "takeaway": "Braces pick `initializer_list<char>` whenever they can. Use parentheses for a count and a char."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Copies share the buffer until one is modified.\"",
+            "truth": "Copy-on-write is forbidden since C++11. Every copy owns its characters."
+          },
+          {
+            "myth": "\"`clear()` frees the memory.\"",
+            "truth": "Size becomes 0, capacity is kept. `shrink_to_fit` is only a request."
+          },
+          {
+            "myth": "\"`std::string s{5, 'a'};` is five `'a'`.\"",
+            "truth": "Braces prefer `initializer_list<char>`: 2 characters."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`s.substr(s.size())` throws `out_of_range`.\"",
+            "truth": "It returns an empty string. Only `pos > size()` throws."
+          },
+          {
+            "myth": "\"`+=` within capacity keeps my `c_str()` pointer valid.\"",
+            "truth": "Any non-const member except the access functions formally invalidates it."
+          },
+          {
+            "myth": "\"`data()` is not null-terminated, only `c_str()` is.\"",
+            "truth": "Since C++11 both return the same null-terminated pointer."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Reacquire `c_str()`<br>after every<br>non-const call.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S01-P3",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "std::string",
+    "source": "topic_01 practice Q3",
+    "text": {
+      "hook": "`if (text.find(\"key\"))` reads like \"contains\".\nIt passed code review.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Two `if`s and one comparison. Three characters of output.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::string",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::string text = \"key=value\";\n  if (text.find(\"key\")) std::cout << \"A \";\n  else                  std::cout << \"B \";\n  if (text.find(\"zzz\")) std::cout << \"C \";\n  else                  std::cout << \"D \";\n  std::cout << (text.find(\"zzz\")\n                == std::string::npos);\n}",
+        "options": [
+          "`A D 1`",
+          "`A C 0`",
+          "`B D 1`",
+          "`B C 1`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. B C 1",
+        "verdict_sub": "`find` returns a position, not a bool",
+        "bullets": [
+          "`\"key\"` is found at position **0**, which converts to `false`: prints `B`.",
+          "`\"zzz\"` is not found: `find` returns `npos` (`size_t(-1)`), non-zero, so `true`: prints `C`.",
+          "The truth test is inverted for position 0 and wrong for \"not found\"."
+        ],
+        "wrong": "\"`A D 1`: `find` works like contains\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Compare with `npos`, or say `contains`",
+        "code": "if (text.find(\"key\") != std::string::npos)\n  std::cout << \"found\\n\";\n\nif (text.contains(\"key\"))  // C++23\n  std::cout << \"found\\n\";",
+        "tip": "`int pos = s.find(...)` narrows `npos` to `-1`. Keep positions in `std::size_t` or `auto`.",
+        "takeaway": "Never use `find` as a boolean."
+      }
+    ]
+  },
+  {
+    "id": "S01-P2",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "std::string",
+    "source": "topic_01 practice Q2",
+    "text": {
+      "hook": "One `reserve(100)` on a 5-char string.\nThen the old `c_str()` pointer is printed.\nASan runs clean.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Results: libstdc++ / GCC 11, x86-64. Short strings live somewhere unusual.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · libstdc++ / GCC 11, x86-64",
+        "title": "What happens?",
+        "code": "int main() {\n  std::string s = \"Hello\";\n  const char* p = s.c_str();\n  s.reserve(100);\n  std::cout << '[' << p << \"]\\n\";\n}",
+        "options": [
+          "Prints `[Hello]`, well-defined",
+          "UB: prints `[d]`, ASan silent",
+          "UB: ASan reports use-after-free",
+          "Prints `[]`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. UB: prints [d]",
+        "verdict_sub": "libstdc++ / GCC 11, x86-64. ASan reports nothing",
+        "bullets": [
+          "`reserve` is a non-const member that is not exempt: `p` is invalidated. Printing it is UB.",
+          "`\"Hello\"` was inline (SSO): `p` points into the string object's 16-byte local buffer.",
+          "After `reserve(100)` the chars move to the heap and those bytes hold the capacity: 100 = `0x64` = `'d'`.",
+          "Nothing was freed, so ASan stays silent."
+        ],
+        "wrong": "\"Prints `[Hello]`: the old characters are still there\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Acquire the pointer after the last mutation",
+        "code": "int main() {\n  std::string s = \"Hello\";\n  s.reserve(100);\n  const char* p = s.c_str();\n  std::cout << '[' << p << \"]\\n\"; // [Hello]\n}",
+        "tip": "Same bug with a 40-char string: the old heap block is freed and ASan reports `heap-use-after-free`.",
+        "takeaway": "Follow the invalidation rule, not the tool."
+      }
+    ]
+  },
+  {
+    "id": "S01-P5",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "std::string",
+    "source": "topic_01 practice Q5",
+    "text": {
+      "hook": "\"Config value missing? Pass nullptr.\nstd::string makes it an empty string.\"\nA review comment. True in C++20?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "C++23 changed half of this story. Slide 3 shows which half.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::string",
+        "title": "Built with `-std=c++20`.<br>What happens?",
+        "code": "int main() {\n  std::string s = nullptr;\n  std::cout << s.size() << '\\n';\n}",
+        "options": [
+          "Prints `0`: an empty string",
+          "Compile error",
+          "Compiles, UB at run time",
+          "Prints `1`: one null char"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. Compiles, UB at run time",
+        "verdict_sub": "libstdc++ (GCC 11) throws `std::logic_error`: `_M_construct null not valid`",
+        "bullets": [
+          "Before C++23, `nullptr` converts to `const char*` and picks the C-string constructor.",
+          "That constructor calls `strlen` on a null pointer: UB.",
+          "libstdc++ happens to check and throw; other libraries may simply crash."
+        ],
+        "wrong": "\"Prints 0: a null pointer is an empty string\"",
+        "cta": "C++23 ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "C++23",
+        "title": "The literal is fixed. The runtime null is not.",
+        "code": "std::string a = nullptr;  // C++23: error,\n                          // deleted ctor\nconst char* env = std::getenv(\"APP_MODE\");\nstd::string b = env;  // compiles in C++23:\n                      // UB if env is null\nstd::string c = env ? env : \"\";  // safe",
+        "tip": "C++23 adds `basic_string(std::nullptr_t) = delete` (verified with GCC 13). It also rejects `std::string s = 0;`.",
+        "takeaway": "A null `const char*` is not an empty string. Check it before constructing."
+      }
+    ]
+  },
+  {
+    "id": "S01-P6",
+    "type": "code_puzzle",
+    "topic_no": 1,
+    "topic_short": "std::string",
+    "source": "topic_01 practice Q6",
+    "text": {
+      "hook": "Same 5 bytes: `\"ab\\0cd\"`.\nTwo strings, three sizes printed.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Binary data in a `std::string` is legal. The question is who is counting.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "moderncpp",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::string",
+        "title": "What does it print?",
+        "code": "int main() {\n  using namespace std::string_literals;\n  std::string a(\"ab\\0cd\");\n  std::string b = \"ab\\0cd\"s;\n  std::cout << a.size() << ' ' << b.size()\n    << ' ' << std::strlen(b.c_str());\n}",
+        "options": [
+          "`2 5 2`",
+          "`5 5 5`",
+          "`2 5 5`",
+          "`5 5 2`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. 2 5 2",
+        "verdict_sub": "Size depends on who counts: the string or `'\\0'`",
+        "bullets": [
+          "`a(\"ab\\0cd\")` uses the `const char*` constructor, which finds the length with `strlen`: size 2.",
+          "The `s` literal (C++14) receives the array length: all 5 characters, size 5.",
+          "`strlen(b.c_str())` stops at the first `'\\0'`: 2, although `b.size()` is 5."
+        ],
+        "wrong": "\"`2 5 5`: `b` keeps 5 chars, so `strlen` sees 5\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Keep the length, and never ask C",
+        "code": "std::string b = \"ab\\0cd\"s;   // size 5\nstd::string c(\"ab\\0cd\", 5);  // size 5\n\nstd::strlen(c.c_str());       // still 2\nstd::fwrite(c.data(), 1, c.size(), out);",
+        "tip": "Binary payloads belong in a `std::string` only if they never reach `const char*` C functions.",
+        "takeaway": "`std::string` tracks its size. C APIs track a terminator."
+      }
+    ]
+  }
+]

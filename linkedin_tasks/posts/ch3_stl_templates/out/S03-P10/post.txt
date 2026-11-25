@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The parser correctly returns std::nullopt.
+The caller skipped one check.
+What does *port do now?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two accessors look alike. Only one is checked.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

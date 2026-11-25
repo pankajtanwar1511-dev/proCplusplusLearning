@@ -1,0 +1,13 @@
+=== POST TEXT ===
+std::any a = 42;
+Ask for a long, an int, an unsigned.
+All integers. All should work. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Pointer form and value form of any_cast fail in different ways.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

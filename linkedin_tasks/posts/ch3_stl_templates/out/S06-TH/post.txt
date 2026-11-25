@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"deque push_back keeps my iterators valid."
+References survive. Iterators do not.
+
+The full invalidation table, plus 6 myths. Swipe ➜ and save it. 💡
+
+Inside:
+1. Three ways an iterator breaks
+2. vector rules, with and without reallocation
+3. deque, list, map, unordered, array
+4. Safe erase patterns
+5. What debug tools catch and miss
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

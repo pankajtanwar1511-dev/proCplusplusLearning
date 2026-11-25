@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Two priority queues. One uses the default, one uses std::greater.
+"greater" means biggest first. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Same four values pushed into both queues.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

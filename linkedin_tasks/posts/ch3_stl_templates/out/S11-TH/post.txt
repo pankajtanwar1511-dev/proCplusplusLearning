@@ -1,0 +1,20 @@
+=== POST TEXT ===
+Two overloads, each with class = enable_if_t<...>.
+Different conditions. The compiler sees one template, defined twice.
+
+Swipe ➜ from SFINAE to concepts, plus 6 myths that fail interviews.
+
+Inside:
+1. Three generations of constraints
+2. What SFINAE does and does not catch
+3. enable_if forms and traps
+4. if constexpr limits
+5. Concepts, requires and subsumption
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #templates #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+The myth busters are near the end ➜ Which one did you believe before reading? Reply below 👇

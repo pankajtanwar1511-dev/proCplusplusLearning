@@ -1,0 +1,418 @@
+[
+  {
+    "id": "S09-TH",
+    "type": "theory",
+    "topic_no": 9,
+    "topic_short": "Unordered & Hashing",
+    "source": "topic_09 theory",
+    "text": {
+      "hook": "\"unordered_map lookup is O(1).\"\nOnly on average. Worst case is O(n), and every rehash invalidates your iterators.\n\nSwipe ➜ for the mental model and 6 myths that fail interviews.",
+      "body": "Inside:\n1. Buckets of linked nodes\n2. Average, worst and amortized cost\n3. When a rehash happens\n4. What survives a rehash\n5. Custom keys and hash quality\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "unordered_map:<br>the mental model<br>+ 6 myths",
+        "lead": "Buckets, load factor, rehash rules, hash quality, and when to pick something else.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "A hash table with separate chaining",
+        "cards": [
+          {
+            "label": "Bucket array",
+            "text": "Contiguous array of pointers. `bucket = hash(key) mod bucket_count()`."
+          },
+          {
+            "label": "Nodes",
+            "text": "Every element lives in its **own heap node**. Nodes never move."
+          },
+          {
+            "label": "Lookup",
+            "text": "Hash the key, jump to the bucket, walk the chain comparing with `==`."
+          }
+        ],
+        "takeaway": "Keep apart: the **hash** spreads keys, **equality** decides identity, the **load factor** decides growth."
+      },
+      {
+        "layout": "table",
+        "kicker": "Complexity",
+        "title": "O(1) is an average, not a promise",
+        "header": [
+          "Operation",
+          "Average / worst"
+        ],
+        "rows": [
+          [
+            "`find`, `contains` (C++20)",
+            "O(1) / O(n)"
+          ],
+          [
+            "`insert`, `emplace`, `m[k]`",
+            "O(1) amortized / O(n)"
+          ],
+          [
+            "`rehash`, `reserve`",
+            "O(n): relinks every node"
+          ],
+          [
+            "Worst case cause",
+            "every key in one bucket"
+          ]
+        ],
+        "takeaway": "Bad hash, adversarial keys (hash flooding) or a shared stride turn chains into lists."
+      },
+      {
+        "layout": "chain",
+        "kicker": "Load factor",
+        "title": "When does the table rehash?",
+        "steps": [
+          "`load_factor() = size() / bucket_count()`, the average chain length",
+          "`max_load_factor()` defaults to **1.0**",
+          "**Before** an insert that would exceed it: rehash first, then insert",
+          "Erase and `clear()` never shrink the buckets: use `rehash(0)`"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "What survives",
+        "title": "Rehash relinks nodes, it does not move them",
+        "header": [
+          "Operation",
+          "Iterators / refs + ptrs"
+        ],
+        "rows": [
+          [
+            "Insert, no rehash",
+            "valid / valid"
+          ],
+          [
+            "Rehash, `reserve`, `rehash`",
+            "**all invalid** / valid"
+          ],
+          [
+            "`erase(x)`",
+            "only `x` / only `x`"
+          ],
+          [
+            "`clear()`",
+            "all invalid / all invalid"
+          ]
+        ],
+        "takeaway": "`reserve(n)` = room for n **elements**. `rehash(n)` = at least n **buckets**."
+      },
+      {
+        "layout": "cards",
+        "kicker": "Custom keys",
+        "title": "The hash and equality contract",
+        "cards": [
+          {
+            "label": "Contract",
+            "text": "`a == b` must imply `hash(a) == hash(b)`. Else `find` misses."
+          },
+          {
+            "label": "Missing hash",
+            "text": "No `std::hash` for `pair`, `tuple`, your struct. Write one."
+          },
+          {
+            "label": "Combine well",
+            "text": "`h1 ^ (h2 << 1)` is weak: longest chain 50 vs 7 with a mixer (one libstdc++ run, 10000 grid points)."
+          }
+        ],
+        "takeaway": "Hash exactly the fields `operator==` compares. Never mutate a stored key: `extract`, edit, reinsert."
+      },
+      {
+        "layout": "table",
+        "kicker": "Choosing",
+        "title": "Not always the fastest map",
+        "header": [
+          "Need",
+          "Pick"
+        ],
+        "rows": [
+          [
+            "Order, ranges, hard O(log n)",
+            "`std::map`"
+          ],
+          [
+            "Point lookups, large set",
+            "`std::unordered_map`"
+          ],
+          [
+            "Read-mostly, small",
+            "sorted vector, `flat_map` (C++23)"
+          ],
+          [
+            "Max lookup speed",
+            "flat open-addressing map"
+          ]
+        ],
+        "takeaway": "Flat maps store elements in one array: often faster, but no reference stability."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"Lookup is O(1).\"",
+            "truth": "Average O(1), worst O(n). Insertion is also amortized because of rehash."
+          },
+          {
+            "myth": "\"A rehash invalidates everything.\"",
+            "truth": "Iterators yes. References and pointers stay valid: nodes do not move."
+          },
+          {
+            "myth": "\"`reserve(n)` reserves n buckets.\"",
+            "truth": "It reserves room for n **elements**. `rehash(n)` is the bucket request."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`unordered_map` is always faster than `map`.\"",
+            "truth": "Not for small sizes, costly string hashes or ordered access: `map` or a sorted vector can win."
+          },
+          {
+            "myth": "\"`clear()` frees the bucket array.\"",
+            "truth": "The bucket count never shrinks by itself. Use `rehash(0)` or swap."
+          },
+          {
+            "myth": "\"`std::hash<std::pair>` exists.\"",
+            "truth": "It does not. Write a hash with a real combiner."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Average O(1).<br>Iterators die on rehash.<br>References survive.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S09-P6",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Unordered & Hashing",
+    "source": "topic_09 practice Q6",
+    "text": {
+      "hook": "The key \"order\" is in the map.\nThe lookup string is \"order\" too.\nSame characters. Same count?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The lookup text arrives at runtime, e.g. read from a socket.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Pointer keys",
+        "title": "Same text. What does it print?",
+        "code": "std::unordered_map<const char*, int> qty;\nconst char* key = \"order\";\nqty[key] = 5;\n\nchar buf[16];\nstd::strcpy(buf, \"order\"); // from a socket\n\nstd::cout << qty.count(buf) << ' '\n          << qty.count(key) << '\\n';",
+        "options": [
+          "`1 1`",
+          "`0 1`",
+          "`0 0`",
+          "Compile error: no hash"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. `0 1`",
+        "verdict_sub": "The key type is a pointer: the characters are never looked at",
+        "bullets": [
+          "`std::hash<const char*>` hashes the **address**, `std::equal_to` compares addresses.",
+          "`buf` holds the same text at a different address: the lookup misses.",
+          "`key` is the very pointer that was stored, so it is found.",
+          "Two equal literals may or may not share an address (unspecified). Never rely on it."
+        ],
+        "wrong": "\"A: the map compares the strings\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Key by content, not by address",
+        "code": "std::unordered_map<std::string, int> qty;\nqty[\"order\"] = 5;\n\nchar buf[16];\nstd::strcpy(buf, \"order\");\nstd::cout << qty.count(buf);  // 1",
+        "tip": "Avoid the temporary `std::string` per lookup with a transparent hash + `std::equal_to<>` (C++20).",
+        "takeaway": "Pointer keys mean identity, not content."
+      }
+    ]
+  },
+  {
+    "id": "S09-P2",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Unordered & Hashing",
+    "source": "topic_09 practice Q2",
+    "text": {
+      "hook": "Point has a defaulted operator==.\nSo it can be an unordered_map key. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Three lines of code, one familiar struct. Read the first error carefully.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Custom keys (C++20)",
+        "title": "Does this compile?",
+        "code": "struct Point {\n  int x, y;\n  bool operator==(const Point&)\n      const = default;\n};\n\nint main() {\n  std::unordered_map<Point, std::string>\n      labels;\n  labels[{1, 2}] = \"a\";\n  std::cout << labels.size() << '\\n';\n}",
+        "options": [
+          "Yes, prints 1",
+          "Error: Point has no `operator<`",
+          "Yes, hashes Point's bytes",
+          "Error: no hash for Point"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. Compile error: no `std::hash<Point>`",
+        "verdict_sub": "GCC 11: \"use of deleted function ... unordered_map()\"",
+        "bullets": [
+          "`std::hash<Point>` is not specialized, so it is **disabled**: not constructible, not callable.",
+          "The map's default constructor must build a `std::hash<Point>`, so it is deleted.",
+          "`operator==` is already there. Only the hash is missing.",
+          "`operator<` is what `std::map` needs, not `std::unordered_map`."
+        ],
+        "wrong": "\"B: it needs operator<\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Specialize `std::hash` for Point",
+        "code": "template <>\nstruct std::hash<Point> {\n  std::size_t operator()(const Point& p)\n      const noexcept {\n    std::size_t s = std::hash<int>{}(p.x);\n    s ^= std::hash<int>{}(p.y) + 0x9e3779b9\n         + (s << 6) + (s >> 2);\n    return s;\n  }\n};  // now labels.size() prints 1",
+        "tip": "Or pass a hasher: `std::unordered_map<Point, V, PointHash>`.",
+        "takeaway": "Unordered keys need a hash **and** equality, consistent with each other."
+      }
+    ]
+  },
+  {
+    "id": "S09-P3",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Unordered & Hashing",
+    "source": "topic_09 practice Q3",
+    "text": {
+      "hook": "reserve(1000) forces a rehash.\nA reference, a pointer and an iterator all point at the same element.\nWhich ones are still safe?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "All three lines print \"one\" on GCC. That proves less than it seems.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · Rehash",
+        "title": "Which lines are well-defined?",
+        "code": "std::unordered_map<int, std::string> m{\n    {1, \"one\"}};\nstd::string& ref = m[1];\nstd::string* ptr = &m[1];\nauto it = m.find(1);\n\nm.reserve(1000);  // forces a rehash\n\nstd::cout << ref << '\\n';         // A\nstd::cout << *ptr << '\\n';        // B\nstd::cout << it->second << '\\n';  // C",
+        "options": [
+          "A and B only",
+          "All three",
+          "Only A",
+          "None: the nodes moved"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. Lines A and B only",
+        "verdict_sub": "Line C is UB. GCC 11 / libstdc++ still prints `one`, ASan is silent",
+        "bullets": [
+          "`reserve(1000)` changes the bucket count (13 to 1031 on libstdc++): a rehash.",
+          "Rehash allocates a new bucket array and **relinks** nodes. Nodes stay put, so `ref` and `ptr` are valid.",
+          "Every iterator, `end()` included, is invalidated by the standard.",
+          "It works on libstdc++ (iterators are node pointers; even `-D_GLIBCXX_DEBUG` is silent). The standard still makes it UB."
+        ],
+        "wrong": "\"B: it printed one, so all three are fine\"",
+        "cta": "The rule ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "Cache values, not iterators",
+        "code": "auto it = m.find(1);\nstd::string* val = &it->second; // keep\n\nm.reserve(1000);                // rehash\n\nstd::cout << *val << '\\n';       // fine\nit = m.find(1);                 // redo",
+        "tip": "Know the final size? Call `reserve(n)` once, before inserting and before taking iterators.",
+        "takeaway": "Rehash invalidates iterators, never references or pointers."
+      }
+    ]
+  },
+  {
+    "id": "S09-P1",
+    "type": "code_puzzle",
+    "topic_no": 9,
+    "topic_short": "Unordered & Hashing",
+    "source": "topic_09 practice Q1",
+    "text": {
+      "hook": "Five int keys: 0, 10, 20, 30, 40.\nPrint the map, call rehash, print it again.\nThe keys did not change. Does the output?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Measured on GCC 11 / libstdc++, x86-64. Another library may differ, which is the point.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · GCC 11 / libstdc++",
+        "title": "What does this print?",
+        "code": "std::unordered_map<int, int> m;\nfor (int i = 0; i < 5; ++i) m[i * 10] = i;\n\nfor (const auto& [k, v] : m)\n  std::cout << k << ' ';\nstd::cout << '\\n';\n\nm.rehash(1000);\nfor (const auto& [k, v] : m)\n  std::cout << k << ' ';",
+        "options": [
+          "Ascending, both times",
+          "Descending, both times",
+          "Descending, then ascending",
+          "Ascending, then descending"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. `40 30 20 10 0`, then `0 10 20 30 40`",
+        "verdict_sub": "Observed on GCC 11 / libstdc++, x86-64. The standard leaves the order unspecified",
+        "bullets": [
+          "libstdc++ keeps all nodes on one list. A key landing in an empty bucket goes to the **front**: newest first.",
+          "`rehash(1000)` relinks the nodes bucket by bucket. With the identity `std::hash<int>`, the order happens to be ascending.",
+          "Another library or version may print something else.",
+          "Any rehash can reorder the elements."
+        ],
+        "wrong": "\"A: small int keys come out sorted\"",
+        "cta": "The rule ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "Need an order? Make one",
+        "code": "std::vector<int> keys;\nfor (const auto& [k, v] : m)\n  keys.push_back(k);\nstd::sort(keys.begin(), keys.end());\nfor (int k : keys)\n  std::cout << k << ' ';",
+        "tip": "Two maps with equal contents can iterate differently, yet `==` says they are equal.",
+        "takeaway": "Never test, log or serialize unordered iteration order."
+      }
+    ]
+  }
+]

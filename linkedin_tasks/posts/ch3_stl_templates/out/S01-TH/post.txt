@@ -1,0 +1,19 @@
+=== POST TEXT ===
+"A string copy shares the buffer until someone writes."
+That answer stopped being true in C++11.
+
+The std::string mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.
+
+Inside:
+1. The object vs the characters
+2. SSO, library by library
+3. Which calls kill your pointers
+4. Capacity and construction traps
+5. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

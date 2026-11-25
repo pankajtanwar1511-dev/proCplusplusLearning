@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Remove every 2 from the vector with std::remove.
+Then print the size.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+The algorithm's name promises more than it can do.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

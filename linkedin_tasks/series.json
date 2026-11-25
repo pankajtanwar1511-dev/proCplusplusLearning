@@ -3,7 +3,8 @@
   "paused": false,
   "chapters": [
     "posts/ch4_concurrency",
-    "posts/ch2_memory_ownership"
+    "posts/ch2_memory_ownership",
+    "posts/ch3_stl_templates"
   ],
   "timezone": "Asia/Tokyo",
   "slots": [

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Print every second element.
+it += 2, stop at end(). Three lines, looks fine.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Tests with an even size pass every time.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

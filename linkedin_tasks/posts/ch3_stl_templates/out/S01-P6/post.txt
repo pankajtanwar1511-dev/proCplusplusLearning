@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Same 5 bytes: "ab\0cd".
+Two strings, three sizes printed.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Binary data in a std::string is legal. The question is who is counting.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

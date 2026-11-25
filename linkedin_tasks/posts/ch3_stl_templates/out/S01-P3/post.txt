@@ -1,0 +1,12 @@
+=== POST TEXT ===
+if (text.find("key")) reads like "contains".
+It passed code review.
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Two ifs and one comparison. Three characters of output.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.

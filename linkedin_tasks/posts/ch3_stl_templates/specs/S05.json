@@ -1,0 +1,412 @@
+[
+  {
+    "id": "S05-TH",
+    "type": "theory",
+    "topic_no": 5,
+    "topic_short": "vector",
+    "source": "topic_05 theory",
+    "text": {
+      "hook": "\"`clear()` gives the memory back.\"\nIt does not. The capacity stays.\n\nThe std::vector mental model, plus 6 myths that fail interviews. Swipe ➜ and save it.",
+      "body": "Inside:\n1. Three pointers, one heap block\n2. Growth factors by library\n3. reserve vs resize\n4. What reallocation does, in order\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "cover",
+        "hero": "std::vector:<br>the mental model<br>+ 6 myths",
+        "lead": "Three pointers, a growth factor, and the rules that decide when your pointers die.",
+        "cta": "Swipe ➜"
+      },
+      {
+        "layout": "cards",
+        "kicker": "The core idea",
+        "title": "Three pointers, one heap block",
+        "cards": [
+          {
+            "label": "begin",
+            "text": "The first element."
+          },
+          {
+            "label": "end",
+            "text": "One past the last **constructed** element: `size()`."
+          },
+          {
+            "label": "end_of_storage",
+            "text": "One past the block: `capacity()`."
+          }
+        ],
+        "takeaway": "Slots in `[end, end_of_storage)` are raw memory. Reading or writing them is UB, even though they are allocated."
+      },
+      {
+        "layout": "table",
+        "kicker": "Implementation-defined",
+        "title": "Growth on `push_back`",
+        "header": [
+          "Library",
+          "Capacity sequence"
+        ],
+        "rows": [
+          [
+            "libstdc++ (GCC)",
+            "2x: 1, 2, 4, 8, ..."
+          ],
+          [
+            "libc++ (Clang)",
+            "2x (typical)"
+          ],
+          [
+            "MSVC STL",
+            "1.5x: 1, 2, 3, 4, 6, 9, ... (typical)"
+          ],
+          [
+            "Linear `+10`",
+            "n pushes cost O(n²)"
+          ]
+        ],
+        "takeaway": "Geometric growth makes `push_back` amortized O(1). The libstdc++ row is verified with GCC 11."
+      },
+      {
+        "layout": "table",
+        "kicker": "reserve vs resize",
+        "title": "Who creates elements?",
+        "header": [
+          "Call",
+          "size / elements"
+        ],
+        "rows": [
+          [
+            "`std::vector<int> v(n);`",
+            "n, value-initialized (0)"
+          ],
+          [
+            "`v.reserve(n);`",
+            "unchanged, nothing constructed"
+          ],
+          [
+            "`v.resize(n);`",
+            "n, new ones value-initialized"
+          ],
+          [
+            "`v.clear();`",
+            "0, capacity kept"
+          ]
+        ],
+        "takeaway": "`reserve` changes capacity only. `resize` changes the size, and grows capacity when needed."
+      },
+      {
+        "layout": "chain",
+        "kicker": "libstdc++",
+        "title": "`emplace_back` at full capacity",
+        "steps": [
+          "Allocate a new block, larger by the growth factor",
+          "Construct the **new element first**, at index `size()`",
+          "Relocate the old elements with `move_if_noexcept`, destroy them, free the old block: every old pointer is now invalid",
+          "That order is why `v.push_back(v[0])` is safe: the argument lives until the old block is freed"
+        ]
+      },
+      {
+        "layout": "table",
+        "kicker": "push_back vs emplace_back",
+        "title": "Where `emplace_back` wins",
+        "header": [
+          "Call",
+          "Work done"
+        ],
+        "rows": [
+          [
+            "`v.push_back(T(args))`",
+            "temporary + move + destroy"
+          ],
+          [
+            "`v.emplace_back(args)`",
+            "1 construction in place"
+          ],
+          [
+            "`v.emplace_back(t)`",
+            "1 copy: no gain"
+          ],
+          [
+            "`v.emplace_back(new int(1))` into `unique_ptr`s",
+            "compiles, leaks if growth throws"
+          ]
+        ],
+        "takeaway": "`emplace_back` only saves work when you pass constructor arguments."
+      },
+      {
+        "layout": "statement",
+        "kicker": "The odd one out",
+        "hero": "`vector<bool>` is not<br>a container of bool.",
+        "lead": "It stores bits. `operator[]` returns a proxy object, not `bool&`: `&vb[0]` is not a `bool*`, there is no `data()`, and writes to different elements can race."
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`emplace_back` is always faster than `push_back`.\"",
+            "truth": "Only when you pass constructor arguments. `emplace_back(t)` is the same copy."
+          },
+          {
+            "myth": "\"`push_back` at full capacity might not reallocate.\"",
+            "truth": "It must: capacity is the storage the vector holds."
+          },
+          {
+            "myth": "\"Reallocation moves the old elements first, then builds the new one.\"",
+            "truth": "libstdc++ builds the new element first. That is why `push_back(v[0])` works."
+          }
+        ]
+      },
+      {
+        "layout": "myths",
+        "items": [
+          {
+            "myth": "\"`v.front()` on an empty vector throws.\"",
+            "truth": "It is UB. Only `at()` checks and throws `out_of_range`."
+          },
+          {
+            "myth": "\"`clear()` frees the memory.\"",
+            "truth": "Capacity stays. Use `shrink_to_fit` (a request) or swap with an empty vector."
+          },
+          {
+            "myth": "\"A copy keeps the reserved capacity.\"",
+            "truth": "A copy allocates for the elements only. A move keeps the block."
+          }
+        ]
+      },
+      {
+        "layout": "takeaway",
+        "hero": "Growth relocates<br>every element.",
+        "lead": "Save this. Follow for a C++ interview puzzle every day."
+      }
+    ]
+  },
+  {
+    "id": "S05-P1",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "vector",
+    "source": "topic_05 practice Q1",
+    "text": {
+      "hook": "`reserve(n)` first, so the loop never reallocates.\nThen fill by index.\nApproved in review.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "A rotate by index that looks correct line by line.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::vector",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::vector<int> in{1, 2, 3, 4, 5};\n  std::vector<int> r;\n  r.reserve(in.size());\n  for (std::size_t i = 0; i < 5; ++i)\n    r[(i + 2) % 5] = in[i];  // rotate by 2\n  std::cout << \"size \" << r.size() << ':';\n  for (int x : r) std::cout << ' ' << x;\n}",
+        "options": [
+          "`size 5: 4 5 1 2 3`",
+          "`size 5: 1 2 3 4 5`",
+          "UB, in practice `size 0:`",
+          "Throws `out_of_range`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "C. UB, in practice size 0:",
+        "verdict_sub": "GCC 11 printed `size 0:`. ASan is silent",
+        "bullets": [
+          "`reserve(n)` allocates room for `n` ints but creates no elements: `size()` stays 0.",
+          "`r[i]` writes raw memory inside the block: UB, no check, no exception.",
+          "`r` still has `begin == end`, so the loop prints nothing.",
+          "`-D_GLIBCXX_ASSERTIONS` aborts on the first `r[...]`."
+        ],
+        "wrong": "\"`size 5: 4 5 1 2 3`: the memory was reserved\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Size the vector before indexing",
+        "code": "int main() {\n  std::vector<int> in{1, 2, 3, 4, 5};\n  std::vector<int> r(in.size());  // 5 zeros\n  for (std::size_t i = 0; i < 5; ++i)\n    r[(i + 2) % 5] = in[i];\n  std::cout << \"size \" << r.size() << ':';\n  for (int x : r) std::cout << ' ' << x;\n}  // size 5: 4 5 1 2 3",
+        "tip": "Appending in order instead? Then `reserve(n)` plus `push_back` is the right pair.",
+        "takeaway": "Reserved slots are not elements."
+      }
+    ]
+  },
+  {
+    "id": "S05-P4",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "vector",
+    "source": "topic_05 practice Q4",
+    "text": {
+      "hook": "`v(10)`, `v{10}`, `v(10, 5)`, `v{10, 5}`.\nThen `emplace_back(10)` vs `push_back({10})`.\nSix sizes.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "Every C++ developer has written one of these by accident.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · std::vector",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::vector<int> a(10);\n  std::vector<int> b{10};\n  std::vector<int> c(10, 5);\n  std::vector<int> d{10, 5};\n  std::vector<std::vector<int>> nested;\n  nested.emplace_back(10);\n  nested.push_back({10});\n  for (auto n : {a.size(), b.size(),\n      c.size(), d.size(),\n      nested[0].size(), nested[1].size()})\n    std::cout << n << ' ';\n}",
+        "options": [
+          "`10 1 10 2 10 1`",
+          "`10 1 10 2 1 1`",
+          "`10 10 10 10 10 10`",
+          "`10 1 10 2 10 10`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "A. 10 1 10 2 10 1",
+        "verdict_sub": "Parentheses count, braces list",
+        "bullets": [
+          "Parentheses pick the size constructors: `(10)` ten zeros, `(10, 5)` ten fives.",
+          "Braces pick the `initializer_list` constructor when viable: `{10}` one element, `{10, 5}` two.",
+          "`emplace_back(10)` direct-initializes `std::vector<int>(10)`: ten zeros.",
+          "`push_back({10})` list-initializes the parameter: one element."
+        ],
+        "wrong": "\"`10 1 10 2 1 1`: `emplace_back(10)` adds one element\"",
+        "cta": "The rule ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The rule",
+        "title": "Parentheses for counts, braces for values",
+        "code": "std::vector<int> a(10);     // 10 zeros\nstd::vector<int> b{10};     // {10}\nstd::vector<int> c(10, 5);  // 10 fives\nstd::vector<int> d{10, 5};  // {10, 5}\nnested.emplace_back(10);    // (10)\nnested.push_back({10});     // {10}",
+        "takeaway": "`emplace_back` forwards to parentheses, not braces."
+      }
+    ]
+  },
+  {
+    "id": "S05-P5",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "vector",
+    "source": "topic_05 practice Q5",
+    "text": {
+      "hook": "`auto first = flags[0];` copies the flag.\nThen `flags[0] = true;`.\n`first` is still false. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "With `std::vector<int>` this is boring. This one is a `vector<bool>`.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · vector<bool>",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::vector<bool> flags(3, false);\n  auto first = flags[0];\n  bool copy = flags[0];\n  flags[0] = true;\n  std::cout << first << ' ' << copy << '\\n';\n}",
+        "options": [
+          "`0 0`",
+          "`1 1`",
+          "Compile error",
+          "`1 0`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "D. 1 0",
+        "verdict_sub": "`auto` deduced a proxy, not a `bool`",
+        "bullets": [
+          "`vector<bool>::operator[]` returns a proxy (`std::vector<bool>::reference`), not `bool&`.",
+          "`auto first` is that proxy: it keeps referring to bit 0 and reads the later write: `1`.",
+          "`bool copy` converts the proxy to a value at that moment: `0`."
+        ],
+        "wrong": "\"`0 0`: `auto` always makes a copy\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "Spell out `bool` when you want a value",
+        "columns": [
+          {
+            "label": "proxy",
+            "code": "auto first =\n  flags[0];",
+            "verdict": "tracks bit 0: prints 1"
+          },
+          {
+            "label": "value",
+            "code": "bool first =\n  flags[0];",
+            "verdict": "a copy: prints 0",
+            "verdict_ok": true
+          }
+        ],
+        "tip": "`&flags[0]` is not a `bool*` and there is no `data()`. Need real bools? `std::vector<char>`.",
+        "takeaway": "`vector<bool>` stores bits and hands out proxies."
+      }
+    ]
+  },
+  {
+    "id": "S05-P6",
+    "type": "code_puzzle",
+    "topic_no": 5,
+    "topic_short": "vector",
+    "source": "topic_05 practice Q6",
+    "text": {
+      "hook": "Remove every 2 from the vector with `std::remove`.\nThen print the size.\n\nLock in your answer below, then swipe ➜ to verify.",
+      "body": "The algorithm's name promises more than it can do.",
+      "hashtags": [
+        "cpp",
+        "cplusplus",
+        "stl",
+        "datastructures",
+        "interviewprep"
+      ]
+    },
+    "slides": [
+      {
+        "layout": "puzzle",
+        "kicker": "Puzzle · libstdc++ / GCC 11",
+        "title": "What does it print?",
+        "code": "int main() {\n  std::vector<int> v{1, 2, 3, 2, 5};\n  auto it =\n    std::remove(v.begin(), v.end(), 2);\n  std::cout << v.size() << ' '\n            << (it - v.begin()) << \" :\";\n  for (int x : v) std::cout << ' ' << x;\n}",
+        "options": [
+          "`3 3 : 1 3 5`",
+          "`5 3 : 1 3 5 2 5`",
+          "`5 5 : 1 2 3 2 5`",
+          "`3 5 : 1 3 5`"
+        ],
+        "cta": "Work it out, then swipe ➜"
+      },
+      {
+        "layout": "answer",
+        "verdict": "B. 5 3 : 1 3 5 2 5",
+        "verdict_sub": "Tail values are unspecified: `2 5` is libstdc++ / GCC 11, x86-64",
+        "bullets": [
+          "`std::remove` shifts the kept elements (`1 3 5`) to the front and returns the new logical end: index 3.",
+          "It cannot change the size: algorithms see iterators, not the container.",
+          "The tail holds valid but unspecified values."
+        ],
+        "wrong": "\"`3 3 : 1 3 5`: remove removes\"",
+        "cta": "The fix ➜"
+      },
+      {
+        "layout": "code",
+        "kicker": "The fix",
+        "title": "`remove` reorders, `erase` shrinks",
+        "code": "// erase-remove idiom\nv.erase(std::remove(v.begin(), v.end(), 2),\n        v.end());          // size 3\n\n// C++20: one call instead\nauto n = std::erase(v, 2);  // n == 2",
+        "takeaway": "`std::remove` never changes `size()`. Pair it with `erase`, or use C++20 `std::erase`."
+      }
+    ]
+  }
+]

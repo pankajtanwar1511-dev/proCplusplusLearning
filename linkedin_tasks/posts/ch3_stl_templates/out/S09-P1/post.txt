@@ -1,0 +1,13 @@
+=== POST TEXT ===
+Five int keys: 0, 10, 20, 30, 40.
+Print the map, call rehash, print it again.
+The keys did not change. Does the output?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Measured on GCC 11 / libstdc++, x86-64. Another library may differ, which is the point.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

@@ -1,0 +1,12 @@
+=== POST TEXT ===
+use_default is false.
+So label just views configured. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+No threads, no heap tricks. One conditional operator.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

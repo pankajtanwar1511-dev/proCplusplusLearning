@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The unit test is a static_assert.
+The expected sum is correct.
+Green build?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Sum the last k elements of an array.
+
+#cpp #cplusplus #moderncpp #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

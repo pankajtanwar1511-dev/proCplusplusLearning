@@ -1,0 +1,12 @@
+=== POST TEXT ===
+The cache already holds a value.
+So the fallback never runs. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+A one-liner that shows up in every config and cache lookup.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

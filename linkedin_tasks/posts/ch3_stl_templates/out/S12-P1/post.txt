@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The same call sq(10) five times.
+Constant argument, constexpr function.
+So all five run at compile time. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+is_constant_evaluated() reports which calls really ran in the compiler.
+
+#cpp #cplusplus #moderncpp #metaprogramming #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

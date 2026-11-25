@@ -1,0 +1,411 @@
+[
+ {
+  "id": "S10-TH",
+  "type": "theory",
+  "topic_no": 10,
+  "topic_short": "Templates",
+  "source": "topic_10 theory",
+  "text": {
+   "hook": "\"Templates go in headers because .cpp files cannot hold them.\"\nWrong. The real rule is visibility at instantiation.\n\nSwipe ➜ for the template rules interviewers probe, plus 6 myths.",
+   "body": "Inside:\n1. Instantiation and why templates live in headers\n2. The deduction table\n3. Overload vs specialize\n4. Disambiguators and CTAD\n5. Folds and CRTP vs deducing this\n6. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "cover",
+    "hero": "Templates:<br>the rules that bite<br>+ 6 myths",
+    "lead": "Deduction, specialization, dependent names, CTAD, folds and CRTP.",
+    "cta": "Swipe ➜"
+   },
+   {
+    "layout": "cards",
+    "kicker": "The core idea",
+    "title": "A template is a recipe, not code",
+    "cards": [
+     {
+      "label": "Instantiation",
+      "text": "`max<int>` and `max<double>` are two separate functions in the binary."
+     },
+     {
+      "label": "Headers",
+      "text": "The definition must be visible where it is instantiated. Else: \"undefined reference\"."
+     },
+     {
+      "label": "Control it",
+      "text": "`template class M<double>;` in one `.cpp`, `extern template` in the header."
+     }
+    ],
+    "takeaway": "Errors show up at instantiation, and every distinct argument set adds code (bloat)."
+   },
+   {
+    "layout": "table",
+    "kicker": "Deduction",
+    "title": "What is `T`?",
+    "header": [
+     "Parameter, argument",
+     "Deduced `T`"
+    ],
+    "rows": [
+     [
+      "`T`, `const int`",
+      "`int`: top-level const dropped"
+     ],
+     [
+      "`T`, `int[3]`",
+      "`int*`: array decays"
+     ],
+     [
+      "`T&`, `const int`",
+      "`const int`: kept"
+     ],
+     [
+      "`T&`, `int[3]`",
+      "`int[3]`: no decay"
+     ]
+    ],
+    "takeaway": "By value makes a new copy, so top-level `const` goes. `T&` keeps everything the argument has."
+   },
+   {
+    "layout": "cards",
+    "kicker": "Customizing",
+    "title": "Overload, do not specialize functions",
+    "cards": [
+     {
+      "label": "Overload resolution",
+      "text": "Sees only primary templates and plain functions. Specializations are not candidates."
+     },
+     {
+      "label": "Prefer",
+      "text": "Overloads, `if constexpr`, or a class template with partial specialization."
+     },
+     {
+      "label": "No partial",
+      "text": "Function templates cannot be partially specialized. Class templates can."
+     }
+    ],
+    "takeaway": "A full specialization `f<int*>` is silently ignored if an overload `f(T*)` wins."
+   },
+   {
+    "layout": "checklist",
+    "kicker": "Disambiguators and CTAD",
+    "title": "Where correct-looking code fails",
+    "items": [
+     "`typename T::value_type x;`: say it is a type",
+     "`obj.template get<0>()`: say `get` is a template",
+     "`std::pair p{1, \"x\"}`: second is `const char*`",
+     "`std::array<int> a{1, 2}`: error, CTAD is all or nothing"
+    ],
+    "takeaway": "A deduction guide fixes a CTAD surprise: `Wrapper(const char*) -> Wrapper<std::string>;`"
+   },
+   {
+    "layout": "table",
+    "kicker": "Fold expressions (C++17)",
+    "title": "Direction matters",
+    "header": [
+     "Fold on `(10, 3, 2)`",
+     "Result"
+    ],
+    "rows": [
+     [
+      "`(args - ...)`",
+      "`10 - (3 - 2)` = 9"
+     ],
+     [
+      "`(... - args)`",
+      "`(10 - 3) - 2` = 5"
+     ],
+     [
+      "Empty pack, `&&` / `||` / `,`",
+      "`true` / `false` / `void()`"
+     ],
+     [
+      "Empty pack, `+`",
+      "compile error: use `(0 + ... + args)`"
+     ]
+    ]
+   },
+   {
+    "layout": "cards",
+    "kicker": "Static polymorphism",
+    "title": "CRTP vs deducing this",
+    "cards": [
+     {
+      "label": "CRTP",
+      "text": "`struct D : Base<D>`. Base calls `static_cast<D&>(*this).step()`. No vptr."
+     },
+     {
+      "label": "Limit",
+      "text": "`Base<A>` and `Base<B>` are unrelated: no mixed `vector<Base*>`."
+     },
+     {
+      "label": "C++23",
+      "text": "`void run(this auto& self) { self.step(); }`. No template base, no cast (GCC 14+, Clang 18+)."
+     }
+    ],
+    "takeaway": "CRTP removes the virtual call. Inlining is still the optimizer's decision."
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"Templates are type-checked when defined.\"",
+      "truth": "Only the non-dependent parts. Dependent code is checked at instantiation."
+     },
+     {
+      "myth": "\"A full specialization is an overload.\"",
+      "truth": "It is not a candidate. Only its primary template is."
+     },
+     {
+      "myth": "\"Pass by value deduces `const int` from a `const int`.\"",
+      "truth": "Top-level `const` is dropped: `T` is `int`."
+     }
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"Function templates can be partially specialized, like classes.\"",
+      "truth": "They cannot. Overload instead."
+     },
+     {
+      "myth": "\"An empty fold works with any operator.\"",
+      "truth": "Only `&&`, `||` and `,`. Others need an init value."
+     },
+     {
+      "myth": "\"`typename` and `class` differ in a template parameter list.\"",
+      "truth": "Identical there. `typename` also marks dependent types."
+     }
+    ]
+   },
+   {
+    "layout": "takeaway",
+    "hero": "A recipe, not code.<br>Overload, do not specialize.<br>Visible where instantiated.",
+    "lead": "Save this. Follow for a C++ interview puzzle every day."
+   }
+  ]
+ },
+ {
+  "id": "S10-P1",
+  "type": "code_puzzle",
+  "topic_no": 10,
+  "topic_short": "Templates",
+  "source": "topic_10 practice Q1",
+  "text": {
+   "hook": "A two-line generic add.\nCalled with an int and a double.\n\"The int just converts to double.\" Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Ordinary functions convert arguments all the time. Templates play by a different rule.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Deduction",
+    "title": "What happens?",
+    "code": "template <class T>\nT add(T a, T b) { return a + b; }\n\nint main() {\n  std::cout << add(10, 20.5) << '\\n';\n}",
+    "options": [
+     "Compile error",
+     "Prints 30.5",
+     "Prints 30",
+     "Prints 30, with a warning"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "A. Compile error",
+    "verdict_sub": "GCC: deduced conflicting types for parameter 'T' ('int' and 'double')",
+    "bullets": [
+     "`T` is deduced from **each** argument separately: `int` from `10`, `double` from `20.5`.",
+     "All deductions of `T` must agree exactly. They do not.",
+     "Deduction never tries conversions, so the template is not viable: \"no matching function\"."
+    ],
+    "wrong": "\"B: 10 is promoted to 10.0\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Fix `T` first, then convert",
+    "code": "template <class A, class B>\nauto add2(A a, B b) { return a + b; }\n\nadd<double>(10, 20.5);  // 30.5\nadd(10.0, 20.5);        // 30.5\nadd2(10, 20.5);         // 30.5",
+    "tip": "With an explicit `<double>` nothing is deduced, so `10` converts like in any normal call.",
+    "takeaway": "Conversions happen only after `T` is fixed."
+   }
+  ]
+ },
+ {
+  "id": "S10-P8",
+  "type": "code_puzzle",
+  "topic_no": 10,
+  "topic_short": "Templates",
+  "source": "topic_10 practice Q8",
+  "text": {
+   "hook": "Three vectors built from the same source.\nC++17 CTAD deduces every element type.\nThey all hold 4 ints. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Braces vs parentheses is the whole puzzle.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · CTAD (C++17)",
+    "title": "What does this print?",
+    "code": "std::vector<int> src{5, 6, 7, 8};\nstd::vector a{src};\nstd::vector b{src.begin(), src.end()};\nstd::vector c(src.begin(), src.end());\n\nstd::cout << a.size() << ' ' << b.size()\n          << ' ' << c.size() << '\\n';",
+    "options": [
+     "`4 4 4`",
+     "`1 2 4`",
+     "`4 2 4`",
+     "`1 4 4`"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "C. `4 2 4`",
+    "verdict_sub": "`b` is a `std::vector<std::vector<int>::iterator>` with two elements",
+    "bullets": [
+     "`a{src}`: for one argument of the same template, CTAD prefers the **copy** candidate: a `vector<int>` copy.",
+     "`b{...}`: braces make the `initializer_list` constructor win: two iterators.",
+     "`c(...)`: parentheses select the iterator-pair constructor and its deduction guide: 4 ints."
+    ],
+    "wrong": "\"A: braces and parentheses do the same thing\"",
+    "cta": "Prove it ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "Prove it",
+    "title": "Check the deduced type",
+    "code": "using It = std::vector<int>::iterator;\nstatic_assert(std::is_same_v<decltype(b),\n              std::vector<It>>);  // passes\n\nstd::vector c(src.begin(), src.end());\nstd::vector<int> d{src.begin(), src.end()};\n// c.size() == 4, d.size() == 4",
+    "tip": "Spelling out `<int>` turns CTAD off, so the braces can no longer pick iterators.",
+    "takeaway": "Iterator pairs: use parentheses or name the element type."
+   }
+  ]
+ },
+ {
+  "id": "S10-P7",
+  "type": "code_puzzle",
+  "topic_no": 10,
+  "topic_short": "Templates",
+  "source": "topic_10 practice Q7",
+  "text": {
+   "hook": "Cache inherits reset() from Storage.\nCalling an inherited member is basic C++.\nWhat could go wrong?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Without the templates this compiles fine. Add them and the compiler stops trusting the base.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Dependent base",
+    "title": "What happens?",
+    "code": "template <class T>\nstruct Storage {\n  T value{};\n  void reset() { value = T{}; }\n};\ntemplate <class T>\nstruct Cache : Storage<T> {\n  void clear() { reset(); }\n};\n\nint main() { Cache<int> c; c.clear(); }",
+    "options": [
+     "Compiles, `value` reset to 0",
+     "Compile error at `reset()`",
+     "Link error: `reset` undefined",
+     "Compiles, `value` unchanged"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "B. Compile error at `reset()`",
+    "verdict_sub": "GCC: there are no arguments to 'reset' that depend on a template parameter",
+    "bullets": [
+     "`Storage<T>` is a **dependent base**: unqualified lookup at definition time (phase 1) does not search it.",
+     "`reset()` has no dependent arguments, so it is looked up immediately. Nothing is found.",
+     "Reason: `Storage<T>` might be specialized later **without** `reset`."
+    ],
+    "wrong": "\"A: inherited members are always visible\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Make the name dependent",
+    "code": "template <class T>\nstruct Cache : Storage<T> {\n  void clear() {\n    this->reset();  // now dependent\n  }\n};",
+    "tip": "Also fine: `Storage<T>::reset();` or `using Storage<T>::reset;` in the class.",
+    "takeaway": "Members of a dependent base need `this->` or qualification."
+   }
+  ]
+ },
+ {
+  "id": "S10-P11",
+  "type": "code_puzzle",
+  "topic_no": 10,
+  "topic_short": "Templates",
+  "source": "topic_10 practice Q11",
+  "text": {
+   "hook": "\"A plain function always beats a template.\"\nTwo plain overloads, one template, three calls.\nThe last one is a short.\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "The first two calls are warm-up. The third is the interview question.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "templates",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Overload resolution",
+    "title": "What does this print?",
+    "code": "void handle(long) { std::cout << \"long\\n\"; }\ntemplate <class T>\nvoid handle(T)    { std::cout << \"T\\n\"; }\nvoid handle(int)  { std::cout << \"int\\n\"; }\n\nint main() {\n  short s = 1;\n  handle(1);\n  handle(1L);\n  handle(s);\n}",
+    "options": [
+     "int, long, int",
+     "T, T, T",
+     "int, long, long",
+     "int, long, T"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "D. `int`, `long`, `T`",
+    "verdict_sub": "The non-template preference is only a tie-breaker",
+    "bullets": [
+     "`handle(1)`: `handle(int)` and `handle<int>` are both exact. Tie: the non-template wins.",
+     "`handle(1L)`: same tie with `long`: the non-template wins.",
+     "`handle(s)`: `handle<short>` is **exact**. `handle(int)` needs a promotion, `handle(long)` a conversion.",
+     "The better match is decided before \"prefer non-template\" is ever asked."
+    ],
+    "wrong": "\"A: short promotes to int, plain function wins\"",
+    "cta": "The rule ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The twist",
+    "title": "Remove the template",
+    "code": "void handle(long) { std::cout << \"long\\n\"; }\nvoid handle(int)  { std::cout << \"int\\n\"; }\n\nint main() {\n  short s = 1;\n  handle(s);  // int: promotion wins\n}",
+    "bullets": [
+     "Order: exact match, then promotion, then conversion.",
+     "Only on a tie: non-template beats template.",
+     "Still tied: the more specialized template wins."
+    ],
+    "takeaway": "\"Prefer the non-template\" is a tie-breaker, not a rule."
+   }
+  ]
+ }
+]

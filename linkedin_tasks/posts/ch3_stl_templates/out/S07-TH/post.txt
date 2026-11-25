@@ -1,0 +1,20 @@
+=== POST TEXT ===
+"deque is just a vector that can also grow at the front."
+That answer fails C++ interviews.
+
+Five containers, their real memory layouts, plus 6 myths. Swipe ➜ and save it. 💡
+
+Inside:
+1. Four memory layouts
+2. deque by the numbers
+3. list, forward_list, array
+4. Adaptors and pop() returning void
+5. Which container for which need
+6. Six myths, busted (slides 8-9)
+
+Which myth did you believe? Comment the slide number.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+📌 Save this for your next C++ interview. Which myth did you believe? Comment the slide number 👇

@@ -1,0 +1,13 @@
+=== POST TEXT ===
+The feature flag is explicitly set to false.
+The code checks if (enabled).
+Ship it?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+std::optional<bool>: a three-state flag that reads like a two-state one.
+
+#cpp #cplusplus #stl #moderncpp #interviewprep
+
+=== FIRST COMMENT ===
+👉 Swipe right for the answer and the fix. Did your reasoning match? Drop your answer below 👇

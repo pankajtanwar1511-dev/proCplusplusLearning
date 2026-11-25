@@ -1,0 +1,435 @@
+[
+ {
+  "id": "S03-TH",
+  "type": "theory",
+  "topic_no": 3,
+  "topic_short": "optional & expected",
+  "source": "topic_03 theory",
+  "text": {
+   "hook": "std::optional allocates nothing of its own.\nAnd assigning to a full one keeps the old object alive.\n\nThe mental model for optional and expected, plus 6 myths. Swipe ➜",
+   "body": "Inside:\n1. A value plus a flag, in place\n2. How an empty optional compares\n3. What happens to the T inside\n4. expected: a value or a typed error\n5. Six myths, busted (slides 8-9)\n\nWhich myth did you believe? Comment the slide number.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "cover",
+    "hero": "optional & expected:<br>the mental model<br>+ 6 myths",
+    "lead": "Where the value lives, what happens when it is empty, and how to return errors without exceptions.",
+    "cta": "Swipe ➜"
+   },
+   {
+    "layout": "cards",
+    "kicker": "The core idea",
+    "title": "A value, plus what happens without one",
+    "cards": [
+     {
+      "label": "optional<T> (C++17)",
+      "text": "A `T` or nothing: storage for one `T` **inside** the object, plus an engaged flag."
+     },
+     {
+      "label": "expected<T, E> (C++23)",
+      "text": "A `T` or the reason why not: the empty state carries an error of type `E`."
+     },
+     {
+      "label": "Value types",
+      "text": "Copying copies the contents. No sharing, no reference counting, no heap of their own."
+     }
+    ],
+    "takeaway": "Absence or failure becomes part of the **type**: the caller cannot use the result without seeing it."
+   },
+   {
+    "layout": "table",
+    "kicker": "Storage (libstdc++ / GCC, x86-64)",
+    "title": "The T lives in place",
+    "header": [
+     "Type",
+     "sizeof"
+    ],
+    "rows": [
+     [
+      "`optional<int>`",
+      "8 (4 + flag, padded)"
+     ],
+     [
+      "`optional<double>`",
+      "16"
+     ],
+     [
+      "`optional<int*>`",
+      "16 (no \"nullptr = empty\" trick)"
+     ],
+     [
+      "`optional<std::string>`",
+      "40 (string is 32)"
+     ]
+    ],
+    "takeaway": "Constructing an optional never allocates. The `T` itself may (a long string). Exact sizes are not fixed by the standard."
+   },
+   {
+    "layout": "table",
+    "kicker": "Comparisons",
+    "title": "An empty `o` compares less than everything",
+    "header": [
+     "Expression",
+     "Result"
+    ],
+    "rows": [
+     [
+      "`o < -1000000`",
+      "`true`"
+     ],
+     [
+      "`o == 0`",
+      "`false`"
+     ],
+     [
+      "`o == std::nullopt`",
+      "`true`"
+     ],
+     [
+      "`std::sort` on optionals",
+      "All empties come first"
+     ]
+    ],
+    "takeaway": "`std::max(a, b)` prefers any engaged optional over an empty one, which can hide missing data."
+   },
+   {
+    "layout": "table",
+    "kicker": "Lifetime",
+    "title": "What happens to the T inside",
+    "header": [
+     "Operation on an engaged `o`",
+     "Effect on the `T`"
+    ],
+    "rows": [
+     [
+      "`o = T(...)`",
+      "`T`'s **assignment**: same object stays alive"
+     ],
+     [
+      "`o.emplace(...)`",
+      "Destroy, then construct in place"
+     ],
+     [
+      "`o.reset()`, `o = std::nullopt`",
+      "Destroy the `T`. The optional lives on, empty"
+     ],
+     [
+      "`auto p = std::move(o);`",
+      "`o` stays **engaged**, holding a moved-from `T`"
+     ]
+    ],
+    "takeaway": "A `T&` taken from `*o` dies with the `T`, not with the optional."
+   },
+   {
+    "layout": "cards",
+    "kicker": "std::expected (C++23)",
+    "title": "A value, or a typed error",
+    "cards": [
+     {
+      "label": "Success",
+      "text": "`return value;` converts to `T`."
+     },
+     {
+      "label": "Failure",
+      "text": "`return std::unexpected(err);` builds the error state."
+     },
+     {
+      "label": "expected<void, E>",
+      "text": "Success carries nothing. A good fit for save, send or validate."
+     }
+    ],
+    "takeaway": "`e.error()` on a success is UB. `e.value()` on an error throws `bad_expected_access<E>`."
+   },
+   {
+    "layout": "table",
+    "kicker": "Choosing",
+    "title": "Which error mechanism?",
+    "header": [
+     "Mechanism",
+     "Best for"
+    ],
+    "rows": [
+     [
+      "Exception",
+      "Rare, cannot-continue failures; constructors"
+     ],
+     [
+      "`optional<T>`",
+      "\"Not found\", no reason needed"
+     ],
+     [
+      "`expected<T, E>`",
+      "Expected failures with a reason: parsers, validation, I/O"
+     ],
+     [
+      "Sentinel (`-1`, `\"\"`)",
+      "Legacy only: easy to forget the check"
+     ]
+    ],
+    "takeaway": "C++23 chains: `and_then` when the step may fail, `transform` when it always succeeds, `or_else` to recover."
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"`optional` heap-allocates the value.\"",
+      "truth": "The `T` lives inside the optional object. No allocation of its own."
+     },
+     {
+      "myth": "\"`optional<T>` is the same size as `T`.\"",
+      "truth": "It adds a flag plus padding: `optional<int>` is 8 bytes (GCC, x86-64)."
+     },
+     {
+      "myth": "\"`reset()` destroys the optional.\"",
+      "truth": "It destroys the contained `T`. The optional lives on, empty."
+     }
+    ]
+   },
+   {
+    "layout": "myths",
+    "items": [
+     {
+      "myth": "\"Assigning to an engaged optional destroys the old value first.\"",
+      "truth": "It uses `T`'s assignment. Only `emplace` destroys, then constructs."
+     },
+     {
+      "myth": "\"`std::optional<T&>` is a cheap optional reference.\"",
+      "truth": "It does not compile before C++26. Use `T*`."
+     },
+     {
+      "myth": "\"`expected` is just optional with a string.\"",
+      "truth": "`E` is any type (an enum, a struct), with `error()` and `transform_error`."
+     }
+    ]
+   },
+   {
+    "layout": "takeaway",
+    "hero": "optional: a value or nothing.<br>expected: a value<br>or the reason why not.",
+    "lead": "Save this. Follow for a C++ interview puzzle every day."
+   }
+  ]
+ },
+ {
+  "id": "S03-P2",
+  "type": "code_puzzle",
+  "topic_no": 3,
+  "topic_short": "optional & expected",
+  "source": "topic_03 practice Q2",
+  "text": {
+   "hook": "The cache already holds a value.\nSo the fallback never runs. Right?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "A one-liner that shows up in every config and cache lookup.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · value_or",
+    "title": "The cache is warm. What prints?",
+    "code": "int fetches = 0;\nstd::string fetch() {\n  ++fetches;\n  return \"fresh\";\n}\nint main() {\n  std::optional<std::string> cache = \"cached\";\n  for (int i = 0; i < 3; ++i) {\n    std::string v = cache.value_or(fetch());\n  }\n  std::cout << \"fetches=\" << fetches << '\\n';\n}",
+    "options": [
+     "fetches=0",
+     "fetches=1",
+     "Depends on -O level",
+     "fetches=3"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "D. fetches=3",
+    "verdict_sub": "`fetch()` runs on every iteration, cache hit or not",
+    "bullets": [
+     "`value_or` is an ordinary function: its argument is evaluated **before** the call.",
+     "`cache` is engaged, so the fetched string is thrown away. Three times.",
+     "Optimization level does not change it: the call has side effects.",
+     "`value_or` is fine for cheap defaults like `0` or `\"\"`."
+    ],
+    "wrong": "\"A: the default is only evaluated when the optional is empty\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Make the fallback lazy",
+    "code": "// fetch() runs only on a miss\nstd::string v = cache ? *cache : fetch();\n\n// C++23 (GCC 12+)\nstd::string w = *cache.or_else([] {\n  return std::optional(fetch()); });",
+    "tip": "Both versions leave `fetches=0` for a warm cache.",
+    "takeaway": "`value_or` is eager. Use it only with cheap defaults."
+   }
+  ]
+ },
+ {
+  "id": "S03-P6",
+  "type": "code_puzzle",
+  "topic_no": 3,
+  "topic_short": "optional & expected",
+  "source": "topic_03 practice Q6",
+  "text": {
+   "hook": "The config file does not exist.\nThe function returns an error message.\nWhat does the caller see?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "C++23 std::expected. Both branches look right.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · std::expected (C++23, GCC 13)",
+    "title": "The file is missing. What prints?",
+    "code": "std::expected<std::string, std::string>\nload_config(bool exists) {\n  if (!exists) return \"config file not found\";\n  return \"port=9000\";\n}\nint main() {\n  auto cfg = load_config(false);\n  if (cfg) std::cout << \"loaded: \" << *cfg;\n  else std::cout << \"error: \" << cfg.error();\n}",
+    "options": [
+     "loaded: config file not found",
+     "error: config file not found",
+     "Compile error: ambiguous return",
+     "loaded: port=9000"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "A. loaded: config file not found",
+    "verdict_sub": "Observed with GCC 13, `-std=c++23`",
+    "bullets": [
+     "A plain `return x;` always constructs the **value**.",
+     "`E` and `T` are both `std::string`, so the message converts to `T` without complaint.",
+     "The error message became the config contents.",
+     "Only `return std::unexpected(...)` creates the error state."
+    ],
+    "wrong": "\"B: returning the message from the error branch makes it an error\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "A distinct error type",
+    "code": "enum class ConfigError { NotFound, Malformed };\n\nstd::expected<std::string, ConfigError>\nload_config(bool exists) {\n  if (!exists)\n    return std::unexpected(ConfigError::NotFound);\n  return \"port=9000\";\n}",
+    "tip": "Now `return ConfigError::NotFound;` without `unexpected` fails to compile instead of compiling wrongly.",
+    "takeaway": "In `std::expected`, success is implicit. Errors must be wrapped in `std::unexpected`."
+   }
+  ]
+ },
+ {
+  "id": "S03-Q5",
+  "type": "code_puzzle",
+  "topic_no": 3,
+  "topic_short": "optional & expected",
+  "source": "topic_03 qa Q5",
+  "text": {
+   "hook": "The feature flag is explicitly set to false.\nThe code checks `if (enabled)`.\nShip it?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "`std::optional<bool>`: a three-state flag that reads like a two-state one.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · optional<bool>",
+    "title": "The flag is off.<br>What does it print?",
+    "code": "int main() {\n  std::optional<bool> enabled = false;  // off\n  if (enabled) std::cout << \"feature ON\\n\";\n  std::cout << static_cast<bool>(enabled) << ' '\n            << *enabled << ' '\n            << (enabled == true) << '\\n';\n}",
+    "options": [
+     "0 0 0",
+     "feature ON, then 1 1 1",
+     "feature ON, then 1 0 0",
+     "Compile error"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "C. feature ON, then 1 0 0",
+    "verdict_sub": "An optional holding `false` is truthy",
+    "bullets": [
+     "`if (enabled)` asks \"is there a value?\", not \"is it true?\".",
+     "`*enabled` is the stored `false`: prints `0`.",
+     "`enabled == true` compares the value: `0`.",
+     "Same trap: `optional<int>` holding 0, `optional<T*>` holding `nullptr`."
+    ],
+    "wrong": "\"A: `if (ob)` is fine because bool converts naturally\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Spell the intent",
+    "code": "if (enabled.value_or(false)) start();\nif (enabled == true) start();\n// start() is not called\n\n// clearer still: three named states\nenum class Setting { Unset, Off, On };",
+    "tip": "`enabled == true` is false when empty, and false when it holds `false`.",
+    "takeaway": "For `optional<bool>`, the condition asks \"is it set?\", never \"is it true?\"."
+   }
+  ]
+ },
+ {
+  "id": "S03-P10",
+  "type": "code_puzzle",
+  "topic_no": 3,
+  "topic_short": "optional & expected",
+  "source": "topic_03 practice Q10",
+  "text": {
+   "hook": "The parser correctly returns `std::nullopt`.\nThe caller skipped one check.\nWhat does `*port` do now?\n\nLock in your answer below, then swipe ➜ to verify.",
+   "body": "Two accessors look alike. Only one is checked.",
+   "hashtags": [
+    "cpp",
+    "cplusplus",
+    "stl",
+    "moderncpp",
+    "interviewprep"
+   ]
+  },
+  "slides": [
+   {
+    "layout": "puzzle",
+    "kicker": "Puzzle · Empty optional (GCC 11)",
+    "title": "The input is empty.<br>What happens?",
+    "code": "std::optional<int> parse_port(const char* s) {\n  if (s[0] == '\\0') return std::nullopt;\n  return 9000;\n}\n\nint main() {\n  auto port = parse_port(\"\");\n  std::cout << \"port \" << *port << '\\n';\n}",
+    "options": [
+     "Throws an exception",
+     "UB: unchecked read",
+     "Prints port 0",
+     "Prints port 9000"
+    ],
+    "cta": "Work it out, then swipe ➜"
+   },
+   {
+    "layout": "answer",
+    "verdict": "B. Undefined behaviour",
+    "verdict_sub": "GCC 11, `-O0`: a different number each run. ASan + UBSan: silent",
+    "bullets": [
+     "`operator*` has a **precondition** (`has_value()`), not a check.",
+     "It reads whatever bytes are in the storage. No `int` lives there.",
+     "ASan sees valid stack memory, so it reports nothing.",
+     "`-D_GLIBCXX_ASSERTIONS` (libstdc++) aborts: `Assertion 'this->_M_is_engaged()' failed`."
+    ],
+    "wrong": "\"A: `*opt` throws if it is empty\"",
+    "cta": "The fix ➜"
+   },
+   {
+    "layout": "code",
+    "kicker": "The fix",
+    "title": "Check, or ask for the throw",
+    "code": "auto port = parse_port(\"\");\nif (port) std::cout << \"port \" << *port;\n\ntry { std::cout << port.value(); }\ncatch (const std::bad_optional_access& e) {\n  std::cout << e.what();   // bad optional access\n}",
+    "tip": "Turn on `-D_GLIBCXX_ASSERTIONS` in debug and test builds: it makes `*opt` on empty abort.",
+    "takeaway": "`*opt` on empty is silent UB. `value()` is the checked accessor."
+   }
+  ]
+ }
+]

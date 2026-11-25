@@ -1,0 +1,12 @@
+=== POST TEXT ===
+std::array is the safe, modern C array.
+So std::array<int, 3> a; starts zeroed. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Three declarations, three different initializations.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+Swipe ➜ for the answer and the common wrong answer. Got it on the first try? Reply below 👇

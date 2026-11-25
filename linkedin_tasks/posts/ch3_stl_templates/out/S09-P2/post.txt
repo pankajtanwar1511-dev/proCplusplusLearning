@@ -1,0 +1,12 @@
+=== POST TEXT ===
+Point has a defaulted operator==.
+So it can be an unordered_map key. Right?
+
+Lock in your answer below, then swipe ➜ to verify.
+
+Three lines of code, one familiar struct. Read the first error carefully.
+
+#cpp #cplusplus #stl #datastructures #interviewprep
+
+=== FIRST COMMENT ===
+The answer is on the next page ➜ Comment your answer first, then compare.
